@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JasperReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.reporting.engine.jasper</a> &gt; <span class="el_source">JasperReportService.java</span></div><h1>JasperReportService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.reporting.engine.jasper;
+
+import net.sf.jasperreports.engine.DefaultJasperReportsContext;
+import net.sf.jasperreports.engine.JRDataSource;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.JasperReportsContext;
+import net.sf.jasperreports.engine.data.JRBeanArrayDataSource;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.export.HtmlExporter;
+import net.sf.jasperreports.engine.export.JRCsvExporter;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.engine.export.JRRtfExporter;
+import net.sf.jasperreports.engine.export.JRTextExporter;
+import net.sf.jasperreports.engine.export.JRXlsExporter;
+import net.sf.jasperreports.engine.export.ooxml.JRDocxExporter;
+import net.sf.jasperreports.engine.query.JRHibernateQueryExecuterFactory;
+import net.sf.jasperreports.engine.util.JRLoader;
+import net.sf.jasperreports.export.Exporter;
+import net.sf.jasperreports.export.ExporterConfiguration;
+import net.sf.jasperreports.export.ExporterOutput;
+import net.sf.jasperreports.export.SimpleCsvExporterConfiguration;
+import net.sf.jasperreports.export.SimpleDocxExporterConfiguration;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleHtmlExporterConfiguration;
+import net.sf.jasperreports.export.SimpleHtmlExporterOutput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
+import net.sf.jasperreports.export.SimpleRtfExporterConfiguration;
+import net.sf.jasperreports.export.SimpleTextExporterConfiguration;
+import net.sf.jasperreports.export.SimpleWriterExporterOutput;
+import net.sf.jasperreports.export.SimpleXlsExporterConfiguration;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.reporting.engine.AbstractReportService;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.reporting.engine.ReportRequest;
+import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Connection;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.egov.infra.reporting.engine.ReportFormat.CSV;
+import static org.egov.infra.reporting.engine.ReportFormat.HTM;
+import static org.egov.infra.reporting.engine.ReportFormat.PDF;
+import static org.egov.infra.reporting.engine.ReportFormat.RTF;
+import static org.egov.infra.reporting.engine.ReportFormat.TXT;
+import static org.egov.infra.reporting.engine.ReportFormat.XLS;
+import static org.egov.infra.reporting.engine.ReportFormat.DOCX;
+
+public class JasperReportService extends AbstractReportService&lt;JasperReport&gt; {
+
+<span class="nc" id="L113">    private static final Logger LOGGER = LoggerFactory.getLogger(JasperReportService.class);</span>
+
+    private static final String TEMPLATE_EXTENSION = &quot;.jasper&quot;;
+    private static final String JASPER_PROPERTIES_FILE = &quot;config/jasperreports.properties&quot;;
+    private static final String EXCEPTION_IN_REPORT_CREATION = &quot;Error occurred while generating report.&quot;;
+    private static final String PRINT_PDF_JAVASCRIPT = &quot;this.print()&quot;;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public JasperReportService(int templateCacheMinSize, int templateCacheMaxSize) {
+<span class="nc" id="L124">        super(templateCacheMinSize, templateCacheMaxSize);</span>
+<span class="nc" id="L125">        System.setProperty(DefaultJasperReportsContext.PROPERTIES_FILE, JASPER_PROPERTIES_FILE);</span>
+<span class="nc" id="L126">    }</span>
+
+    @Override
+    protected String getTemplateExtension() {
+<span class="nc" id="L130">        return TEMPLATE_EXTENSION;</span>
+    }
+
+    @Override
+    protected ReportOutput createReportFromSql(ReportRequest reportInput, Connection connection) {
+        try {
+<span class="nc" id="L136">            JasperPrint jasperPrint = JasperFillManager.fillReport(getTemplate(reportInput.getReportTemplate()),</span>
+<span class="nc" id="L137">                    reportInput.getReportParams(), connection);</span>
+<span class="nc" id="L138">            return new ReportOutput(exportReport(reportInput, jasperPrint), reportInput);</span>
+<span class="nc" id="L139">        } catch (JRException | IOException e) {</span>
+<span class="nc" id="L140">            LOGGER.error(EXCEPTION_IN_REPORT_CREATION, e);</span>
+<span class="nc" id="L141">            throw new ApplicationRuntimeException(EXCEPTION_IN_REPORT_CREATION, e);</span>
+        }
+    }
+
+    @Override
+    protected ReportOutput createReportFromJavaBean(ReportRequest reportInput) {
+        try {
+<span class="nc" id="L148">            Object reportData = reportInput.getReportInputData();</span>
+            JRDataSource dataSource;
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            if (reportData == null) {</span>
+<span class="nc" id="L151">                dataSource = new JREmptyDataSource();</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            } else if (reportData.getClass().isArray()) {</span>
+<span class="nc" id="L153">                dataSource = new JRBeanArrayDataSource((Object[]) reportData, false);</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">            } else if (reportData instanceof Collection) {</span>
+<span class="nc" id="L155">                dataSource = new JRBeanCollectionDataSource((Collection) reportData, false);</span>
+            } else {
+<span class="nc" id="L157">                dataSource = new JRBeanArrayDataSource(new Object[]{reportData}, false);</span>
+            }
+<span class="nc" id="L159">            LOGGER.info(&quot;Jasper fillReport start-&gt;&quot;+reportInput.getReportTemplate());</span>
+<span class="nc" id="L160">            JasperPrint jasperPrint = JasperFillManager.fillReport(getTemplate(reportInput.getReportTemplate()),</span>
+<span class="nc" id="L161">                    reportInput.getReportParams(), dataSource);</span>
+<span class="nc" id="L162">            LOGGER.info(&quot;Jasper fillReport end-&gt;&quot;+reportInput.getReportTemplate());</span>
+<span class="nc" id="L163">            return new ReportOutput(exportReport(reportInput, jasperPrint), reportInput);</span>
+<span class="nc" id="L164">        } catch (Exception e) {</span>
+<span class="nc" id="L165">        	System.out.println(&quot;Error1 :::&quot;+e.getMessage());</span>
+<span class="nc" id="L166">            e.printStackTrace();</span>
+<span class="nc" id="L167">            throw new ApplicationRuntimeException(EXCEPTION_IN_REPORT_CREATION, e);</span>
+        }
+
+    }
+
+    @Override
+    protected ReportOutput createReportFromHql(ReportRequest reportInput) {
+        try {
+<span class="nc" id="L175">            Map&lt;String, Object&gt; reportParams = reportInput.getReportParams();</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">            if (reportParams == null) {</span>
+<span class="nc" id="L177">                reportParams = new HashMap&lt;&gt;();</span>
+            }
+<span class="nc" id="L179">            reportParams.put(JRHibernateQueryExecuterFactory.PARAMETER_HIBERNATE_SESSION, entityManager.unwrap(Session.class));</span>
+<span class="nc" id="L180">            JasperReportsContext jrc = DefaultJasperReportsContext.getInstance();</span>
+<span class="nc" id="L181">            jrc.setValue(JRHibernateQueryExecuterFactory.PROPERTY_HIBERNATE_FIELD_MAPPING_DESCRIPTIONS, false);</span>
+<span class="nc" id="L182">            JasperPrint jasperPrint = JasperFillManager.getInstance(jrc).fill(getTemplate(reportInput.getReportTemplate()), reportParams);</span>
+<span class="nc" id="L183">            return new ReportOutput(exportReport(reportInput, jasperPrint), reportInput);</span>
+<span class="nc" id="L184">        } catch (JRException | IOException e) {</span>
+<span class="nc" id="L185">            LOGGER.error(EXCEPTION_IN_REPORT_CREATION, e);</span>
+<span class="nc" id="L186">            throw new ApplicationRuntimeException(EXCEPTION_IN_REPORT_CREATION, e);</span>
+        }
+    }
+
+    @Override
+    protected JasperReport loadTemplate(InputStream templateInputStream) {
+        try {
+<span class="nc" id="L193">            return (JasperReport) JRLoader.loadObject(templateInputStream);</span>
+<span class="nc" id="L194">        } catch (JRException e) {</span>
+<span class="nc" id="L195">            LOGGER.error(EXCEPTION_IN_REPORT_CREATION, e);</span>
+<span class="nc" id="L196">            throw new ApplicationRuntimeException(EXCEPTION_IN_REPORT_CREATION, e);</span>
+        }
+    }
+
+    private byte[] exportReport(ReportRequest reportInput, JasperPrint jasperPrint) throws JRException, IOException {
+<span class="nc" id="L201">        try (ByteArrayOutputStream reportOutputStream = new ByteArrayOutputStream()) {</span>
+<span class="nc" id="L202">        	System.out.println(&quot;start export&quot;);</span>
+<span class="nc" id="L203">            Exporter exporter = getExporter(reportInput, jasperPrint, reportOutputStream);</span>
+<span class="nc" id="L204">            exporter.exportReport();</span>
+<span class="nc" id="L205">            System.out.println(&quot;export&quot;);</span>
+<span class="nc" id="L206">            return reportOutputStream.toByteArray();</span>
+<span class="nc bnc" id="L207" title="All 8 branches missed.">        } catch (Exception e) {</span>
+<span class="nc" id="L208">        	System.out.println(&quot;Error2 :::&quot;+e.getMessage());</span>
+<span class="nc" id="L209">            e.printStackTrace();</span>
+<span class="nc" id="L210">            throw new ApplicationRuntimeException(EXCEPTION_IN_REPORT_CREATION, e);</span>
+        }
+    }
+
+    private Exporter getExporter(ReportRequest reportInput, JasperPrint jasperPrint, OutputStream outputStream) {
+<span class="nc" id="L215">        Exporter exporter = null;</span>
+<span class="nc" id="L216">        ExporterConfiguration exporterConfiguration = null;</span>
+<span class="nc" id="L217">        ExporterOutput exporterOutput = null;</span>
+<span class="nc" id="L218">        System.out.println(&quot;reportInput.getReportFormat() :::&quot;+reportInput.getReportFormat());</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (PDF.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L220">            SimplePdfExporterConfiguration pdfExporterConfiguration = new SimplePdfExporterConfiguration();</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if (reportInput.isPrintDialogOnOpenReport())</span>
+<span class="nc" id="L222">                pdfExporterConfiguration.setPdfJavaScript(PRINT_PDF_JAVASCRIPT);</span>
+<span class="nc" id="L223">            exporter = new JRPdfExporter();</span>
+<span class="nc" id="L224">            exporterConfiguration = pdfExporterConfiguration;</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        } else if (XLS.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L226">        	System.out.println(&quot;xls ::: &quot;+XLS);</span>
+        	try
+        	{
+<span class="nc" id="L229">        		exporter = new JRXlsExporter();</span>
+<span class="nc" id="L230">                exporterConfiguration = new SimpleXlsExporterConfiguration();</span>
+<span class="nc" id="L231">        	}catch (Exception e) {</span>
+<span class="nc" id="L232">				e.printStackTrace();</span>
+<span class="nc" id="L233">			}</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        } else if (RTF.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L235">            exporter = new JRRtfExporter();</span>
+<span class="nc" id="L236">            exporterConfiguration = new SimpleRtfExporterConfiguration();</span>
+<span class="nc" id="L237">            exporterOutput= new SimpleWriterExporterOutput(outputStream);</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">        } else if (HTM.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L239">            exporter = new HtmlExporter();</span>
+<span class="nc" id="L240">            exporterConfiguration = new SimpleHtmlExporterConfiguration();</span>
+<span class="nc" id="L241">            exporterOutput = new SimpleHtmlExporterOutput(outputStream);</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        } else if (TXT.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L243">            exporter = new JRTextExporter();</span>
+<span class="nc" id="L244">            exporterConfiguration = new SimpleTextExporterConfiguration();</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">        } else if (CSV.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L246">            exporter = new JRCsvExporter();</span>
+<span class="nc" id="L247">            exporterConfiguration = new SimpleCsvExporterConfiguration();</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        } else if (DOCX.equals(reportInput.getReportFormat())) {</span>
+<span class="nc" id="L249">            exporter = new JRDocxExporter();</span>
+<span class="nc" id="L250">            exporterConfiguration = new SimpleDocxExporterConfiguration();</span>
+        } else {
+<span class="nc" id="L252">        	System.out.println(&quot;else&quot;);</span>
+<span class="nc" id="L253">            throw new ApplicationRuntimeException(&quot;Invalid report format [&quot; + reportInput.getReportFormat() + &quot;]&quot;);</span>
+        }
+        try
+        {
+<span class="nc" id="L257">        	System.out.println(&quot;xxxx&quot;);</span>
+<span class="nc" id="L258">        	exporter.setConfiguration(exporterConfiguration);</span>
+<span class="nc" id="L259">            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">            exporter.setExporterOutput(exporterOutput == null ? new SimpleOutputStreamExporterOutput(outputStream) : exporterOutput);</span>
+            
+<span class="nc" id="L262">        }catch (Exception e) {</span>
+<span class="nc" id="L263">			e.printStackTrace(); </span>
+<span class="nc" id="L264">		}</span>
+<span class="nc" id="L265">        return exporter;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

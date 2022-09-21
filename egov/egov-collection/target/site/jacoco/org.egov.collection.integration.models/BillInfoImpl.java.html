@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillInfoImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">BillInfoImpl.java</span></div><h1>BillInfoImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.models;
+
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+import com.thoughtworks.xstream.annotations.XStreamImplicit;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+@XStreamAlias(&quot;bill-collect&quot;)
+public class BillInfoImpl implements BillInfo {
+
+    private String serviceCode;
+    private String fundCode;
+    private BigDecimal functionaryCode;
+    private String fundSourceCode;
+    private String departmentCode;
+
+    private String displayMessage;
+    private String paidBy;
+    private Boolean partPaymentAllowed;
+
+    // true =&gt; call the new API (of billing system), false =&gt; default logic
+    // (done by collection system).
+    private Boolean callbackForApportioning;
+
+    private Boolean overrideAccountHeadsAllowed;
+
+    private COLLECTIONTYPE collectionType;
+
+    @XStreamImplicit(itemFieldName = &quot;collectionModeNotAllowed&quot;)
+    private List&lt;String&gt; collectionModesNotAllowed;
+
+<span class="nc" id="L81">    @XStreamAlias(&quot;payees&quot;)</span>
+    private List&lt;BillPayeeDetails&gt; payees = new ArrayList&lt;&gt;(0);
+
+    private String transactionReferenceNumber;
+
+    private String source;
+
+    @Override
+    public String getServiceCode() {
+<span class="nc" id="L90">        return serviceCode;</span>
+    }
+
+<span class="nc" id="L93">    public BillInfoImpl() {</span>
+<span class="nc" id="L94">    }</span>
+
+    public BillInfoImpl(final String serviceCode, final String fundCode, final BigDecimal functionaryCode,
+            final String fundSourceCode, final String departmentCode, final String displayMessage, final String paidBy,
+            final Boolean partPaymentAllowed, final Boolean overrideAccountHeadsAllowed,
+<span class="nc" id="L99">            final List&lt;String&gt; collectionModesNotAllowed, final COLLECTIONTYPE collectionType) {</span>
+<span class="nc" id="L100">        this.serviceCode = serviceCode;</span>
+<span class="nc" id="L101">        this.fundCode = fundCode;</span>
+<span class="nc" id="L102">        this.functionaryCode = functionaryCode;</span>
+<span class="nc" id="L103">        this.fundSourceCode = fundSourceCode;</span>
+<span class="nc" id="L104">        this.departmentCode = departmentCode;</span>
+<span class="nc" id="L105">        this.displayMessage = displayMessage;</span>
+<span class="nc" id="L106">        this.paidBy = paidBy;</span>
+<span class="nc" id="L107">        this.partPaymentAllowed = partPaymentAllowed;</span>
+<span class="nc" id="L108">        this.overrideAccountHeadsAllowed = overrideAccountHeadsAllowed;</span>
+<span class="nc" id="L109">        this.collectionModesNotAllowed = collectionModesNotAllowed;</span>
+<span class="nc" id="L110">        this.collectionType = collectionType;</span>
+<span class="nc" id="L111">    }</span>
+
+    @Override
+    public String getFundCode() {
+<span class="nc" id="L115">        return fundCode;</span>
+    }
+
+    @Override
+    public BigDecimal getFunctionaryCode() {
+<span class="nc" id="L120">        return functionaryCode;</span>
+    }
+
+    @Override
+    public String getFundSourceCode() {
+<span class="nc" id="L125">        return fundSourceCode;</span>
+    }
+
+    @Override
+    public String getDepartmentCode() {
+<span class="nc" id="L130">        return departmentCode;</span>
+    }
+
+    @Override
+    public String getDisplayMessage() {
+<span class="nc" id="L135">        return displayMessage;</span>
+    }
+
+    @Override
+    public Boolean getPartPaymentAllowed() {
+<span class="nc" id="L140">        return partPaymentAllowed;</span>
+    }
+
+    @Override
+    public Boolean getOverrideAccountHeadsAllowed() {
+<span class="nc" id="L145">        return overrideAccountHeadsAllowed;</span>
+    }
+
+    @Override
+    public List&lt;String&gt; getCollectionModesNotAllowed() {
+<span class="nc" id="L150">        return collectionModesNotAllowed;</span>
+    }
+
+    @Override
+    public List&lt;BillPayeeDetails&gt; getPayees() {
+<span class="nc" id="L155">        return payees;</span>
+    }
+
+    @Override
+    public void setPayees(final List&lt;BillPayeeDetails&gt; payees) {
+<span class="nc" id="L160">        this.payees = payees;</span>
+<span class="nc" id="L161">    }</span>
+
+    @Override
+    public void addPayees(final BillPayeeDetails payee) {
+<span class="nc" id="L165">        payees.add(payee);</span>
+<span class="nc" id="L166">    }</span>
+
+    @Override
+    public COLLECTIONTYPE getCollectionType() {
+<span class="nc" id="L170">        return collectionType;</span>
+    }
+
+    @Override
+    public String getPaidBy() {
+<span class="nc" id="L175">        return paidBy;</span>
+    }
+
+    @Override
+    public Boolean getCallbackForApportioning() {
+<span class="nc" id="L180">        return callbackForApportioning;</span>
+    }
+
+    public void setCallbackForApportioning(final Boolean callbackForApportioning) {
+<span class="nc" id="L184">        this.callbackForApportioning = callbackForApportioning;</span>
+<span class="nc" id="L185">    }</span>
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (!(obj instanceof BillInfoImpl))</span>
+<span class="nc" id="L190">            return false;</span>
+
+<span class="nc" id="L192">        final BillInfoImpl billColl = (BillInfoImpl) obj;</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">        if (serviceCode.equals(billColl.getServiceCode()) &amp;&amp; fundCode.equals(billColl.fundCode)</span>
+<span class="nc bnc" id="L194" title="All 4 branches missed.">                &amp;&amp; functionaryCode.equals(billColl.functionaryCode) &amp;&amp; fundSourceCode.equals(billColl.fundSourceCode)</span>
+<span class="nc bnc" id="L195" title="All 10 branches missed.">                &amp;&amp; departmentCode.equals(billColl.departmentCode) &amp;&amp; displayMessage.equals(billColl.displayMessage)</span>
+                &amp;&amp; partPaymentAllowed == billColl.partPaymentAllowed
+                &amp;&amp; overrideAccountHeadsAllowed == billColl.overrideAccountHeadsAllowed
+                &amp;&amp; callbackForApportioning == billColl.callbackForApportioning
+<span class="nc bnc" id="L199" title="All 2 branches missed.">                &amp;&amp; getPayees().containsAll(billColl.getPayees()))</span>
+<span class="nc bnc" id="L200" title="All 4 branches missed.">            return collectionModesNotAllowed == billColl.getCollectionModesNotAllowed()</span>
+            || collectionModesNotAllowed != null
+<span class="nc bnc" id="L202" title="All 2 branches missed.">                    &amp;&amp; collectionModesNotAllowed.containsAll(billColl.getCollectionModesNotAllowed());</span>
+        else
+<span class="nc" id="L204">            return false;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+<span class="nc" id="L213">        int hashCode = serviceCode.hashCode() + fundCode.hashCode() + functionaryCode.hashCode()</span>
+<span class="nc" id="L214">                + fundSourceCode.hashCode() + departmentCode.hashCode() + displayMessage.hashCode()</span>
+<span class="nc" id="L215">                + partPaymentAllowed.hashCode() + overrideAccountHeadsAllowed.hashCode();</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        for (final String collectionModeNotAllowed : collectionModesNotAllowed)</span>
+<span class="nc" id="L217">            hashCode += collectionModeNotAllowed.hashCode();</span>
+<span class="nc" id="L218">        return hashCode;</span>
+    }
+
+    public String getTransactionReferenceNumber() {
+<span class="nc" id="L222">        return this.transactionReferenceNumber;</span>
+    }
+
+    public void setTransactionReferenceNumber(String transactionReferenceNumber) {
+<span class="nc" id="L226">        this.transactionReferenceNumber = transactionReferenceNumber;</span>
+<span class="nc" id="L227">    }</span>
+
+    public String getSource() {
+<span class="nc" id="L230">        return source;</span>
+    }
+
+    public void setSource(String source) {
+<span class="nc" id="L234">        this.source = source;</span>
+<span class="nc" id="L235">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

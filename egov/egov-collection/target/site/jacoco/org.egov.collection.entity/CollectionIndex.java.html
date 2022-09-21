@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionIndex.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">CollectionIndex.java</span></div><h1>CollectionIndex.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.entity;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.hibernate.validator.constraints.Length;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Entity
+@Table(name = &quot;EG_COLLECTIONINDEX&quot;)
+@SequenceGenerator(name = CollectionIndex.SEQ_COLLECTIONINDEX, sequenceName = CollectionIndex.SEQ_COLLECTIONINDEX, allocationSize = 1)
+<span class="nc" id="L68">public class CollectionIndex extends AbstractAuditable {</span>
+    private static final long serialVersionUID = 1L;
+    public static final String SEQ_COLLECTIONINDEX = &quot;SEQ_EG_COLLECTIONINDEX&quot;;
+
+    @Id
+    @GeneratedValue(generator = SEQ_COLLECTIONINDEX, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @NotNull
+    private Date receiptDate;
+
+    @NotNull
+    @Length(max = 50)
+    private String receiptNumber;
+
+    @NotNull
+    @Length(max = 100)
+    private String billingService;
+
+    @NotNull
+    @Length(max = 50)
+    private String paymentMode;
+
+    private BigDecimal arrearAmount;
+
+    private BigDecimal penaltyAmount;
+
+    private BigDecimal currentAmount;
+
+    @NotNull
+    private BigDecimal totalAmount;
+
+    private BigDecimal advanceAmount;
+
+    @NotNull
+    @Length(max = 50)
+    private String channel;
+
+    @Length(max = 100)
+    private String paymentGateway;
+
+    private String billNumber;
+
+    @Length(max = 50)
+    private String consumerCode;
+
+    @NotNull
+    @Length(max = 250)
+    private String cityName;
+
+    @Length(max = 250)
+    private String districtName;
+
+    @Length(max = 250)
+    private String regionName;
+
+    @NotNull
+    @Length(max = 50)
+    private String status;
+
+    private BigDecimal latePaymentCharges;
+
+    private BigDecimal arrearCess;
+
+    private BigDecimal currentCess;
+
+    @Length(max = 50)
+    private String installmentFrom;
+
+    @Length(max = 50)
+    private String installmentTo;
+
+    @Length(max = 256)
+    private String consumerName;
+
+    private BigDecimal reductionAmount;
+
+    @Length(max = 50)
+    private String cityGrade;
+
+    @Length(max = 10)
+    private String cityCode;
+
+    @Length(max = 100)
+    private String receiptCreator;
+
+    private String revenueWard;
+
+    @Length(max = 100)
+    private String consumerType;
+
+    private Integer conflict;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L163">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L168">        this.id = id;</span>
+<span class="nc" id="L169">    }</span>
+
+    public Date getReceiptDate() {
+<span class="nc" id="L172">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(final Date receiptDate) {
+<span class="nc" id="L176">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L177">    }</span>
+
+    public String getReceiptNumber() {
+<span class="nc" id="L180">        return receiptNumber;</span>
+    }
+
+    public void setReceiptNumber(final String receiptNumber) {
+<span class="nc" id="L184">        this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L185">    }</span>
+
+    public String getBillingService() {
+<span class="nc" id="L188">        return billingService;</span>
+    }
+
+    public void setBillingService(final String billingService) {
+<span class="nc" id="L192">        this.billingService = billingService;</span>
+<span class="nc" id="L193">    }</span>
+
+    public String getPaymentMode() {
+<span class="nc" id="L196">        return paymentMode;</span>
+    }
+
+    public void setPaymentMode(final String paymentMode) {
+<span class="nc" id="L200">        this.paymentMode = paymentMode;</span>
+<span class="nc" id="L201">    }</span>
+
+    public BigDecimal getAdvanceAmount() {
+<span class="nc" id="L204">        return advanceAmount;</span>
+    }
+
+    public void setAdvanceAmount(final BigDecimal advanceAmount) {
+<span class="nc" id="L208">        this.advanceAmount = advanceAmount;</span>
+<span class="nc" id="L209">    }</span>
+
+    public BigDecimal getArrearAmount() {
+<span class="nc" id="L212">        return arrearAmount;</span>
+    }
+
+    public void setArrearAmount(final BigDecimal arrearAmount) {
+<span class="nc" id="L216">        this.arrearAmount = arrearAmount;</span>
+<span class="nc" id="L217">    }</span>
+
+    public BigDecimal getPenaltyAmount() {
+<span class="nc" id="L220">        return penaltyAmount;</span>
+    }
+
+    public void setPenaltyAmount(final BigDecimal penaltyAmount) {
+<span class="nc" id="L224">        this.penaltyAmount = penaltyAmount;</span>
+<span class="nc" id="L225">    }</span>
+
+    public BigDecimal getCurrentAmount() {
+<span class="nc" id="L228">        return currentAmount;</span>
+    }
+
+    public void setCurrentAmount(final BigDecimal currentAmount) {
+<span class="nc" id="L232">        this.currentAmount = currentAmount;</span>
+<span class="nc" id="L233">    }</span>
+
+    public BigDecimal getTotalAmount() {
+<span class="nc" id="L236">        return totalAmount;</span>
+    }
+
+    public void setTotalAmount(final BigDecimal totalAmount) {
+<span class="nc" id="L240">        this.totalAmount = totalAmount;</span>
+<span class="nc" id="L241">    }</span>
+
+    public String getChannel() {
+<span class="nc" id="L244">        return channel;</span>
+    }
+
+    public void setChannel(final String channel) {
+<span class="nc" id="L248">        this.channel = channel;</span>
+<span class="nc" id="L249">    }</span>
+
+    public String getPaymentGateway() {
+<span class="nc" id="L252">        return paymentGateway;</span>
+    }
+
+    public void setPaymentGateway(final String paymentGateway) {
+<span class="nc" id="L256">        this.paymentGateway = paymentGateway;</span>
+<span class="nc" id="L257">    }</span>
+
+    public String getBillNumber() {
+<span class="nc" id="L260">        return billNumber;</span>
+    }
+
+    public void setBillNumber(final String billNumber) {
+<span class="nc" id="L264">        this.billNumber = billNumber;</span>
+<span class="nc" id="L265">    }</span>
+
+    public String getConsumerCode() {
+<span class="nc" id="L268">        return consumerCode;</span>
+    }
+
+    public void setConsumerCode(final String consumerCode) {
+<span class="nc" id="L272">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L273">    }</span>
+
+    public String getCityName() {
+<span class="nc" id="L276">        return cityName;</span>
+    }
+
+    public void setCityName(final String cityName) {
+<span class="nc" id="L280">        this.cityName = cityName;</span>
+<span class="nc" id="L281">    }</span>
+
+    public String getDistrictName() {
+<span class="nc" id="L284">        return districtName;</span>
+    }
+
+    public void setDistrictName(final String districtName) {
+<span class="nc" id="L288">        this.districtName = districtName;</span>
+<span class="nc" id="L289">    }</span>
+
+    public String getRegionName() {
+<span class="nc" id="L292">        return regionName;</span>
+    }
+
+    public void setRegionName(final String regionName) {
+<span class="nc" id="L296">        this.regionName = regionName;</span>
+<span class="nc" id="L297">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L300">        return status;</span>
+    }
+
+    public void setStatus(final String status) {
+<span class="nc" id="L304">        this.status = status;</span>
+<span class="nc" id="L305">    }</span>
+
+    public BigDecimal getLatePaymentCharges() {
+<span class="nc" id="L308">        return latePaymentCharges;</span>
+    }
+
+    public void setLatePaymentCharges(final BigDecimal latePaymentCharges) {
+<span class="nc" id="L312">        this.latePaymentCharges = latePaymentCharges;</span>
+<span class="nc" id="L313">    }</span>
+
+    public BigDecimal getArrearCess() {
+<span class="nc" id="L316">        return arrearCess;</span>
+    }
+
+    public void setArrearCess(final BigDecimal arrearCess) {
+<span class="nc" id="L320">        this.arrearCess = arrearCess;</span>
+<span class="nc" id="L321">    }</span>
+
+    public BigDecimal getCurrentCess() {
+<span class="nc" id="L324">        return currentCess;</span>
+    }
+
+    public void setCurrentCess(final BigDecimal currentCess) {
+<span class="nc" id="L328">        this.currentCess = currentCess;</span>
+<span class="nc" id="L329">    }</span>
+
+    public String getConsumerName() {
+<span class="nc" id="L332">        return consumerName;</span>
+    }
+
+    public void setConsumerName(final String consumerName) {
+<span class="nc" id="L336">        this.consumerName = consumerName;</span>
+<span class="nc" id="L337">    }</span>
+
+    /**
+     * @return the installmentFrom
+     */
+    public String getInstallmentFrom() {
+<span class="nc" id="L343">        return installmentFrom;</span>
+    }
+
+    /**
+     * @param installmentFrom
+     *            the installmentFrom to set
+     */
+    public void setInstallmentFrom(final String installmentFrom) {
+<span class="nc" id="L351">        this.installmentFrom = installmentFrom;</span>
+<span class="nc" id="L352">    }</span>
+
+    /**
+     * @return the installmentTo
+     */
+    public String getInstallmentTo() {
+<span class="nc" id="L358">        return installmentTo;</span>
+    }
+
+    /**
+     * @param installmentTo
+     *            the installmentTo to set
+     */
+    public void setInstallmentTo(final String installmentTo) {
+<span class="nc" id="L366">        this.installmentTo = installmentTo;</span>
+<span class="nc" id="L367">    }</span>
+
+    /**
+     * @return the reductionAmount
+     */
+    public BigDecimal getReductionAmount() {
+<span class="nc" id="L373">        return reductionAmount;</span>
+    }
+
+    /**
+     * @param reductionAmount
+     *            the reductionAmount to set
+     */
+    public void setReductionAmount(final BigDecimal reductionAmount) {
+<span class="nc" id="L381">        this.reductionAmount = reductionAmount;</span>
+<span class="nc" id="L382">    }</span>
+
+    /**
+     * @return the cityGrade
+     */
+    public String getCityGrade() {
+<span class="nc" id="L388">        return cityGrade;</span>
+    }
+
+    /**
+     * @param cityGrade
+     *            the cityGrade to set
+     */
+    public void setCityGrade(final String cityGrade) {
+<span class="nc" id="L396">        this.cityGrade = cityGrade;</span>
+<span class="nc" id="L397">    }</span>
+
+    /**
+     * @return the ulbCode
+     */
+    public String getCityCode() {
+<span class="nc" id="L403">        return cityCode;</span>
+    }
+
+    /**
+     * @param ulbCode
+     *            the ulbCode to set
+     */
+    public void setCityCode(final String cityCode) {
+<span class="nc" id="L411">        this.cityCode = cityCode;</span>
+<span class="nc" id="L412">    }</span>
+
+    /**
+     * @return the receiptCreator
+     */
+    public String getReceiptCreator() {
+<span class="nc" id="L418">        return receiptCreator;</span>
+    }
+
+    /**
+     * @param receiptCreator
+     *            the receiptCreator to set
+     */
+    public void setReceiptCreator(final String receiptCreator) {
+<span class="nc" id="L426">        this.receiptCreator = receiptCreator;</span>
+<span class="nc" id="L427">    }</span>
+
+    public String getRevenueWard() {
+<span class="nc" id="L430">        return revenueWard;</span>
+    }
+
+    public void setRevenueWard(final String revenueWard) {
+<span class="nc" id="L434">        this.revenueWard = revenueWard;</span>
+<span class="nc" id="L435">    }</span>
+
+    public String getConsumerType() {
+<span class="nc" id="L438">        return consumerType;</span>
+    }
+
+    public void setConsumerType(final String consumerType) {
+<span class="nc" id="L442">        this.consumerType = consumerType;</span>
+<span class="nc" id="L443">    }</span>
+
+    public Integer getConflict() {
+<span class="nc" id="L446">        return conflict;</span>
+    }
+
+    public void setConflict(final Integer conflict) {
+<span class="nc" id="L450">        this.conflict = conflict;</span>
+<span class="nc" id="L451">    }</span>
+
+    public static CollectionIndexBuilder builder() {
+<span class="nc" id="L454">        return new CollectionIndexBuilder();</span>
+    }
+
+    public static final class CollectionIndexBuilder {
+        private Date receiptdate;
+        private String receiptnumber;
+        private String billingservice;
+        private String paymentmode;
+        private BigDecimal totalamount;
+        private String channel;
+        private BigDecimal arrearamount;
+        private BigDecimal penaltyamount;
+        private BigDecimal currentamount;
+        private BigDecimal advanceamount;
+        private String paymentgateway;
+        private String billnumber;
+        private BigDecimal latepaymentcharges;
+        private BigDecimal arrearcess;
+        private BigDecimal currentcess;
+        private String installmentfrom;
+        private String installmentto;
+        private String consumername;
+        private BigDecimal reductionamount;
+        private String receiptcreator;
+        private String revenueward;
+        private String status;
+        private String consumercode;
+        private String consumerType;
+        private Integer conflict;
+
+        public CollectionIndex build() throws ApplicationRuntimeException {
+<span class="nc" id="L485">            final CollectionIndex collectionIndex = new CollectionIndex();</span>
+<span class="nc" id="L486">            collectionIndex.setReceiptDate(receiptdate);</span>
+<span class="nc" id="L487">            collectionIndex.setReceiptNumber(receiptnumber);</span>
+<span class="nc" id="L488">            collectionIndex.setBillingService(billingservice);</span>
+<span class="nc" id="L489">            collectionIndex.setPaymentMode(paymentmode);</span>
+<span class="nc" id="L490">            collectionIndex.setConsumerCode(consumercode);</span>
+<span class="nc" id="L491">            collectionIndex.setTotalAmount(totalamount);</span>
+<span class="nc" id="L492">            collectionIndex.setArrearAmount(arrearamount);</span>
+<span class="nc" id="L493">            collectionIndex.setPenaltyAmount(penaltyamount);</span>
+<span class="nc" id="L494">            collectionIndex.setCurrentAmount(currentamount);</span>
+<span class="nc" id="L495">            collectionIndex.setAdvanceAmount(advanceamount);</span>
+<span class="nc" id="L496">            collectionIndex.setPaymentGateway(paymentgateway);</span>
+<span class="nc" id="L497">            collectionIndex.setBillNumber(billnumber);</span>
+<span class="nc" id="L498">            collectionIndex.setLatePaymentCharges(latepaymentcharges);</span>
+<span class="nc" id="L499">            collectionIndex.setArrearCess(arrearcess);</span>
+<span class="nc" id="L500">            collectionIndex.setCurrentCess(currentcess);</span>
+<span class="nc" id="L501">            collectionIndex.setInstallmentFrom(installmentfrom);</span>
+<span class="nc" id="L502">            collectionIndex.setInstallmentTo(installmentto);</span>
+<span class="nc" id="L503">            collectionIndex.setConsumerName(consumername);</span>
+<span class="nc" id="L504">            collectionIndex.setReductionAmount(reductionamount);</span>
+<span class="nc" id="L505">            collectionIndex.setReceiptCreator(receiptcreator);</span>
+<span class="nc" id="L506">            collectionIndex.setRevenueWard(revenueward);</span>
+<span class="nc" id="L507">            collectionIndex.setChannel(channel);</span>
+<span class="nc" id="L508">            collectionIndex.setStatus(status);</span>
+<span class="nc" id="L509">            collectionIndex.setConsumerType(consumerType);</span>
+<span class="nc" id="L510">            collectionIndex.setConflict(conflict);</span>
+<span class="nc" id="L511">            collectionIndex.validate();</span>
+<span class="nc" id="L512">            return collectionIndex;</span>
+        }
+
+<span class="nc" id="L515">        private CollectionIndexBuilder() {</span>
+<span class="nc" id="L516">        }</span>
+
+        public CollectionIndexBuilder withReceiptDate(final Date receiptdate) {
+<span class="nc" id="L519">            this.receiptdate = receiptdate;</span>
+<span class="nc" id="L520">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withReceiptnumber(final String receiptnumber) {
+<span class="nc" id="L524">            this.receiptnumber = receiptnumber;</span>
+<span class="nc" id="L525">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withBillingservice(final String billingService) {
+<span class="nc" id="L529">            billingservice = billingService;</span>
+<span class="nc" id="L530">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withPaymentMode(final String paymentMode) {
+<span class="nc" id="L534">            paymentmode = paymentMode;</span>
+<span class="nc" id="L535">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withConsumerCode(final String consumercode) {
+<span class="nc" id="L539">            this.consumercode = consumercode;</span>
+<span class="nc" id="L540">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withTotalamount(final BigDecimal totalamount) {
+<span class="nc" id="L544">            this.totalamount = totalamount;</span>
+<span class="nc" id="L545">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withArrearAmount(final BigDecimal arrearAmount) {
+<span class="nc" id="L549">            arrearamount = arrearAmount;</span>
+<span class="nc" id="L550">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withPenaltyAmount(final BigDecimal penaltyAmount) {
+<span class="nc" id="L554">            penaltyamount = penaltyAmount;</span>
+<span class="nc" id="L555">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withCurrentAmount(final BigDecimal currentAmount) {
+<span class="nc" id="L559">            currentamount = currentAmount;</span>
+<span class="nc" id="L560">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withAdvanceAmount(final BigDecimal advanceAmount) {
+<span class="nc" id="L564">            advanceamount = advanceAmount;</span>
+<span class="nc" id="L565">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withPaymentGateway(final String paymentGateway) {
+<span class="nc" id="L569">            paymentgateway = paymentGateway;</span>
+<span class="nc" id="L570">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withBillNumber(final String billNumber) {
+<span class="nc" id="L574">            billnumber = billNumber;</span>
+<span class="nc" id="L575">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withLatePaymentChargesAmount(final BigDecimal latePaymentCharges) {
+<span class="nc" id="L579">            latepaymentcharges = latePaymentCharges;</span>
+<span class="nc" id="L580">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withArrearCess(final BigDecimal arrearCess) {
+<span class="nc" id="L584">            arrearcess = arrearCess;</span>
+<span class="nc" id="L585">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withCurrentCess(final BigDecimal currentCess) {
+<span class="nc" id="L589">            currentcess = currentCess;</span>
+<span class="nc" id="L590">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withInstallmentFrom(final String installmentFrom) {
+<span class="nc" id="L594">            installmentfrom = installmentFrom;</span>
+<span class="nc" id="L595">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withInstallmentTo(final String installmentTo) {
+<span class="nc" id="L599">            installmentto = installmentTo;</span>
+<span class="nc" id="L600">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withConsumerName(final String consumerName) {
+<span class="nc" id="L604">            consumername = consumerName;</span>
+<span class="nc" id="L605">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withReductionAmount(final BigDecimal reductionAmount) {
+<span class="nc" id="L609">            reductionamount = reductionAmount;</span>
+<span class="nc" id="L610">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withReceiptCreator(final String receiptCreator) {
+<span class="nc" id="L614">            receiptcreator = receiptCreator;</span>
+<span class="nc" id="L615">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withRevenueWard(final String revenueWard) {
+<span class="nc" id="L619">            revenueward = revenueWard;</span>
+<span class="nc" id="L620">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withStatus(final String status) {
+<span class="nc" id="L624">            this.status = status;</span>
+<span class="nc" id="L625">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withChannel(final String channel) {
+<span class="nc" id="L629">            this.channel = channel;</span>
+<span class="nc" id="L630">            return this;</span>
+        }
+
+        public CollectionIndexBuilder withConsumerType(final String consumerType) {
+<span class="nc" id="L634">            this.consumerType = consumerType;</span>
+<span class="nc" id="L635">            return this;</span>
+        }
+        
+        public CollectionIndexBuilder withConflict(final Integer conflict) {
+<span class="nc" id="L639">            this.conflict = conflict;</span>
+<span class="nc" id="L640">            return this;</span>
+        }
+    }
+
+    private void validate() throws ApplicationRuntimeException {
+<span class="nc bnc" id="L645" title="All 2 branches missed.">        if (getReceiptDate() == null)</span>
+<span class="nc" id="L646">            throw new ApplicationRuntimeException(&quot;Receipt Date is mandatory&quot;);</span>
+<span class="nc bnc" id="L647" title="All 2 branches missed.">        if (getReceiptNumber() == null)</span>
+<span class="nc" id="L648">            throw new ApplicationRuntimeException(&quot;Receipt Number is mandatory&quot;);</span>
+<span class="nc bnc" id="L649" title="All 2 branches missed.">        if (getPaymentMode() == null)</span>
+<span class="nc" id="L650">            throw new ApplicationRuntimeException(&quot;Payment Mode is mandatory&quot;);</span>
+<span class="nc bnc" id="L651" title="All 2 branches missed.">        if (getTotalAmount() == null)</span>
+<span class="nc" id="L652">            throw new ApplicationRuntimeException(&quot;Total Amount is mandatory&quot;);</span>
+<span class="nc bnc" id="L653" title="All 2 branches missed.">        if (getChannel() == null)</span>
+<span class="nc" id="L654">            throw new ApplicationRuntimeException(&quot;Channel is mandatory&quot;);</span>
+<span class="nc bnc" id="L655" title="All 2 branches missed.">        if (getStatus() == null)</span>
+<span class="nc" id="L656">            throw new ApplicationRuntimeException(&quot;Receipt Status is mandatory&quot;);</span>
+<span class="nc" id="L657">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

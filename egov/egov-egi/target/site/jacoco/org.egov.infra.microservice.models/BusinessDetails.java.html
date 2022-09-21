@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BusinessDetails.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">BusinessDetails.java</span></div><h1>BusinessDetails.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.List;
+
+<span class="nc" id="L5">public class BusinessDetails {</span>
+
+	private Long id;
+
+	private String code;
+
+	private String name;
+
+	private Boolean active;
+
+	private Long businessCategory;
+
+	private String businessType;
+
+	private String businessUrl;
+
+	private String department;
+
+	private String fundSource;
+
+	private String functionary;
+
+	private Boolean voucherCreation;
+
+	private Boolean isVoucherApproved;
+
+	private Boolean callBackForApportioning;
+
+	private Long voucherCutoffDate;
+
+	private Integer ordernumber;
+
+	private String fund;
+
+	private String function;
+
+	private String tenantId;
+
+	private List&lt;BusinessAccountDetails&gt; accountDetails;
+
+	public Long getId() {
+<span class="nc" id="L46">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L50">		this.id = id;</span>
+<span class="nc" id="L51">	}</span>
+
+	public String getCode() {
+<span class="nc" id="L54">		return code;</span>
+	}
+
+	public void setCode(String code) {
+<span class="nc" id="L58">		this.code = code;</span>
+<span class="nc" id="L59">	}</span>
+
+	public String getName() {
+<span class="nc" id="L62">		return name;</span>
+	}
+
+	public void setName(String name) {
+<span class="nc" id="L66">		this.name = name;</span>
+<span class="nc" id="L67">	}</span>
+
+	public Boolean getActive() {
+<span class="nc" id="L70">		return active;</span>
+	}
+
+	public void setActive(Boolean active) {
+<span class="nc" id="L74">		this.active = active;</span>
+<span class="nc" id="L75">	}</span>
+
+	public Long getBusinessCategory() {
+<span class="nc" id="L78">		return businessCategory;</span>
+	}
+
+	public void setBusinessCategory(Long businessCategory) {
+<span class="nc" id="L82">		this.businessCategory = businessCategory;</span>
+<span class="nc" id="L83">	}</span>
+
+	public String getBusinessType() {
+<span class="nc" id="L86">		return businessType;</span>
+	}
+
+	public void setBusinessType(String businessType) {
+<span class="nc" id="L90">		this.businessType = businessType;</span>
+<span class="nc" id="L91">	}</span>
+
+	public String getBusinessUrl() {
+<span class="nc" id="L94">		return businessUrl;</span>
+	}
+
+	public void setBusinessUrl(String businessUrl) {
+<span class="nc" id="L98">		this.businessUrl = businessUrl;</span>
+<span class="nc" id="L99">	}</span>
+
+	public String getDepartment() {
+<span class="nc" id="L102">		return department;</span>
+	}
+
+	public void setDepartment(String department) {
+<span class="nc" id="L106">		this.department = department;</span>
+<span class="nc" id="L107">	}</span>
+
+	public String getFundSource() {
+<span class="nc" id="L110">		return fundSource;</span>
+	}
+
+	public void setFundSource(String fundSource) {
+<span class="nc" id="L114">		this.fundSource = fundSource;</span>
+<span class="nc" id="L115">	}</span>
+
+	public String getFunctionary() {
+<span class="nc" id="L118">		return functionary;</span>
+	}
+
+	public void setFunctionary(String functionary) {
+<span class="nc" id="L122">		this.functionary = functionary;</span>
+<span class="nc" id="L123">	}</span>
+
+	public Boolean getVoucherCreation() {
+<span class="nc" id="L126">		return voucherCreation;</span>
+	}
+
+	public void setVoucherCreation(Boolean voucherCreation) {
+<span class="nc" id="L130">		this.voucherCreation = voucherCreation;</span>
+<span class="nc" id="L131">	}</span>
+
+	public Boolean getIsVoucherApproved() {
+<span class="nc" id="L134">		return isVoucherApproved;</span>
+	}
+
+	public void setIsVoucherApproved(Boolean isVoucherApproved) {
+<span class="nc" id="L138">		this.isVoucherApproved = isVoucherApproved;</span>
+<span class="nc" id="L139">	}</span>
+
+	public Boolean getCallBackForApportioning() {
+<span class="nc" id="L142">		return callBackForApportioning;</span>
+	}
+
+	public void setCallBackForApportioning(Boolean callBackForApportioning) {
+<span class="nc" id="L146">		this.callBackForApportioning = callBackForApportioning;</span>
+<span class="nc" id="L147">	}</span>
+
+	public Long getVoucherCutoffDate() {
+<span class="nc" id="L150">		return voucherCutoffDate;</span>
+	}
+
+	public void setVoucherCutoffDate(Long voucherCutoffDate) {
+<span class="nc" id="L154">		this.voucherCutoffDate = voucherCutoffDate;</span>
+<span class="nc" id="L155">	}</span>
+
+	public Integer getOrdernumber() {
+<span class="nc" id="L158">		return ordernumber;</span>
+	}
+
+	public void setOrdernumber(Integer ordernumber) {
+<span class="nc" id="L162">		this.ordernumber = ordernumber;</span>
+<span class="nc" id="L163">	}</span>
+
+	public String getFund() {
+<span class="nc" id="L166">		return fund;</span>
+	}
+
+	public void setFund(String fund) {
+<span class="nc" id="L170">		this.fund = fund;</span>
+<span class="nc" id="L171">	}</span>
+
+	public String getFunction() {
+<span class="nc" id="L174">		return function;</span>
+	}
+
+	public void setFunction(String function) {
+<span class="nc" id="L178">		this.function = function;</span>
+<span class="nc" id="L179">	}</span>
+
+	public String getTenantId() {
+<span class="nc" id="L182">		return tenantId;</span>
+	}
+
+	public void setTenantId(String tenantId) {
+<span class="nc" id="L186">		this.tenantId = tenantId;</span>
+<span class="nc" id="L187">	}</span>
+
+	public List&lt;BusinessAccountDetails&gt; getAccountDetails() {
+<span class="nc" id="L190">		return accountDetails;</span>
+	}
+
+	public void setAccountDetails(List&lt;BusinessAccountDetails&gt; accountDetails) {
+<span class="nc" id="L194">		this.accountDetails = accountDetails;</span>
+<span class="nc" id="L195">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

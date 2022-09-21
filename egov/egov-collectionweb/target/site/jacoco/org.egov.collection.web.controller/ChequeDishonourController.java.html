@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChequeDishonourController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.controller</a> &gt; <span class="el_source">ChequeDishonourController.java</span></div><h1>ChequeDishonourController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.controller;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang.StringUtils;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.DishonoredChequeBean;
+import org.egov.collection.integration.services.DishonorChequeService;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CGeneralLedger;
+import org.egov.commons.dao.BankBranchHibernateDAO;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.services.instrument.InstrumentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping(value = { &quot;/dishonour/cheque&quot; })
+public class ChequeDishonourController {
+<span class="nc" id="L90">    private static final Logger LOGGER = LoggerFactory.getLogger(ChequeDishonourController.class);</span>
+    
+<span class="nc" id="L92">    public ChequeDishonourController() {</span>
+<span class="nc" id="L93">        LOGGER.debug(&quot;ChequeDishonourController class initialized&quot;);</span>
+<span class="nc" id="L94">    }</span>
+    @Autowired
+    private BankBranchHibernateDAO bankBranchHibernateDAO;
+    @Autowired
+    private DishonorChequeService dishonorChequeService;
+    @Autowired
+    @Qualifier(&quot;instrumentService&quot;)
+    private InstrumentService instrumentService;
+    @Autowired
+    @Qualifier(&quot;persistenceService&quot;)
+    protected transient PersistenceService persistenceService;
+    
+    @RequestMapping(method = {RequestMethod.POST,RequestMethod.GET}, value = &quot;/form&quot;)
+    public String getDishonourChequeForm(final Model model, @ModelAttribute(&quot;errorMessage&quot;) String errorMessage){
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if(errorMessage != null){</span>
+<span class="nc" id="L109">            model.addAttribute(&quot;errorMessage&quot;, errorMessage);</span>
+        }
+<span class="nc" id="L111">        model.addAttribute(CollectionConstants.DROPDOWN_DATA_BANKBRANCH_LIST, bankBranchHibernateDAO.getAllBankBranchs());</span>
+<span class="nc" id="L112">        model.addAttribute(CollectionConstants.DROPDOWN_DATA_ACCOUNT_NO_LIST, Collections.EMPTY_LIST);</span>
+<span class="nc" id="L113">        model.addAttribute(CollectionConstants.DROPDOWN_DATA_DISHONOR_REASONS_LIST, persistenceService.getSession()</span>
+<span class="nc" id="L114">                .createSQLQuery(&quot;select * from egf_instrument_dishonor_reason&quot;).list());</span>
+<span class="nc" id="L115">        DishonoredChequeBean attributeValue = new DishonoredChequeBean();</span>
+        //attributeValue.setDishonorDate(new Date());
+<span class="nc" id="L117">        model.addAttribute(&quot;dishonoredChequeModel&quot;, attributeValue);</span>
+<span class="nc" id="L118">        model.addAttribute(&quot;instrumentModesMap&quot;, getInstrumentModeMap());</span>
+<span class="nc" id="L119">        return &quot;dishonour-cheque-form&quot;;</span>
+    }
+    
+    private TreeMap&lt;String, String&gt; getInstrumentModeMap() {
+<span class="nc" id="L123">        TreeMap&lt;String, String&gt; instMap = new TreeMap&lt;&gt;();</span>
+<span class="nc" id="L124">        instMap.put(&quot;Cheque&quot;, &quot;Cheque&quot;);</span>
+<span class="nc" id="L125">        instMap.put(&quot;DD&quot;, &quot;DD&quot;);</span>
+<span class="nc" id="L126">        return instMap;</span>
+    }
+
+    @RequestMapping(method = {RequestMethod.GET}, value = &quot;/_search&quot;)
+    public @ResponseBody ResponseEntity getDishonorChequeSearch(@ModelAttribute DishonoredChequeBean model){
+        try {
+        	
+<span class="nc" id="L133">            return new ResponseEntity&lt;&gt;(getDishonorCheque(model), HttpStatus.OK);</span>
+<span class="nc" id="L134">        } catch (Exception e) {</span>
+<span class="nc" id="L135">            return new ResponseEntity&lt;&gt;(e.getMessage(),HttpStatus.BAD_REQUEST);</span>
+        }
+    }
+    
+    @GetMapping(&quot;/bankAccount/_search&quot;)
+    public @ResponseBody List&lt;Object[]&gt; searchBankAccount(@RequestParam(name=&quot;fundId&quot;, required=false) int fundId, @RequestParam(&quot;branchId&quot;) int branchId){
+<span class="nc" id="L141">        return instrumentService.getBankAccount(fundId, branchId);</span>
+    }
+    
+    @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST}, value = &quot;/submit&quot;)
+    public String submit(@ModelAttribute DishonoredChequeBean chequeBean, final Model model, RedirectAttributes redAttribute){
+<span class="nc" id="L146">        String returnPage = &quot;dishonor_cheque_success&quot;;</span>
+        try {
+<span class="nc" id="L148">            dishonorChequeService.processDishonor(chequeBean);                </span>
+<span class="nc" id="L149">            model.addAttribute(&quot;dishonoredChequeModel&quot;, chequeBean);</span>
+<span class="nc" id="L150">            return returnPage;       </span>
+<span class="nc" id="L151">        } catch (Exception e) {</span>
+<span class="nc" id="L152">            LOGGER.error(&quot;Error Occurred while doing dishonoring of Instrument Number : {}&quot;, chequeBean.getInstrumentNumber());</span>
+<span class="nc" id="L153">            redAttribute.addFlashAttribute(&quot;errorMessage&quot;, &quot;Error occurred while doing dishonoring of Instrument Number &quot;+chequeBean.getInstrumentNumber()+&quot;. Please contact to Administration.&quot;);</span>
+<span class="nc" id="L154">            return &quot;redirect:/dishonour/cheque/form&quot;;</span>
+        }
+    }
+    
+    private List&lt;DishonoredChequeBean&gt; getDishonorCheque(DishonoredChequeBean model) throws Exception {
+<span class="nc" id="L159">        List&lt;DishonoredChequeBean&gt; resultList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L160">        String bankBranch = model.getBankBranch();</span>
+<span class="nc" id="L161">        String bankId = null;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if(StringUtils.isNotBlank(bankBranch)){</span>
+<span class="nc" id="L163">            bankId = bankBranch.split(&quot;-&quot;)[0].trim();</span>
+        }
+<span class="nc" id="L165">        resultList =dishonorChequeService.getCollectionListForDishonorInstrument(model.getInstrumentMode(), bankId, model.getAccountNumber(), model.getInstrumentNumber(), model.getTransactionDate());</span>
+<span class="nc" id="L166">        return resultList;</span>
+    }
+    
+    private Map&lt;String,String&gt; getBankAccount(int fundId, int branchId){
+<span class="nc" id="L170">        Map&lt;String,String&gt; bankAccountMap = new HashMap();</span>
+<span class="nc" id="L171">        List&lt;Object[]&gt; bankAccount = instrumentService.getBankAccount(fundId, branchId);</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if(!bankAccount.isEmpty()){</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            for(Object[] obj:bankAccount){</span>
+<span class="nc" id="L174">                bankAccountMap.put(obj[0].toString(), obj[2].toString()+&quot;--&quot;+obj[3].toString());</span>
+<span class="nc" id="L175">            }</span>
+        }
+<span class="nc" id="L177">        return bankAccountMap;</span>
+    }
+    
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Remittance.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Remittance.java</span></div><h1>Remittance.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.HashSet;
+import java.util.Set;
+
+<span class="nc" id="L6">public class Remittance {</span>
+
+    private String tenantId;
+
+    private String id;
+
+    private String referenceNumber;
+
+    private Long referenceDate;
+
+    private String voucherHeader;
+
+    private String function;
+
+    private String fund;
+
+    private String remarks;
+
+    private String reasonForDelay;
+
+    private String status;
+
+    private String bankaccount;
+
+<span class="nc" id="L30">    private Set&lt;RemittanceDetail&gt; remittanceDetails = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L32">    private Set&lt;RemittanceInstrument&gt; remittanceInstruments = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L34">    private Set&lt;RemittanceReceipt&gt; remittanceReceipts = new HashSet&lt;&gt;();</span>
+
+    public String getTenantId() {
+<span class="nc" id="L37">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L41">        this.tenantId = tenantId;</span>
+<span class="nc" id="L42">    }</span>
+
+    public String getId() {
+<span class="nc" id="L45">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L49">        this.id = id;</span>
+<span class="nc" id="L50">    }</span>
+
+    public String getReferenceNumber() {
+<span class="nc" id="L53">        return referenceNumber;</span>
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+<span class="nc" id="L57">        this.referenceNumber = referenceNumber;</span>
+<span class="nc" id="L58">    }</span>
+
+    public Long getReferenceDate() {
+<span class="nc" id="L61">        return referenceDate;</span>
+    }
+
+    public void setReferenceDate(Long referenceDate) {
+<span class="nc" id="L65">        this.referenceDate = referenceDate;</span>
+<span class="nc" id="L66">    }</span>
+
+    public String getVoucherHeader() {
+<span class="nc" id="L69">        return voucherHeader;</span>
+    }
+
+    public void setVoucherHeader(String voucherHeader) {
+<span class="nc" id="L73">        this.voucherHeader = voucherHeader;</span>
+<span class="nc" id="L74">    }</span>
+
+    public String getFunction() {
+<span class="nc" id="L77">        return function;</span>
+    }
+
+    public void setFunction(String function) {
+<span class="nc" id="L81">        this.function = function;</span>
+<span class="nc" id="L82">    }</span>
+
+    public String getFund() {
+<span class="nc" id="L85">        return fund;</span>
+    }
+
+    public void setFund(String fund) {
+<span class="nc" id="L89">        this.fund = fund;</span>
+<span class="nc" id="L90">    }</span>
+
+    public String getRemarks() {
+<span class="nc" id="L93">        return remarks;</span>
+    }
+
+    public void setRemarks(String remarks) {
+<span class="nc" id="L97">        this.remarks = remarks;</span>
+<span class="nc" id="L98">    }</span>
+
+    public String getReasonForDelay() {
+<span class="nc" id="L101">        return reasonForDelay;</span>
+    }
+
+    public void setReasonForDelay(String reasonForDelay) {
+<span class="nc" id="L105">        this.reasonForDelay = reasonForDelay;</span>
+<span class="nc" id="L106">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L109">        return status;</span>
+    }
+
+    public void setStatus(String status) {
+<span class="nc" id="L113">        this.status = status;</span>
+<span class="nc" id="L114">    }</span>
+
+    public String getBankaccount() {
+<span class="nc" id="L117">        return bankaccount;</span>
+    }
+
+    public void setBankaccount(String bankaccount) {
+<span class="nc" id="L121">        this.bankaccount = bankaccount;</span>
+<span class="nc" id="L122">    }</span>
+
+    public Set&lt;RemittanceDetail&gt; getRemittanceDetails() {
+<span class="nc" id="L125">        return remittanceDetails;</span>
+    }
+
+    public void setRemittanceDetails(Set&lt;RemittanceDetail&gt; remittanceDetails) {
+<span class="nc" id="L129">        this.remittanceDetails = remittanceDetails;</span>
+<span class="nc" id="L130">    }</span>
+
+    public Set&lt;RemittanceInstrument&gt; getRemittanceInstruments() {
+<span class="nc" id="L133">        return remittanceInstruments;</span>
+    }
+
+    public void setRemittanceInstruments(Set&lt;RemittanceInstrument&gt; remittanceInstruments) {
+<span class="nc" id="L137">        this.remittanceInstruments = remittanceInstruments;</span>
+<span class="nc" id="L138">    }</span>
+
+    public Set&lt;RemittanceReceipt&gt; getRemittanceReceipts() {
+<span class="nc" id="L141">        return remittanceReceipts;</span>
+    }
+
+    public void setRemittanceReceipts(Set&lt;RemittanceReceipt&gt; remittanceReceipts) {
+<span class="nc" id="L145">        this.remittanceReceipts = remittanceReceipts;</span>
+<span class="nc" id="L146">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

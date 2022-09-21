@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Instrument.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Instrument.java</span></div><h1>Instrument.java</h1><pre class="source lang-java linenums">/*
+ * eGov suite of products aim to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) &lt;2015&gt;  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
+package org.egov.infra.microservice.models;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+<span class="nc" id="L49">public class Instrument {</span>
+
+    private String id;
+
+    private String transactionNumber;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;dd-MM-yyyy&quot;)
+    private Date transactionDate;
+
+    private Long transactionDateInput;
+
+    private BigDecimal amount;
+
+    private InstrumentType instrumentType;
+
+    private Long instrumentDate;
+
+    private String instrumentNumber;
+
+    private FinancialStatus financialStatus;
+
+    private Bank bank;
+
+    private String branchName;
+
+    private BankAccount bankAccount;
+
+    private String ifscCode;
+
+    private TransactionType transactionType;
+
+    private String payee;
+
+    private String drawer;
+
+    private String tenantId;
+
+    private String serialNo;
+
+    private String payinSlipId;
+
+    private BigDecimal reconciledAmount;
+    
+    private DishonorReasonContract dishonor;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;dd-MM-yyyy&quot;)
+    private Date reconciledOn;
+    
+    private String instrumentStatus;
+
+<span class="nc" id="L99">    private List&lt;InstrumentVoucher&gt; instrumentVouchers = new ArrayList&lt;&gt;();</span>
+
+    public String getId() {
+<span class="nc" id="L102">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L106">        this.id = id;</span>
+<span class="nc" id="L107">    }</span>
+
+    public String getTransactionNumber() {
+<span class="nc" id="L110">        return transactionNumber;</span>
+    }
+
+    public void setTransactionNumber(String transactionNumber) {
+<span class="nc" id="L114">        this.transactionNumber = transactionNumber;</span>
+<span class="nc" id="L115">    }</span>
+
+    public Date getTransactionDate() {
+<span class="nc" id="L118">        return transactionDate;</span>
+    }
+
+    public void setTransactionDate(Date transactionDate) {
+<span class="nc" id="L122">        this.transactionDate = transactionDate;</span>
+<span class="nc" id="L123">    }</span>
+
+    public Long getTransactionDateInput() {
+<span class="nc" id="L126">        return transactionDateInput;</span>
+    }
+
+    public void setTransactionDateInput(Long transactionDateInput) {
+<span class="nc" id="L130">        this.transactionDateInput = transactionDateInput;</span>
+<span class="nc" id="L131">    }</span>
+
+    public BigDecimal getAmount() {
+<span class="nc" id="L134">        return amount;</span>
+    }
+
+    public void setAmount(BigDecimal amount) {
+<span class="nc" id="L138">        this.amount = amount;</span>
+<span class="nc" id="L139">    }</span>
+
+    public InstrumentType getInstrumentType() {
+<span class="nc" id="L142">        return instrumentType;</span>
+    }
+
+    public void setInstrumentType(InstrumentType instrumentType) {
+<span class="nc" id="L146">        this.instrumentType = instrumentType;</span>
+<span class="nc" id="L147">    }</span>
+
+    public Long getInstrumentDate() {
+<span class="nc" id="L150">        return instrumentDate;</span>
+    }
+
+    public void setInstrumentDate(Long instrumentDate) {
+<span class="nc" id="L154">        this.instrumentDate = instrumentDate;</span>
+<span class="nc" id="L155">    }</span>
+
+    public String getInstrumentNumber() {
+<span class="nc" id="L158">        return instrumentNumber;</span>
+    }
+
+    public void setInstrumentNumber(String instrumentNumber) {
+<span class="nc" id="L162">        this.instrumentNumber = instrumentNumber;</span>
+<span class="nc" id="L163">    }</span>
+
+    public FinancialStatus getFinancialStatus() {
+<span class="nc" id="L166">        return financialStatus;</span>
+    }
+
+    public void setFinancialStatus(FinancialStatus financialStatus) {
+<span class="nc" id="L170">        this.financialStatus = financialStatus;</span>
+<span class="nc" id="L171">    }</span>
+
+    public Bank getBank() {
+<span class="nc" id="L174">        return bank;</span>
+    }
+
+    public void setBank(Bank bank) {
+<span class="nc" id="L178">        this.bank = bank;</span>
+<span class="nc" id="L179">    }</span>
+
+    public String getBranchName() {
+<span class="nc" id="L182">        return branchName;</span>
+    }
+
+    public void setBranchName(String branchName) {
+<span class="nc" id="L186">        this.branchName = branchName;</span>
+<span class="nc" id="L187">    }</span>
+
+    public BankAccount getBankAccount() {
+<span class="nc" id="L190">        return bankAccount;</span>
+    }
+
+    public void setBankAccount(BankAccount bankAccount) {
+<span class="nc" id="L194">        this.bankAccount = bankAccount;</span>
+<span class="nc" id="L195">    }</span>
+
+    public String getIfscCode() {
+<span class="nc" id="L198">        return ifscCode;</span>
+    }
+
+    public void setIfscCode(String ifscCode) {
+<span class="nc" id="L202">        this.ifscCode = ifscCode;</span>
+<span class="nc" id="L203">    }</span>
+
+    public TransactionType getTransactionType() {
+<span class="nc" id="L206">        return transactionType;</span>
+    }
+
+    public void setTransactionType(TransactionType transactionType) {
+<span class="nc" id="L210">        this.transactionType = transactionType;</span>
+<span class="nc" id="L211">    }</span>
+
+    public String getPayee() {
+<span class="nc" id="L214">        return payee;</span>
+    }
+
+    public void setPayee(String payee) {
+<span class="nc" id="L218">        this.payee = payee;</span>
+<span class="nc" id="L219">    }</span>
+
+    public String getDrawer() {
+<span class="nc" id="L222">        return drawer;</span>
+    }
+
+    public void setDrawer(String drawer) {
+<span class="nc" id="L226">        this.drawer = drawer;</span>
+<span class="nc" id="L227">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L230">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L234">        this.tenantId = tenantId;</span>
+<span class="nc" id="L235">    }</span>
+
+    public List&lt;InstrumentVoucher&gt; getInstrumentVouchers() {
+<span class="nc" id="L238">        return instrumentVouchers;</span>
+    }
+
+    public void setInstrumentVouchers(List&lt;InstrumentVoucher&gt; instrumentVouchers) {
+<span class="nc" id="L242">        this.instrumentVouchers = instrumentVouchers;</span>
+<span class="nc" id="L243">    }</span>
+
+    public String getSerialNo() {
+<span class="nc" id="L246">        return serialNo;</span>
+    }
+
+    public void setSerialNo(String serialNo) {
+<span class="nc" id="L250">        this.serialNo = serialNo;</span>
+<span class="nc" id="L251">    }</span>
+
+    public String getPayinSlipId() {
+<span class="nc" id="L254">        return payinSlipId;</span>
+    }
+
+    public void setPayinSlipId(String payinSlipId) {
+<span class="nc" id="L258">        this.payinSlipId = payinSlipId;</span>
+<span class="nc" id="L259">    }</span>
+
+    public BigDecimal getReconciledAmount() {
+<span class="nc" id="L262">        return reconciledAmount;</span>
+    }
+
+    public void setReconciledAmount(BigDecimal reconciledAmount) {
+<span class="nc" id="L266">        this.reconciledAmount = reconciledAmount;</span>
+<span class="nc" id="L267">    }</span>
+
+    public Date getReconciledOn() {
+<span class="nc" id="L270">        return reconciledOn;</span>
+    }
+
+    public void setReconciledOn(Date reconciledOn) {
+<span class="nc" id="L274">        this.reconciledOn = reconciledOn;</span>
+<span class="nc" id="L275">    }</span>
+
+    public String getInstrumentStatus() {
+<span class="nc" id="L278">        return instrumentStatus;</span>
+    }
+
+    public void setInstrumentStatus(String instrumentStatus) {
+<span class="nc" id="L282">        this.instrumentStatus = instrumentStatus;</span>
+<span class="nc" id="L283">    }</span>
+
+	public DishonorReasonContract getDishonor() {
+<span class="nc" id="L286">		return dishonor;</span>
+	}
+
+	
+	public void setDishonor(DishonorReasonContract dishonorReasonContract) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L292">		this.dishonor = dishonorReasonContract;</span>
+<span class="nc" id="L293">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

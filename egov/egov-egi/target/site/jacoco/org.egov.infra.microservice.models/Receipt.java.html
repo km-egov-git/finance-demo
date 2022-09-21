@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Receipt.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Receipt.java</span></div><h1>Receipt.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+<span class="nc" id="L13">public class Receipt {</span>
+    @NotNull
+    private String tenantId;
+
+    private String transactionId;
+
+    // Read only, populated during search
+    private String receiptNumber;
+
+    // Read only, populated during search
+    private String consumerCode;
+
+    // Read only, populated during search
+    private Long receiptDate;
+    
+    private String subdivison;
+    
+    private String paymentStatus;
+    
+    private String gstNo;
+
+<span class="nc" id="L34">    @NotNull</span>
+    @Size(min = 1, max = 1)
+    @Valid
+    @JsonProperty(&quot;Bill&quot;)
+    private List&lt;Bill&gt; bill = new ArrayList&lt;&gt;();
+
+    private AuditDetails auditDetails;
+
+    @Valid
+    private Instrument instrument;
+    
+    @JsonIgnore
+    private String paymentId;
+
+    public String getTenantId() {
+<span class="nc" id="L49">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L53">        this.tenantId = tenantId;</span>
+<span class="nc" id="L54">    }</span>
+
+    public String getTransactionId() {
+<span class="nc" id="L57">        return transactionId;</span>
+    }
+
+    public void setTransactionId(String transactionId) {
+<span class="nc" id="L61">        this.transactionId = transactionId;</span>
+<span class="nc" id="L62">    }</span>
+
+    public String getReceiptNumber() {
+<span class="nc" id="L65">        return receiptNumber;</span>
+    }
+
+    public void setReceiptNumber(String receiptNumber) {
+<span class="nc" id="L69">        this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L70">    }</span>
+
+    public String getConsumerCode() {
+<span class="nc" id="L73">        return consumerCode;</span>
+    }
+
+    public void setConsumerCode(String consumerCode) {
+<span class="nc" id="L77">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L78">    }</span>
+
+    public Long getReceiptDate() {
+<span class="nc" id="L81">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(Long receiptDate) {
+<span class="nc" id="L85">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L86">    }</span>
+
+    public List&lt;Bill&gt; getBill() {
+<span class="nc" id="L89">        return bill;</span>
+    }
+
+    public void setBill(List&lt;Bill&gt; bill) {
+<span class="nc" id="L93">        this.bill = bill;</span>
+<span class="nc" id="L94">    }</span>
+
+    public AuditDetails getAuditDetails() {
+<span class="nc" id="L97">        return auditDetails;</span>
+    }
+
+    public void setAuditDetails(AuditDetails auditDetails) {
+<span class="nc" id="L101">        this.auditDetails = auditDetails;</span>
+<span class="nc" id="L102">    }</span>
+
+    public Instrument getInstrument() {
+<span class="nc" id="L105">        return instrument;</span>
+    }
+
+    public void setInstrument(Instrument instrument) {
+<span class="nc" id="L109">        this.instrument = instrument;</span>
+<span class="nc" id="L110">    }</span>
+    
+    public String getPaymentId() {
+<span class="nc" id="L113">        return paymentId;</span>
+    }
+    
+    public void setPaymentId(String paymentId) {
+<span class="nc" id="L117">        this.paymentId = paymentId;</span>
+<span class="nc" id="L118">    }</span>
+
+	public String getSubdivison() {
+<span class="nc" id="L121">		return subdivison;</span>
+	}
+
+	public void setSubdivison(String subdivison) {
+<span class="nc" id="L125">		this.subdivison = subdivison;</span>
+<span class="nc" id="L126">	}</span>
+
+	public String getGstNo() {
+<span class="nc" id="L129">		return gstNo;</span>
+	}
+
+	public void setGstNo(String gstNo) {
+<span class="nc" id="L133">		this.gstNo = gstNo;</span>
+<span class="nc" id="L134">	}</span>
+
+	public String getPaymentStatus() {
+<span class="nc" id="L137">		return paymentStatus;</span>
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+<span class="nc" id="L141">		this.paymentStatus = paymentStatus;</span>
+<span class="nc" id="L142">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

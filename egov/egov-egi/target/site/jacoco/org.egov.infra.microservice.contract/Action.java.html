@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Action.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.contract</a> &gt; <span class="el_source">Action.java</span></div><h1>Action.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.contract;
+
+import java.util.Date;
+
+public class Action {
+	
+	private Long id;
+	private String name;
+	private String url;
+	private String displayName;
+	private Integer orderNumber;
+	private String queryParams;
+	private String parentModule;
+	private boolean enabled;
+	private String serviceCode;
+	private String tenantId;
+
+	private Date createdDate;
+
+	private Long createdBy;
+
+	private Date lastModifiedDate;
+
+	private Long lastModifiedBy;
+
+	private String path;
+	
+	private String navigationURL;
+	private String leftIcon;
+	private String rightIcon;
+	
+	
+<span class="nc" id="L33">	public Action(){}</span>
+
+
+	public Action(Long id, String name, String url, String displayName, Integer orderNumber, String queryParams,
+			String parentModule, boolean enabled, String serviceCode, String tenantId, Date createdDate, Long createdBy,
+			Date lastModifiedDate, Long lastModifiedBy, String path, String navigationURL, String leftIcon,
+<span class="nc" id="L39">			String rightIcon) {</span>
+<span class="nc" id="L40">		this.id = id;</span>
+<span class="nc" id="L41">		this.name = name;</span>
+<span class="nc" id="L42">		this.url = url;</span>
+<span class="nc" id="L43">		this.displayName = displayName;</span>
+<span class="nc" id="L44">		this.orderNumber = orderNumber;</span>
+<span class="nc" id="L45">		this.queryParams = queryParams;</span>
+<span class="nc" id="L46">		this.parentModule = parentModule;</span>
+<span class="nc" id="L47">		this.enabled = enabled;</span>
+<span class="nc" id="L48">		this.serviceCode = serviceCode;</span>
+<span class="nc" id="L49">		this.tenantId = tenantId;</span>
+<span class="nc" id="L50">		this.createdDate = createdDate;</span>
+<span class="nc" id="L51">		this.createdBy = createdBy;</span>
+<span class="nc" id="L52">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L53">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L54">		this.path = path;</span>
+<span class="nc" id="L55">		this.navigationURL = navigationURL;</span>
+<span class="nc" id="L56">		this.leftIcon = leftIcon;</span>
+<span class="nc" id="L57">		this.rightIcon = rightIcon;</span>
+<span class="nc" id="L58">	}</span>
+
+
+	public Long getId() {
+<span class="nc" id="L62">		return id;</span>
+	}
+
+
+	public void setId(Long id) {
+<span class="nc" id="L67">		this.id = id;</span>
+<span class="nc" id="L68">	}</span>
+
+
+	public String getName() {
+<span class="nc" id="L72">		return name;</span>
+	}
+
+
+	public void setName(String name) {
+<span class="nc" id="L77">		this.name = name;</span>
+<span class="nc" id="L78">	}</span>
+
+
+	public String getUrl() {
+<span class="nc" id="L82">		return url;</span>
+	}
+
+
+	public void setUrl(String url) {
+<span class="nc" id="L87">		this.url = url;</span>
+<span class="nc" id="L88">	}</span>
+
+
+	public String getDisplayName() {
+<span class="nc" id="L92">		return displayName;</span>
+	}
+
+
+	public void setDisplayName(String displayName) {
+<span class="nc" id="L97">		this.displayName = displayName;</span>
+<span class="nc" id="L98">	}</span>
+
+
+	public Integer getOrderNumber() {
+<span class="nc" id="L102">		return orderNumber;</span>
+	}
+
+
+	public void setOrderNumber(Integer orderNumber) {
+<span class="nc" id="L107">		this.orderNumber = orderNumber;</span>
+<span class="nc" id="L108">	}</span>
+
+
+	public String getQueryParams() {
+<span class="nc" id="L112">		return queryParams;</span>
+	}
+
+
+	public void setQueryParams(String queryParams) {
+<span class="nc" id="L117">		this.queryParams = queryParams;</span>
+<span class="nc" id="L118">	}</span>
+
+
+	public String getParentModule() {
+<span class="nc" id="L122">		return parentModule;</span>
+	}
+
+
+	public void setParentModule(String parentModule) {
+<span class="nc" id="L127">		this.parentModule = parentModule;</span>
+<span class="nc" id="L128">	}</span>
+
+
+	public boolean isEnabled() {
+<span class="nc" id="L132">		return enabled;</span>
+	}
+
+
+	public void setEnabled(boolean enabled) {
+<span class="nc" id="L137">		this.enabled = enabled;</span>
+<span class="nc" id="L138">	}</span>
+
+
+	public String getServiceCode() {
+<span class="nc" id="L142">		return serviceCode;</span>
+	}
+
+
+	public void setServiceCode(String serviceCode) {
+<span class="nc" id="L147">		this.serviceCode = serviceCode;</span>
+<span class="nc" id="L148">	}</span>
+
+
+	public String getTenantId() {
+<span class="nc" id="L152">		return tenantId;</span>
+	}
+
+
+	public void setTenantId(String tenantId) {
+<span class="nc" id="L157">		this.tenantId = tenantId;</span>
+<span class="nc" id="L158">	}</span>
+
+
+	public Date getCreatedDate() {
+<span class="nc" id="L162">		return createdDate;</span>
+	}
+
+
+	public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L167">		this.createdDate = createdDate;</span>
+<span class="nc" id="L168">	}</span>
+
+
+	public Long getCreatedBy() {
+<span class="nc" id="L172">		return createdBy;</span>
+	}
+
+
+	public void setCreatedBy(Long createdBy) {
+<span class="nc" id="L177">		this.createdBy = createdBy;</span>
+<span class="nc" id="L178">	}</span>
+
+
+	public Date getLastModifiedDate() {
+<span class="nc" id="L182">		return lastModifiedDate;</span>
+	}
+
+
+	public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L187">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L188">	}</span>
+
+
+	public Long getLastModifiedBy() {
+<span class="nc" id="L192">		return lastModifiedBy;</span>
+	}
+
+
+	public void setLastModifiedBy(Long lastModifiedBy) {
+<span class="nc" id="L197">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L198">	}</span>
+
+
+	public String getPath() {
+<span class="nc" id="L202">		return path;</span>
+	}
+
+
+	public void setPath(String path) {
+<span class="nc" id="L207">		this.path = path;</span>
+<span class="nc" id="L208">	}</span>
+
+
+	public String getNavigationURL() {
+<span class="nc" id="L212">		return navigationURL;</span>
+	}
+
+
+	public void setNavigationURL(String navigationURL) {
+<span class="nc" id="L217">		this.navigationURL = navigationURL;</span>
+<span class="nc" id="L218">	}</span>
+
+
+	public String getLeftIcon() {
+<span class="nc" id="L222">		return leftIcon;</span>
+	}
+
+
+	public void setLeftIcon(String leftIcon) {
+<span class="nc" id="L227">		this.leftIcon = leftIcon;</span>
+<span class="nc" id="L228">	}</span>
+
+
+	public String getRightIcon() {
+<span class="nc" id="L232">		return rightIcon;</span>
+	}
+
+
+	public void setRightIcon(String rightIcon) {
+<span class="nc" id="L237">		this.rightIcon = rightIcon;</span>
+<span class="nc" id="L238">	}</span>
+
+
+	@Override
+	public int hashCode() {
+<span class="nc" id="L243">		final int prime = 31;</span>
+<span class="nc" id="L244">		int result = 1;</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">		result = prime * result + ((createdBy == null) ? 0 : createdBy.hashCode());</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		result = prime * result + ((createdDate == null) ? 0 : createdDate.hashCode());</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">		result = prime * result + ((displayName == null) ? 0 : displayName.hashCode());</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">		result = prime * result + (enabled ? 1231 : 1237);</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">		result = prime * result + ((id == null) ? 0 : id.hashCode());</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">		result = prime * result + ((lastModifiedBy == null) ? 0 : lastModifiedBy.hashCode());</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">		result = prime * result + ((lastModifiedDate == null) ? 0 : lastModifiedDate.hashCode());</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">		result = prime * result + ((leftIcon == null) ? 0 : leftIcon.hashCode());</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">		result = prime * result + ((name == null) ? 0 : name.hashCode());</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">		result = prime * result + ((navigationURL == null) ? 0 : navigationURL.hashCode());</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		result = prime * result + ((orderNumber == null) ? 0 : orderNumber.hashCode());</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">		result = prime * result + ((parentModule == null) ? 0 : parentModule.hashCode());</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">		result = prime * result + ((path == null) ? 0 : path.hashCode());</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">		result = prime * result + ((queryParams == null) ? 0 : queryParams.hashCode());</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">		result = prime * result + ((rightIcon == null) ? 0 : rightIcon.hashCode());</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">		result = prime * result + ((serviceCode == null) ? 0 : serviceCode.hashCode());</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">		result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">		result = prime * result + ((url == null) ? 0 : url.hashCode());</span>
+<span class="nc" id="L263">		return result;</span>
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		if (this == obj)</span>
+<span class="nc" id="L270">			return true;</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">		if (obj == null)</span>
+<span class="nc" id="L272">			return false;</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">		if (getClass() != obj.getClass())</span>
+<span class="nc" id="L274">			return false;</span>
+<span class="nc" id="L275">		Action other = (Action) obj;</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		if (createdBy == null) {</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">			if (other.createdBy != null)</span>
+<span class="nc" id="L278">				return false;</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">		} else if (!createdBy.equals(other.createdBy))</span>
+<span class="nc" id="L280">			return false;</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">		if (createdDate == null) {</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">			if (other.createdDate != null)</span>
+<span class="nc" id="L283">				return false;</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		} else if (!createdDate.equals(other.createdDate))</span>
+<span class="nc" id="L285">			return false;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">		if (displayName == null) {</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">			if (other.displayName != null)</span>
+<span class="nc" id="L288">				return false;</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">		} else if (!displayName.equals(other.displayName))</span>
+<span class="nc" id="L290">			return false;</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">		if (enabled != other.enabled)</span>
+<span class="nc" id="L292">			return false;</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">		if (id == null) {</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">			if (other.id != null)</span>
+<span class="nc" id="L295">				return false;</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">		} else if (!id.equals(other.id))</span>
+<span class="nc" id="L297">			return false;</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">		if (lastModifiedBy == null) {</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">			if (other.lastModifiedBy != null)</span>
+<span class="nc" id="L300">				return false;</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">		} else if (!lastModifiedBy.equals(other.lastModifiedBy))</span>
+<span class="nc" id="L302">			return false;</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">		if (lastModifiedDate == null) {</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">			if (other.lastModifiedDate != null)</span>
+<span class="nc" id="L305">				return false;</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">		} else if (!lastModifiedDate.equals(other.lastModifiedDate))</span>
+<span class="nc" id="L307">			return false;</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">		if (leftIcon == null) {</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">			if (other.leftIcon != null)</span>
+<span class="nc" id="L310">				return false;</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">		} else if (!leftIcon.equals(other.leftIcon))</span>
+<span class="nc" id="L312">			return false;</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">		if (name == null) {</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			if (other.name != null)</span>
+<span class="nc" id="L315">				return false;</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">		} else if (!name.equals(other.name))</span>
+<span class="nc" id="L317">			return false;</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">		if (navigationURL == null) {</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">			if (other.navigationURL != null)</span>
+<span class="nc" id="L320">				return false;</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">		} else if (!navigationURL.equals(other.navigationURL))</span>
+<span class="nc" id="L322">			return false;</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">		if (orderNumber == null) {</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">			if (other.orderNumber != null)</span>
+<span class="nc" id="L325">				return false;</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">		} else if (!orderNumber.equals(other.orderNumber))</span>
+<span class="nc" id="L327">			return false;</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">		if (parentModule == null) {</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">			if (other.parentModule != null)</span>
+<span class="nc" id="L330">				return false;</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">		} else if (!parentModule.equals(other.parentModule))</span>
+<span class="nc" id="L332">			return false;</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">		if (path == null) {</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">			if (other.path != null)</span>
+<span class="nc" id="L335">				return false;</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">		} else if (!path.equals(other.path))</span>
+<span class="nc" id="L337">			return false;</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">		if (queryParams == null) {</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">			if (other.queryParams != null)</span>
+<span class="nc" id="L340">				return false;</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">		} else if (!queryParams.equals(other.queryParams))</span>
+<span class="nc" id="L342">			return false;</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">		if (rightIcon == null) {</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">			if (other.rightIcon != null)</span>
+<span class="nc" id="L345">				return false;</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">		} else if (!rightIcon.equals(other.rightIcon))</span>
+<span class="nc" id="L347">			return false;</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">		if (serviceCode == null) {</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">			if (other.serviceCode != null)</span>
+<span class="nc" id="L350">				return false;</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">		} else if (!serviceCode.equals(other.serviceCode))</span>
+<span class="nc" id="L352">			return false;</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">		if (tenantId == null) {</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			if (other.tenantId != null)</span>
+<span class="nc" id="L355">				return false;</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">		} else if (!tenantId.equals(other.tenantId))</span>
+<span class="nc" id="L357">			return false;</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">		if (url == null) {</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">			if (other.url != null)</span>
+<span class="nc" id="L360">				return false;</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">		} else if (!url.equals(other.url))</span>
+<span class="nc" id="L362">			return false;</span>
+<span class="nc" id="L363">		return true;</span>
+	}
+	
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

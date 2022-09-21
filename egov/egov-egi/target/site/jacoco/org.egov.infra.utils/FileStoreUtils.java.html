@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileStoreUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.utils</a> &gt; <span class="el_source">FileStoreUtils.java</span></div><h1>FileStoreUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.utils;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.filestore.entity.FileStoreMapper;
+import org.egov.infra.filestore.repository.FileStoreMapperRepository;
+import org.egov.infra.filestore.service.FileStoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_ATTACH;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION_INLINE;
+import static org.egov.infra.utils.ImageUtils.JPG_MIME_TYPE;
+import static org.egov.infra.utils.ImageUtils.compressImage;
+import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
+import static org.springframework.http.MediaType.parseMediaType;
+
+@Service
+<span class="nc" id="L97">public class FileStoreUtils {</span>
+<span class="nc" id="L98">    private static final Logger LOGGER = LoggerFactory.getLogger(FileStoreUtils.class);</span>
+
+    @Autowired
+    @Qualifier(&quot;fileStoreService&quot;)
+    private FileStoreService fileStoreService;
+
+    @Autowired
+    private FileStoreMapperRepository fileStoreMapperRepository;
+
+    public Path getFileAsPath(String fileStoreId, String moduleName) {
+<span class="nc" id="L108">        return fileStoreService.fetchAsPath(fileStoreId, moduleName);</span>
+    }
+
+    public Optional&lt;FileStoreMapper&gt; getFileStoreMapper(String fileStoreId) {
+<span class="nc" id="L112">        return Optional.ofNullable(this.fileStoreMapperRepository.findByFileStoreId(fileStoreId));</span>
+    }
+
+    public ResponseEntity&lt;InputStreamResource&gt; fileAsResponseEntity(String fileStoreId, String moduleName, boolean toSave) {
+        try {
+<span class="nc" id="L117">            Optional&lt;FileStoreMapper&gt; fileStoreMapper = getFileStoreMapper(fileStoreId);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">            if (fileStoreMapper.isPresent()) {</span>
+<span class="nc" id="L119">                Path file = getFileAsPath(fileStoreId, moduleName);</span>
+<span class="nc" id="L120">                byte[] fileBytes = Files.readAllBytes(file);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                String contentType = isBlank(fileStoreMapper.get().getContentType()) ? Files.probeContentType(file)</span>
+<span class="nc" id="L122">                        : fileStoreMapper.get().getContentType();</span>
+<span class="nc" id="L123">                return ResponseEntity</span>
+<span class="nc" id="L124">                        .ok()</span>
+<span class="nc" id="L125">                        .contentType(parseMediaType(defaultIfBlank(contentType, JPG_MIME_TYPE)))</span>
+<span class="nc" id="L126">                        .cacheControl(CacheControl.noCache())</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                        .contentLength(fileBytes.length)</span>
+<span class="nc" id="L128">                        .header(CONTENT_DISPOSITION, format(toSave ? CONTENT_DISPOSITION_ATTACH : CONTENT_DISPOSITION_INLINE,</span>
+<span class="nc" id="L129">                                fileStoreMapper.get().getFileName())).</span>
+<span class="nc" id="L130">                                body(new InputStreamResource(new ByteArrayInputStream(fileBytes)));</span>
+            }
+<span class="nc" id="L132">            return ResponseEntity.notFound().build();</span>
+<span class="nc" id="L133">        } catch (IOException e) {</span>
+<span class="nc" id="L134">            LOGGER.error(&quot;Error occurred while creating response entity from file mapper&quot;, e);</span>
+<span class="nc" id="L135">            return ResponseEntity.badRequest().build();</span>
+        }
+    }
+
+    public void writeToHttpResponseStream(String fileStoreId, String moduleName, HttpServletResponse response) {
+        try {
+<span class="nc" id="L141">            FileStoreMapper fileStoreMapper = this.fileStoreMapperRepository.findByFileStoreId(fileStoreId);</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">            if (fileStoreMapper != null) {</span>
+<span class="nc" id="L143">                File file = this.fileStoreService.fetch(fileStoreMapper, moduleName);</span>
+<span class="nc" id="L144">                response.setHeader(CONTENT_DISPOSITION, format(CONTENT_DISPOSITION_INLINE, fileStoreMapper.getFileName()));</span>
+<span class="nc" id="L145">                response.setContentType(fileStoreMapper.getContentType());</span>
+<span class="nc" id="L146">                OutputStream out = response.getOutputStream();</span>
+<span class="nc" id="L147">                IOUtils.write(FileUtils.readFileToByteArray(file), out);</span>
+            }
+<span class="nc" id="L149">        } catch (IOException e) {</span>
+<span class="nc" id="L150">            LOGGER.error(&quot;Error occurred while writing file to response stream&quot;, e);</span>
+<span class="nc" id="L151">        }</span>
+<span class="nc" id="L152">    }</span>
+
+    public Set&lt;FileStoreMapper&gt; addToFileStore(MultipartFile[] files, String moduleName) {
+<span class="nc" id="L155">        return this.addToFileStore(files, moduleName, false);</span>
+    }
+
+    public Set&lt;FileStoreMapper&gt; addToFileStore(MultipartFile[] files, String moduleName, boolean compressImage) {
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (ArrayUtils.isNotEmpty(files))</span>
+<span class="nc" id="L160">            return Arrays.stream(files)</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">                    .filter(file -&gt; !file.isEmpty())</span>
+<span class="nc" id="L162">                    .map(file -&gt; {</span>
+                        try {
+<span class="nc bnc" id="L164" title="All 4 branches missed.">                            if (compressImage &amp;&amp; file.getContentType().contains(&quot;image&quot;))</span>
+<span class="nc" id="L165">                                return this.fileStoreService.store(compressImage(file),</span>
+<span class="nc" id="L166">                                        file.getOriginalFilename(), JPG_MIME_TYPE, moduleName);</span>
+                            else
+<span class="nc" id="L168">                                return this.fileStoreService.store(file.getInputStream(), file.getOriginalFilename(),</span>
+<span class="nc" id="L169">                                        file.getContentType(), moduleName);</span>
+<span class="nc" id="L170">                        } catch (Exception e) {</span>
+<span class="nc" id="L171">                            throw new ApplicationRuntimeException(&quot;err.input.stream&quot;, e);</span>
+                        }
+<span class="nc" id="L173">                    }).collect(Collectors.toSet());</span>
+        else
+<span class="nc" id="L175">            return Collections.emptySet();</span>
+    }
+
+    public void copyFileToPath(Path newFilePath, String fileStoreId, String moduleName) throws IOException {
+<span class="nc" id="L179">        Optional&lt;FileStoreMapper&gt; fileStoreMapper = getFileStoreMapper(fileStoreId);</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (fileStoreMapper.isPresent()) {</span>
+<span class="nc" id="L181">            File file = fileStoreService.fetch(fileStoreMapper.get(), moduleName);</span>
+<span class="nc" id="L182">            Files.copy(file.toPath(), newFilePath);</span>
+        }
+<span class="nc" id="L184">    }</span>
+
+    public byte[] fileAsByteArray(String fileStoreId, String moduleName) {
+        try {
+<span class="nc" id="L188">            Optional&lt;FileStoreMapper&gt; fileStoreMapper = getFileStoreMapper(fileStoreId);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">            if (fileStoreMapper.isPresent()) {</span>
+<span class="nc" id="L190">                Path file = getFileAsPath(fileStoreId, moduleName);</span>
+<span class="nc" id="L191">                return Files.readAllBytes(file);</span>
+            } else {
+<span class="nc" id="L193">                return new byte[0];</span>
+            }
+<span class="nc" id="L195">        } catch (IOException ioe) {</span>
+<span class="nc" id="L196">            LOGGER.error(&quot;Error occurred while converting file to byte array&quot;, ioe);</span>
+<span class="nc" id="L197">            return new byte[0];</span>
+        }
+    }
+    
+    public byte[] httpImageAsByteArray(String imageUrl){
+        
+//        String _imageUrl = &quot;https://s3.ap-south-1.amazonaws.com/pb-egov-assets/pb.mohali/logo.png&quot;;
+        
+        try {
+<span class="nc" id="L206">            URL url = new URL(imageUrl);</span>
+<span class="nc" id="L207">            ByteArrayOutputStream output = new ByteArrayOutputStream();</span>
+            
+<span class="nc" id="L209">            try (InputStream inputStream = url.openStream()) {</span>
+<span class="nc" id="L210">                int n = 0;</span>
+<span class="nc" id="L211">                byte [] buffer = new byte[ 1024 ];</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">                while (-1 != (n = inputStream.read(buffer))) {</span>
+<span class="nc" id="L213">                    output.write(buffer, 0, n);</span>
+                }
+<span class="nc" id="L215">                return output.toByteArray();</span>
+<span class="nc bnc" id="L216" title="All 8 branches missed.">            } catch (IOException e) {</span>
+                // TODO Auto-generated catch block
+<span class="nc" id="L218">                e.printStackTrace();</span>
+            }
+<span class="nc" id="L220">        } catch (MalformedURLException e) {</span>
+            // TODO Auto-generated catch block
+<span class="nc" id="L222">            e.printStackTrace();</span>
+<span class="nc" id="L223">        }</span>
+<span class="nc" id="L224">        return new byte[0];</span>
+    }
+
+    public ResponseEntity&lt;InputStreamResource&gt; fileAsPDFResponse(String fileStoreId, String fileName, String moduleName) {
+        try {
+<span class="nc" id="L229">            File file = fileStoreService.fetch(fileStoreId, moduleName);</span>
+<span class="nc" id="L230">            byte[] fileBytes = FileUtils.readFileToByteArray(file);</span>
+<span class="nc" id="L231">            return ResponseEntity</span>
+<span class="nc" id="L232">                    .ok()</span>
+<span class="nc" id="L233">                    .contentType(parseMediaType(APPLICATION_PDF_VALUE))</span>
+<span class="nc" id="L234">                    .cacheControl(CacheControl.noCache())</span>
+<span class="nc" id="L235">                    .contentLength(fileBytes.length)</span>
+<span class="nc" id="L236">                    .header(CONTENT_DISPOSITION, format(CONTENT_DISPOSITION_INLINE, fileName + &quot;.pdf&quot;))</span>
+<span class="nc" id="L237">                    .body(new InputStreamResource(new ByteArrayInputStream(fileBytes)));</span>
+<span class="nc" id="L238">        } catch (IOException e) {</span>
+<span class="nc" id="L239">            throw new ApplicationRuntimeException(&quot;Error while reading file&quot;, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

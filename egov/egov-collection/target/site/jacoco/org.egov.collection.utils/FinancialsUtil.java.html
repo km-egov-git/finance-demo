@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FinancialsUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.utils</a> &gt; <span class="el_source">FinancialsUtil.java</span></div><h1>FinancialsUtil.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.utils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.egov.billsaccounting.services.CreateVoucher;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.instrument.InstrumentHeader;
+import org.egov.model.instrument.InstrumentType;
+import org.egov.model.instrument.InstrumentVoucher;
+import org.egov.services.contra.ContraService;
+import org.egov.services.instrument.InstrumentService;
+import org.hibernate.SQLQuery;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Utility class for interfacing with financials. This class should be used for calling any financials APIs from erp collections.
+ */
+<span class="nc" id="L77">public class FinancialsUtil {</span>
+    private InstrumentService instrumentService;
+    public PersistenceService&lt;InstrumentHeader, Long&gt; instrumentHeaderService;
+    @Autowired
+    @Qualifier(&quot;contraService&quot;)
+    private ContraService contraService;
+    @Autowired
+    private CreateVoucher createVoucher;
+    @Autowired
+    private FinancialsVoucherUtil financialsVoucherUtil;
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
+<span class="nc" id="L89">    private static final Logger LOGGER = Logger.getLogger(FinancialsUtil.class);</span>
+
+    /**
+     * @param instrumentService the Instrument Service to set
+     */
+    public void setInstrumentService(final InstrumentService instrumentService) {
+<span class="nc" id="L95">        this.instrumentService = instrumentService;</span>
+<span class="nc" id="L96">    }</span>
+
+    /**
+     * Fetches instrument type object for given instrument type as string
+     *
+     * @param type Instrument type as string e.g. cash/cheque
+     * @return Instrument type object for given instrument type as string
+     */
+    public InstrumentType getInstrumentTypeByType(final String type) {
+<span class="nc" id="L105">        return instrumentService.getInstrumentTypeByType(type);</span>
+    }
+
+    @Transactional
+    public CVoucherHeader createRemittanceVoucher(final HashMap&lt;String, Object&gt; headerdetails,
+            final List&lt;HashMap&lt;String, Object&gt;&gt; accountCodeList, final List&lt;HashMap&lt;String, Object&gt;&gt; subledgerList) {
+<span class="nc" id="L111">        CVoucherHeader voucherHeaderCash = new CVoucherHeader();</span>
+        try {
+<span class="nc" id="L113">            voucherHeaderCash = financialsVoucherUtil.createApprovedVoucher(headerdetails, accountCodeList,</span>
+                    subledgerList);
+<span class="nc" id="L115">        } catch (final Exception e) {</span>
+<span class="nc" id="L116">            LOGGER.error(&quot;Error in createBankRemittance createPreApprovalVoucher when cash amount&gt;0&quot;);</span>
+<span class="nc" id="L117">            throw new ApplicationRuntimeException(</span>
+                    &quot;Error in createBankRemittance createPreApprovalVoucher when cash amount&gt;0&quot;, e);
+<span class="nc" id="L119">        }</span>
+<span class="nc" id="L120">        return voucherHeaderCash;</span>
+    }
+
+    /**
+     * @param headerdetails
+     * @param accountcodedetails
+     * @param subledgerdetails
+     * @param isVoucherApproved
+     * @return
+     */
+
+    public CVoucherHeader createVoucher(final Map&lt;String, Object&gt; headerdetails,
+            final List&lt;HashMap&lt;String, Object&gt;&gt; accountcodedetails,
+            final List&lt;HashMap&lt;String, Object&gt;&gt; subledgerdetails, final Boolean isVoucherApproved) {
+        CVoucherHeader voucherHeader;
+
+<span class="nc" id="L136">        LOGGER.debug(&quot;Logs For HandHeldDevice Permance Test : Voucher Creation Started....&quot;);</span>
+
+<span class="nc bnc" id="L138" title="All 4 branches missed.">        if (isVoucherApproved != null &amp;&amp; isVoucherApproved)</span>
+<span class="nc" id="L139">            voucherHeader = financialsVoucherUtil.createApprovedVoucher(headerdetails, accountcodedetails,</span>
+                    subledgerdetails);
+        else
+<span class="nc" id="L142">            voucherHeader = financialsVoucherUtil.createPreApprovalVoucher(headerdetails, accountcodedetails,</span>
+                    subledgerdetails);
+<span class="nc" id="L144">        LOGGER.info(&quot;Logs For HandHeldDevice Permance Test : Voucher Creation Ended...&quot;);</span>
+<span class="nc" id="L145">        return voucherHeader;</span>
+    }
+
+    /**
+     * Get the reversal voucher for the voucher header
+     *
+     * @param paramList
+     * @return CVoucherHeader
+     */
+    public CVoucherHeader getReversalVoucher(final List&lt;HashMap&lt;String, Object&gt;&gt; paramList) {
+<span class="nc" id="L155">        CVoucherHeader voucherHeaders = null;</span>
+        try {
+<span class="nc" id="L157">            voucherHeaders = createVoucher.reverseVoucher(paramList);</span>
+<span class="nc" id="L158">        } catch (final ApplicationRuntimeException re) {</span>
+<span class="nc" id="L159">            LOGGER.error(&quot;Runtime Exception while creating reversal voucher!&quot;, re);</span>
+<span class="nc" id="L160">            throw re;</span>
+<span class="nc" id="L161">        } catch (final Exception e) {</span>
+<span class="nc" id="L162">            LOGGER.error(&quot;Exception while creating reversal voucher!&quot;, e);</span>
+<span class="nc" id="L163">            throw new ApplicationRuntimeException(&quot;Exception while creating reversal voucher!&quot;, e);</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">        return voucherHeaders;</span>
+    }
+
+    /**
+     * Update instrument type and return list of InstrumentVoucher
+     *
+     * @param paramList
+     * @return
+     */
+
+    public List&lt;InstrumentVoucher&gt; updateInstrumentVoucher(final List&lt;Map&lt;String, Object&gt;&gt; paramList) {
+<span class="nc" id="L176">        return instrumentService.updateInstrumentVoucherReference(paramList);</span>
+    }
+
+    /**
+     * Create Instrument Header for list of HashMap of instrument header properties
+     *
+     * @param paramList
+     * @return List of InstrumentHeader
+     */
+    public List&lt;InstrumentHeader&gt; createInstrument(final List&lt;Map&lt;String, Object&gt;&gt; paramList) {
+<span class="nc" id="L186">        return instrumentService.addToInstrument(paramList);</span>
+    }
+
+    /**
+     * Update Cheque/DD/Card Instrument Status after creating Bank Remittance Voucher(if the Bank Remittance voucher type is
+     * Contra)
+     *
+     * @param Map containing Instrument and PayInSlip voucher information
+     */
+
+    @Transactional
+    public void updateCheque_DD_Card_Deposit(final Map&lt;String, Object&gt; instrumentMap) {
+<span class="nc" id="L198">        contraService.updateCheque_DD_Card_Deposit(instrumentMap);</span>
+<span class="nc" id="L199">    }</span>
+
+    @Transactional
+    public void updateCheque_DD_Card_Deposit(final Map instrumentMap, final CVoucherHeader cVoucherHeader,
+            final InstrumentHeader instrumentHeader, final Bankaccount bankaccount) {
+<span class="nc" id="L204">        contraService.updateCheque_DD_Card_Deposit(instrumentMap, cVoucherHeader, instrumentHeader, bankaccount);</span>
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Update Cheque/DD/Card Instrument Status after creating Bank Remittance Voucher(if the Bank Remittance voucher type is
+     * Receipt)
+     *
+     * @param Map containing Instrument and PayInSlip voucher information
+     */
+
+    @Transactional
+    public void updateCheque_DD_Card_Deposit_Receipt(final Map&lt;String, Object&gt; instrumentMap) {
+<span class="nc" id="L216">        contraService.updateCheque_DD_Card_Deposit_Receipt(instrumentMap);</span>
+<span class="nc" id="L217">    }</span>
+
+    /**
+     * Update Cash Instrument Status after creating Pay in Slip Voucher
+     *
+     * @param Map containing Instrument and PayInSlip voucher information
+     */
+    @Deprecated
+    @Transactional
+    public void updateCashDeposit(final Map&lt;String, Object&gt; instrumentMap) {
+<span class="nc" id="L227">        contraService.updateCashDeposit(instrumentMap);</span>
+<span class="nc" id="L228">    }</span>
+
+    @Transactional
+    public void updateCashDeposit(final Map&lt;String, Object&gt; instrumentMap, final CVoucherHeader cVoucherHeader,
+            final InstrumentHeader instrumentHeader, final Bankaccount bankaccount) {
+<span class="nc" id="L233">        contraService.updateCashDeposit(instrumentMap, cVoucherHeader, instrumentHeader, bankaccount);</span>
+<span class="nc" id="L234">    }</span>
+
+    /**
+     * @param contraService the contraService to set
+     */
+    public void setContraService(final ContraService contraService) {
+<span class="nc" id="L240">        this.contraService = contraService;</span>
+<span class="nc" id="L241">    }</span>
+
+    /**
+     * Checks whether given account is a revenue account (cash/cheque in hand)
+     *
+     * @param coa the account object
+     * @return true if the account is a revenue account, else false
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static boolean isRevenueAccountHead(final CChartOfAccounts coa, final List&lt;CChartOfAccounts&gt; bankCOAList,
+            final PersistenceService persistenceService) {
+<span class="nc" id="L252">        final Long purposeId = coa.getPurposeId();</span>
+
+        // In case of bank payment, to check if the chartofaccounts exist in the
+        // list of chartofacccounts mapped to bankaccounts.
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (bankCOAList.contains(coa))</span>
+<span class="nc" id="L257">            return true;</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (purposeId != null)</span>
+            try {
+<span class="nc" id="L260">                final SQLQuery query = persistenceService.getSession().createSQLQuery(</span>
+                        &quot;SELECT NAME FROM EGF_ACCOUNTCODE_PURPOSE WHERE ID = &quot; + purposeId);
+<span class="nc" id="L262">                final List&lt;String&gt; purposeNames = query.list();</span>
+<span class="nc bnc" id="L263" title="All 4 branches missed.">                if (purposeNames != null &amp;&amp; purposeNames.size() == 1) {</span>
+<span class="nc" id="L264">                    final String purposeName = purposeNames.get(0);</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">                    if (purposeName.equals(CollectionConstants.PURPOSE_NAME_CASH_IN_HAND)</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_CHEQUE_IN_HAND)</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_CASH_IN_TRANSIT)</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_CREDIT_CARD)</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_ATM_ACCOUNTCODE)</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_INTERUNITACCOUNT)</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">                            || purposeName.equals(CollectionConstants.PURPOSE_NAME_THIRD_PARTY_COLLECTION))</span>
+<span class="nc" id="L272">                        return true;</span>
+                }
+<span class="nc" id="L274">            } catch (final Exception e) {</span>
+<span class="nc" id="L275">                throw new ApplicationRuntimeException(&quot;Exception in fetching purpose name for id [&quot; + purposeId + &quot;]&quot;,</span>
+                        e);
+<span class="nc" id="L277">            }</span>
+<span class="nc" id="L278">        return false;</span>
+    }
+
+    @Transactional
+    public void updateInstrumentHeader(final List&lt;InstrumentHeader&gt; instrumentHeaderList, final EgwStatus status,
+            final Bankaccount depositedBankAccount) {
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (final InstrumentHeader iHeader : instrumentHeaderList)</span>
+<span class="nc" id="L285">            instrumentHeaderService.persist(updateInstrumentHeaderStatus(iHeader, status, depositedBankAccount));</span>
+
+<span class="nc" id="L287">    }</span>
+
+    public InstrumentHeader updateInstrumentHeaderStatus(final InstrumentHeader instrumentHeaderObj,
+            final EgwStatus status, final Bankaccount depositedBankAccount) {
+<span class="nc" id="L291">        instrumentHeaderObj.setStatusId(status);</span>
+<span class="nc" id="L292">        instrumentHeaderObj.setBankAccountId(depositedBankAccount);</span>
+<span class="nc" id="L293">        return instrumentHeaderObj;</span>
+
+    }
+
+    @Transactional
+    public void updateInstrumentHeader(final InstrumentHeader instrumentHeader) {
+<span class="nc" id="L299">        instrumentHeaderService.persist(instrumentHeader);</span>
+<span class="nc" id="L300">    }</span>
+
+    /**
+     * This API return list of ChartOfAccount mapped with bank accounts
+     *
+     * @return List of CChartOfAccounts
+     */
+    public List&lt;CChartOfAccounts&gt; getBankChartofAccountCodeList() {
+<span class="nc" id="L308">        return chartOfAccountsHibernateDAO.getBankChartofAccountCodeList();</span>
+    }
+
+    public Map&lt;String, Object&gt; prepareForUpdateInstrumentDepositSQL() {
+<span class="nc" id="L312">        return contraService.prepareForUpdateInstrumentDepositSQL();</span>
+    }
+
+    public void setInstrumentHeaderService(final PersistenceService&lt;InstrumentHeader, Long&gt; instrumentHeaderService) {
+<span class="nc" id="L316">        this.instrumentHeaderService = instrumentHeaderService;</span>
+<span class="nc" id="L317">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

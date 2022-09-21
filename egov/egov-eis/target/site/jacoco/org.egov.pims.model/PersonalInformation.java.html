@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersonalInformation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.model</a> &gt; <span class="el_source">PersonalInformation.java</span></div><h1>PersonalInformation.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.model;
+
+
+import org.apache.log4j.Logger;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.utils.EntityType;
+import org.egov.eis.entity.EmployeeType;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.pims.service.EmployeeServiceOld;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+
+/**
+ * 
+ * @author DivyaShree
+ *
+ */
+public class PersonalInformation implements java.io.Serializable,EntityType
+{
+
+	private static final long serialVersionUID = 1L;
+<span class="nc" id="L72">	public final static Logger LOGGER = Logger.getLogger(PersonalInformation.class.getClass());</span>
+	private PersonalInformation employeeId;
+	private EmployeeServiceOld employeeService;
+<span class="nc" id="L75">	User	userMaster =null;</span>
+	private Integer idPersonalInformation;
+
+	private LanguagesQulifiedMaster langQulMstr;
+
+	private ReligionMaster religionMstr;
+
+	private LanguagesKnownMaster languagesKnownMstr;
+
+	private RecruimentMaster modeOfRecruimentMstr;
+
+	private CommunityMaster communityMstr;
+
+	private CategoryMaster categoryMstr;//is this required?
+
+	private BloodGroupMaster bloodGroupMstr;
+
+	private TypeOfRecruimentMaster recruitmentTypeMstr;
+
+	private String employeeCode;
+	private String employeeName;
+	private  EmployeeType employeeTypeMaster;
+	private EgwStatus StatusMaster;
+	private String employeeFirstName;
+	private String employeeMiddleName;
+	private String employeeLastName;
+	private String fatherHusbandFirstName;
+	private String fatherHusbandMiddleName;
+	private String fatherHusbandLastName;
+	private String identificationMarks2;
+	private String panNumber;
+	private Date dateOfBirth;
+	/*
+	 * death date
+	 */
+	private Date deathDate;
+	/*
+	 * deputation date
+	 */
+	private Date dateOfjoin;
+	
+	/*
+	 * Retirement date moved from grade
+	 */
+	private Date retirementDate;
+
+	private String motherTonuge;
+
+<span class="nc" id="L123">	private Character gender= Character.valueOf('0');</span>
+
+
+<span class="nc" id="L126">	private Integer isActive= Integer.valueOf(1);</span>
+
+<span class="nc" id="L128">	private Character isHandicapped= Character.valueOf('0');</span>
+
+<span class="nc" id="L130">	private Character isMedReportAvailable=Character.valueOf('0');</span>
+
+	private Date dateOfFirstAppointment;
+
+	private String identificationMarks1;
+
+<span class="nc" id="L136">	private Character status= Character.valueOf('0');</span>
+
+	private String gpfAcNumber;//Should this come under EIS ?
+
+	private Integer retirementAge;
+
+	private String location;//Where are we using this?
+
+	private User createdBy;
+	
+	private Date createdTime;
+	/*
+	 * New column added for last modified date
+	 */
+	
+	private Date lastmodifieddate;
+	
+	private String email;
+	
+	private String phoneNumber;
+	
+	private String permanentAddress;
+	
+	private String correspondenceAddress;
+	
+	public String getPermanentAddress() {
+<span class="nc" id="L162">		return permanentAddress;</span>
+	}
+	public void setPermanentAddress(String permanentAddress) {
+<span class="nc" id="L165">		this.permanentAddress = permanentAddress;</span>
+<span class="nc" id="L166">	}</span>
+	public String getCorrespondenceAddress() {
+<span class="nc" id="L168">		return correspondenceAddress;</span>
+	}
+	public void setCorrespondenceAddress(String correspondenceAddress) {
+<span class="nc" id="L171">		this.correspondenceAddress = correspondenceAddress;</span>
+<span class="nc" id="L172">	}</span>
+	public String getEmail() {
+<span class="nc" id="L174">		return email;</span>
+	}
+	public void setEmail(String email) {
+<span class="nc" id="L177">		this.email = email;</span>
+<span class="nc" id="L178">	}</span>
+	public String getPhoneNumber() {
+<span class="nc" id="L180">		return phoneNumber;</span>
+	}
+	public void setPhoneNumber(String phoneNumber) {
+<span class="nc" id="L183">		this.phoneNumber = phoneNumber;</span>
+<span class="nc" id="L184">	}</span>
+	public User getCreatedBy() {
+<span class="nc" id="L186">		return createdBy;</span>
+	}
+	public void setCreatedBy(User createdBy) {
+<span class="nc" id="L189">		this.createdBy = createdBy;</span>
+<span class="nc" id="L190">	}</span>
+	public Date getCreatedTime() {
+<span class="nc" id="L192">		return createdTime;</span>
+	}
+	public void setCreatedTime(Date createdTime) {
+<span class="nc" id="L195">		this.createdTime = createdTime;</span>
+<span class="nc" id="L196">	}</span>
+
+<span class="nc" id="L198">	private Set&lt;LangKnown&gt; egpimsLangKnowns = new HashSet&lt;LangKnown&gt;(0);//should we keep it now?</span>
+<span class="nc" id="L199">	private Set&lt;org.egov.eis.entity.Assignment&gt; egpimsAssignment = new HashSet&lt;org.egov.eis.entity.Assignment&gt;(0);</span>
+
+	public Set&lt;org.egov.eis.entity.Assignment&gt; getEgpimsAssignment() {
+<span class="nc" id="L202">		return egpimsAssignment;</span>
+	}
+	public void setEgpimsAssignment(
+			Set&lt;org.egov.eis.entity.Assignment&gt; egpimsAssignment) {
+<span class="nc" id="L206">		this.egpimsAssignment = egpimsAssignment;</span>
+<span class="nc" id="L207">	}</span>
+	public PersonalInformation()
+<span class="nc" id="L209">	{</span>
+<span class="nc" id="L210">	}</span>
+
+
+	public Integer getIdPersonalInformation()
+	{
+<span class="nc" id="L215">		return this.idPersonalInformation;</span>
+	}
+	
+	public Integer getId()
+	{
+<span class="nc" id="L220">		return this.idPersonalInformation;</span>
+	}
+	
+	public void setIdPersonalInformation(Integer idPersonalInformation)
+	{
+<span class="nc" id="L225">		this.idPersonalInformation = idPersonalInformation;</span>
+<span class="nc" id="L226">	}</span>
+public BloodGroupMaster getBloodGroupMstr()
+	{
+<span class="nc" id="L229">		return this.bloodGroupMstr;</span>
+	}
+
+	public void setBloodGroupMstr(BloodGroupMaster bloodGroupMstr)
+	{
+<span class="nc" id="L234">		this.bloodGroupMstr = bloodGroupMstr;</span>
+<span class="nc" id="L235">	}</span>
+
+	public ReligionMaster getReligionMstr()
+	{
+<span class="nc" id="L239">		return this.religionMstr;</span>
+	}
+
+	public void setReligionMstr(ReligionMaster religionMstr)
+	{
+<span class="nc" id="L244">		this.religionMstr = religionMstr;</span>
+<span class="nc" id="L245">	}</span>
+
+	public LanguagesKnownMaster getLanguagesKnownMstr()
+	{
+<span class="nc" id="L249">		return this.languagesKnownMstr;</span>
+	}
+
+	public void setLanguagesKnownMstr(
+			LanguagesKnownMaster languagesKnownMstr)
+	{
+<span class="nc" id="L255">		this.languagesKnownMstr = languagesKnownMstr;</span>
+<span class="nc" id="L256">	}</span>
+
+	public CommunityMaster getCommunityMstr()
+	{
+<span class="nc" id="L260">		return this.communityMstr;</span>
+	}
+	public void setCommunityMstr(CommunityMaster communityMstr)
+	{
+<span class="nc" id="L264">		this.communityMstr = communityMstr;</span>
+<span class="nc" id="L265">	}</span>
+	public CategoryMaster getCategoryMstr()
+	{
+<span class="nc" id="L268">		return this.categoryMstr;</span>
+	}
+	public void setCategoryMstr(CategoryMaster categoryMstr)
+	{
+<span class="nc" id="L272">		this.categoryMstr = categoryMstr;</span>
+<span class="nc" id="L273">	}</span>
+	public TypeOfRecruimentMaster getRecruitmentTypeMstr()
+	{
+<span class="nc" id="L276">		return this.recruitmentTypeMstr;</span>
+	}
+	public void setRecruitmentTypeMstr(
+			TypeOfRecruimentMaster recruitmentTypeMstr)
+	{
+<span class="nc" id="L281">		this.recruitmentTypeMstr = recruitmentTypeMstr;</span>
+<span class="nc" id="L282">	}</span>
+
+	public String getEmployeeCode()
+	{
+<span class="nc" id="L286">		return this.employeeCode;</span>
+	}
+
+	public void setEmployeeCode(Integer employeeCode)
+	{
+<span class="nc" id="L291">		this.employeeCode = String.valueOf(employeeCode);</span>
+<span class="nc" id="L292">	}</span>
+
+	public void setEmployeeCode(String employeeCode)
+	{
+<span class="nc" id="L296">		this.employeeCode = employeeCode;</span>
+<span class="nc" id="L297">	}</span>
+
+	public Date getDateOfBirth()
+	{
+<span class="nc" id="L301">		return this.dateOfBirth;</span>
+	}
+
+	public void setDateOfBirth(Date dateOfBirth)
+	{
+<span class="nc" id="L306">		this.dateOfBirth = dateOfBirth;</span>
+<span class="nc" id="L307">	}</span>
+
+
+	public String getMotherTonuge()
+	{
+<span class="nc" id="L312">		return this.motherTonuge;</span>
+	}
+
+	public void setMotherTonuge(String motherTonuge)
+	{
+<span class="nc" id="L317">		this.motherTonuge = motherTonuge;</span>
+<span class="nc" id="L318">	}</span>
+
+	public Character getGender()
+	{
+<span class="nc" id="L322">		return this.gender;</span>
+	}
+
+	public void setGender(Character gender)
+	{
+<span class="nc" id="L327">		this.gender = gender;</span>
+<span class="nc" id="L328">	}</span>
+
+	public Character getIsHandicapped()
+	{
+<span class="nc" id="L332">		return this.isHandicapped;</span>
+	}
+
+	public void setIsHandicapped(Character isHandicapped)
+	{
+<span class="nc" id="L337">		this.isHandicapped = isHandicapped;</span>
+<span class="nc" id="L338">	}</span>
+
+	public Character getIsMedReportAvailable()
+	{
+<span class="nc" id="L342">		return this.isMedReportAvailable;</span>
+	}
+
+	public void setIsMedReportAvailable(Character isMedReportAvailable)
+	{
+<span class="nc" id="L347">		this.isMedReportAvailable = isMedReportAvailable;</span>
+<span class="nc" id="L348">	}</span>
+
+	public Date getDateOfFirstAppointment()
+	{
+<span class="nc" id="L352">		return this.dateOfFirstAppointment;</span>
+	}
+
+	public void setDateOfFirstAppointment(Date dateOfFirstAppointment)
+	{
+<span class="nc" id="L357">		this.dateOfFirstAppointment = dateOfFirstAppointment;</span>
+<span class="nc" id="L358">	}</span>
+
+	public String getIdentificationMarks1()
+	{
+<span class="nc" id="L362">		return this.identificationMarks1;</span>
+	}
+
+	public void setIdentificationMarks1(String identificationMarks1)
+	{
+<span class="nc" id="L367">		this.identificationMarks1 = identificationMarks1;</span>
+<span class="nc" id="L368">	}</span>
+
+	public Character getStatus()
+	{
+<span class="nc" id="L372">		return this.status;</span>
+	}
+
+	public void setStatus(Character status)
+	{
+<span class="nc" id="L377">		this.status = status;</span>
+<span class="nc" id="L378">	}</span>
+
+
+	public String getGpfAcNumber()
+	{
+<span class="nc" id="L383">		return this.gpfAcNumber;</span>
+	}
+
+	public void setGpfAcNumber(String gpfAcNumber)
+	{
+<span class="nc" id="L388">		this.gpfAcNumber = gpfAcNumber;</span>
+<span class="nc" id="L389">	}</span>
+
+	
+
+	public Integer getRetirementAge() {
+<span class="nc" id="L394">		return retirementAge;</span>
+	}
+	public void setRetirementAge(Integer retirementAge) {
+<span class="nc" id="L397">		this.retirementAge = retirementAge;</span>
+<span class="nc" id="L398">	}</span>
+
+	public String getLocation()
+	{
+<span class="nc" id="L402">		return this.location;</span>
+	}
+
+	public void setLocation(String location)
+	{
+<span class="nc" id="L407">		this.location = location;</span>
+<span class="nc" id="L408">	}</span>
+
+	public Set&lt;LangKnown&gt; getEgpimsLangKnowns()
+	{
+<span class="nc" id="L412">		return this.egpimsLangKnowns;</span>
+	}
+
+	public void setEgpimsLangKnowns(Set&lt;LangKnown&gt; egpimsLangKnowns)
+	{
+<span class="nc" id="L417">		this.egpimsLangKnowns = egpimsLangKnowns;</span>
+<span class="nc" id="L418">	}</span>
+	public void addLangKnown(LangKnown egpimsLangKnown)
+	{
+
+<span class="nc bnc" id="L422" title="All 2 branches missed.">		if(getEgpimsLangKnowns()!=null)</span>
+<span class="nc" id="L423">		getEgpimsLangKnowns().add(egpimsLangKnown);</span>
+<span class="nc" id="L424">	}</span>
+	public void removeLangKnown(LangKnown egpimsLangKnown)
+	{
+
+<span class="nc" id="L428">		getEgpimsLangKnowns().remove(egpimsLangKnown);</span>
+<span class="nc" id="L429">	}</span>
+
+	/**
+	 * @return Returns the isActive.
+	 */
+	public Integer getIsActive() {
+<span class="nc" id="L435">		return isActive;</span>
+	}
+	/**
+	 * @param isActive The isActive to set.
+	 */
+	public void setIsActive(Integer isActive) {
+<span class="nc" id="L441">		this.isActive = isActive;</span>
+<span class="nc" id="L442">	}</span>
+			/**
+			 * @return Returns the userMaster.
+			 */
+			public User getUserMaster() {
+<span class="nc" id="L447">				return userMaster;</span>
+			}
+			/**
+			 * @param userMaster The userMaster to set.
+			 */
+			public void setUserMaster(User userMaster) {
+<span class="nc" id="L453">				this.userMaster = userMaster;</span>
+<span class="nc" id="L454">			}</span>
+public String getEmployeeFirstName() {
+<span class="nc" id="L456">	return employeeFirstName;</span>
+}
+public void setEmployeeFirstName(String employeeFirstName) {
+<span class="nc" id="L459">	this.employeeFirstName = employeeFirstName;</span>
+<span class="nc" id="L460">}</span>
+public String getEmployeeLastName() {
+<span class="nc" id="L462">	return employeeLastName;</span>
+}
+public void setEmployeeLastName(String employeeLastName) {
+<span class="nc" id="L465">	this.employeeLastName = employeeLastName;</span>
+<span class="nc" id="L466">}</span>
+public String getEmployeeMiddleName() {
+<span class="nc" id="L468">	return employeeMiddleName;</span>
+}
+public void setEmployeeMiddleName(String employeeMiddleName) {
+<span class="nc" id="L471">	this.employeeMiddleName = employeeMiddleName;</span>
+<span class="nc" id="L472">}</span>
+public String getFatherHusbandFirstName() {
+<span class="nc" id="L474">	return fatherHusbandFirstName;</span>
+}
+public void setFatherHusbandFirstName(String fatherHusbandFirstName) {
+<span class="nc" id="L477">	this.fatherHusbandFirstName = fatherHusbandFirstName;</span>
+<span class="nc" id="L478">}</span>
+public String getFatherHusbandLastName() {
+<span class="nc" id="L480">	return fatherHusbandLastName;</span>
+}
+public void setFatherHusbandLastName(String fatherHusbandLastName) {
+<span class="nc" id="L483">	this.fatherHusbandLastName = fatherHusbandLastName;</span>
+<span class="nc" id="L484">}</span>
+public String getFatherHusbandMiddleName() {
+<span class="nc" id="L486">	return fatherHusbandMiddleName;</span>
+}
+public void setFatherHusbandMiddleName(String fatherHusbandMiddleName) {
+<span class="nc" id="L489">	this.fatherHusbandMiddleName = fatherHusbandMiddleName;</span>
+<span class="nc" id="L490">}</span>
+public String getIdentificationMarks2() {
+<span class="nc" id="L492">	return identificationMarks2;</span>
+}
+public void setIdentificationMarks2(String identificationMarks2) {
+<span class="nc" id="L495">	this.identificationMarks2 = identificationMarks2;</span>
+<span class="nc" id="L496">}</span>
+public String getPanNumber() {
+<span class="nc" id="L498">	return panNumber;</span>
+}
+public void setPanNumber(String panNumber) {
+<span class="nc" id="L501">	this.panNumber = panNumber;</span>
+<span class="nc" id="L502">}</span>
+
+public LanguagesQulifiedMaster getLangQulMstr() {
+<span class="nc" id="L505">	return langQulMstr;</span>
+}
+public void setLangQulMstr(LanguagesQulifiedMaster langQulMstr) {
+<span class="nc" id="L508">	this.langQulMstr = langQulMstr;</span>
+<span class="nc" id="L509">}</span>
+public RecruimentMaster getModeOfRecruimentMstr() {
+<span class="nc" id="L511">	return modeOfRecruimentMstr;</span>
+}
+public void setModeOfRecruimentMstr(RecruimentMaster modeOfRecruimentMstr) {
+<span class="nc" id="L514">	this.modeOfRecruimentMstr = modeOfRecruimentMstr;</span>
+<span class="nc" id="L515">}</span>
+public void setEmployeeService(EmployeeServiceOld employeeService) {
+<span class="nc" id="L517">	this.employeeService = employeeService;</span>
+<span class="nc" id="L518">}</span>
+public PersonalInformation getEmployeeId() {
+<span class="nc" id="L520">	return employeeId;</span>
+}
+public void setEmployeeId(PersonalInformation employeeId) {
+<span class="nc" id="L523">	this.employeeId = employeeId;</span>
+<span class="nc" id="L524">}</span>
+public String getEmployeeName() {
+<span class="nc" id="L526">	return employeeName;</span>
+}
+public void setEmployeeName(String employeeName) {
+<span class="nc" id="L529">	this.employeeName = employeeName;</span>
+<span class="nc" id="L530">}</span>
+
+public EmployeeType getEmployeeTypeMaster() {
+<span class="nc" id="L533">	return employeeTypeMaster;</span>
+}
+public void setEmployeeTypeMaster(EmployeeType employeeTypeMaster) {
+<span class="nc" id="L536">	this.employeeTypeMaster = employeeTypeMaster;</span>
+<span class="nc" id="L537">}</span>
+	public EgwStatus getStatusMaster() {
+<span class="nc" id="L539">		return StatusMaster;</span>
+	}
+	public void setStatusMaster(EgwStatus statusMaster) {
+<span class="nc" id="L542">		StatusMaster = statusMaster;</span>
+<span class="nc" id="L543">	}</span>
+	public Date getDeathDate() {
+<span class="nc" id="L545">		return deathDate;</span>
+	}
+	public void setDeathDate(Date deathDate) {
+<span class="nc" id="L548">		this.deathDate = deathDate;</span>
+<span class="nc" id="L549">	}</span>
+	public Date getLastmodifieddate() {
+<span class="nc" id="L551">		return lastmodifieddate;</span>
+	}
+	public void setLastmodifieddate(Date lastmodifieddate) {
+<span class="nc" id="L554">		this.lastmodifieddate = lastmodifieddate;</span>
+<span class="nc" id="L555">	}</span>
+	public Date getDateOfjoin() {
+<span class="nc" id="L557">		return dateOfjoin;</span>
+	}
+	public void setDateOfjoin(Date dateOfjoin) {
+<span class="nc" id="L560">		this.dateOfjoin = dateOfjoin;</span>
+<span class="nc" id="L561">	}</span>
+	
+	public Date getRetirementDate() {
+<span class="nc" id="L564">		return retirementDate;</span>
+	}
+	public void setRetirementDate(Date retirementDate) {
+<span class="nc" id="L567">		this.retirementDate = retirementDate;</span>
+<span class="nc" id="L568">	}</span>
+	
+	public String getBankaccount() {
+		
+<span class="nc" id="L572">		return null;</span>
+	}
+	
+	public String getBankname() {
+		
+<span class="nc" id="L577">		return null;</span>
+	}
+	
+	public String getCode() {
+<span class="nc bnc" id="L581" title="All 2 branches missed.">		if(employeeCode!=null)</span>
+		{
+<span class="nc" id="L583">		   return this.employeeCode.toString();</span>
+		}
+		else
+		{
+<span class="nc" id="L587">			return null;</span>
+		}
+	}
+	
+	public String getIfsccode() {
+		
+<span class="nc" id="L593">		return null;</span>
+	}
+	
+	public String getModeofpay() {
+
+<span class="nc" id="L598">		return null;</span>
+	}
+	
+	public String getName() {
+
+<span class="nc" id="L603">		return this.employeeName;</span>
+	}
+	
+	public String getPanno() {
+
+<span class="nc" id="L608">		return this.panNumber;</span>
+	}
+	
+	public String getTinno() {
+
+<span class="nc" id="L613">		return null;</span>
+	}
+	public Integer getEntityId()
+	{
+<span class="nc" id="L617">		return Integer.valueOf(idPersonalInformation);</span>
+	}
+	@Override
+	public String getEntityDescription() {
+		
+<span class="nc" id="L622">		return getName();</span>
+	}
+	
+	@Override
+	public EgwStatus getEgwStatus() {
+
+<span class="nc" id="L628">		return null;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

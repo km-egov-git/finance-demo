@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.utils</a> &gt; <span class="el_source">WebUtils.java</span></div><h1>WebUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.utils;
+
+import org.apache.log4j.Logger;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.config.security.repository.ApplicationSecurityRepository;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.support.RequestContextUtils;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.egov.infra.utils.ApplicationConstant.COLON;
+import static org.egov.infra.utils.ApplicationConstant.SLASH;
+
+import java.util.Locale;
+
+public final class WebUtils {
+
+<span class="nc" id="L69">	private static final Logger LOGGER = Logger.getLogger(WebUtils.class);</span>
+    private static final char QUESTION_MARK = '?';
+    private static final char FORWARD_SLASH = '/';
+    private static final String SCHEME_DOMAIN_SEPARATOR = &quot;://&quot;;
+
+<span class="nc" id="L74">    private WebUtils() {</span>
+        //Since utils are with static methods
+<span class="nc" id="L76">    }</span>
+
+    /**
+     * This will return only domain name from http request &lt;br/&gt;
+     * eg: http://www.domain.com/cxt/xyz will return www.domain.com http://somehost:8090/cxt/xyz will return somehost
+     **/
+    public static String extractRequestedDomainName(HttpServletRequest httpRequest) {
+<span class="nc" id="L83">        String requestURL = httpRequest.getRequestURL().toString();</span>
+<span class="nc" id="L84">        return extractRequestedDomainName(requestURL);</span>
+    }
+
+    /**
+     * This will return only domain name from given requestUrl &lt;br/&gt;
+     * eg: http://www.domain.com/cxt/xyz will return www.domain.com http://somehost:8090/cxt/xyz will return somehost
+     **/
+    public static String extractRequestedDomainName(String requestURL) {
+<span class="nc" id="L92">        int domainNameStartIndex = requestURL.indexOf(SCHEME_DOMAIN_SEPARATOR) + 3;</span>
+<span class="nc" id="L93">        int domainNameEndIndex = requestURL.indexOf(FORWARD_SLASH, domainNameStartIndex);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        String domainName = requestURL.substring(domainNameStartIndex,</span>
+<span class="nc" id="L95">                domainNameEndIndex &gt; 0 ? domainNameEndIndex : requestURL.length());</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (domainName.contains(COLON))</span>
+<span class="nc" id="L97">            domainName = domainName.split(COLON)[0];</span>
+<span class="nc" id="L98">        return domainName;</span>
+    }
+
+    /**
+     * This will return full domain name including http scheme and optionally with contextroot depends on 'withContext' value eg:
+     * http://www.domain.com/cxt/xyz withContext value as true will return http://www.domain.com/cxt/ &lt;br/&gt;
+     * http://www.domain.com/cxt/xyz withContext value as false will return http://www.domain.com
+     **/
+    public static String extractRequestDomainURL(HttpServletRequest httpRequest, boolean withContext) {
+<span class="nc" id="L107">        StringBuilder url = new StringBuilder(httpRequest.getRequestURL());</span>
+<span class="nc" id="L108">        LOGGER.info(&quot;In WebUtils : url = &quot; + url);</span>
+<span class="nc" id="L109">        String uri = httpRequest.getRequestURI();</span>
+<span class="nc" id="L110">        LOGGER.info(&quot;In WebUtils : uri = &quot; + uri);</span>
+<span class="nc" id="L111">        LOGGER.info(&quot;In WebUtils : withContext = &quot; + withContext);</span>
+<span class="nc" id="L112">        LOGGER.info(&quot;In WebUtils : if withContext is false = &quot; + url.substring(0, url.length() - uri.length()));</span>
+<span class="nc" id="L113">        LOGGER.info(&quot;In WebUtils : if withContext is true = &quot; + url.substring(0, url.length() - uri.length() + httpRequest.getContextPath().length()) + FORWARD_SLASH);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        return withContext ? url.substring(0, url.length() - uri.length() + httpRequest.getContextPath().length()) + FORWARD_SLASH</span>
+<span class="nc" id="L115">                : url.substring(0, url.length() - uri.length());</span>
+    }
+
+    public static String extractQueryParamsFromUrl(String url) {
+<span class="nc" id="L119">        return url.substring(url.indexOf(QUESTION_MARK) + 1, url.length());</span>
+    }
+
+    public static String extractURLWithoutQueryParams(String url) {
+<span class="nc" id="L123">        return url.substring(0, url.indexOf(QUESTION_MARK));</span>
+    }
+
+    public static String currentContextPath(ServletRequest request) {
+<span class="nc" id="L127">        return request.getServletContext().getContextPath().replace(SLASH, EMPTY);</span>
+    }
+
+    public static void setUserLocale(User user, HttpServletRequest request, HttpServletResponse response) {
+<span class="nc" id="L131">        LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);</span>
+//        localeResolver.setLocale(request, response, user.locale());
+<span class="nc" id="L133">        localeResolver.setLocale(request, response, new Locale(&quot;en_IN&quot;));</span>
+<span class="nc" id="L134">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

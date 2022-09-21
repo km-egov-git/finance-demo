@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeGrievance.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.entity</a> &gt; <span class="el_source">EmployeeGrievance.java</span></div><h1>EmployeeGrievance.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.entity;
+
+import static org.egov.eis.entity.EmployeeGrievance.SEQ_EMPLOYEEGRIEVANCE;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+import org.egov.eis.entity.enums.EmployeeGrievanceStatus;
+import org.egov.infra.filestore.entity.FileStoreMapper;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.pims.commons.Position;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.SafeHtml;
+
+@Entity
+@Unique(fields = { &quot;grievanceNumber&quot; }, enableDfltMsg = true)
+@Table(name = &quot;egeis_grievance&quot;)
+@SequenceGenerator(name = SEQ_EMPLOYEEGRIEVANCE, sequenceName = SEQ_EMPLOYEEGRIEVANCE, allocationSize = 1)
+<span class="nc" id="L87">public class EmployeeGrievance extends StateAware {</span>
+
+    private static final long serialVersionUID = 9177150353790687499L;
+
+    public static final String SEQ_EMPLOYEEGRIEVANCE = &quot;SEQ_EGEIS_GRIEVANCE&quot;;
+
+    @Id
+    @GeneratedValue(generator = SEQ_EMPLOYEEGRIEVANCE, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @NotBlank
+    @Length(max = 50)
+    @SafeHtml
+    @Column(name = &quot;grievanceNumber&quot;, unique = true)
+    private String grievanceNumber;
+
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = &quot;grievanceType&quot;, nullable = false)
+    private EmployeeGrievanceType employeeGrievanceType;
+
+<span class="nc" id="L108">    @ManyToOne</span>
+    @NotNull
+    @JoinColumn(name = &quot;employee&quot;, nullable = false)
+    private Employee employee = new Employee();
+
+    @NotNull
+    @Enumerated(EnumType.ORDINAL)
+    @JoinColumn(name = &quot;status&quot;)
+    private EmployeeGrievanceStatus status;
+
+    @Length(min = 10, max = 500)
+    @SafeHtml
+    @NotNull
+    private String details;
+
+    @Length(max = 500)
+    @SafeHtml
+    private String grievanceResolution;
+
+<span class="nc" id="L127">    @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)</span>
+    @JoinTable(name = &quot;egeis_grievancedocs&quot;, joinColumns = @JoinColumn(name = &quot;grievanceid&quot;), inverseJoinColumns = @JoinColumn(name = &quot;filestoreid&quot;))
+<span class="nc" id="L129">    private Set&lt;FileStoreMapper&gt; grievanceDocs = Collections.emptySet();</span>
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L133">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L138">        this.id = id;</span>
+<span class="nc" id="L139">    }</span>
+
+    @Override
+    public String getStateDetails() {
+<span class="nc" id="L143">        return &quot;Employee Grievance Number : &quot; + getGrievanceNumber();</span>
+    }
+
+    public Set&lt;FileStoreMapper&gt; grievanceDocsOrderById() {
+<span class="nc" id="L147">        return grievanceDocs</span>
+<span class="nc" id="L148">                .stream()</span>
+<span class="nc" id="L149">                .sorted(Comparator.comparing(FileStoreMapper::getId))</span>
+<span class="nc" id="L150">                .collect(Collectors.toSet());</span>
+    }
+
+    @Override
+    public String myLinkId() {
+<span class="nc" id="L155">        return id.toString();</span>
+    }
+
+    public String getGrievanceNumber() {
+<span class="nc" id="L159">        return grievanceNumber;</span>
+    }
+
+    public void setGrievanceNumber(String grievanceNumber) {
+<span class="nc" id="L163">        this.grievanceNumber = grievanceNumber;</span>
+<span class="nc" id="L164">    }</span>
+
+    public EmployeeGrievanceType getEmployeeGrievanceType() {
+<span class="nc" id="L167">        return employeeGrievanceType;</span>
+    }
+
+    public void setEmployeeGrievanceType(EmployeeGrievanceType employeeGrievanceType) {
+<span class="nc" id="L171">        this.employeeGrievanceType = employeeGrievanceType;</span>
+<span class="nc" id="L172">    }</span>
+
+    public Employee getEmployee() {
+<span class="nc" id="L175">        return employee;</span>
+    }
+
+    public void setEmployee(Employee employee) {
+<span class="nc" id="L179">        this.employee = employee;</span>
+<span class="nc" id="L180">    }</span>
+
+    public EmployeeGrievanceStatus getStatus() {
+<span class="nc" id="L183">        return status;</span>
+    }
+
+    public void setStatus(EmployeeGrievanceStatus status) {
+<span class="nc" id="L187">        this.status = status;</span>
+<span class="nc" id="L188">    }</span>
+
+    public String getDetails() {
+<span class="nc" id="L191">        return details;</span>
+    }
+
+    public void setDetails(String details) {
+<span class="nc" id="L195">        this.details = details;</span>
+<span class="nc" id="L196">    }</span>
+
+    public String getGrievanceResolution() {
+<span class="nc" id="L199">        return grievanceResolution;</span>
+    }
+
+    public void setGrievanceResolution(String grievanceResolution) {
+<span class="nc" id="L203">        this.grievanceResolution = grievanceResolution;</span>
+<span class="nc" id="L204">    }</span>
+
+    public Set&lt;FileStoreMapper&gt; getGrievanceDocs() {
+<span class="nc" id="L207">        return grievanceDocs;</span>
+    }
+
+    public void setGrievanceDocs(Set&lt;FileStoreMapper&gt; grievanceDocs) {
+<span class="nc" id="L211">        this.grievanceDocs = grievanceDocs;</span>
+<span class="nc" id="L212">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

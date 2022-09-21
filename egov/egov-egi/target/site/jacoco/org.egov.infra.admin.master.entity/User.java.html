@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.entity</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.gson.annotations.Expose;
+import org.apache.commons.lang3.LocaleUtils;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.Address;
+import org.egov.infra.persistence.entity.enums.Gender;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.egov.infra.persistence.validator.annotation.CompositeUnique;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.egov.infra.validation.regex.Constants;
+import org.hibernate.envers.AuditJoinTable;
+import org.hibernate.envers.Audited;
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.SafeHtml;
+import org.joda.time.DateTime;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+
+import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
+
+@Entity
+@Table(name = &quot;eg_user&quot;)
+@Inheritance(strategy = InheritanceType.JOINED)
+@Cacheable
+@SequenceGenerator(name = User.SEQ_USER, sequenceName = User.SEQ_USER, allocationSize = 1)
+@Unique(fields = {&quot;username&quot;, &quot;pan&quot;, &quot;aadhaarNumber&quot;, &quot;emailId&quot;}, enableDfltMsg = true, isSuperclass = true)
+@CompositeUnique(fields = {&quot;type&quot;, &quot;mobileNumber&quot;}, enableDfltMsg = true, message = &quot;{user.exist.with.same.mobileno}&quot;)
+@JsonIgnoreProperties({&quot;createdBy&quot;, &quot;lastModifiedBy&quot;})
+public class User extends AbstractAuditable {
+    public static final String SEQ_USER = &quot;SEQ_EG_USER&quot;;
+    private static final long serialVersionUID = -2415368058955783970L;
+    @Expose
+    @Id
+    @GeneratedValue(generator = SEQ_USER, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @Column(name = &quot;username&quot;, unique = true)
+    @NotNull
+    @Length(min = 2, max = 64)
+    private String username;
+
+    @NotNull
+    @Length(min = 4, max = 64)
+    @Audited
+    private String password;
+
+    private String salutation;
+
+    @SafeHtml
+    @Length(min = 2, max = 64)
+    private String guardian;
+
+    @SafeHtml
+    @Length(min = 2, max = 64)
+    private String guardianRelation;
+
+    @NotNull
+    @SafeHtml
+    @Length(min = 2, max = 100)
+    @Audited
+    private String name;
+
+    @Enumerated(EnumType.ORDINAL)
+    private Gender gender;
+
+    @Pattern(regexp = Constants.MOBILE_NUM)
+    @SafeHtml
+    @Length(max = 15)
+    @Audited
+    private String mobileNumber;
+
+    @Email(regexp = Constants.EMAIL)
+    @SafeHtml
+    @Length(max = 128)
+    @Audited
+    private String emailId;
+
+    @SafeHtml
+    private String altContactNumber;
+
+    @SafeHtml
+    @Length(max = 10)
+    private String pan;
+
+    @SafeHtml
+    @Length(max = 20)
+    private String aadhaarNumber;
+
+<span class="nc" id="L151">    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)</span>
+    private List&lt;Address&gt; address = new ArrayList&lt;&gt;();
+
+    private boolean active;
+
+<span class="nc" id="L156">    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)</span>
+    @JoinTable(name = &quot;eg_userrole&quot;, joinColumns = @JoinColumn(name = &quot;userid&quot;), inverseJoinColumns = @JoinColumn(name = &quot;roleid&quot;))
+    @Audited(targetAuditMode = NOT_AUDITED)
+    @AuditJoinTable
+    private Set&lt;Role&gt; roles = new HashSet&lt;&gt;();
+
+    @Temporal(TemporalType.DATE)
+    private Date dob;
+
+<span class="nc" id="L165">    @NotNull</span>
+    private Date pwdExpiryDate = new Date();
+
+<span class="nc" id="L168">    @NotNull</span>
+    private String locale = &quot;en_IN&quot;;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type&quot;)
+    private UserType type;
+
+    private byte[] signature;
+
+    private boolean accountLocked;
+    
+    @Transient
+    private String uuid;
+
+<span class="nc" id="L182">    public User() {</span>
+        //Default constructor
+<span class="nc" id="L184">    }</span>
+
+<span class="nc" id="L186">    public User(UserType type) {</span>
+<span class="nc" id="L187">        this.type = type;</span>
+<span class="nc" id="L188">    }</span>
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L192">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L197">        this.id = id;</span>
+<span class="nc" id="L198">    }</span>
+
+    @JsonIgnore
+    public String getUsername() {
+<span class="nc" id="L202">        return username;</span>
+    }
+
+    public void setUsername(final String username) {
+<span class="nc" id="L206">        this.username = username;</span>
+<span class="nc" id="L207">    }</span>
+
+    @JsonIgnore
+    public String getPassword() {
+<span class="nc" id="L211">        return password;</span>
+    }
+
+    public void setPassword(final String password) {
+<span class="nc" id="L215">        this.password = password;</span>
+<span class="nc" id="L216">    }</span>
+
+    public String getSalutation() {
+<span class="nc" id="L219">        return salutation;</span>
+    }
+
+    public void setSalutation(final String salutation) {
+<span class="nc" id="L223">        this.salutation = salutation;</span>
+<span class="nc" id="L224">    }</span>
+
+    public String getName() {
+<span class="nc" id="L227">        return name;</span>
+    }
+
+    public void setName(final String name) {
+<span class="nc" id="L231">        this.name = name;</span>
+<span class="nc" id="L232">    }</span>
+
+    public Gender getGender() {
+<span class="nc" id="L235">        return gender;</span>
+    }
+
+    public void setGender(final Gender gender) {
+<span class="nc" id="L239">        this.gender = gender;</span>
+<span class="nc" id="L240">    }</span>
+
+    public String getMobileNumber() {
+<span class="nc" id="L243">        return mobileNumber;</span>
+    }
+
+    public void setMobileNumber(final String mobileNumber) {
+<span class="nc" id="L247">        this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L248">    }</span>
+
+    public String getEmailId() {
+<span class="nc" id="L251">        return emailId;</span>
+    }
+
+    public void setEmailId(final String emailId) {
+<span class="nc" id="L255">        this.emailId = emailId;</span>
+<span class="nc" id="L256">    }</span>
+
+    public String getAltContactNumber() {
+<span class="nc" id="L259">        return altContactNumber;</span>
+    }
+
+    public void setAltContactNumber(final String altContactNumber) {
+<span class="nc" id="L263">        this.altContactNumber = altContactNumber;</span>
+<span class="nc" id="L264">    }</span>
+
+    public String getPan() {
+<span class="nc" id="L267">        return pan;</span>
+    }
+
+    public void setPan(final String pan) {
+<span class="nc" id="L271">        this.pan = pan;</span>
+<span class="nc" id="L272">    }</span>
+
+    public String getAadhaarNumber() {
+<span class="nc" id="L275">        return aadhaarNumber;</span>
+    }
+
+    public void setAadhaarNumber(final String aadhaarNumber) {
+<span class="nc" id="L279">        this.aadhaarNumber = aadhaarNumber;</span>
+<span class="nc" id="L280">    }</span>
+
+    public List&lt;Address&gt; getAddress() {
+<span class="nc" id="L283">        return address;</span>
+    }
+
+    public void setAddress(final List&lt;Address&gt; address) {
+<span class="nc" id="L287">        this.address = address;</span>
+<span class="nc" id="L288">    }</span>
+
+    public void addAddress(final Address address) {
+<span class="nc" id="L291">        address.setUser(this);</span>
+<span class="nc" id="L292">        this.address.add(address);</span>
+<span class="nc" id="L293">    }</span>
+
+    public void removeAddress(final Address address) {
+<span class="nc" id="L296">        getAddress().remove(address);</span>
+<span class="nc" id="L297">    }</span>
+
+    public boolean isActive() {
+<span class="nc" id="L300">        return active;</span>
+    }
+
+    public void setActive(final boolean active) {
+<span class="nc" id="L304">        this.active = active;</span>
+<span class="nc" id="L305">    }</span>
+
+    public Set&lt;Role&gt; getRoles() {
+<span class="nc" id="L308">        return roles;</span>
+    }
+
+    public void setRoles(final Set&lt;Role&gt; roles) {
+<span class="nc" id="L312">        this.roles = roles;</span>
+<span class="nc" id="L313">    }</span>
+
+    public void addRole(final Role role) {
+<span class="nc" id="L316">        getRoles().add(role);</span>
+<span class="nc" id="L317">    }</span>
+
+    public void removeRole(final Role role) {
+<span class="nc" id="L320">        getRoles().remove(role);</span>
+<span class="nc" id="L321">    }</span>
+
+    public Date getDob() {
+<span class="nc" id="L324">        return dob;</span>
+    }
+
+    public void setDob(final Date dob) {
+<span class="nc" id="L328">        this.dob = dob;</span>
+<span class="nc" id="L329">    }</span>
+
+    public DateTime getPwdExpiryDate() {
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        return null == pwdExpiryDate ? null : new DateTime(pwdExpiryDate);</span>
+    }
+
+    public void setPwdExpiryDate(final Date pwdExpiryDate) {
+<span class="nc" id="L336">        this.pwdExpiryDate = pwdExpiryDate;</span>
+<span class="nc" id="L337">    }</span>
+
+    public String getLocale() {
+<span class="nc" id="L340">        return locale;</span>
+    }
+
+    public void setLocale(final String locale) {
+<span class="nc" id="L344">        this.locale = locale;</span>
+<span class="nc" id="L345">    }</span>
+
+    public Locale locale() {
+<span class="nc" id="L348">        return LocaleUtils.toLocale(locale);</span>
+    }
+
+    public UserType getType() {
+<span class="nc" id="L352">        return type;</span>
+    }
+
+    protected void setType(final UserType userType) {
+<span class="nc" id="L356">        type = userType;</span>
+<span class="nc" id="L357">    }</span>
+
+    public String getGuardian() {
+<span class="nc" id="L360">        return guardian;</span>
+    }
+
+    public void setGuardian(final String guardian) {
+<span class="nc" id="L364">        this.guardian = guardian;</span>
+<span class="nc" id="L365">    }</span>
+
+    public String getGuardianRelation() {
+<span class="nc" id="L368">        return guardianRelation;</span>
+    }
+
+    public void setGuardianRelation(final String guardianRelation) {
+<span class="nc" id="L372">        this.guardianRelation = guardianRelation;</span>
+<span class="nc" id="L373">    }</span>
+
+    @JsonIgnore
+    public byte[] getSignature() {
+<span class="nc" id="L377">        return signature;</span>
+    }
+
+    public void setSignature(byte[] signature) {
+<span class="nc" id="L381">        this.signature = signature;</span>
+<span class="nc" id="L382">    }</span>
+
+    public boolean isAccountLocked() {
+<span class="nc" id="L385">        return accountLocked;</span>
+    }
+
+    public void setAccountLocked(final boolean accountLocked) {
+<span class="nc" id="L389">        this.accountLocked = accountLocked;</span>
+<span class="nc" id="L390">    }</span>
+
+    public void updateNextPwdExpiryDate(Integer passwordExpireInDays) {
+<span class="nc" id="L393">        this.setPwdExpiryDate(new DateTime().plusDays(passwordExpireInDays).toDate());</span>
+<span class="nc" id="L394">    }</span>
+
+    public boolean hasRole(String roleName) {
+<span class="nc" id="L397">        return roles.parallelStream().map(Role::getName)</span>
+<span class="nc" id="L398">                .anyMatch(roleName::equals);</span>
+    }
+
+    public boolean hasAnyRole(String... roleName) {
+<span class="nc" id="L402">        List&lt;String&gt; roleNames = Arrays.asList(roleName);</span>
+<span class="nc" id="L403">        return roles.parallelStream()</span>
+<span class="nc" id="L404">                .anyMatch(role -&gt; roleNames.contains(role.getName()));</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L409" title="All 2 branches missed.">        if (this == o)</span>
+<span class="nc" id="L410">            return true;</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">        if (!(o instanceof User))</span>
+<span class="nc" id="L412">            return false;</span>
+<span class="nc" id="L413">        User user = (User) o;</span>
+<span class="nc" id="L414">        return Objects.equals(username, user.username);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L419">        return Objects.hash(username);</span>
+    }
+
+    public String getUuid() {
+<span class="nc" id="L423">        return uuid;</span>
+    }
+
+    public void setUuid(String uuid) {
+<span class="nc" id="L427">        this.uuid = uuid;</span>
+<span class="nc" id="L428">    }</span>
+   
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationConfigManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.utils</a> &gt; <span class="el_source">ApplicationConfigManager.java</span></div><h1>ApplicationConfigManager.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.microservice.utils;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Configuration
+<span class="nc" id="L60">@Setter</span>
+@Getter
+<span class="nc" id="L62">@NoArgsConstructor</span>
+public class ApplicationConfigManager {
+    @Value(&quot;${egov.hrms.service.endpoint:}&quot;)
+    private String egovHrmsSerHost;
+    @Value(&quot;${egov.accesscontrol.service.endpoint:}&quot;)
+    private String egovAccessControllSerHost;
+    @Value(&quot;${egov.hr.masters.service.endpoint:}&quot;)
+    private String egovHrMasterSerHost;
+    @Value(&quot;${egov.user.service.endpoint:}&quot;)
+    private String egovUserSerHost;
+    @Value(&quot;${egov.common.masters.endpoint:}&quot;)
+    private String egovCommonMasterSerHost;
+    @Value(&quot;${egov.billing.service.endpoint:}&quot;)
+<span class="nc" id="L75">    private String egovBillingSerHost;</span>
+    @Value(&quot;${egov.collection.service.endpoint:}&quot;)
+    private String egovCollSerHost;
+    @Value(&quot;${egov.egf.master.service.endpoint:}&quot;)
+    private String egovEgfMasterSerHost;
+    @Value(&quot;${egov.egf.instrument.service.endpoint:}&quot;)
+    private String egovEgfInstSerHost;
+    @Value(&quot;${egov.mdms.service.endpoint:}&quot;)
+    private String egovMdmsSerHost;
+    @Value(&quot;${egov.indexer.service.endpoint:}&quot;)
+    private String egovIndexerSerHost;
+    @Value(&quot;${egov.default.services.endpoint}&quot;)
+<span class="nc" id="L87">    private String egovSerHost;</span>
+	@Value(&quot;${egov.filestore.service.endpoint:}&quot;)
+    private String egovFileStoreSerHost;
+    @Value(&quot;${egov.services.filestore.service.upload.file:}&quot;)
+    private String egovFileStoreUploadFile;
+    @Value(&quot;${egov.services.filestore.service.download.file:}&quot;)
+    private String egovFileStoreDownloadFile;											 
+	
+    @Value(&quot;${egov.services.collection.service.payment.search:}&quot;)
+<span class="nc" id="L96">    private String collSerPaymentSearch;</span>
+    
+    @Value(&quot;${egov.services.collection.service.payment.searchnew}&quot;)
+<span class="nc" id="L99">    private String collSerPaymentSearchNew;</span>
+    
+    @Value(&quot;${egov.services.collection.service.payment.cancel:}&quot;)
+<span class="nc" id="L102">    private String collSerPaymentCancel;</span>
+    
+    @Value(&quot;${egov.services.collection.service.payment.create:}&quot;)
+<span class="nc" id="L105">    private String collSerPaymentCreate;</span>
+    
+    @Value(&quot;${egov.services.collection.service.payment.workflow:}&quot;)
+<span class="nc" id="L108">    private String collSerPaymentWorkflow;</span>
+    
+																	
+										   
+	
+    public String getEgovHrmsSerHost(){
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovHrmsSerHost) ? egovHrmsSerHost : egovSerHost; </span>
+    }
+    
+    public String getEgovAccessControllSerHost(){
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovAccessControllSerHost) ? egovAccessControllSerHost : egovSerHost; </span>
+    }
+    public String getEgovHrMasterSerHost(){
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovHrMasterSerHost) ? egovHrMasterSerHost : egovSerHost; </span>
+    }
+    public String getEgovUserSerHost(){
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovUserSerHost) ? egovUserSerHost : egovSerHost; </span>
+    }
+    public String getEgovCommonMasterSerHost(){
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovCommonMasterSerHost) ? egovCommonMasterSerHost : egovSerHost; </span>
+    }
+    public String getEegovBillingSerHost(){
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovBillingSerHost) ? egovBillingSerHost : egovSerHost; </span>
+    }
+    public String getEgovCollSerHost(){
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovCollSerHost) ? egovCollSerHost : egovSerHost; </span>
+    }
+    public String getEgovEgfMasterSerHost(){
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovEgfMasterSerHost) ? egovEgfMasterSerHost : egovSerHost; </span>
+    }
+    public String getEgovEgfInstSerHost(){
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovEgfInstSerHost) ? egovEgfInstSerHost : egovSerHost; </span>
+    }
+    public String getEgovMdmsSerHost(){
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovMdmsSerHost) ? egovMdmsSerHost : egovSerHost; </span>
+    }
+    public String getEgovIndexerSerHost(){
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovIndexerSerHost) ? egovIndexerSerHost : egovSerHost; </span>
+    }
+	public String getEgovFileStoreSerHost(){
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovFileStoreSerHost) ? egovFileStoreSerHost : egovSerHost; </span>
+    }
+    public String getEgovFileStoreUploadFile(){
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovFileStoreUploadFile) ? egovFileStoreUploadFile : egovSerHost; </span>
+    }
+    public String getEgovFileStoreDownloadFile(){
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        return StringUtils.isNotBlank(egovFileStoreDownloadFile) ? egovFileStoreDownloadFile : egovSerHost; </span>
+    }
+    
+    
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

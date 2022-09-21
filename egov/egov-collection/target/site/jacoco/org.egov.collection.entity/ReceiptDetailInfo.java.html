@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReceiptDetailInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">ReceiptDetailInfo.java</span></div><h1>ReceiptDetailInfo.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import org.egov.commons.Accountdetailtype;
+import org.egov.commons.CChartOfAccounts;
+
+import java.math.BigDecimal;
+
+/**
+ * Used By Miscellaneous Receipts and Challan to create account details, Rebate
+ * details, Subledger Details tables
+ */
+<span class="nc" id="L59">public class ReceiptDetailInfo {</span>
+    private Long functionIdDetail;
+    private String functionDetail;
+    private String glcodeIdDetail;
+    private String glcodeDetail;
+    private String accounthead;
+<span class="nc" id="L65">    private BigDecimal debitAmountDetail = BigDecimal.ZERO;</span>
+<span class="nc" id="L66">    private BigDecimal creditAmountDetail = BigDecimal.ZERO;</span>
+    private CChartOfAccounts glcode;
+    private Accountdetailtype detailType;
+    private String detailTypeName;
+    private Integer detailKeyId;
+    private String detailKey;
+    private String detailCode;
+<span class="nc" id="L73">    private BigDecimal amount = BigDecimal.ZERO;</span>
+    private String subledgerCode;
+    private Long financialYearId;
+    private String financialYearRange;
+
+    public Long getFunctionIdDetail() {
+<span class="nc" id="L79">        return functionIdDetail;</span>
+    }
+
+    public void setFunctionIdDetail(final Long functionIdDetail) {
+<span class="nc" id="L83">        this.functionIdDetail = functionIdDetail;</span>
+<span class="nc" id="L84">    }</span>
+
+    public String getFunctionDetail() {
+<span class="nc" id="L87">        return functionDetail;</span>
+    }
+
+    public void setFunctionDetail(final String functionDetail) {
+<span class="nc" id="L91">        this.functionDetail = functionDetail;</span>
+<span class="nc" id="L92">    }</span>
+
+    public String getGlcodeIdDetail() {
+<span class="nc" id="L95">        return glcodeIdDetail;</span>
+    }
+
+    public void setGlcodeIdDetail(final String glcodeIdDetail) {
+<span class="nc" id="L99">        this.glcodeIdDetail = glcodeIdDetail;</span>
+<span class="nc" id="L100">    }</span>
+
+    public String getGlcodeDetail() {
+<span class="nc" id="L103">        return glcodeDetail;</span>
+    }
+
+    public void setGlcodeDetail(final String glcodeDetail) {
+<span class="nc" id="L107">        this.glcodeDetail = glcodeDetail;</span>
+<span class="nc" id="L108">    }</span>
+
+    public String getAccounthead() {
+<span class="nc" id="L111">        return accounthead;</span>
+    }
+
+    public void setAccounthead(final String accounthead) {
+<span class="nc" id="L115">        this.accounthead = accounthead;</span>
+<span class="nc" id="L116">    }</span>
+
+    public BigDecimal getDebitAmountDetail() {
+<span class="nc" id="L119">        return debitAmountDetail;</span>
+    }
+
+    public void setDebitAmountDetail(final BigDecimal debitAmountDetail) {
+<span class="nc" id="L123">        this.debitAmountDetail = debitAmountDetail;</span>
+<span class="nc" id="L124">    }</span>
+
+    public BigDecimal getCreditAmountDetail() {
+<span class="nc" id="L127">        return creditAmountDetail;</span>
+    }
+
+    public void setCreditAmountDetail(final BigDecimal creditAmountDetail) {
+<span class="nc" id="L131">        this.creditAmountDetail = creditAmountDetail;</span>
+<span class="nc" id="L132">    }</span>
+
+    public CChartOfAccounts getGlcode() {
+<span class="nc" id="L135">        return glcode;</span>
+    }
+
+    public void setGlcode(final CChartOfAccounts glcode) {
+<span class="nc" id="L139">        this.glcode = glcode;</span>
+<span class="nc" id="L140">    }</span>
+
+    public Accountdetailtype getDetailType() {
+<span class="nc" id="L143">        return detailType;</span>
+    }
+
+    public void setDetailType(final Accountdetailtype detailType) {
+<span class="nc" id="L147">        this.detailType = detailType;</span>
+<span class="nc" id="L148">    }</span>
+
+    public String getDetailTypeName() {
+<span class="nc" id="L151">        return detailTypeName;</span>
+    }
+
+    public void setDetailTypeName(final String detailTypeName) {
+<span class="nc" id="L155">        this.detailTypeName = detailTypeName;</span>
+<span class="nc" id="L156">    }</span>
+
+    public Integer getDetailKeyId() {
+<span class="nc" id="L159">        return detailKeyId;</span>
+    }
+
+    public void setDetailKeyId(final Integer detailKeyId) {
+<span class="nc" id="L163">        this.detailKeyId = detailKeyId;</span>
+<span class="nc" id="L164">    }</span>
+
+    public String getDetailKey() {
+<span class="nc" id="L167">        return detailKey;</span>
+    }
+
+    public void setDetailKey(final String detailKey) {
+<span class="nc" id="L171">        this.detailKey = detailKey;</span>
+<span class="nc" id="L172">    }</span>
+
+    public String getDetailCode() {
+<span class="nc" id="L175">        return detailCode;</span>
+    }
+
+    public void setDetailCode(final String detailCode) {
+<span class="nc" id="L179">        this.detailCode = detailCode;</span>
+<span class="nc" id="L180">    }</span>
+
+    public BigDecimal getAmount() {
+<span class="nc" id="L183">        return amount;</span>
+    }
+
+    public void setAmount(final BigDecimal amount) {
+<span class="nc" id="L187">        this.amount = amount;</span>
+<span class="nc" id="L188">    }</span>
+
+    public String getSubledgerCode() {
+<span class="nc" id="L191">        return subledgerCode;</span>
+    }
+
+    public void setSubledgerCode(final String subledgerCode) {
+<span class="nc" id="L195">        this.subledgerCode = subledgerCode;</span>
+<span class="nc" id="L196">    }</span>
+
+    public Long getFinancialYearId() {
+<span class="nc" id="L199">        return financialYearId;</span>
+    }
+
+    public void setFinancialYearId(final Long financialYearId) {
+<span class="nc" id="L203">        this.financialYearId = financialYearId;</span>
+<span class="nc" id="L204">    }</span>
+
+    public String getFinancialYearRange() {
+<span class="nc" id="L207">        return financialYearRange;</span>
+    }
+
+    public void setFinancialYearRange(final String financialYearRange) {
+<span class="nc" id="L211">        this.financialYearRange = financialYearRange;</span>
+<span class="nc" id="L212">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

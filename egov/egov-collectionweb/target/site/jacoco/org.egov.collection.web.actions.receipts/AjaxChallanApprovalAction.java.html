@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AjaxChallanApprovalAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">AjaxChallanApprovalAction.java</span></div><h1>AjaxChallanApprovalAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.service.ReceiptHeaderService;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.pims.commons.Designation;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({
+        @Result(name = &quot;userList&quot;, location = &quot;ajaxChallanApproval-userList.jsp&quot;),
+        @Result(name = &quot;designationList&quot;, location = &quot;ajaxChallanApproval-designationList.jsp&quot;)
+})
+<span class="nc" id="L71">public class AjaxChallanApprovalAction extends BaseFormAction {</span>
+    private static final long serialVersionUID = 1L;
+    private static final String USERLIST = &quot;userList&quot;;
+    private static final String DESIGNATIONLIST = &quot;designationList&quot;;
+    private Integer designationId;
+    private Integer approverDeptId;
+    private Long receiptheaderId;
+<span class="nc" id="L78">    private List&lt;EmployeeView&gt; postionUserList = new ArrayList&lt;EmployeeView&gt;(0);</span>
+<span class="nc" id="L79">    private List&lt;Designation&gt; designationMasterList = new ArrayList&lt;Designation&gt;(0);</span>
+    private CollectionsUtil collectionsUtil;
+    private ReceiptHeaderService receiptHeaderService;
+
+    @Override
+    public Object getModel() {
+
+<span class="nc" id="L86">        return null;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxChallanApproval-positionUserList&quot;)
+    public String positionUserList() {
+<span class="nc bnc" id="L91" title="All 4 branches missed.">        if (designationId != null &amp;&amp; approverDeptId != null)</span>
+            try
+            {
+<span class="nc" id="L94">                postionUserList = collectionsUtil.getPositionBySearchParameters(null, designationId, approverDeptId, null, null,</span>
+<span class="nc" id="L95">                        new Date(), 0);</span>
+<span class="nc" id="L96">            } catch (final NoSuchObjectException e) {</span>
+<span class="nc" id="L97">                throw new ApplicationRuntimeException(&quot;Designation Postion not found&quot;, e);</span>
+<span class="nc" id="L98">            }</span>
+<span class="nc" id="L99">        return USERLIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxChallanApproval-approverDesignationList&quot;)
+    public String approverDesignationList() {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (approverDeptId != null)</span>
+<span class="nc" id="L106">            designationMasterList = collectionsUtil.getDesignationsAllowedForChallanApproval(approverDeptId);</span>
+
+<span class="nc" id="L108">        return DESIGNATIONLIST;</span>
+    }
+
+    /**
+     * @param designationId the designationId to set
+     */
+    public void setDesignationId(final Integer designationId) {
+<span class="nc" id="L115">        this.designationId = designationId;</span>
+<span class="nc" id="L116">    }</span>
+
+    /**
+     * @return the postionUserList
+     */
+    public List&lt;EmployeeView&gt; getPostionUserList() {
+<span class="nc" id="L122">        return postionUserList;</span>
+    }
+
+    /**
+     * @param collectionsUtil the collectionsUtil to set
+     */
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L129">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L130">    }</span>
+
+    /**
+     * @return the approverDeptId
+     */
+    public Integer getApproverDeptId() {
+<span class="nc" id="L136">        return approverDeptId;</span>
+    }
+
+    /**
+     * @param approverDeptId the approverDeptId to set
+     */
+    public void setApproverDeptId(final Integer approverDeptId) {
+<span class="nc" id="L143">        this.approverDeptId = approverDeptId;</span>
+<span class="nc" id="L144">    }</span>
+
+    /**
+     * @return the designationMasterList
+     */
+    public List&lt;Designation&gt; getDesignationMasterList() {
+<span class="nc" id="L150">        return designationMasterList;</span>
+    }
+
+    /**
+     * @param receiptHeaderService the receiptHeaderService to set
+     */
+    public void setReceiptHeaderService(final ReceiptHeaderService receiptHeaderService) {
+<span class="nc" id="L157">        this.receiptHeaderService = receiptHeaderService;</span>
+<span class="nc" id="L158">    }</span>
+
+    /**
+     * @return the receiptheaderId
+     */
+    public Long getReceiptheaderId() {
+<span class="nc" id="L164">        return receiptheaderId;</span>
+    }
+
+    /**
+     * @param receiptheaderId the receiptheaderId to set
+     */
+    public void setReceiptheaderId(final Long receiptheaderId) {
+<span class="nc" id="L171">        this.receiptheaderId = receiptheaderId;</span>
+<span class="nc" id="L172">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

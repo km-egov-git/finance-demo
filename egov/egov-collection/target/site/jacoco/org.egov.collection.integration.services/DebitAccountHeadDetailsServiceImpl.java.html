@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DebitAccountHeadDetailsServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.services</a> &gt; <span class="el_source">DebitAccountHeadDetailsServiceImpl.java</span></div><h1>DebitAccountHeadDetailsServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.services;
+
+import java.math.BigDecimal;
+
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.integration.models.BillAccountDetails.PURPOSE;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.infra.microservice.models.InstrumentAccountCode;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+
+<span class="nc" id="L61">public class DebitAccountHeadDetailsServiceImpl implements DebitAccountHeadDetailsService {</span>
+
+    protected MicroserviceUtils microserviceUtils;
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
+
+    public ReceiptDetail addDebitAccountHeadDetails(final BigDecimal debitAmount, final ReceiptHeader receiptHeader,
+            final BigDecimal chequeInstrumenttotal, final BigDecimal otherInstrumenttotal, final String instrumentType) {
+
+<span class="nc" id="L69">        final ReceiptDetail newReceiptDetail = new ReceiptDetail();</span>
+<span class="nc" id="L70">        newReceiptDetail.setPurpose(PURPOSE.OTHERS.toString());</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (chequeInstrumenttotal.toString() != null</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                &amp;&amp; !chequeInstrumenttotal.toString().trim().equals(CollectionConstants.ZERO_INT)</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">                &amp;&amp; !chequeInstrumenttotal.toString().trim().equals(CollectionConstants.ZERO_DOUBLE)) {</span>
+<span class="nc" id="L74">            InstrumentAccountCode ac = microserviceUtils</span>
+<span class="nc" id="L75">                    .getInstrumentAccountGlCodeByType(CollectionConstants.INSTRUMENTTYPE_NAME_CHEQUE);</span>
+<span class="nc" id="L76">            CChartOfAccounts coa = null;</span>
+<span class="nc bnc" id="L77" title="All 6 branches missed.">            if (ac != null &amp;&amp; ac.getGlcode() != null &amp;&amp; ac.getAccountCode().getGlcode() != null) {</span>
+<span class="nc" id="L78">                coa = chartOfAccountsHibernateDAO.getCChartOfAccountsByGlCode(ac.getGlcode());</span>
+            }
+<span class="nc" id="L80">            newReceiptDetail.setAccounthead(coa);</span>
+
+<span class="nc" id="L82">            newReceiptDetail.setDramount(debitAmount);</span>
+<span class="nc" id="L83">            newReceiptDetail.setCramount(BigDecimal.valueOf(0));</span>
+<span class="nc" id="L84">            newReceiptDetail.setReceiptHeader(receiptHeader);</span>
+<span class="nc" id="L85">            newReceiptDetail.setFunction(receiptHeader.getReceiptDetails().iterator().next().getFunction());</span>
+        }
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (otherInstrumenttotal.toString() != null</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                &amp;&amp; !otherInstrumenttotal.toString().trim().equals(CollectionConstants.ZERO_INT)</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                &amp;&amp; !otherInstrumenttotal.toString().trim().equals(CollectionConstants.ZERO_DOUBLE)) {</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CASH)) {</span>
+<span class="nc" id="L92">                InstrumentAccountCode ac = microserviceUtils</span>
+<span class="nc" id="L93">                        .getInstrumentAccountGlCodeByType(CollectionConstants.INSTRUMENTTYPE_NAME_CHEQUE);</span>
+<span class="nc" id="L94">                CChartOfAccounts coa = null;</span>
+<span class="nc bnc" id="L95" title="All 6 branches missed.">                if (ac != null &amp;&amp; ac.getGlcode() != null &amp;&amp; ac.getAccountCode().getGlcode() != null) {</span>
+<span class="nc" id="L96">                    coa = chartOfAccountsHibernateDAO.getCChartOfAccountsByGlCode(ac.getGlcode());</span>
+                }
+<span class="nc" id="L98">                newReceiptDetail.setAccounthead(coa);</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CARD)) {</span>
+<span class="nc" id="L100">                InstrumentAccountCode ac = microserviceUtils</span>
+<span class="nc" id="L101">                        .getInstrumentAccountGlCodeByType(CollectionConstants.INSTRUMENTTYPE_NAME_CARD);</span>
+<span class="nc" id="L102">                CChartOfAccounts coa = null;</span>
+<span class="nc bnc" id="L103" title="All 6 branches missed.">                if (ac != null &amp;&amp; ac.getGlcode() != null &amp;&amp; ac.getAccountCode().getGlcode() != null) {</span>
+<span class="nc" id="L104">                    coa = chartOfAccountsHibernateDAO.getCChartOfAccountsByGlCode(ac.getGlcode());</span>
+                }
+<span class="nc" id="L106">                newReceiptDetail.setAccounthead(coa);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">            } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_BANK))</span>
+<span class="nc" id="L108">                newReceiptDetail.setAccounthead(receiptHeader.getReceiptInstrument().iterator().next()</span>
+<span class="nc" id="L109">                        .getBankAccountId().getChartofaccounts());</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_ONLINE)) {</span>
+<span class="nc" id="L111">                InstrumentAccountCode ac = microserviceUtils</span>
+<span class="nc" id="L112">                        .getInstrumentAccountGlCodeByType(CollectionConstants.INSTRUMENTTYPE_ONLINE);</span>
+<span class="nc" id="L113">                CChartOfAccounts coa = null;</span>
+<span class="nc bnc" id="L114" title="All 6 branches missed.">                if (ac != null &amp;&amp; ac.getGlcode() != null &amp;&amp; ac.getAccountCode().getGlcode() != null) {</span>
+<span class="nc" id="L115">                    coa = chartOfAccountsHibernateDAO.getCChartOfAccountsByGlCode(ac.getGlcode());</span>
+                }
+<span class="nc" id="L117">                newReceiptDetail.setAccounthead(coa);</span>
+            }
+<span class="nc" id="L119">            newReceiptDetail.setDramount(debitAmount);</span>
+<span class="nc" id="L120">            newReceiptDetail.setCramount(BigDecimal.ZERO);</span>
+<span class="nc" id="L121">            newReceiptDetail.setReceiptHeader(receiptHeader);</span>
+<span class="nc" id="L122">            newReceiptDetail.setFunction(receiptHeader.getReceiptDetails().iterator().next().getFunction());</span>
+        }
+<span class="nc" id="L124">        return newReceiptDetail;</span>
+    }
+
+    public void setMicroserviceUtils(MicroserviceUtils microserviceUtils) {
+<span class="nc" id="L128">        this.microserviceUtils = microserviceUtils;</span>
+<span class="nc" id="L129">    }</span>
+
+    public void setChartOfAccountsHibernateDAO(ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO) {
+<span class="nc" id="L132">        this.chartOfAccountsHibernateDAO = chartOfAccountsHibernateDAO;</span>
+<span class="nc" id="L133">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseAtomReconcilation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">ResponseAtomReconcilation.java</span></div><h1>ResponseAtomReconcilation.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.models;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
+@XmlRootElement(name = &quot;VerifyOutput&quot;)
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = &quot;ResponseAtomReconcilation&quot;)
+<span class="nc" id="L59">public class ResponseAtomReconcilation {</span>
+    @XmlAttribute(name = &quot;MerchantID&quot;)
+    protected String merchantID;
+    @XmlAttribute(name = &quot;MerchantTxnID&quot;)
+    protected String merchantTxnID;
+    @XmlAttribute(name = &quot;AMT&quot;)
+    protected String amt;
+    @XmlAttribute(name = &quot;VERIFIED&quot;)
+    protected String verified;
+    @XmlAttribute(name = &quot;BID&quot;)
+    protected String bid;
+    @XmlAttribute
+    protected String bankname;
+    @XmlAttribute
+    protected String atomtxnId;
+    @XmlAttribute
+    protected String discriminator;
+    @XmlAttribute(name = &quot;CardNumber&quot;)
+    protected String cardNumber;
+    @XmlAttribute(name = &quot;surcharge&quot;)
+    protected String surcharge;
+    @XmlAttribute(name = &quot;TxnDate&quot;)
+    protected String txnDate;
+    @XmlAttribute(name = &quot;UDF9&quot;)
+    protected String udf9;
+    /**
+     * @return the bankname
+     */
+    public String getBankname() {
+<span class="nc" id="L88">            return bankname;</span>
+    }
+
+    /**
+     * @param bankname
+     *            the bankname to set
+     */
+    public void setBankname(String bankname) {
+<span class="nc" id="L96">            this.bankname = bankname;</span>
+<span class="nc" id="L97">    }</span>
+
+    /**
+     * @return the atomtxnId
+     */
+    public String getAtomtxnId() {
+<span class="nc" id="L103">            return atomtxnId;</span>
+    }
+
+    /**
+     * @param atomtxnId
+     *            the atomtxnId to set
+     */
+    public void setAtomtxnId(String atomtxnId) {
+<span class="nc" id="L111">            this.atomtxnId = atomtxnId;</span>
+<span class="nc" id="L112">    }</span>
+
+    /**
+     * @return the surcharge
+     */
+    public String getSurcharge() {
+<span class="nc" id="L118">            return surcharge;</span>
+    }
+
+    /**
+     * @param surcharge
+     *            the surcharge to set
+     */
+    public void setSurcharge(String surcharge) {
+<span class="nc" id="L126">            this.surcharge = surcharge;</span>
+<span class="nc" id="L127">    }</span>
+
+    /**
+     * @return the txnDate
+     */
+    public String getTxnDate() {
+<span class="nc" id="L133">            return txnDate;</span>
+    }
+
+    /**
+     * @param txnDate
+     *            the txnDate to set
+     */
+    public void setTxnDate(String txnDate) {
+<span class="nc" id="L141">            this.txnDate = txnDate;</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * @return the amt
+     */
+    public String getAmt() {
+<span class="nc" id="L148">            return amt;</span>
+    }
+
+    /**
+     * @param amt
+     *            the amt to set
+     */
+    public void setAmt(String amt) {
+<span class="nc" id="L156">            this.amt = amt;</span>
+<span class="nc" id="L157">    }</span>
+
+    /**
+     * @return the merchantID
+     */
+    public String getMerchantID() {
+<span class="nc" id="L163">            return merchantID;</span>
+    }
+
+    /**
+     * @param merchantID
+     *            the merchantID to set
+     */
+    public void setMerchantID(String merchantID) {
+<span class="nc" id="L171">            this.merchantID = merchantID;</span>
+<span class="nc" id="L172">    }</span>
+
+    /**
+     * @return the merchantTxnID
+     */
+    public String getMerchantTxnID() {
+<span class="nc" id="L178">            return merchantTxnID;</span>
+    }
+
+    /**
+     * @param merchantTxnID
+     *            the merchantTxnID to set
+     */
+    public void setMerchantTxnID(String merchantTxnID) {
+<span class="nc" id="L186">            this.merchantTxnID = merchantTxnID;</span>
+<span class="nc" id="L187">    }</span>
+
+    /**
+     * @return the verified
+     */
+    public String getVerified() {
+<span class="nc" id="L193">            return verified;</span>
+    }
+
+    /**
+     * @param verified
+     *            the verified to set
+     */
+    public void setVerified(String verified) {
+<span class="nc" id="L201">            this.verified = verified;</span>
+<span class="nc" id="L202">    }</span>
+
+    /**
+     * @return the bid
+     */
+    public String getBid() {
+<span class="nc" id="L208">            return bid;</span>
+    }
+
+    /**
+     * @param bid
+     *            the bid to set
+     */
+    public void setBid(String bid) {
+<span class="nc" id="L216">            this.bid = bid;</span>
+<span class="nc" id="L217">    }</span>
+
+    /**
+     * @return the cardNumber
+     */
+    public String getCardNumber() {
+<span class="nc" id="L223">            return cardNumber;</span>
+    }
+
+    /**
+     * @param cardNumber
+     *            the cardNumber to set
+     */
+    public void setCardNumber(String cardNumber) {
+<span class="nc" id="L231">            this.cardNumber = cardNumber;</span>
+<span class="nc" id="L232">    }</span>
+
+    public String getDiscriminator() {
+<span class="nc" id="L235">        return discriminator;</span>
+    }
+
+    public void setDiscriminator(String discriminator) {
+<span class="nc" id="L239">        this.discriminator = discriminator;</span>
+<span class="nc" id="L240">    }</span>
+
+    public String getUdf9() {
+<span class="nc" id="L243">        return udf9;</span>
+    }
+
+    public void setUdf9(String udf9) {
+<span class="nc" id="L247">        this.udf9 = udf9;</span>
+<span class="nc" id="L248">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

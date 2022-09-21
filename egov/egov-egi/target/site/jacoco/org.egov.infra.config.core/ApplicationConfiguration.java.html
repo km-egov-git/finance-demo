@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.core</a> &gt; <span class="el_source">ApplicationConfiguration.java</span></div><h1>ApplicationConfiguration.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.core;
+
+import org.egov.infra.filestore.service.FileStoreService;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.reporting.engine.jasper.JasperReportService;
+import org.egov.infra.web.rest.handler.RestErrorHandler;
+import org.egov.infra.web.rest.handler.RestTemplateLoggerInterceptor;
+import org.springframework.beans.factory.annotation.Autowire;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_COUNTRY_CODE_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_CURRENCY_CODE_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_CURRENCY_NAME_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_CURRENCY_NAME_SHORT_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_CURRENCY_SYMBOL_HEX_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_CURRENCY_SYMBOL_UTF8_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_DATE_PATTERN_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_DATE_TIME_PATTERN_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_ENCODING_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_LOCALE_KEY;
+import static org.egov.infra.config.core.LocalizationSettings.DEFAULT_TIME_ZONE_KEY;
+
+@Configuration
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+<span class="nc" id="L97">public class ApplicationConfiguration {</span>
+
+    @Resource(name = &quot;tenants&quot;)
+    private List&lt;String&gt; tenants;
+
+    @Autowired
+    private ApplicationContext context;
+
+    @Autowired
+    private EnvironmentSettings environmentSettings;
+
+    @Value(&quot;${filestoreservice.beanname}&quot;)
+    private String fileStoreServiceBeanName;
+
+    @Bean
+    public FileStoreService fileStoreService() {
+<span class="nc" id="L113">        return (FileStoreService) context.getBean(fileStoreServiceBeanName);</span>
+    }
+
+    @Bean
+    public LocaleResolver localeResolver () {
+<span class="nc" id="L118">        CookieLocaleResolver r = new CookieLocaleResolver();</span>
+<span class="nc" id="L119">        r.setDefaultLocale(Locale.US);</span>
+<span class="nc" id="L120">        r.setCookieName(&quot;locale&quot;);</span>
+<span class="nc" id="L121">        r.setCookiePath(&quot;/services/EGF/&quot;);</span>
+        //if set to -1, the cookie is deleted
+        // when browser shuts down
+<span class="nc" id="L124">        r.setCookieMaxAge(24*60*60);</span>
+<span class="nc" id="L125">        return r;</span>
+    }
+
+    @Bean(name = &quot;cities&quot;, autowire = Autowire.BY_NAME)
+    @DependsOn(value = &quot;tenants&quot;)
+    public List&lt;String&gt; cities() {
+<span class="nc" id="L131">        final List&lt;String&gt; cities = new ArrayList&lt;&gt;(tenants);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (!environmentSettings.devMode())</span>
+<span class="nc" id="L133">            cities.remove(environmentSettings.statewideSchemaName());</span>
+<span class="nc" id="L134">        return cities;</span>
+    }
+
+    @Bean
+    public LocalValidatorFactoryBean entityValidator() {
+<span class="nc" id="L139">        return new LocalValidatorFactoryBean();</span>
+    }
+
+    @Bean
+    public ReportService reportService() {
+<span class="nc" id="L144">        return new JasperReportService(10, 30);</span>
+    }
+
+    @PostConstruct
+    public void enhanceSystemProperties() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, ClassNotFoundException {
+<span class="nc" id="L149">        MethodInvokingFactoryBean methodInvokingFactoryBean = new MethodInvokingFactoryBean();</span>
+<span class="nc" id="L150">        methodInvokingFactoryBean.setTargetObject(System.getProperties());</span>
+<span class="nc" id="L151">        methodInvokingFactoryBean.setTargetMethod(&quot;putAll&quot;);</span>
+<span class="nc" id="L152">        Properties properties = new Properties();</span>
+<span class="nc" id="L153">        properties.setProperty(DEFAULT_TIME_ZONE_KEY, environmentSettings.getProperty(DEFAULT_TIME_ZONE_KEY));</span>
+<span class="nc" id="L154">        properties.setProperty(DEFAULT_COUNTRY_CODE_KEY, environmentSettings.getProperty(DEFAULT_COUNTRY_CODE_KEY));</span>
+<span class="nc" id="L155">        properties.setProperty(DEFAULT_CURRENCY_CODE_KEY, environmentSettings.getProperty(DEFAULT_CURRENCY_CODE_KEY));</span>
+<span class="nc" id="L156">        properties.setProperty(DEFAULT_CURRENCY_NAME_KEY, environmentSettings.getProperty(DEFAULT_CURRENCY_NAME_KEY));</span>
+<span class="nc" id="L157">        properties.setProperty(DEFAULT_CURRENCY_NAME_SHORT_KEY, environmentSettings.getProperty(DEFAULT_CURRENCY_NAME_SHORT_KEY));</span>
+<span class="nc" id="L158">        properties.setProperty(DEFAULT_CURRENCY_SYMBOL_UTF8_KEY, environmentSettings.getProperty(DEFAULT_CURRENCY_SYMBOL_UTF8_KEY));</span>
+<span class="nc" id="L159">        properties.setProperty(DEFAULT_CURRENCY_SYMBOL_HEX_KEY, environmentSettings.getProperty(DEFAULT_CURRENCY_SYMBOL_HEX_KEY));</span>
+<span class="nc" id="L160">        properties.setProperty(DEFAULT_LOCALE_KEY, environmentSettings.getProperty(DEFAULT_LOCALE_KEY));</span>
+<span class="nc" id="L161">        properties.setProperty(DEFAULT_ENCODING_KEY, environmentSettings.getProperty(DEFAULT_ENCODING_KEY));</span>
+<span class="nc" id="L162">        properties.setProperty(DEFAULT_DATE_PATTERN_KEY, environmentSettings.getProperty(DEFAULT_DATE_PATTERN_KEY));</span>
+<span class="nc" id="L163">        properties.setProperty(DEFAULT_DATE_TIME_PATTERN_KEY, environmentSettings.getProperty(DEFAULT_DATE_TIME_PATTERN_KEY));</span>
+<span class="nc" id="L164">        methodInvokingFactoryBean.setArguments(new Object[]{properties});</span>
+<span class="nc" id="L165">        methodInvokingFactoryBean.prepare();</span>
+<span class="nc" id="L166">        methodInvokingFactoryBean.invoke();</span>
+<span class="nc" id="L167">    }</span>
+    
+    @Bean
+    public RestTemplate restTemplate(){
+<span class="nc" id="L171">        System.out.println(&quot;************************* RestTemplate object created*********************&quot;);</span>
+
+<span class="nc" id="L173">        SimpleClientHttpRequestFactory simpleCFactory = new  SimpleClientHttpRequestFactory();</span>
+<span class="nc" id="L174">        simpleCFactory.setOutputStreaming(false);</span>
+        
+<span class="nc" id="L176">        ClientHttpRequestFactory factory = new BufferingClientHttpRequestFactory(simpleCFactory);</span>
+<span class="nc" id="L177">        RestTemplate restTemplate = new RestTemplate(factory);</span>
+<span class="nc" id="L178">        restTemplate.setInterceptors(Collections.singletonList(new RestTemplateLoggerInterceptor()));</span>
+<span class="nc" id="L179">        restTemplate.setErrorHandler(new RestErrorHandler());</span>
+<span class="nc" id="L180">        return restTemplate;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

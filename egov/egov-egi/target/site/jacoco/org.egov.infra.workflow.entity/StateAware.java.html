@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StateAware.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.entity</a> &gt; <span class="el_source">StateAware.java</span></div><h1>StateAware.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.entity;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.utils.JsonUtils;
+import org.egov.infra.workflow.entity.State.StateStatus;
+import org.egov.infra.workflow.entity.contract.StateInfoBuilder;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@MappedSuperclass
+<span class="nc" id="L79">public abstract class StateAware extends AbstractAuditable {</span>
+    private static final long serialVersionUID = 5776408218810221246L;
+
+    @ManyToOne(targetEntity = State.class, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = &quot;STATE_ID&quot;)
+    private State state;
+
+    @Transient
+    @JsonIgnore
+    private Transition transition;
+
+    /**
+     * Need to overridden by the implementing class to give details about the State &lt;I&gt;Used by Inbox to fetch the State Detail at
+     * runtime&lt;/I&gt;
+     *
+     * @return String Detail
+     */
+    public abstract String getStateDetails();
+
+    /**
+     * To set the Group Link, Any State Aware Object which needs Grouping should override this method
+     **/
+    public String myLinkId() {
+<span class="nc" id="L102">        return getId().toString();</span>
+    }
+
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    public State getState() {
+<span class="nc" id="L107">        return state;</span>
+    }
+
+    public void setState(State state) {
+<span class="nc" id="L111">        this.state = state;</span>
+<span class="nc" id="L112">    }</span>
+
+    public final State getCurrentState() {
+<span class="nc" id="L115">        return getState();</span>
+    }
+
+    public final Long currentAssignee() {
+<span class="nc" id="L119">        return getState().getOwnerPosition();</span>
+    }
+
+    public final Long previousAssignee() {
+<span class="nc" id="L123">        return getState().getPreviousOwner();</span>
+    }
+
+    public final List&lt;StateHistory&gt; getStateHistory() {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        return state == null ? Collections.emptyList() : new LinkedList(getState().getHistory());</span>
+    }
+
+    public final String getStateType() {
+<span class="nc" id="L131">        return this.getClass().getSimpleName();</span>
+    }
+
+    public &lt;S&gt; S extraInfoAs(Class&lt;S&gt; type) {
+<span class="nc" id="L135">        return state.extraInfoAs(type);</span>
+    }
+
+    public final boolean transitionInitialized() {
+<span class="nc bnc" id="L139" title="All 4 branches missed.">        return hasState() &amp;&amp; getCurrentState().isNew();</span>
+    }
+
+    public final boolean transitionCompleted() {
+<span class="nc bnc" id="L143" title="All 4 branches missed.">        return hasState() &amp;&amp; getCurrentState().isEnded();</span>
+    }
+
+    public final boolean transitionInprogress() {
+<span class="nc bnc" id="L147" title="All 6 branches missed.">        return hasState() &amp;&amp; (transitionInitialized() || getCurrentState().isInprogress());</span>
+    }
+
+    public final boolean hasState() {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        return getCurrentState() != null;</span>
+    }
+
+    public final Transition transition() {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (this.transition == null)</span>
+<span class="nc" id="L156">            this.transition = new Transition();</span>
+<span class="nc" id="L157">        return this.transition;</span>
+    }
+
+    public final void changeProcessOwner(Long position) {
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (transitionInprogress())</span>
+<span class="nc" id="L162">            this.state.setOwnerPosition(position);</span>
+<span class="nc" id="L163">    }</span>
+
+    public final void changeProcessInitiator(Long position) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (transitionInprogress())</span>
+<span class="nc" id="L167">            this.state.setInitiatorPosition(position);</span>
+<span class="nc" id="L168">    }</span>
+
+    protected StateInfoBuilder buildStateInfo() {
+<span class="nc" id="L171">        return new StateInfoBuilder().task(this.getState().getNatureOfTask()).itemDetails(this.getStateDetails())</span>
+<span class="nc" id="L172">                .status(getCurrentState().getStatus().name()).refDate(this.getCreatedDate())</span>
+<span class="nc" id="L173">                .sender(this.getState().getSenderName()).senderPhoneno(this.getState().getExtraInfo());</span>
+    }
+
+    public String getStateInfoJson() {
+<span class="nc" id="L177">        return this.buildStateInfo().toJson();</span>
+    }
+
+<span class="nc" id="L180">    public final class Transition implements Serializable {</span>
+        private static final long serialVersionUID = -6035435855091367838L;
+        private boolean transitionInitiated;
+
+        private void checkinTransition() {
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (transitionInitiated)</span>
+<span class="nc" id="L186">                throw new ApplicationRuntimeException(&quot;Calling multiple transitions not supported&quot;);</span>
+<span class="nc" id="L187">            transitionInitiated = true;</span>
+<span class="nc" id="L188">        }</span>
+
+        private void checkTransitionStatus() {
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if (!transitionInitiated)</span>
+<span class="nc" id="L192">                throw new ApplicationRuntimeException(&quot;Use start|progress|end API before setting values&quot;);</span>
+<span class="nc" id="L193">        }</span>
+
+        public final Transition start() {
+<span class="nc" id="L196">            checkinTransition();</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            if (hasState())</span>
+<span class="nc" id="L198">                throw new ApplicationRuntimeException(&quot;Transition already started.&quot;);</span>
+            else {
+<span class="nc" id="L200">                setState(new State());</span>
+<span class="nc" id="L201">                state.setType(getStateType());</span>
+<span class="nc" id="L202">                state.setStatus(StateStatus.STARTED);</span>
+<span class="nc" id="L203">                state.setValue(State.DEFAULT_STATE_VALUE_CREATED);</span>
+<span class="nc" id="L204">                state.setComments(State.DEFAULT_STATE_VALUE_CREATED);</span>
+            }
+<span class="nc" id="L206">            return this;</span>
+        }
+
+        public final Transition startNext() {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            if (state == null)</span>
+<span class="nc" id="L211">                throw new ApplicationRuntimeException(&quot;Transition never started, use start() instead&quot;);</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">            if (!transitionCompleted())</span>
+<span class="nc" id="L213">                throw new ApplicationRuntimeException(</span>
+                        &quot;Transition can not be started, end the current transition first&quot;);
+<span class="nc" id="L215">            State previousState = state;</span>
+<span class="nc" id="L216">            state = null;</span>
+<span class="nc" id="L217">            start();</span>
+<span class="nc" id="L218">            state.setPreviousStateRef(previousState);</span>
+<span class="nc" id="L219">            return this;</span>
+        }
+
+        public final Transition progress() {
+<span class="nc" id="L223">            Long previousOwner = state.getOwnerPosition();</span>
+<span class="nc" id="L224">            progressWithStateCopy();</span>
+<span class="nc" id="L225">            resetState();</span>
+<span class="nc" id="L226">            state.setPreviousOwner(previousOwner);</span>
+<span class="nc" id="L227">            return this;</span>
+        }
+
+        public final Transition progressWithStateCopy() {
+<span class="nc" id="L231">            checkinTransition();</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">            if (transitionCompleted())</span>
+<span class="nc" id="L233">                throw new ApplicationRuntimeException(&quot;Transition already ended&quot;);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">            if (hasState()) {</span>
+<span class="nc" id="L235">                state.addStateHistory(new StateHistory(state));</span>
+<span class="nc" id="L236">                state.setPreviousOwner(state.getOwnerPosition());</span>
+<span class="nc" id="L237">                state.setStatus(StateStatus.INPROGRESS);</span>
+            }
+<span class="nc" id="L239">            return this;</span>
+        }
+
+        public final Transition end() {
+<span class="nc" id="L243">            checkinTransition();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">            if (transitionCompleted())</span>
+<span class="nc" id="L245">                throw new ApplicationRuntimeException(&quot;Transition already ended&quot;);</span>
+            else {
+<span class="nc" id="L247">                state.addStateHistory(new StateHistory(state));</span>
+<span class="nc" id="L248">                state.setValue(State.DEFAULT_STATE_VALUE_CLOSED);</span>
+<span class="nc" id="L249">                state.setStatus(StateStatus.ENDED);</span>
+<span class="nc" id="L250">                state.setComments(State.DEFAULT_STATE_VALUE_CLOSED);</span>
+            }
+<span class="nc" id="L252">            return this;</span>
+        }
+
+        public final Transition reopen() {
+<span class="nc" id="L256">            checkinTransition();</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (transitionCompleted()) {</span>
+<span class="nc" id="L258">                state.addStateHistory(new StateHistory(state));</span>
+<span class="nc" id="L259">                state.setPreviousOwner(state.getOwnerPosition());</span>
+<span class="nc" id="L260">                state.setValue(State.STATE_REOPENED);</span>
+<span class="nc" id="L261">                state.setStatus(StateStatus.INPROGRESS);</span>
+            } else
+<span class="nc" id="L263">                throw new ApplicationRuntimeException(</span>
+                        &quot;Transition can not be reopened, end the current transition first&quot;);
+<span class="nc" id="L265">            return this;</span>
+        }
+
+        public final Transition withOwner(Long owner) {
+<span class="nc" id="L269">            checkTransitionStatus();</span>
+<span class="nc" id="L270">            state.setOwnerPosition(owner);</span>
+<span class="nc" id="L271">            return this;</span>
+        }
+
+        public final Transition withOwner(Object owner) {
+<span class="nc" id="L275">            checkTransitionStatus();</span>
+<span class="nc" id="L276">            state.setOwnerPosition(this.getLongValue(owner, &quot;getId&quot;));</span>
+<span class="nc" id="L277">            return this;</span>
+        }
+        
+        public final Transition withOwnerName(String ownerName) {
+<span class="nc" id="L281">            state.setOwnerName(ownerName);</span>
+<span class="nc" id="L282">            return this;</span>
+        }
+
+        public final Transition withInitiator(Object owner) {
+<span class="nc" id="L286">            checkTransitionStatus();</span>
+<span class="nc" id="L287">            state.setInitiatorPosition(this.getLongValue(owner, &quot;getId&quot;));</span>
+<span class="nc" id="L288">            return this;</span>
+        }
+        
+        public final Transition withInitiator(Long owner) {
+<span class="nc" id="L292">            checkTransitionStatus();</span>
+<span class="nc" id="L293">            state.setInitiatorPosition(owner);</span>
+<span class="nc" id="L294">            return this;</span>
+        }
+
+        public final Transition withStateValue(String currentStateValue) {
+<span class="nc" id="L298">            checkTransitionStatus();</span>
+<span class="nc" id="L299">            state.setValue(currentStateValue);</span>
+<span class="nc" id="L300">            return this;</span>
+        }
+
+        public final Transition withNextAction(String nextAction) {
+<span class="nc" id="L304">            checkTransitionStatus();</span>
+<span class="nc" id="L305">            state.setNextAction(nextAction);</span>
+<span class="nc" id="L306">            return this;</span>
+        }
+
+        public final Transition withComments(String comments) {
+<span class="nc" id="L310">            checkTransitionStatus();</span>
+<span class="nc" id="L311">            state.setComments(comments);</span>
+<span class="nc" id="L312">            return this;</span>
+        }
+
+        public final Transition withNatureOfTask(String natureOfTask) {
+<span class="nc" id="L316">            checkTransitionStatus();</span>
+<span class="nc" id="L317">            state.setNatureOfTask(natureOfTask);</span>
+<span class="nc" id="L318">            return this;</span>
+        }
+
+        public final Transition withExtraInfo(String extraInfo) {
+<span class="nc" id="L322">            checkTransitionStatus();</span>
+<span class="nc" id="L323">            state.setExtraInfo(extraInfo);</span>
+<span class="nc" id="L324">            return this;</span>
+        }
+
+        public final Transition withExtraInfo(Object extraInfo) {
+<span class="nc" id="L328">            checkTransitionStatus();</span>
+<span class="nc" id="L329">            state.setExtraInfo(JsonUtils.toJSON(extraInfo));</span>
+<span class="nc" id="L330">            return this;</span>
+        }
+
+        public final Transition withDateInfo(Date dateInfo) {
+<span class="nc" id="L334">            checkTransitionStatus();</span>
+<span class="nc" id="L335">            state.setDateInfo(dateInfo);</span>
+<span class="nc" id="L336">            return this;</span>
+        }
+
+        public final Transition withExtraDateInfo(Date extraDateInfo) {
+<span class="nc" id="L340">            checkTransitionStatus();</span>
+<span class="nc" id="L341">            state.setExtraDateInfo(extraDateInfo);</span>
+<span class="nc" id="L342">            return this;</span>
+        }
+
+        public final Transition withSenderName(String senderName) {
+<span class="nc" id="L346">            checkTransitionStatus();</span>
+<span class="nc" id="L347">            state.setSenderName(senderName);</span>
+<span class="nc" id="L348">            return this;</span>
+        }
+
+        public final Transition withCreatedBy(long id) {
+<span class="nc" id="L352">            checkTransitionStatus();</span>
+<span class="nc" id="L353">            state.setCreatedBy(id);</span>
+<span class="nc" id="L354">            return this;</span>
+        }
+        
+        public final Transition withCreatedDate(Date date) {
+<span class="nc" id="L358">            checkTransitionStatus();</span>
+<span class="nc" id="L359">            state.setCreatedDate(date);</span>
+<span class="nc" id="L360">            state.setLastModifiedDate(date);</span>
+<span class="nc" id="L361">            return this;</span>
+        }
+
+        public final Transition withtLastModifiedBy(long id) {
+<span class="nc" id="L365">            checkTransitionStatus();</span>
+<span class="nc" id="L366">            state.setLastModifiedBy(id);</span>
+<span class="nc" id="L367">            return this;</span>
+        }
+
+        private void resetState() {
+<span class="nc" id="L371">            state.setComments(EMPTY);</span>
+<span class="nc" id="L372">            state.setDateInfo(null);</span>
+<span class="nc" id="L373">            state.setExtraDateInfo(null);</span>
+<span class="nc" id="L374">            state.setExtraInfo(EMPTY);</span>
+<span class="nc" id="L375">            state.setNextAction(EMPTY);</span>
+<span class="nc" id="L376">            state.setValue(EMPTY);</span>
+<span class="nc" id="L377">            state.setSenderName(EMPTY);</span>
+<span class="nc" id="L378">            state.setNatureOfTask(EMPTY);</span>
+<span class="nc" id="L379">            state.setOwnerUser(null);</span>
+<span class="nc" id="L380">            state.setOwnerPosition(null);</span>
+<span class="nc" id="L381">            state.setInitiatorPosition(null);</span>
+<span class="nc" id="L382">        }</span>
+
+        private Long getLongValue(Object obj, String methodName) {
+
+<span class="nc" id="L386">            Method[] methods = obj.getClass().getMethods();</span>
+<span class="nc" id="L387">            Object value = 0;</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">            for (Method method : methods) {</span>
+                try {
+<span class="nc bnc" id="L390" title="All 2 branches missed.">                    if (method.getName().equalsIgnoreCase(methodName)) {</span>
+<span class="nc" id="L391">                        value = method.invoke(obj);</span>
+                    }
+<span class="nc" id="L393">                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {</span>
+<span class="nc" id="L394">                    e.printStackTrace();</span>
+<span class="nc" id="L395">                }</span>
+            }
+<span class="nc" id="L397">            return (long) value;</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

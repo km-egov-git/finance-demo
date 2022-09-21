@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Address.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.persistence.entity</a> &gt; <span class="el_source">Address.java</span></div><h1>Address.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.persistence.entity;
+
+import com.google.gson.annotations.Expose;
+import org.apache.commons.lang3.StringUtils;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.persistence.entity.enums.AddressType;
+import org.hibernate.validator.constraints.SafeHtml;
+
+import javax.persistence.*;
+
+import static org.egov.infra.persistence.entity.Address.SEQ_ADDRESS;
+
+@Entity
+@Table(name = &quot;eg_address&quot;)
+@Inheritance(strategy = InheritanceType.JOINED)
+@SequenceGenerator(name = SEQ_ADDRESS, sequenceName = SEQ_ADDRESS, allocationSize = 1)
+@Cacheable
+<span class="nc" id="L66">public abstract class Address extends AbstractPersistable&lt;Long&gt; {</span>
+
+    public static final String SEQ_ADDRESS = &quot;seq_eg_address&quot;;
+    private static final long serialVersionUID = 4842889134725565148L;
+    @Expose
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = SEQ_ADDRESS)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;userid&quot;)
+    private User user;
+
+    @SafeHtml
+    private String houseNoBldgApt;
+
+    @SafeHtml
+    private String streetRoadLine;
+
+    @SafeHtml
+    private String landmark;
+
+    @SafeHtml
+    private String areaLocalitySector;
+
+    @SafeHtml
+    private String cityTownVillage;
+
+    @SafeHtml
+    private String district;
+
+    @SafeHtml
+    private String subdistrict;
+
+    @SafeHtml
+    private String postOffice;
+
+    @SafeHtml
+    private String state;
+
+    @SafeHtml
+    private String country;
+
+    @SafeHtml
+    private String pinCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type&quot;)
+    private AddressType type;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L118">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L123">        this.id = id;</span>
+<span class="nc" id="L124">    }</span>
+
+    public String getHouseNoBldgApt() {
+<span class="nc" id="L127">        return houseNoBldgApt;</span>
+    }
+
+    public void setHouseNoBldgApt(final String houseNoBldgApt) {
+<span class="nc" id="L131">        this.houseNoBldgApt = houseNoBldgApt;</span>
+<span class="nc" id="L132">    }</span>
+
+    public String getStreetRoadLine() {
+<span class="nc" id="L135">        return streetRoadLine;</span>
+    }
+
+    public void setStreetRoadLine(final String streetRoadLine) {
+<span class="nc" id="L139">        this.streetRoadLine = streetRoadLine;</span>
+<span class="nc" id="L140">    }</span>
+
+    public String getLandmark() {
+<span class="nc" id="L143">        return landmark;</span>
+    }
+
+    public void setLandmark(final String landmark) {
+<span class="nc" id="L147">        this.landmark = landmark;</span>
+<span class="nc" id="L148">    }</span>
+
+    public String getAreaLocalitySector() {
+<span class="nc" id="L151">        return areaLocalitySector;</span>
+    }
+
+    public void setAreaLocalitySector(final String areaLocalitySector) {
+<span class="nc" id="L155">        this.areaLocalitySector = areaLocalitySector;</span>
+<span class="nc" id="L156">    }</span>
+
+    public String getCityTownVillage() {
+<span class="nc" id="L159">        return cityTownVillage;</span>
+    }
+
+    public void setCityTownVillage(final String cityTownVillage) {
+<span class="nc" id="L163">        this.cityTownVillage = cityTownVillage;</span>
+<span class="nc" id="L164">    }</span>
+
+    public String getDistrict() {
+<span class="nc" id="L167">        return district;</span>
+    }
+
+    public void setDistrict(final String district) {
+<span class="nc" id="L171">        this.district = district;</span>
+<span class="nc" id="L172">    }</span>
+
+    public String getSubdistrict() {
+<span class="nc" id="L175">        return subdistrict;</span>
+    }
+
+    public void setSubdistrict(final String subdistrict) {
+<span class="nc" id="L179">        this.subdistrict = subdistrict;</span>
+<span class="nc" id="L180">    }</span>
+
+    public String getPostOffice() {
+<span class="nc" id="L183">        return postOffice;</span>
+    }
+
+    public void setPostOffice(final String postOffice) {
+<span class="nc" id="L187">        this.postOffice = postOffice;</span>
+<span class="nc" id="L188">    }</span>
+
+    public String getState() {
+<span class="nc" id="L191">        return state;</span>
+    }
+
+    public void setState(final String state) {
+<span class="nc" id="L195">        this.state = state;</span>
+<span class="nc" id="L196">    }</span>
+
+    public String getCountry() {
+<span class="nc" id="L199">        return country;</span>
+    }
+
+    public void setCountry(final String country) {
+<span class="nc" id="L203">        this.country = country;</span>
+<span class="nc" id="L204">    }</span>
+
+    public String getPinCode() {
+<span class="nc" id="L207">        return pinCode;</span>
+    }
+
+    public void setPinCode(final String pinCode) {
+<span class="nc" id="L211">        this.pinCode = pinCode;</span>
+<span class="nc" id="L212">    }</span>
+
+    public AddressType getType() {
+<span class="nc" id="L215">        return type;</span>
+    }
+
+    public void setType(final AddressType type) {
+<span class="nc" id="L219">        this.type = type;</span>
+<span class="nc" id="L220">    }</span>
+
+    public User getUser() {
+<span class="nc" id="L223">        return user;</span>
+    }
+
+    public void setUser(final User user) {
+<span class="nc" id="L227">        this.user = user;</span>
+<span class="nc" id="L228">    }</span>
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L232">        final int prime = 31;</span>
+<span class="nc" id="L233">        int result = 1;</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        result = prime * result + (id == null ? 0 : id.hashCode());</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        result = prime * result + (type == null ? 0 : type.hashCode());</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">        result = prime * result + (user == null ? 0 : user.hashCode());</span>
+<span class="nc" id="L237">        return result;</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (this == obj)</span>
+<span class="nc" id="L243">            return true;</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (obj == null)</span>
+<span class="nc" id="L245">            return false;</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (getClass() != obj.getClass())</span>
+<span class="nc" id="L247">            return false;</span>
+<span class="nc" id="L248">        final Address other = (Address) obj;</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        if (id == null) {</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">            if (other.id != null)</span>
+<span class="nc" id="L251">                return false;</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        } else if (!id.equals(other.id))</span>
+<span class="nc" id="L253">            return false;</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (type != other.type)</span>
+<span class="nc" id="L255">            return false;</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (other.user != null)</span>
+<span class="nc" id="L258">                return false;</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        } else if (!user.equals(other.user))</span>
+<span class="nc" id="L260">            return false;</span>
+<span class="nc" id="L261">        return true;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L266">        StringBuilder builder = new StringBuilder();</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        if (StringUtils.isNotBlank(houseNoBldgApt))</span>
+<span class="nc" id="L268">            builder.append(StringUtils.trim(houseNoBldgApt)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (StringUtils.isNotBlank(areaLocalitySector))</span>
+<span class="nc" id="L270">            builder.append(StringUtils.trim(areaLocalitySector)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        if (StringUtils.isNotBlank(streetRoadLine))</span>
+<span class="nc" id="L272">            builder.append(StringUtils.trim(streetRoadLine)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">        if (StringUtils.isNotBlank(landmark))</span>
+<span class="nc" id="L274">            builder.append(StringUtils.trim(landmark)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        if (StringUtils.isNotBlank(cityTownVillage))</span>
+<span class="nc" id="L276">            builder.append(StringUtils.trim(cityTownVillage)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        if (StringUtils.isNotBlank(postOffice))</span>
+<span class="nc" id="L278">            builder.append(StringUtils.trim(postOffice)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">        if (StringUtils.isNotBlank(subdistrict))</span>
+<span class="nc" id="L280">            builder.append(StringUtils.trim(subdistrict)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (StringUtils.isNotBlank(district))</span>
+<span class="nc" id="L282">            builder.append(StringUtils.trim(district)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        if (StringUtils.isNotBlank(state))</span>
+<span class="nc" id="L284">            builder.append(StringUtils.trim(state)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        if (StringUtils.isNotBlank(country))</span>
+<span class="nc" id="L286">            builder.append(StringUtils.trim(country)).append(&quot;, &quot;);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (StringUtils.isNotBlank(pinCode))</span>
+<span class="nc" id="L288">            builder.append(&quot;PIN : &quot;).append(pinCode);</span>
+<span class="nc" id="L289">        return builder.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

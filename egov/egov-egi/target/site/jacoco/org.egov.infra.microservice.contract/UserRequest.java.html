@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.contract</a> &gt; <span class="el_source">UserRequest.java</span></div><h1>UserRequest.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.infra.microservice.contract;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.egov.infra.persistence.entity.enums.UserType;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class UserRequest {
+
+    private Long id;
+    private String userName;
+    private String salutation;
+    private String name;
+    private String gender;
+    private String mobileNumber;
+    private String emailId;
+    private String altContactNumber;
+    private String pan;
+    private String aadhaarNumber;
+    private String permanentAddress;
+    private String permanentCity;
+    private String permanentPinCode;
+    private String correspondenceAddress;
+    private String correspondenceCity;
+    private String correspondencePinCode;
+    private Boolean active;
+    private String locale;
+    private UserType type;
+    private Boolean accountLocked;
+    private String fatherOrHusbandName;
+    private String signature;
+    private String bloodGroup;
+    private String photo;
+    private String identificationMark;
+    private Long createdBy;
+    private String password;
+    private String otpReference;
+    private Long lastModifiedBy;
+    private String tenantId;
+    private List&lt;RoleRequest&gt; roles;
+
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;, timezone = &quot;IST&quot;)
+    private Date createdDate;
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;, timezone = &quot;IST&quot;)
+    private Date lastModifiedDate;
+    @JsonFormat(pattern = &quot;MM/dd/YYYY&quot;)
+    private Date dob;
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;, timezone = &quot;IST&quot;)
+    private Date pwdExpiryDate;
+
+<span class="nc" id="L102">    public UserRequest() {</span>
+<span class="nc" id="L103">    }</span>
+
+<span class="nc" id="L105">    public UserRequest(final org.egov.infra.admin.master.entity.User user, final String tenantId) {</span>
+
+<span class="nc" id="L107">        id = user.getId();</span>
+<span class="nc" id="L108">        userName = user.getUsername();</span>
+<span class="nc" id="L109">        salutation = user.getSalutation();</span>
+<span class="nc" id="L110">        name = user.getName();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        gender = user.getGender() != null ? user.getGender().toString() : null;</span>
+<span class="nc" id="L112">        mobileNumber = user.getMobileNumber();</span>
+<span class="nc" id="L113">        emailId = user.getEmailId();</span>
+<span class="nc" id="L114">        altContactNumber = user.getAltContactNumber();</span>
+<span class="nc" id="L115">        pan = user.getPan();</span>
+<span class="nc" id="L116">        aadhaarNumber = user.getAadhaarNumber();</span>
+<span class="nc" id="L117">        active = user.isActive();</span>
+<span class="nc" id="L118">        dob = user.getDob();</span>
+<span class="nc" id="L119">        password = user.getPassword();</span>
+<span class="nc" id="L120">        pwdExpiryDate = user.getPwdExpiryDate().toDate();</span>
+<span class="nc" id="L121">        locale = user.getLocale();</span>
+<span class="nc" id="L122">        type = user.getType();</span>
+<span class="nc" id="L123">        accountLocked = user.isAccountLocked();</span>
+<span class="nc" id="L124">        createdBy = user.getCreatedBy() ;</span>
+<span class="nc" id="L125">        createdDate = user.getCreatedDate();</span>
+<span class="nc" id="L126">        lastModifiedBy = user.getLastModifiedBy() ;</span>
+<span class="nc" id="L127">        lastModifiedDate = user.getLastModifiedDate();</span>
+<span class="nc" id="L128">        this.tenantId = tenantId;</span>
+<span class="nc" id="L129">        roles = convertRoleEntitiesToContract(user.getRoles());</span>
+<span class="nc" id="L130">    }</span>
+
+    private List&lt;RoleRequest&gt; convertRoleEntitiesToContract(final Set&lt;org.egov.infra.admin.master.entity.Role&gt; domainRoles) {
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (domainRoles == null)</span>
+<span class="nc" id="L134">            return new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L135">        return domainRoles.stream().map(RoleRequest::new).collect(Collectors.toList());</span>
+    }
+
+    public Long getId() {
+<span class="nc" id="L139">        return id;</span>
+    }
+
+    public String getUserName() {
+<span class="nc" id="L143">        return userName;</span>
+    }
+
+    public String getSalutation() {
+<span class="nc" id="L147">        return salutation;</span>
+    }
+
+    public String getName() {
+<span class="nc" id="L151">        return name;</span>
+    }
+
+    public String getGender() {
+<span class="nc" id="L155">        return gender;</span>
+    }
+
+    public String getMobileNumber() {
+<span class="nc" id="L159">        return mobileNumber;</span>
+    }
+
+    public String getEmailId() {
+<span class="nc" id="L163">        return emailId;</span>
+    }
+
+    public String getAltContactNumber() {
+<span class="nc" id="L167">        return altContactNumber;</span>
+    }
+
+    public String getPan() {
+<span class="nc" id="L171">        return pan;</span>
+    }
+
+    public String getAadhaarNumber() {
+<span class="nc" id="L175">        return aadhaarNumber;</span>
+    }
+
+    public String getPermanentAddress() {
+<span class="nc" id="L179">        return permanentAddress;</span>
+    }
+
+    public String getPermanentCity() {
+<span class="nc" id="L183">        return permanentCity;</span>
+    }
+
+    public String getPermanentPinCode() {
+<span class="nc" id="L187">        return permanentPinCode;</span>
+    }
+
+    public String getCorrespondenceAddress() {
+<span class="nc" id="L191">        return correspondenceAddress;</span>
+    }
+
+    public String getCorrespondenceCity() {
+<span class="nc" id="L195">        return correspondenceCity;</span>
+    }
+
+    public String getCorrespondencePinCode() {
+<span class="nc" id="L199">        return correspondencePinCode;</span>
+    }
+
+    public Boolean getActive() {
+<span class="nc" id="L203">        return active;</span>
+    }
+
+    public String getLocale() {
+<span class="nc" id="L207">        return locale;</span>
+    }
+
+    public UserType getType() {
+<span class="nc" id="L211">        return type;</span>
+    }
+
+    public Boolean getAccountLocked() {
+<span class="nc" id="L215">        return accountLocked;</span>
+    }
+
+    public String getFatherOrHusbandName() {
+<span class="nc" id="L219">        return fatherOrHusbandName;</span>
+    }
+
+    public String getSignature() {
+<span class="nc" id="L223">        return signature;</span>
+    }
+
+    public String getBloodGroup() {
+<span class="nc" id="L227">        return bloodGroup;</span>
+    }
+
+    public String getPhoto() {
+<span class="nc" id="L231">        return photo;</span>
+    }
+
+    public String getIdentificationMark() {
+<span class="nc" id="L235">        return identificationMark;</span>
+    }
+
+    public Long getCreatedBy() {
+<span class="nc" id="L239">        return createdBy;</span>
+    }
+
+    public String getPassword() {
+<span class="nc" id="L243">        return password;</span>
+    }
+
+    public String getOtpReference() {
+<span class="nc" id="L247">        return otpReference;</span>
+    }
+
+    public Long getLastModifiedBy() {
+<span class="nc" id="L251">        return lastModifiedBy;</span>
+    }
+
+    public String getTenantId() {
+<span class="nc" id="L255">        return tenantId;</span>
+    }
+
+    public List&lt;RoleRequest&gt; getRoles() {
+<span class="nc" id="L259">        return roles;</span>
+    }
+
+    public Date getCreatedDate() {
+<span class="nc" id="L263">        return createdDate;</span>
+    }
+
+    public Date getLastModifiedDate() {
+<span class="nc" id="L267">        return lastModifiedDate;</span>
+    }
+
+    public Date getDob() {
+<span class="nc" id="L271">        return dob;</span>
+    }
+
+    public Date getPwdExpiryDate() {
+<span class="nc" id="L275">        return pwdExpiryDate;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

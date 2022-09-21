@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Feature.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.entity</a> &gt; <span class="el_source">Feature.java</span></div><h1>Feature.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.entity;
+
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.envers.AuditJoinTable;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import java.util.Set;
+
+import static org.egov.infra.admin.master.entity.Feature.SEQ_FEATURE;
+import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
+
+@Entity
+@Table(name = &quot;eg_feature&quot;)
+@SequenceGenerator(name = SEQ_FEATURE, sequenceName = SEQ_FEATURE, allocationSize = 1)
+@Unique(fields = &quot;name&quot;, enableDfltMsg = true)
+@Audited
+<span class="nc" id="L81">public class Feature extends AbstractPersistable&lt;Long&gt; {</span>
+
+    public static final String SEQ_FEATURE = &quot;SEQ_EG_FEATURE&quot;;
+    private static final long serialVersionUID = -5308237250026445794L;
+    @Id
+    @GeneratedValue(generator = SEQ_FEATURE, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @NotAudited
+    private String name;
+
+    @NotAudited
+    private String description;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;module&quot;)
+    @NotAudited
+    private Module module;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = &quot;eg_feature_action&quot;, joinColumns = @JoinColumn(name = &quot;feature&quot;), inverseJoinColumns = @JoinColumn(name = &quot;action&quot;))
+    @Fetch(FetchMode.JOIN)
+    @NotAudited
+    private Set&lt;Action&gt; actions;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = &quot;eg_feature_role&quot;, joinColumns = @JoinColumn(name = &quot;feature&quot;), inverseJoinColumns = @JoinColumn(name = &quot;role&quot;))
+    @Fetch(FetchMode.JOIN)
+    @Audited(targetAuditMode = NOT_AUDITED)
+    @AuditJoinTable
+    private Set&lt;Role&gt; roles;
+
+    private boolean enabled;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L117">        return id;</span>
+    }
+
+    @Override
+    protected void setId(final Long id) {
+<span class="nc" id="L122">        this.id = id;</span>
+<span class="nc" id="L123">    }</span>
+
+    public String getName() {
+<span class="nc" id="L126">        return name;</span>
+    }
+
+    public void setName(final String name) {
+<span class="nc" id="L130">        this.name = name;</span>
+<span class="nc" id="L131">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L134">        return description;</span>
+    }
+
+    public void setDescription(final String description) {
+<span class="nc" id="L138">        this.description = description;</span>
+<span class="nc" id="L139">    }</span>
+
+    public Module getModule() {
+<span class="nc" id="L142">        return module;</span>
+    }
+
+    public void setModule(final Module module) {
+<span class="nc" id="L146">        this.module = module;</span>
+<span class="nc" id="L147">    }</span>
+
+    public Set&lt;Action&gt; getActions() {
+<span class="nc" id="L150">        return actions;</span>
+    }
+
+    public void setActions(final Set&lt;Action&gt; actions) {
+<span class="nc" id="L154">        this.actions = actions;</span>
+<span class="nc" id="L155">    }</span>
+
+    public Set&lt;Role&gt; getRoles() {
+<span class="nc" id="L158">        return roles;</span>
+    }
+
+    public void setRoles(final Set&lt;Role&gt; roles) {
+<span class="nc" id="L162">        this.roles = roles;</span>
+<span class="nc" id="L163">    }</span>
+
+    public boolean isEnabled() {
+<span class="nc" id="L166">        return enabled;</span>
+    }
+
+    public void setEnabled(final boolean enabled) {
+<span class="nc" id="L170">        this.enabled = enabled;</span>
+<span class="nc" id="L171">    }</span>
+
+    public boolean hasRole(Role role) {
+<span class="nc" id="L174">        return this.roles.contains(role);</span>
+    }
+
+    public void addRole(Role role) {
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (!hasRole(role))</span>
+<span class="nc" id="L179">            this.getRoles().add(role);</span>
+<span class="nc" id="L180">    }</span>
+
+    public void removeRole(Role role) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (hasRole(role))</span>
+<span class="nc" id="L184">            this.getRoles().remove(role);</span>
+<span class="nc" id="L185">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

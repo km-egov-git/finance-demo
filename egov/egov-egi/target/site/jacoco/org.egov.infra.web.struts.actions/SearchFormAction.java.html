@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchFormAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.struts.actions</a> &gt; <span class="el_source">SearchFormAction.java</span></div><h1>SearchFormAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.struts.actions;
+
+import org.displaytag.pagination.PaginatedList;
+import org.displaytag.properties.SortOrderEnum;
+import org.displaytag.tags.TableTagParameters;
+import org.displaytag.util.ParamEncoder;
+import org.egov.infra.persistence.utils.Page;
+import org.egov.infra.web.utils.EgovPaginatedList;
+import org.egov.infstr.search.SearchQuery;
+
+/**
+ * Generic Search Form Action. Can be extended by any action class that intends to provide 
+ * search functionality. Supports pagination. Extending class must implement the method {@link SearchFormAction#prepareQuery()} 
+ * that prepares the query based on criteria entered by user, and returns an object of {@link SearchQuery}
+ */
+<span class="nc" id="L64">public abstract class SearchFormAction extends BaseFormAction {</span>
+	private static final long serialVersionUID = 1L;
+	private static final String SORT_ORDER_ASCENDING = &quot;asc&quot;;
+	private static final String SORT_ORDER_DESCENDING = &quot;desc&quot;;
+	private static final String DEFAULT_TABLE_ID = &quot;currentRowObject&quot;;
+
+	/**
+	 * The page number of search results
+	 */
+<span class="nc" id="L73">	private int pageNum = 1;</span>
+
+	/**
+	 * Number of records to be printed in one page (default = 20)
+	 */
+<span class="nc" id="L78">	private int pageSize = 20;</span>
+
+	/**
+	 * In case of &quot;export&quot;, display tag encodes some request parameters. 
+	 * This encoder is used to get the encoded names of the parameters so that their values can be fetched.
+	 */
+<span class="nc" id="L84">	private ParamEncoder paramEncoder = new ParamEncoder(DEFAULT_TABLE_ID);</span>
+
+	private String sortField;
+<span class="nc" id="L87">	private SortOrderEnum sortOrder = SortOrderEnum.ASCENDING;</span>
+	private SearchQuery searchQuery;
+	protected PaginatedList searchResult;
+
+	/**
+	 * Sets the display tag table id. This is used to create the param encoder. 
+	 * The param encoder is used to fetch data from encoded request parameters. 
+	 * The request parameters related to display tag are encoded in case 
+	 * the attribute &quot;export&quot; is set to true in the &quot;display:table&quot; tag.
+	 * @param tableId The id of the display tag table (in &quot;display:table&quot; tag)
+	 */
+	public void setTableId(final String tableId) {
+<span class="nc" id="L99">		this.paramEncoder = new ParamEncoder(tableId);</span>
+<span class="nc" id="L100">	}</span>
+
+	/**
+	 * @param pageNum the page number to set
+	 */
+	public void setPage(final int pageNum) {
+<span class="nc" id="L106">		this.pageNum = pageNum;</span>
+<span class="nc" id="L107">	}</span>
+
+	/**
+	 * @return the current page number
+	 */
+	public int getPage() {
+<span class="nc" id="L113">		return this.pageNum;</span>
+	}
+
+	/**
+	 * @param pageSize the pageSize to set
+	 */
+	public void setPageSize(final int pageSize) {
+<span class="nc" id="L120">		this.pageSize = pageSize;</span>
+<span class="nc" id="L121">	}</span>
+
+	/**
+	 * @return the pageSize
+	 */
+	public int getPageSize() {
+<span class="nc" id="L127">		return this.pageSize;</span>
+	}
+
+	/**
+	 * @return Field on which data is to be sorted
+	 */
+	public String getSort() {
+<span class="nc" id="L134">		return this.sortField;</span>
+	}
+
+	/**
+	 * @param sortField Field on which data is to be sorted
+	 */
+	public void setSort(final String sortField) {
+<span class="nc" id="L141">		this.sortField = sortField;</span>
+<span class="nc" id="L142">	}</span>
+
+	/**
+	 * @return Sort order (asc/desc)
+	 */
+	public String getSortDir() {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		return this.sortOrder == SortOrderEnum.ASCENDING ? SORT_ORDER_ASCENDING : SORT_ORDER_DESCENDING;</span>
+	}
+
+	/**
+	 * @param sortDir Sort order (asc/desc)
+	 */
+	public void setSortDir(final String sortDir) {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		this.sortOrder = sortDir.equals(SORT_ORDER_ASCENDING) ? SortOrderEnum.ASCENDING : SortOrderEnum.DESCENDING;</span>
+<span class="nc" id="L156">	}</span>
+
+	/**
+	 * @param sortDir Sort order (asc/desc)
+	 */
+	public void setDir(final String sortDir) {
+<span class="nc" id="L162">		setSortDir(sortDir);</span>
+<span class="nc" id="L163">	}</span>
+
+	/**
+	 * @return Sort order (asc/desc)
+	 */
+	public String getDir() {
+<span class="nc" id="L169">		return getSortDir();</span>
+	}
+
+	/**
+	 * @return the search result
+	 */
+	public PaginatedList getSearchResult() {
+<span class="nc" id="L176">		return this.searchResult;</span>
+	}
+
+	/**
+	 * @param sortField the field on which data is to be sorted. 
+	 * This will be same as the value of &quot;property&quot; attribute in display:column 
+	 * tag (when sortable=true and user clicks on the column to sort it). 
+	 * In case no sorting is required, this parameter will be passed as null.
+	 * @param sortOrder the sort order (asc/desc)
+	 * @return the query to be used for fetching the search results.
+	 */
+	public abstract SearchQuery prepareQuery(String sortField, String sortOrder);
+
+	/**
+	 * Checks if we are in &quot;export mode&quot;. If yes, pagination will NOT be performed and the 
+	 * &lt;code&gt;search&lt;/code&gt; method will fetch ALL the records for given filter criteria.
+	 * @return true if user is trying to &quot;export&quot; the search results to a file, else false.
+	 */
+	private boolean isExportMode() {
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		return this.parameters.get(this.paramEncoder.encodeParameterName(TableTagParameters.PARAMETER_EXPORTTYPE)) != null;</span>
+	}
+
+	/**
+	 * The Search action method. This will internally call the method 
+	 * {@link SearchFormAction#prepareQuery()} to get the query to be executed. 
+	 * It then executes the query and creates the paginated search result.
+	 * @return success
+	 */
+	public String search() {
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		if (this.searchQuery == null) {</span>
+<span class="nc" id="L206">			this.searchQuery = prepareQuery(this.sortField, getSortDir());</span>
+		}
+
+		// do not perform pagination in case user is trying
+		// to export the search results to a file
+<span class="nc bnc" id="L211" title="All 2 branches missed.">		if (isExportMode()) {</span>
+<span class="nc" id="L212">			this.pageSize = -1;</span>
+<span class="nc" id="L213">			this.pageNum = 1;</span>
+		}
+
+<span class="nc" id="L216">		final Page resultPage = this.searchQuery.getPage(this.persistenceService, this.pageNum, this.pageSize);</span>
+<span class="nc" id="L217">		final int searchCount = this.searchQuery.getCount(this.persistenceService);</span>
+<span class="nc" id="L218">		this.searchResult = new EgovPaginatedList(resultPage, searchCount, this.sortField, this.sortOrder);</span>
+
+<span class="nc" id="L220">		return SUCCESS;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

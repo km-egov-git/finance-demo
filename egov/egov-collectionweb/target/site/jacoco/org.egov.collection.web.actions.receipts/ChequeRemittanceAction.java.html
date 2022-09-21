@@ -1,0 +1,1061 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChequeRemittanceAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">ChequeRemittanceAction.java</span></div><h1>ChequeRemittanceAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2018  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.web.actions.receipts;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.apache.struts2.dispatcher.multipart.MultiPartRequestWrapper;
+import org.apache.struts2.dispatcher.multipart.UploadedFile;
+import org.apache.struts2.interceptor.validation.SkipValidation;
+import org.displaytag.pagination.PaginatedList;
+import org.egov.collection.bean.ReceiptBean;
+import org.egov.collection.bean.SubDivison;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.CollectionBankRemittanceReport;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.service.RemittanceServiceImpl;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.infra.microservice.models.RemitancePOJO;
+import org.egov.infra.persistence.utils.Page;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.CFinancialYear;
+import org.egov.commons.DocumentUploads;
+import org.egov.commons.dao.BankaccountHibernateDAO;
+import org.egov.commons.dao.FinancialYearDAO;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.microservice.models.BankAccountServiceMapping;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.web.utils.EgovPaginatedList;
+import org.egov.infstr.utils.EgovMasterDataCaching;
+import org.egov.model.bills.DocumentUpload;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@Results({
+        @Result(name = BankRemittanceAction.NEW, location = &quot;chequeRemittance-new.jsp&quot;),
+        @Result(name = BankRemittanceAction.PRINT_BANK_CHALLAN, type = &quot;redirectAction&quot;, location = &quot;remittanceStatementReport-printChequeBankChallan.action&quot;, params = {
+                &quot;namespace&quot;, &quot;/reports&quot;, &quot;totalCashAmount&quot;, &quot;${totalCashAmount}&quot;, &quot;totalChequeAmount&quot;,
+                &quot;${totalChequeAmount}&quot;, &quot;bank&quot;, &quot;${bank}&quot;, &quot;bankAccount&quot;, &quot;${bankAccount}&quot;, &quot;remittanceDate&quot;,
+                &quot;${remittanceDate}&quot; }),
+        @Result(name = BankRemittanceAction.INDEX, location = &quot;bankRemittance-index.jsp&quot;) })
+@ParentPackage(&quot;egov&quot;)
+<span class="nc" id="L118">public class ChequeRemittanceAction extends BaseFormAction {</span>
+    protected static final String PRINT_BANK_CHALLAN = &quot;printBankChallan&quot;;
+    private static final long serialVersionUID = 1L;
+<span class="nc" id="L121">    private static final Logger LOGGER = Logger.getLogger(ChequeRemittanceAction.class);</span>
+    private static final String BANK_ACCOUNT_NUMBER_QUERY = &quot;select distinct ba.accountnumber from BANKACCOUNT ba where ba.accountnumber =:accountNumberId&quot;;
+<span class="nc" id="L123">    private static final String SERVICE_QUERY = new StringBuilder()</span>
+<span class="nc" id="L124">            .append(&quot;select distinct sd.code as servicecode from &quot;)</span>
+<span class="nc" id="L125">            .append(&quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd where &quot;)</span>
+<span class="nc" id="L126">            .append(&quot;asm.servicedetails=sd.ID and asm.bankaccount= :accountNumberId&quot;).toString();</span>
+<span class="nc" id="L127">    private static final String FUND_QUERY = new StringBuilder()</span>
+<span class="nc" id="L128">            .append(&quot;select fd.code as fundcode from BANKACCOUNT ba,FUND fd&quot;)</span>
+<span class="nc" id="L129">            .append(&quot; where fd.ID=ba.FUNDID and ba.accountnumber= :accountNumberId&quot;).toString();</span>
+<span class="nc" id="L130">    private transient List&lt;HashMap&lt;String, Object&gt;&gt; paramList = null;</span>
+<span class="nc" id="L131">    private final ReceiptHeader receiptHeaderIntsance = new ReceiptHeader();</span>
+<span class="nc" id="L132">    private List&lt;ReceiptHeader&gt; remittedReceiptHeaderList = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L133">    private List&lt;ReceiptBean&gt; remittedReceiptList = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L134">    private List&lt;ReceiptBean&gt; receiptBeanList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L135">    private List resultListNew = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L136">	private List resultListFinal = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L137">    private List&lt;ReceiptBean&gt; finalBeanList = new ArrayList&lt;&gt;();</span>
+    private String[] serviceNameArray;
+    private String[] totalCashAmountArray;
+    private String[] totalChequeAmountArray;
+    private String[] totalCardAmountArray;
+    private String[] receiptDateArray;
+    private String[] receiptNumberArray;
+    private String[] fundCodeArray;
+    private String[] departmentCodeArray;
+    private String[] instrumentIdArray;
+    private String accountNumberId;
+    private transient CollectionsUtil collectionsUtil;
+    private Integer branchId;
+    private static final String ACCOUNT_NUMBER_LIST = &quot;accountNumberList&quot;;
+<span class="nc" id="L151">    private Boolean isListData = false;</span>
+    // Added for Manual Work Flow
+    private Integer positionUser;
+    private Integer designationId;
+    private Date remittanceDate;
+    private String narration;
+    private String deptIdnew;
+	private String functionNew;
+	private String subdivisonNew;
+	private File[] file; // added abhishek
+	private String[] fileContentType; // added abhishek
+	private String[] fileFileName; // added abhishek
+<span class="nc" id="L163">	private List&lt;DocumentUpload&gt; documentDetail = new ArrayList&lt;&gt;(); // added abhishek</span>
+    @Autowired
+    private transient FinancialYearDAO financialYearDAO;
+    @Autowired
+    private transient BankaccountHibernateDAO bankaccountHibernateDAO;
+
+    private Double totalCashAmount;
+    private Double totalChequeAmount;
+    private List&lt;CollectionBankRemittanceReport&gt; bankRemittanceList;
+    private String bank;
+    private String bankAccount;
+<span class="nc" id="L174">    private Boolean showCardAndOnlineColumn = false;</span>
+<span class="nc" id="L175">    private Boolean showRemittanceDate = false;</span>
+    private Long finYearId;
+    private RemittanceServiceImpl remittanceService;
+    private String voucherNumber;
+    private Date fromDate;
+    private Date toDate;
+    private String remittanceAmount;
+    private static final String REMITTANCE_LIST = &quot;REMITTANCE_LIST&quot;;
+    private Boolean isBankCollectionRemitter;
+    private String remitAccountNumber;
+    @Autowired
+    protected EgovMasterDataCaching masterDataCache;
+    @Autowired
+	private AppConfigValueService appConfigValuesService;
+<span class="nc" id="L189">    private String deptId = &quot;-1&quot;;</span>
+<span class="nc" id="L190">	private String collectedBy=&quot;&quot;;</span>
+<span class="nc" id="L191">    private String modeOfPayment=&quot;&quot;;</span>
+    private String searchAmount;
+<span class="nc" id="L193">    private String subdivison=&quot;-1&quot;;</span>
+    private String receiptNo;
+<span class="nc" id="L195">    private List&lt;RemitancePOJO&gt; remittance = new ArrayList&lt;&gt;();</span>
+
+    //Property added by prasanta
+<span class="nc" id="L198">    Map&lt;String,String&gt; serviceCategoryNames = new HashMap&lt;String,String&gt;();</span>
+<span class="nc" id="L199">    Map&lt;String,Map&lt;String,String&gt;&gt; serviceTypeMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L200">    private String serviceTypeId = null;</span>
+<span class="nc" id="L201">    private int pageNum = 1;</span>
+<span class="nc" id="L202">	private int pageSize = 20;</span>
+	protected PaginatedList searchResult;
+	
+	public void setPage(final int pageNum) {
+<span class="nc" id="L206">		this.pageNum = pageNum;</span>
+<span class="nc" id="L207">	}</span>
+
+	/**
+	 * @return the current page number
+	 */
+	public int getPage() {
+<span class="nc" id="L213">		return this.pageNum;</span>
+	}
+	
+	public int getPageNum() {
+<span class="nc" id="L217">		return pageNum;</span>
+	}
+
+	public void setPageNum(int pageNum) {
+<span class="nc" id="L221">		this.pageNum = pageNum;</span>
+<span class="nc" id="L222">	}</span>
+
+	public void setPageSize(int pageSize) {
+<span class="nc" id="L225">		this.pageSize = pageSize;</span>
+<span class="nc" id="L226">	}</span>
+    /**
+     * @param collectionsUtil the collectionsUtil to set
+     */
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L231">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L232">    }</span>
+
+    public String getDeptId() {
+<span class="nc" id="L235">		return deptId;</span>
+	}
+
+	public void setDeptId(String deptId) {
+<span class="nc" id="L239">		this.deptId = deptId;</span>
+<span class="nc" id="L240">	}</span>
+
+	public String getCollectedBy() {
+<span class="nc" id="L243">		return collectedBy;</span>
+	}
+
+	public void setCollectedBy(String collectedBy) {
+<span class="nc" id="L247">		this.collectedBy = collectedBy;</span>
+<span class="nc" id="L248">	}</span>
+
+	public String getModeOfPayment() {
+<span class="nc" id="L251">		return modeOfPayment;</span>
+	}
+
+	public void setModeOfPayment(String modeOfPayment) {
+<span class="nc" id="L255">		this.modeOfPayment = modeOfPayment;</span>
+<span class="nc" id="L256">	}</span>
+
+	public String getSearchAmount() {
+<span class="nc" id="L259">		return searchAmount;</span>
+	}
+
+	public void setSearchAmount(String searchAmount) {
+<span class="nc" id="L263">		this.searchAmount = searchAmount;</span>
+<span class="nc" id="L264">	}</span>
+
+	public String getReceiptNo() {
+<span class="nc" id="L267">		return receiptNo;</span>
+	}
+
+	public void setReceiptNo(String receiptNo) {
+<span class="nc" id="L271">		this.receiptNo = receiptNo;</span>
+<span class="nc" id="L272">	}</span>
+
+	@Action(value = &quot;/receipts/chequeRemittance-newform&quot;)
+    @SkipValidation
+    public String newform() {
+<span class="nc" id="L277">        populateRemittanceList();</span>
+<span class="nc" id="L278">        return NEW;</span>
+    }
+
+    private void populateRemittanceList() {
+<span class="nc" id="L282">        Map&lt;String, BankAccountServiceMapping&gt; accountNumberMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        for (BankAccountServiceMapping basm : microserviceUtils.getBankAcntServiceMappings()) {</span>
+<span class="nc" id="L284">            accountNumberMap.put(basm.getBankAccount(), basm);</span>
+<span class="nc" id="L285">        }</span>
+<span class="nc" id="L286">        addDropdownData(&quot;accountNumberList&quot;, new ArrayList&lt;&gt;(accountNumberMap.values()));</span>
+        //addDropdownData(&quot;financialYearList&quot;, financialYearDAO.getAllActivePostingAndNotClosedFinancialYears());
+<span class="nc" id="L288">        addDropdownData(&quot;serviceTypeList&quot;, microserviceUtils.getBusinessService(null));</span>
+<span class="nc" id="L289">        addDropdownData(&quot;departmentList&quot;, masterDataCache.get(&quot;egi-department&quot;));</span>
+<span class="nc" id="L290">        addDropdownData(&quot;bankaccountNumberList&quot;, remittanceService.getallBank());</span>
+		
+<span class="nc" id="L292">		  List&lt;AppConfigValues&gt; appConfigValuesList =appConfigValuesService.getConfigValuesByModuleAndKey(&quot;EGF&quot;, &quot;receipt_sub_divison&quot;);</span>
+		
+<span class="nc" id="L294">		  List&lt;SubDivison&gt; subdivisonList=new ArrayList&lt;SubDivison&gt;(); </span>
+<span class="nc" id="L295">		  SubDivison subdivison=null; </span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">		  for(AppConfigValues value:appConfigValuesList) </span>
+		  { 
+<span class="nc" id="L298">			  subdivison = new SubDivison(); </span>
+<span class="nc" id="L299">			  subdivison.setSubdivisonCode(value.getValue());</span>
+<span class="nc" id="L300">			  subdivison.setSubdivisonName(value.getValue());</span>
+<span class="nc" id="L301">			  subdivisonList.add(subdivison); </span>
+<span class="nc" id="L302">		  } </span>
+<span class="nc" id="L303">		  addDropdownData(&quot;subdivisonList&quot;,subdivisonList);</span>
+<span class="nc" id="L304">    }</span>
+
+    @Action(value = &quot;/receipts/chequeRemittance-listData&quot;)
+    @SkipValidation
+    public String listData() {
+<span class="nc" id="L309">    	String serviceTId = getServiceTypeId();</span>
+<span class="nc" id="L310">		System.out.println(&quot;LIST DATA ACTION &gt;&gt;&gt;&gt;&quot; + serviceTId);</span>
+
+<span class="nc" id="L312">		isListData = true;</span>
+		
+<span class="nc" id="L314">		populateRemittanceList();</span>
+
+<span class="nc bnc" id="L316" title="All 6 branches missed.">		if (fromDate != null &amp;&amp; toDate != null &amp;&amp; toDate.before(fromDate))</span>
+<span class="nc" id="L317">			addActionError(getText(&quot;bankremittance.before.fromdate&quot;));</span>
+		
+		
+<span class="nc bnc" id="L320" title="All 4 branches missed.">			if (getServiceTypeId().equalsIgnoreCase(&quot;&quot;) || getServiceTypeId().equalsIgnoreCase(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">					|| getServiceTypeId().equalsIgnoreCase(&quot; &quot;)) {</span>
+<span class="nc" id="L322">				setServiceTypeId(null);</span>
+			}
+
+<span class="nc bnc" id="L325" title="All 4 branches missed.">			if (deptId == null || deptId.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L326">				deptId = &quot;-1&quot;;</span>
+<span class="nc" id="L327">				setDeptId(&quot;-1&quot;);</span>
+			}
+			/*
+			 * resultList =
+			 * remittanceService.findCashRemittanceDetailsForServiceAndFund(&quot;MISCELLANEOUS&quot;,
+			 * fromDate, toDate, getServiceTypeId(), receiptNo, deptId, &quot;search&quot;,
+			 * searchAmount, subdivison, collectedBy);
+			 */
+			try {
+<span class="nc" id="L336">			receiptBeanList = remittanceService.findCashRemittanceDetailsForServiceAndFundNew(&quot;MISCELLANEOUS&quot;, fromDate, toDate,</span>
+<span class="nc" id="L337">					getServiceTypeId(), receiptNo, deptId, &quot;search&quot;, searchAmount, subdivison, collectedBy,&quot;Cheque&quot;);</span>
+			}
+<span class="nc" id="L339">			catch(Exception e)</span>
+			{
+<span class="nc" id="L341">				e.printStackTrace();</span>
+<span class="nc" id="L342">			}</span>
+<span class="nc" id="L343">			System.out.println(&quot;Result LIST&gt;&gt;&gt;&quot; + receiptBeanList);</span>
+
+<span class="nc bnc" id="L345" title="All 2 branches missed.">			if(getPage()&gt;=1) {</span>
+<span class="nc" id="L346">				int showlist=490*getPage();</span>
+<span class="nc" id="L347">				int fromIndex=0;</span>
+<span class="nc" id="L348">				int toIndex=0;</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">				if(showlist&gt;receiptBeanList.size()) {</span>
+<span class="nc" id="L350">					fromIndex=(490*(getPage()-1));</span>
+<span class="nc" id="L351">					toIndex=receiptBeanList.size();</span>
+				}else {
+<span class="nc bnc" id="L353" title="All 2 branches missed.">					if(receiptBeanList.size()&lt;490) {</span>
+<span class="nc" id="L354">						fromIndex=0;</span>
+<span class="nc" id="L355">						toIndex=receiptBeanList.size();</span>
+					}else {
+<span class="nc" id="L357">					fromIndex=showlist-490;</span>
+<span class="nc" id="L358">					toIndex=showlist;</span>
+					}
+				}
+<span class="nc" id="L361">				System.out.println(&quot;from::: &quot;+fromIndex+&quot;to:::: &quot;+toIndex);</span>
+<span class="nc" id="L362">				resultListFinal=receiptBeanList.subList(fromIndex, toIndex);</span>
+			}
+<span class="nc bnc" id="L364" title="All 2 branches missed.">			if (searchResult == null) {</span>
+<span class="nc" id="L365">				Page page = new Page&lt;List&gt;(getPage(), 490, resultListFinal);</span>
+<span class="nc" id="L366">				searchResult = new EgovPaginatedList(page, receiptBeanList.size());</span>
+<span class="nc" id="L367">			} else {</span>
+<span class="nc" id="L368">				searchResult.getList().clear();</span>
+<span class="nc" id="L369">				searchResult.getList().addAll(receiptBeanList);</span>
+			}
+
+<span class="nc" id="L372">			resultListNew = searchResult.getList();</span>
+		
+<span class="nc" id="L374">		return NEW;</span>
+            
+    }
+
+    @Action(value = &quot;/receipts/chequeRemittance-printBankChallan&quot;)
+    @SkipValidation
+    public String printBankChallan() {
+<span class="nc" id="L381">        return PRINT_BANK_CHALLAN;</span>
+    }
+
+    public String edit() {
+<span class="nc" id="L385">        return EDIT;</span>
+    }
+
+    public String save() {
+<span class="nc" id="L389">        return SUCCESS;</span>
+    }
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L394">        super.prepare();</span>
+<span class="nc" id="L395">        this.getServiceCategoryList();</span>
+<span class="nc" id="L396">        final String showColumn = collectionsUtil.getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+                CollectionConstants.APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_SHOWCOLUMNSCARDONLINE);
+<span class="nc bnc" id="L398" title="All 4 branches missed.">        if (!showColumn.isEmpty() &amp;&amp; showColumn.equals(CollectionConstants.YES))</span>
+<span class="nc" id="L399">            showCardAndOnlineColumn = true;</span>
+<span class="nc" id="L400">        final String showRemitDate = collectionsUtil.getAppConfigValue(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_SHOWREMITDATE);
+<span class="nc bnc" id="L403" title="All 4 branches missed.">        if (!showRemitDate.isEmpty() &amp;&amp; showRemitDate.equals(CollectionConstants.YES))</span>
+<span class="nc" id="L404">            showRemittanceDate = true;</span>
+
+<span class="nc" id="L406">        isBankCollectionRemitter = collectionsUtil.isBankCollectionOperator(collectionsUtil.getLoggedInUser());</span>
+        //addDropdownData(&quot;bankBranchList&quot;, Collections.emptyList());
+        //addDropdownData(ACCOUNT_NUMBER_LIST, Collections.emptyList());
+<span class="nc" id="L409">        Map&lt;String, BankAccountServiceMapping&gt; accountNumberMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L410" title="All 2 branches missed.">		  for (BankAccountServiceMapping basm :microserviceUtils.getBankAcntServiceMappings()) </span>
+		  {
+<span class="nc" id="L412">			  accountNumberMap.put(basm.getBankAccount(), basm); </span>
+<span class="nc" id="L413">		  }</span>
+<span class="nc" id="L414">		  addDropdownData(&quot;accountNumberList&quot;, new ArrayList&lt;&gt;(accountNumberMap.values())); </span>
+        //added by prasanta
+        //addDropdownData(&quot;serviceTypeList&quot;, microserviceUtils.getBusinessService(&quot;Finance&quot;));
+<span class="nc" id="L417">        addDropdownData(&quot;serviceTypeList&quot;, microserviceUtils.getBusinessService(null));</span>
+<span class="nc" id="L418">        addDropdownData(&quot;departmentList&quot;, masterDataCache.get(&quot;egi-department&quot;));</span>
+<span class="nc" id="L419">        addDropdownData(&quot;functionList&quot;, masterDataCache.get(&quot;egi-function&quot;));</span>
+<span class="nc" id="L420">		addDropdownData(&quot;bankaccountNumberList&quot;, remittanceService.getallBank());</span>
+		
+<span class="nc" id="L422">		  List&lt;AppConfigValues&gt; appConfigValuesList =appConfigValuesService.getConfigValuesByModuleAndKey(&quot;EGF&quot;, &quot;receipt_sub_divison&quot;);</span>
+		
+<span class="nc" id="L424">		  List&lt;SubDivison&gt; subdivisonList=new ArrayList&lt;SubDivison&gt;(); </span>
+<span class="nc" id="L425">		  SubDivison subdivison=null; </span>
+<span class="nc bnc" id="L426" title="All 2 branches missed.">		  for(AppConfigValues value:appConfigValuesList) </span>
+		  { 
+<span class="nc" id="L428">			  subdivison = new SubDivison(); subdivison.setSubdivisonCode(value.getValue());</span>
+<span class="nc" id="L429">			  subdivison.setSubdivisonName(value.getValue());</span>
+<span class="nc" id="L430">			  subdivisonList.add(subdivison); </span>
+<span class="nc" id="L431">		  } </span>
+<span class="nc" id="L432">		  addDropdownData(&quot;subdivisonList&quot;,subdivisonList);</span>
+<span class="nc" id="L433">    }</span>
+
+    @ValidationErrorPage(value = &quot;error&quot;)
+    @Action(value = &quot;/receipts/chequeRemittance-create&quot;)
+    public String create() {
+<span class="nc" id="L438">        List&lt;ReceiptBean&gt; eblist=new ArrayList&lt;ReceiptBean&gt;();</span>
+<span class="nc" id="L439">        String receiptNumbers=&quot;&quot;;</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">		for(ReceiptBean f: finalBeanList)</span>
+		{
+<span class="nc bnc" id="L442" title="All 2 branches missed.">			if(f.getSelected()!=null)</span>
+			{
+<span class="nc" id="L444">				eblist.add(f);</span>
+				
+<span class="nc bnc" id="L446" title="All 2 branches missed.">				if(receiptNumbers.equalsIgnoreCase(&quot;&quot;))</span>
+<span class="nc" id="L447">					receiptNumbers=f.getReceiptNumber();</span>
+				else
+<span class="nc" id="L449">					receiptNumbers+=&quot;,&quot;+f.getReceiptNumber();</span>
+			}
+<span class="nc" id="L451">		}</span>
+<span class="nc" id="L452">		System.out.println(&quot;selectfinalList ----&gt;&gt;&gt; &quot;+eblist);</span>
+<span class="nc" id="L453">		System.out.println(&quot;finalList&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + finalBeanList + &quot;..............&quot; + accountNumberId + &quot;..............&quot;</span>
+				+ remittanceDate);
+<span class="nc" id="L455">		final long startTimeMillis = System.currentTimeMillis();</span>
+<span class="nc" id="L456">		List&lt;RemitancePOJO&gt; re = getRemittance();</span>
+<span class="nc" id="L457">		System.out.println(&quot;::::::re Size::: &quot; + re.size());</span>
+<span class="nc" id="L458">		ReceiptBean receipts =null;</span>
+		
+<span class="nc" id="L460">		receipts=remittanceService.createChequeBankRemittance(eblist.get(0), re, remittanceDate,narration,deptIdnew,functionNew,receiptNumbers);</span>
+<span class="nc bnc" id="L461" title="All 2 branches missed.">		if(receipts!=null)</span>
+		{
+			try 
+			{
+<span class="nc bnc" id="L465" title="All 2 branches missed.">				for(ReceiptBean f: finalBeanList)</span>
+				{
+<span class="nc bnc" id="L467" title="All 2 branches missed.">					if(f.getSelected()!=null)</span>
+					{
+<span class="nc" id="L469">						eblist.add(f);</span>
+<span class="nc" id="L470">						persistenceService.getSession()</span>
+<span class="nc" id="L471">		                .createSQLQuery(</span>
+<span class="nc" id="L472">		                        &quot;update mis_receipts_details set payment_status = 'DEPOSITED' where receipt_number ='&quot;+f.getReceiptNumber()+&quot;'&quot;)</span>
+<span class="nc" id="L473">		                .executeUpdate();</span>
+					}
+<span class="nc" id="L475">				}</span>
+			}
+<span class="nc" id="L477">            catch(Exception e)</span>
+            {
+<span class="nc" id="L479">            	e.printStackTrace();</span>
+<span class="nc" id="L480">            }</span>
+		}
+<span class="nc" id="L482">		final long elapsedTimeMillis = System.currentTimeMillis() - startTimeMillis;</span>
+<span class="nc" id="L483">        LOGGER.info(&quot;$$$$$$ Time taken to persist the remittance list (ms) = &quot; + elapsedTimeMillis);</span>
+<span class="nc bnc" id="L484" title="All 2 branches missed.">        if(receipts!=null)</span>
+<span class="nc" id="L485">        	bankRemittanceList = remittanceService.prepareChequeRemittanceReport(receipts);</span>
+		
+        // added by abhishek on 24032021 
+<span class="nc" id="L488">      		File[] uploadedFiles = getFile(); </span>
+<span class="nc" id="L489">      		String[] fileName = getFileFileName(); </span>
+<span class="nc" id="L490">      		String[] contentType = getFileContentType();</span>
+<span class="nc bnc" id="L491" title="All 2 branches missed.">      		if(uploadedFiles!=null)</span>
+      		{
+<span class="nc" id="L493">      			System.out.println(&quot;files &quot;+uploadedFiles[0]);</span>
+<span class="nc bnc" id="L494" title="All 2 branches missed.">      			if(uploadedFiles[0]!=null) </span>
+      			{ 
+      				byte[] fileBytes; 
+<span class="nc bnc" id="L497" title="All 2 branches missed.">      				for (int i = 0; i&lt;uploadedFiles.length; i++) </span>
+      				{ 
+<span class="nc" id="L499">      					Path path =Paths.get(uploadedFiles[i].getAbsolutePath()); </span>
+      					try 
+      					{ 
+<span class="nc" id="L502">      						fileBytes = Files.readAllBytes(path); </span>
+<span class="nc" id="L503">      						ByteArrayInputStream bios= new</span>
+      						ByteArrayInputStream(fileBytes); 
+<span class="nc" id="L505">      						DocumentUpload upload = new DocumentUpload(); </span>
+<span class="nc" id="L506">      						upload.setInputStream(bios);</span>
+<span class="nc" id="L507">      						upload.setFileName(fileName[i]); </span>
+<span class="nc" id="L508">      						upload.setContentType(contentType[i]);</span>
+<span class="nc" id="L509">      						documentDetail.add(upload); </span>
+      					} 
+<span class="nc" id="L511">      					catch (IOException e) </span>
+      					{ // TODO Auto-generated
+<span class="nc" id="L513">      						e.printStackTrace(); </span>
+<span class="nc" id="L514">      					}</span>
+      				} 
+<span class="nc" id="L516">      				receiptHeaderIntsance.setId(receipts.getVoucherid());</span>
+<span class="nc" id="L517">      				receiptHeaderIntsance.setDocumentDetail(documentDetail);</span>
+<span class="nc" id="L518">      				remittanceService.saveDocuments(receiptHeaderIntsance); </span>
+      			}
+      		} 
+		// end
+<span class="nc" id="L522">        return INDEX;</span>
+    }
+
+    //added  by Prasanta
+    
+    private void getServiceCategoryList() {
+<span class="nc" id="L528">        List&lt;BusinessService&gt; businessService = microserviceUtils.getBusinessService(null);</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">        for(BusinessService bs : businessService){</span>
+<span class="nc" id="L530">            String[] splitServName = bs.getBusinessService().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L531">            String[] splitSerCode = bs.getCode().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc bnc" id="L532" title="All 4 branches missed.">            if(splitServName.length==2 &amp;&amp; splitSerCode.length == 2){</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">                if(!serviceCategoryNames.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L534">                    serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+                }
+<span class="nc bnc" id="L536" title="All 2 branches missed.">                if(serviceTypeMap.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L537">                    Map&lt;String, String&gt; map = serviceTypeMap.get(splitSerCode[0]);</span>
+<span class="nc" id="L538">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L539">                    serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L540">                }else{</span>
+<span class="nc" id="L541">                    Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L542">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L543">                    serviceTypeMap.put(splitSerCode[0],map);</span>
+<span class="nc" id="L544">                }</span>
+            }else{
+<span class="nc" id="L546">                serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+            }
+<span class="nc" id="L548">        }</span>
+<span class="nc" id="L549">    }</span>
+
+
+
+    private void populateNames(List&lt;Receipt&gt; receiptList) {
+<span class="nc" id="L554">        List&lt;BusinessService&gt; businessServices = microserviceUtils.getBusinessService(null);</span>
+<span class="nc" id="L555">        Map&lt;String, String&gt; businessDetailsCodeNameMap = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">        if (businessServices != null)</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">            for (BusinessService bd : businessServices) {</span>
+<span class="nc" id="L559">                businessDetailsCodeNameMap.put(bd.getCode(), bd.getBusinessService());</span>
+<span class="nc" id="L560">            }</span>
+
+<span class="nc bnc" id="L562" title="All 2 branches missed.">        for (Receipt r : receiptList) {</span>
+<span class="nc bnc" id="L563" title="All 2 branches missed.">            if (r.getBill().get(0).getBillDetails().get(0).getBusinessService() != null</span>
+<span class="nc bnc" id="L564" title="All 2 branches missed.">                    &amp;&amp; !r.getBill().get(0).getBillDetails().get(0).getBusinessService().isEmpty())</span>
+<span class="nc" id="L565">                r.getBill().get(0).getBillDetails().get(0).setBusinessService(businessDetailsCodeNameMap.get(r.getBill().get(0).getBillDetails().get(0).getBusinessService()));</span>
+<span class="nc" id="L566">        }</span>
+<span class="nc" id="L567">    }</span>
+
+    private Double getSum(List&lt;ReceiptBean&gt; receiptBeanList) {
+<span class="nc" id="L570">        Double sum = 0.0;</span>
+<span class="nc bnc" id="L571" title="All 2 branches missed.">        for (final ReceiptBean rb : receiptBeanList)</span>
+<span class="nc bnc" id="L572" title="All 4 branches missed.">            if (rb.getSelected() != null &amp;&amp; rb.getSelected())</span>
+<span class="nc" id="L573">                sum = sum + rb.getInstrumentAmount().doubleValue();</span>
+<span class="nc" id="L574">        return sum;</span>
+    }
+
+    @Override
+    public void validate() {
+<span class="nc" id="L579">        super.validate();</span>
+<span class="nc" id="L580">        populateRemittanceList();</span>
+<span class="nc" id="L581">        listData();</span>
+<span class="nc" id="L582">        final SimpleDateFormat dateFomatter = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;, Locale.getDefault());</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">        if (receiptDateArray != null) {</span>
+<span class="nc" id="L584">            final String[] filterReceiptDateArray = removeNullValue(receiptDateArray);</span>
+<span class="nc" id="L585">            final String receiptEndDate = filterReceiptDateArray[filterReceiptDateArray.length - 1];</span>
+            try {
+<span class="nc bnc" id="L587" title="All 4 branches missed.">                if (!receiptEndDate.isEmpty() &amp;&amp; remittanceDate != null</span>
+<span class="nc bnc" id="L588" title="All 2 branches missed.">                        &amp;&amp; remittanceDate.before(dateFomatter.parse(receiptEndDate)))</span>
+<span class="nc" id="L589">                    addActionError(getText(&quot;bankremittance.before.receiptdate&quot;));</span>
+<span class="nc" id="L590">            } catch (final ParseException e) {</span>
+<span class="nc" id="L591">                LOGGER.debug(&quot;Exception in parsing date  &quot; + receiptEndDate + &quot; - &quot; + e.getMessage());</span>
+<span class="nc" id="L592">                throw new ApplicationRuntimeException(&quot;Exception while parsing receiptEndDate date&quot;, e);</span>
+<span class="nc" id="L593">            }</span>
+        }
+<span class="nc" id="L595">    }</span>
+
+    private String[] removeNullValue(String[] receiptDateArray) {
+<span class="nc" id="L598">        final List&lt;String&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L599" title="All 2 branches missed.">        for (final String s : receiptDateArray)</span>
+<span class="nc bnc" id="L600" title="All 4 branches missed.">            if (s != null &amp;&amp; s.length() &gt; 0)</span>
+<span class="nc" id="L601">                list.add(s);</span>
+<span class="nc" id="L602">        return list.toArray(new String[list.size()]);</span>
+    }
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L607">        return receiptHeaderIntsance;</span>
+    }
+
+    /**
+     * @return the paramList
+     */
+    public List&lt;HashMap&lt;String, Object&gt;&gt; getParamList() {
+<span class="nc" id="L614">        return paramList;</span>
+    }
+
+    /**
+     * @param paramList the paramList to set
+     */
+    public void setParamList(final List&lt;HashMap&lt;String, Object&gt;&gt; paramList) {
+<span class="nc" id="L621">        this.paramList = paramList;</span>
+<span class="nc" id="L622">    }</span>
+
+    /**
+     * @return the serviceName
+     */
+    public String[] getServiceNameArray() {
+<span class="nc" id="L628">        return serviceNameArray;</span>
+    }
+
+    /**
+     * @param serviceName the serviceName to set
+     */
+    public void setServiceNameArray(final String[] serviceNameArray) {
+<span class="nc" id="L635">        this.serviceNameArray = serviceNameArray;</span>
+<span class="nc" id="L636">    }</span>
+
+    /**
+     * @return the totalCashAmount
+     */
+    public String[] getTotalCashAmountArray() {
+<span class="nc" id="L642">        return totalCashAmountArray;</span>
+    }
+
+    /**
+     * @param totalCashAmount the totalCashAmount to set
+     */
+    public void setTotalCashAmountArray(final String[] totalCashAmountArray) {
+<span class="nc" id="L649">        this.totalCashAmountArray = totalCashAmountArray;</span>
+<span class="nc" id="L650">    }</span>
+
+    /**
+     * @return the totalChequeAmount
+     */
+    public String[] getTotalChequeAmountArray() {
+<span class="nc" id="L656">        return totalChequeAmountArray;</span>
+    }
+
+    /**
+     * @param totalChequeAmount the totalChequeAmount to set
+     */
+    public void setTotalChequeAmountArray(final String[] totalChequeAmountArray) {
+<span class="nc" id="L663">        this.totalChequeAmountArray = totalChequeAmountArray;</span>
+<span class="nc" id="L664">    }</span>
+
+    /**
+     * @return the receiptDate
+     */
+    public String[] getReceiptDateArray() {
+<span class="nc" id="L670">        return receiptDateArray;</span>
+    }
+
+    /**
+     * @param receiptDate the receiptDate to set
+     */
+    public void setReceiptDateArray(final String[] receiptDateArray) {
+<span class="nc" id="L677">        this.receiptDateArray = receiptDateArray;</span>
+<span class="nc" id="L678">    }</span>
+
+    /**
+     * @return the fundCodeArray
+     */
+    public String[] getFundCodeArray() {
+<span class="nc" id="L684">        return fundCodeArray;</span>
+    }
+
+    /**
+     * @param fundCodeArray the fundCodeArray to set
+     */
+    public void setFundCodeArray(final String[] fundCodeArray) {
+<span class="nc" id="L691">        this.fundCodeArray = fundCodeArray;</span>
+<span class="nc" id="L692">    }</span>
+
+    /**
+     * @return the departmentCodeArray
+     */
+    public String[] getDepartmentCodeArray() {
+<span class="nc" id="L698">        return departmentCodeArray;</span>
+    }
+
+    /**
+     * @param departmentCodeArray the departmentCodeArray to set
+     */
+    public void setDepartmentCodeArray(final String[] departmentCodeArray) {
+<span class="nc" id="L705">        this.departmentCodeArray = departmentCodeArray;</span>
+<span class="nc" id="L706">    }</span>
+
+    /**
+     * @return the totalCardAmountArray
+     */
+    public String[] getTotalCardAmountArray() {
+<span class="nc" id="L712">        return totalCardAmountArray;</span>
+    }
+
+    /**
+     * @param totalCardAmountArray the totalCardAmountArray to set
+     */
+    public void setTotalCardAmountArray(final String[] totalCardAmountArray) {
+<span class="nc" id="L719">        this.totalCardAmountArray = totalCardAmountArray;</span>
+<span class="nc" id="L720">    }</span>
+
+    /**
+     * @return the positionUser
+     */
+    public Integer getPositionUser() {
+<span class="nc" id="L726">        return positionUser;</span>
+    }
+
+    /**
+     * @param positionUser the positionUser to set
+     */
+    public void setPositionUser(final Integer positionUser) {
+<span class="nc" id="L733">        this.positionUser = positionUser;</span>
+<span class="nc" id="L734">    }</span>
+
+    /**
+     * @return the designationId
+     */
+    public Integer getDesignationId() {
+<span class="nc" id="L740">        return designationId;</span>
+    }
+
+    /**
+     * @param designationId the designationId to set
+     */
+    public void setDesignationId(final Integer designationId) {
+<span class="nc" id="L747">        this.designationId = designationId;</span>
+<span class="nc" id="L748">    }</span>
+
+    public String[] getReceiptNumberArray() {
+<span class="nc" id="L751">        return receiptNumberArray;</span>
+    }
+
+    public void setReceiptNumberArray(final String[] receiptNumberArray) {
+<span class="nc" id="L755">        this.receiptNumberArray = receiptNumberArray;</span>
+<span class="nc" id="L756">    }</span>
+
+    public Integer getBranchId() {
+<span class="nc" id="L759">        return branchId;</span>
+    }
+
+    public void setBranchId(final Integer branchId) {
+<span class="nc" id="L763">        this.branchId = branchId;</span>
+<span class="nc" id="L764">    }</span>
+
+    public String getAccountNumberId() {
+<span class="nc" id="L767">        return accountNumberId;</span>
+    }
+
+    public void setAccountNumberId(final String accountNumberId) {
+<span class="nc" id="L771">        this.accountNumberId = accountNumberId;</span>
+<span class="nc" id="L772">    }</span>
+
+    public Boolean getIsListData() {
+<span class="nc" id="L775">        return isListData;</span>
+    }
+
+    public void setIsListData(final Boolean isListData) {
+<span class="nc" id="L779">        this.isListData = isListData;</span>
+<span class="nc" id="L780">    }</span>
+
+    public Double getTotalCashAmount() {
+<span class="nc" id="L783">        return totalCashAmount;</span>
+    }
+
+    public void setTotalCashAmount(final Double totalCashAmount) {
+<span class="nc" id="L787">        this.totalCashAmount = totalCashAmount;</span>
+<span class="nc" id="L788">    }</span>
+
+    public Double getTotalChequeAmount() {
+<span class="nc" id="L791">        return totalChequeAmount;</span>
+    }
+
+    public void setTotalChequeAmount(final Double totalChequeAmount) {
+<span class="nc" id="L795">        this.totalChequeAmount = totalChequeAmount;</span>
+<span class="nc" id="L796">    }</span>
+
+    public List&lt;CollectionBankRemittanceReport&gt; getBankRemittanceList() {
+<span class="nc" id="L799">        return bankRemittanceList;</span>
+    }
+
+    public void setBankRemittanceList(final List&lt;CollectionBankRemittanceReport&gt; bankRemittanceList) {
+<span class="nc" id="L803">        this.bankRemittanceList = bankRemittanceList;</span>
+<span class="nc" id="L804">    }</span>
+
+    public String getBank() {
+<span class="nc" id="L807">        return bank;</span>
+    }
+
+    public void setBank(final String bank) {
+<span class="nc" id="L811">        this.bank = bank;</span>
+<span class="nc" id="L812">    }</span>
+
+    public String getBankAccount() {
+<span class="nc" id="L815">        return bankAccount;</span>
+    }
+
+    public void setBankAccount(final String bankAccount) {
+<span class="nc" id="L819">        this.bankAccount = bankAccount;</span>
+<span class="nc" id="L820">    }</span>
+
+    public Boolean getShowCardAndOnlineColumn() {
+<span class="nc" id="L823">        return showCardAndOnlineColumn;</span>
+    }
+
+    public void setShowCardAndOnlineColumn(final Boolean showCardAndOnlineColumn) {
+<span class="nc" id="L827">        this.showCardAndOnlineColumn = showCardAndOnlineColumn;</span>
+<span class="nc" id="L828">    }</span>
+
+    public Boolean getShowRemittanceDate() {
+<span class="nc" id="L831">        return showRemittanceDate;</span>
+    }
+
+    public void setShowRemittanceDate(final Boolean showRemittanceDate) {
+<span class="nc" id="L835">        this.showRemittanceDate = showRemittanceDate;</span>
+<span class="nc" id="L836">    }</span>
+
+    public Date getRemittanceDate() {
+<span class="nc" id="L839">        return remittanceDate;</span>
+    }
+
+    public void setRemittanceDate(final Date remittanceDate) {
+<span class="nc" id="L843">        this.remittanceDate = remittanceDate;</span>
+<span class="nc" id="L844">    }</span>
+
+    public Long getFinYearId() {
+<span class="nc" id="L847">        return finYearId;</span>
+    }
+
+    public void setFinYearId(final Long finYearId) {
+<span class="nc" id="L851">        this.finYearId = finYearId;</span>
+<span class="nc" id="L852">    }</span>
+
+    public void setRemittanceService(final RemittanceServiceImpl remittanceService) {
+<span class="nc" id="L855">        this.remittanceService = remittanceService;</span>
+<span class="nc" id="L856">    }</span>
+
+    public String getVoucherNumber() {
+<span class="nc" id="L859">        return voucherNumber;</span>
+    }
+
+    public void setVoucherNumber(final String voucherNumber) {
+<span class="nc" id="L863">        this.voucherNumber = voucherNumber;</span>
+<span class="nc" id="L864">    }</span>
+
+    public Date getFromDate() {
+<span class="nc" id="L867">        return fromDate;</span>
+    }
+
+    public void setFromDate(Date fromDate) {
+<span class="nc" id="L871">        this.fromDate = fromDate;</span>
+<span class="nc" id="L872">    }</span>
+
+    public Date getToDate() {
+<span class="nc" id="L875">        return toDate;</span>
+    }
+
+    public void setToDate(Date toDate) {
+<span class="nc" id="L879">        this.toDate = toDate;</span>
+<span class="nc" id="L880">    }</span>
+
+    public Integer getPageSize() {
+<span class="nc" id="L883">        return pageSize;</span>
+    }
+
+    public void setPageSize(Integer pageSize) {
+<span class="nc" id="L887">        this.pageSize = pageSize;</span>
+<span class="nc" id="L888">    }</span>
+
+    public String getRemittanceAmount() {
+<span class="nc" id="L891">        return remittanceAmount;</span>
+    }
+
+    public void setRemittanceAmount(String remittanceAmount) {
+<span class="nc" id="L895">        this.remittanceAmount = remittanceAmount;</span>
+<span class="nc" id="L896">    }</span>
+
+    public Boolean getIsBankCollectionRemitter() {
+<span class="nc" id="L899">        return isBankCollectionRemitter;</span>
+    }
+
+    public void setIsBankCollectionRemitter(Boolean isBankCollectionRemitter) {
+<span class="nc" id="L903">        this.isBankCollectionRemitter = isBankCollectionRemitter;</span>
+<span class="nc" id="L904">    }</span>
+
+    public String getRemitAccountNumber() {
+<span class="nc" id="L907">        return remitAccountNumber;</span>
+    }
+
+    public void setRemitAccountNumber(String remitAccountNumber) {
+<span class="nc" id="L911">        this.remitAccountNumber = remitAccountNumber;</span>
+<span class="nc" id="L912">    }</span>
+
+    public String[] getInstrumentIdArray() {
+<span class="nc" id="L915">        return instrumentIdArray;</span>
+    }
+
+    public void setInstrumentIdArray(String[] instrumentIdArray) {
+<span class="nc" id="L919">        this.instrumentIdArray = instrumentIdArray;</span>
+<span class="nc" id="L920">    }</span>
+
+    public List&lt;ReceiptHeader&gt; getRemittedReceiptHeaderList() {
+<span class="nc" id="L923">        return remittedReceiptHeaderList;</span>
+    }
+
+    public void setRemittedReceiptHeaderList(List&lt;ReceiptHeader&gt; remittedReceiptHeaderList) {
+<span class="nc" id="L927">        this.remittedReceiptHeaderList = remittedReceiptHeaderList;</span>
+<span class="nc" id="L928">    }</span>
+
+    public List&lt;ReceiptBean&gt; getReceiptBeanList() {
+<span class="nc" id="L931">        return receiptBeanList;</span>
+    }
+
+    public void setReceiptBeanList(List&lt;ReceiptBean&gt; receiptBeanList) {
+<span class="nc" id="L935">        this.receiptBeanList = receiptBeanList;</span>
+<span class="nc" id="L936">    }</span>
+
+    public List&lt;ReceiptBean&gt; getRemittedReceiptList() {
+<span class="nc" id="L939">        return remittedReceiptList;</span>
+    }
+
+    public void setRemittedReceiptList(List&lt;ReceiptBean&gt; remittedReceiptList) {
+<span class="nc" id="L943">        this.remittedReceiptList = remittedReceiptList;</span>
+<span class="nc" id="L944">    }</span>
+
+    public List&lt;ReceiptBean&gt; getFinalBeanList() {
+<span class="nc" id="L947">        return finalBeanList;</span>
+    }
+
+    public void setFinalBeanList(List&lt;ReceiptBean&gt; finalBeanList) {
+<span class="nc" id="L951">        this.finalBeanList = finalBeanList;</span>
+<span class="nc" id="L952">    }</span>
+
+	public Map&lt;String, String&gt; getServiceCategoryNames() {
+<span class="nc" id="L955">		return serviceCategoryNames;</span>
+	}
+
+	public void setServiceCategoryNames(Map&lt;String, String&gt; serviceCategoryNames) {
+<span class="nc" id="L959">		this.serviceCategoryNames = serviceCategoryNames;</span>
+<span class="nc" id="L960">	}</span>
+
+	public Map&lt;String, Map&lt;String, String&gt;&gt; getServiceTypeMap() {
+<span class="nc" id="L963">		return serviceTypeMap;</span>
+	}
+
+	public void setServiceTypeMap(Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap) {
+<span class="nc" id="L967">		this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L968">	}</span>
+
+	public String getServiceTypeId() {
+<span class="nc" id="L971">		return serviceTypeId;</span>
+	}
+
+	public void setServiceTypeId(String serviceTypeId) {
+<span class="nc" id="L975">		this.serviceTypeId = serviceTypeId;</span>
+<span class="nc" id="L976">	}</span>
+
+	public List&lt;RemitancePOJO&gt; getRemittance() {
+<span class="nc" id="L979">		return remittance;</span>
+	}
+
+	public void setRemittance(List&lt;RemitancePOJO&gt; remittance) {
+<span class="nc" id="L983">		this.remittance = remittance;</span>
+<span class="nc" id="L984">	}</span>
+
+	public String getNarration() {
+<span class="nc" id="L987">		return narration;</span>
+	}
+
+	public void setNarration(String narration) {
+<span class="nc" id="L991">		this.narration = narration;</span>
+<span class="nc" id="L992">	}</span>
+
+	public String getDeptIdnew() {
+<span class="nc" id="L995">		return deptIdnew;</span>
+	}
+
+	public void setDeptIdnew(String deptIdnew) {
+<span class="nc" id="L999">		this.deptIdnew = deptIdnew;</span>
+<span class="nc" id="L1000">	}</span>
+
+	public String getFunctionNew() {
+<span class="nc" id="L1003">		return functionNew;</span>
+	}
+
+	public void setFunctionNew(String functionNew) {
+<span class="nc" id="L1007">		this.functionNew = functionNew;</span>
+<span class="nc" id="L1008">	}</span>
+
+	public String getSubdivisonNew() {
+<span class="nc" id="L1011">		return subdivisonNew;</span>
+	}
+
+	public void setSubdivisonNew(String subdivisonNew) {
+<span class="nc" id="L1015">		this.subdivisonNew = subdivisonNew;</span>
+<span class="nc" id="L1016">	}</span>
+
+	public File[] getFile() {
+<span class="nc" id="L1019">		return file;</span>
+	}
+
+	public void setFile(File[] file) {
+<span class="nc" id="L1023">		this.file = file;</span>
+<span class="nc" id="L1024">	}</span>
+
+	public String[] getFileContentType() {
+<span class="nc" id="L1027">		return fileContentType;</span>
+	}
+
+	public void setFileContentType(String[] fileContentType) {
+<span class="nc" id="L1031">		this.fileContentType = fileContentType;</span>
+<span class="nc" id="L1032">	}</span>
+
+	public String[] getFileFileName() {
+<span class="nc" id="L1035">		return fileFileName;</span>
+	}
+
+	public void setFileFileName(String[] fileFileName) {
+<span class="nc" id="L1039">		this.fileFileName = fileFileName;</span>
+<span class="nc" id="L1040">	}</span>
+
+	public List&lt;DocumentUpload&gt; getDocumentDetail() {
+<span class="nc" id="L1043">		return documentDetail;</span>
+	}
+
+	public void setDocumentDetail(List&lt;DocumentUpload&gt; documentDetail) {
+<span class="nc" id="L1047">		this.documentDetail = documentDetail;</span>
+<span class="nc" id="L1048">	}</span>
+
+	public String getSubdivison() {
+<span class="nc" id="L1051">		return subdivison;</span>
+	}
+
+	public void setSubdivison(String subdivison) {
+<span class="nc" id="L1055">		this.subdivison = subdivison;</span>
+<span class="nc" id="L1056">	}</span>
+
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

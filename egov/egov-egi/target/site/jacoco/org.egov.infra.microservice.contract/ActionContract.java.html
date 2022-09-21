@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActionContract.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.contract</a> &gt; <span class="el_source">ActionContract.java</span></div><h1>ActionContract.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.contract;
+
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class ActionContract {
+
+	private Long id;
+	private String name;
+	private String url;
+	private String queryParams;
+	private String parentModule;
+	private String displayName;
+	private boolean enabled;
+	private Integer orderNumber;
+	private String serviceCode;
+
+	@JsonFormat(pattern = &quot;dd/MM/yyyy&quot;)
+	private Date createdDate;
+
+	private Long createdBy;
+
+	private Date lastModifiedDate;
+
+	private Long lastModifiedBy;
+	
+<span class="nc" id="L28">	public ActionContract(){}</span>
+
+	public ActionContract(Long id, String name, String url, String queryParams, String parentModule, String displayName,
+			boolean enabled, Integer orderNumber, String serviceCode, Date createdDate, Long createdBy,
+<span class="nc" id="L32">			Date lastModifiedDate, Long lastModifiedBy) {</span>
+<span class="nc" id="L33">		this.id = id;</span>
+<span class="nc" id="L34">		this.name = name;</span>
+<span class="nc" id="L35">		this.url = url;</span>
+<span class="nc" id="L36">		this.queryParams = queryParams;</span>
+<span class="nc" id="L37">		this.parentModule = parentModule;</span>
+<span class="nc" id="L38">		this.displayName = displayName;</span>
+<span class="nc" id="L39">		this.enabled = enabled;</span>
+<span class="nc" id="L40">		this.orderNumber = orderNumber;</span>
+<span class="nc" id="L41">		this.serviceCode = serviceCode;</span>
+<span class="nc" id="L42">		this.createdDate = createdDate;</span>
+<span class="nc" id="L43">		this.createdBy = createdBy;</span>
+<span class="nc" id="L44">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L45">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L46">	}</span>
+
+	public Long getId() {
+<span class="nc" id="L49">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L53">		this.id = id;</span>
+<span class="nc" id="L54">	}</span>
+
+	public String getName() {
+<span class="nc" id="L57">		return name;</span>
+	}
+
+	public void setName(String name) {
+<span class="nc" id="L61">		this.name = name;</span>
+<span class="nc" id="L62">	}</span>
+
+	public String getUrl() {
+<span class="nc" id="L65">		return url;</span>
+	}
+
+	public void setUrl(String url) {
+<span class="nc" id="L69">		this.url = url;</span>
+<span class="nc" id="L70">	}</span>
+
+	public String getQueryParams() {
+<span class="nc" id="L73">		return queryParams;</span>
+	}
+
+	public void setQueryParams(String queryParams) {
+<span class="nc" id="L77">		this.queryParams = queryParams;</span>
+<span class="nc" id="L78">	}</span>
+
+	public String getParentModule() {
+<span class="nc" id="L81">		return parentModule;</span>
+	}
+
+	public void setParentModule(String parentModule) {
+<span class="nc" id="L85">		this.parentModule = parentModule;</span>
+<span class="nc" id="L86">	}</span>
+
+	public String getDisplayName() {
+<span class="nc" id="L89">		return displayName;</span>
+	}
+
+	public void setDisplayName(String displayName) {
+<span class="nc" id="L93">		this.displayName = displayName;</span>
+<span class="nc" id="L94">	}</span>
+
+	public boolean isEnabled() {
+<span class="nc" id="L97">		return enabled;</span>
+	}
+
+	public void setEnabled(boolean enabled) {
+<span class="nc" id="L101">		this.enabled = enabled;</span>
+<span class="nc" id="L102">	}</span>
+
+	public Integer getOrderNumber() {
+<span class="nc" id="L105">		return orderNumber;</span>
+	}
+
+	public void setOrderNumber(Integer orderNumber) {
+<span class="nc" id="L109">		this.orderNumber = orderNumber;</span>
+<span class="nc" id="L110">	}</span>
+
+	public String getServiceCode() {
+<span class="nc" id="L113">		return serviceCode;</span>
+	}
+
+	public void setServiceCode(String serviceCode) {
+<span class="nc" id="L117">		this.serviceCode = serviceCode;</span>
+<span class="nc" id="L118">	}</span>
+
+	public Date getCreatedDate() {
+<span class="nc" id="L121">		return createdDate;</span>
+	}
+
+	public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L125">		this.createdDate = createdDate;</span>
+<span class="nc" id="L126">	}</span>
+
+	public Long getCreatedBy() {
+<span class="nc" id="L129">		return createdBy;</span>
+	}
+
+	public void setCreatedBy(Long createdBy) {
+<span class="nc" id="L133">		this.createdBy = createdBy;</span>
+<span class="nc" id="L134">	}</span>
+
+	public Date getLastModifiedDate() {
+<span class="nc" id="L137">		return lastModifiedDate;</span>
+	}
+
+	public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L141">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L142">	}</span>
+
+	public Long getLastModifiedBy() {
+<span class="nc" id="L145">		return lastModifiedBy;</span>
+	}
+
+	public void setLastModifiedBy(Long lastModifiedBy) {
+<span class="nc" id="L149">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L150">	}</span>
+	
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Script.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.script.entity</a> &gt; <span class="el_source">Script.java</span></div><h1>Script.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.script.entity;
+
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.component.Period;
+import org.joda.time.DateTime;
+
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.script.CompiledScript;
+
+import static org.egov.infra.script.entity.Script.SEQ_SCRIPT;
+
+@Entity
+@Table(name = &quot;eg_script&quot;)
+@SequenceGenerator(name = SEQ_SCRIPT, sequenceName = SEQ_SCRIPT, allocationSize = 1)
+@NamedQueries({
+        @NamedQuery(name = Script.BY_NAME,
+                query = &quot;select s from Script s where s.name=:name and current_date between period.startDate and period.endDate&quot;),
+        @NamedQuery(name = Script.BY_NAME_AND_DATE,
+                query = &quot;select s from Script as s where s.name=:name and :date between period.startDate and period.endDate&quot;)
+})
+public class Script extends AbstractAuditable {
+    public static final String SEQ_SCRIPT = &quot;SEQ_EG_SCRIPT&quot;;
+    public static final String BY_NAME = &quot;Script.findByName&quot;;
+    public static final String BY_NAME_AND_DATE = &quot;Script.findByNameAndPeriod&quot;;
+    private static final long serialVersionUID = -2464312999181924258L;
+    @Id
+    @GeneratedValue(generator = SEQ_SCRIPT, strategy = GenerationType.SEQUENCE)
+    private Long id;
+    private String type;
+    private String script;
+    private String name;
+    @Embedded
+    private Period period;
+
+    @Transient
+    private CompiledScript compiledScript;
+
+<span class="nc" id="L95">    Script() {</span>
+<span class="nc" id="L96">    }</span>
+
+    public Script(final String name, final String type, final String script) {
+<span class="nc" id="L99">        this(name, type, script, new DateTime(), new DateTime().plusYears(100));</span>
+<span class="nc" id="L100">    }</span>
+
+<span class="nc" id="L102">    public Script(final String name, final String type, final String script, final DateTime startDate, final DateTime endDate) {</span>
+<span class="nc" id="L103">        this.name = name;</span>
+<span class="nc" id="L104">        this.type = type;</span>
+<span class="nc" id="L105">        this.script = script;</span>
+<span class="nc" id="L106">        period = new Period(startDate.toDate(), endDate.toDate());</span>
+<span class="nc" id="L107">    }</span>
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L111">        return this.id;</span>
+    }
+
+    @Override
+    protected void setId(final Long id) {
+<span class="nc" id="L116">        this.id = id;</span>
+<span class="nc" id="L117">    }</span>
+
+    public String getType() {
+<span class="nc" id="L120">        return type;</span>
+    }
+
+    public void setType(final String type) {
+<span class="nc" id="L124">        this.type = type;</span>
+<span class="nc" id="L125">    }</span>
+
+    public String getScript() {
+<span class="nc" id="L128">        return script;</span>
+    }
+
+    public void setScript(final String script) {
+<span class="nc" id="L132">        this.script = script;</span>
+<span class="nc" id="L133">    }</span>
+
+    public String getName() {
+<span class="nc" id="L136">        return name;</span>
+    }
+
+    public void setName(final String name) {
+<span class="nc" id="L140">        this.name = name;</span>
+<span class="nc" id="L141">    }</span>
+
+    public Period getPeriod() {
+<span class="nc" id="L144">        return period;</span>
+    }
+
+    public void setPeriod(final Period periods) {
+<span class="nc" id="L148">        period = periods;</span>
+<span class="nc" id="L149">    }</span>
+
+    public CompiledScript getCompiledScript() {
+<span class="nc" id="L152">        return compiledScript;</span>
+    }
+
+    public void setCompiledScript(final CompiledScript compiledScript) {
+<span class="nc" id="L156">        this.compiledScript = compiledScript;</span>
+<span class="nc" id="L157">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

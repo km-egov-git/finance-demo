@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillAccountDetail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">BillAccountDetail.java</span></div><h1>BillAccountDetail.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.math.BigDecimal;
+
+import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+<span class="nc" id="L17">@Setter</span>
+@Getter
+<span class="nc" id="L19">@ToString</span>
+<span class="nc" id="L20">@Builder</span>
+<span class="nc" id="L21">@NoArgsConstructor</span>
+<span class="nc" id="L22">@AllArgsConstructor</span>
+<span class="nc bnc" id="L23" title="All 14 branches missed.">@EqualsAndHashCode(of = {&quot;id&quot;})</span>
+public class BillAccountDetail {
+<span class="nc" id="L25">    @Size(max=64)</span>
+    @JsonProperty(&quot;id&quot;)
+<span class="nc" id="L27">    private String id = null;</span>
+
+<span class="nc" id="L29">    @Size(max=64)</span>
+    @JsonProperty(&quot;tenantId&quot;)
+<span class="nc" id="L31">    private String tenantId = null;</span>
+
+<span class="nc" id="L33">    @Size(max=64)</span>
+    @JsonProperty(&quot;billDetailId&quot;)
+<span class="nc" id="L35">    private String billDetailId = null;</span>
+
+<span class="nc" id="L37">    @Size(max=64)</span>
+    @JsonProperty(&quot;demandDetailId&quot;)
+<span class="nc" id="L39">    private String demandDetailId = null;</span>
+
+<span class="nc" id="L41">    @JsonProperty(&quot;order&quot;)</span>
+<span class="nc" id="L42">    private Integer order = null;</span>
+
+<span class="nc" id="L44">    @JsonProperty(&quot;amount&quot;)</span>
+<span class="nc" id="L45">    private BigDecimal amount = null;</span>
+
+<span class="nc" id="L47">    @JsonProperty(&quot;adjustedAmount&quot;)</span>
+<span class="nc" id="L48">    private BigDecimal adjustedAmount = null;</span>
+
+<span class="nc" id="L50">    @JsonProperty(&quot;isActualDemand&quot;)</span>
+<span class="nc" id="L51">    private Boolean isActualDemand = null;</span>
+
+<span class="nc" id="L53">    @Size(max=64)</span>
+    @JsonProperty(&quot;taxHeadCode&quot;)
+<span class="nc" id="L55">    private String taxHeadCode = null;</span>
+
+<span class="nc" id="L57">    @JsonProperty(&quot;additionalDetails&quot;)</span>
+<span class="nc" id="L58">    private JsonNode additionalDetails = null;</span>
+
+<span class="nc" id="L60">    @JsonProperty(&quot;purpose&quot;)</span>
+<span class="nc" id="L61">    private Purpose purpose = null;</span>
+
+    @JsonProperty(&quot;auditDetails&quot;)
+<span class="nc" id="L64">    private AuditDetails auditDetails;</span>
+    
+<span class="nc" id="L66">    private String glcode;</span>
+
+<span class="nc" id="L68">    private String accountDescription;</span>
+
+<span class="nc" id="L70">    private String billDetail;</span>
+
+<span class="nc" id="L72">    private BigDecimal crAmountToBePaid = BigDecimal.ZERO;</span>
+
+<span class="nc" id="L74">    private BigDecimal creditAmount = BigDecimal.ZERO;</span>
+
+<span class="nc" id="L76">    private BigDecimal debitAmount = BigDecimal.ZERO;</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

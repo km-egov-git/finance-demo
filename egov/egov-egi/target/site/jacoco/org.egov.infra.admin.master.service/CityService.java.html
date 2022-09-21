@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CityService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.service</a> &gt; <span class="el_source">CityService.java</span></div><h1>CityService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.service;
+
+import static java.lang.String.format;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getDomainName;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getDomainURL;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getTenantID;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getUserTenantId;
+import static org.egov.infra.utils.ApplicationConstant.CITY_CODE_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_CORP_EMAIL_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_CORP_GRADE_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_CORP_NAME_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_DIST_NAME_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_LOGO_FS_UUID_KEY;
+import static org.egov.infra.utils.ApplicationConstant.CITY_LOGO_URL;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import org.apache.commons.lang.StringUtils;
+import org.egov.infra.admin.master.entity.City;
+import org.egov.infra.admin.master.repository.CityRepository;
+import org.egov.infra.notification.service.NotificationService;
+import org.egov.infra.utils.ApplicationConstant;
+import org.egov.infra.utils.FileStoreUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class CityService {
+
+    private static final String CITY_DATA_CACHE_KEY = &quot;%s-city-pref&quot;;
+    private static final String CITY_LOGO_CACHE_KEY = &quot;%s-city-logo&quot;;
+    private static final String CITY_LOGO_HASH_KEY = &quot;city-logo&quot;;
+
+    private final CityRepository cityRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Resource(name = &quot;redisTemplate&quot;)
+    private HashOperations&lt;String, String, Object&gt; cityPrefCache;
+
+    @Resource(name = &quot;redisTemplate&quot;)
+    private HashOperations&lt;String, String, Object&gt; cityLogoCache;
+
+    @Autowired
+    private RedisTemplate&lt;Object, Object&gt; redisTemplate;
+
+    @Autowired
+    private FileStoreUtils fileStoreUtils;
+    
+    @Value(&quot;${city_logo_aws_url}&quot;)
+    private String city_logo_aws_url;
+
+    @Autowired
+<span class="nc" id="L112">    public CityService(final CityRepository cityRepository) {</span>
+<span class="nc" id="L113">        this.cityRepository = cityRepository;</span>
+<span class="nc" id="L114">    }</span>
+
+    @Transactional
+    public City updateCity(City city) {
+<span class="nc" id="L118">        redisTemplate.delete(cityPrefCacheKey());</span>
+<span class="nc" id="L119">        redisTemplate.delete(cityLogoCacheKey());</span>
+<span class="nc" id="L120">        cityDataAsMap();</span>
+<span class="nc" id="L121">        return cityRepository.save(city);</span>
+    }
+
+    public City getCityByURL(String url) {
+<span class="nc" id="L125">        return cityRepository.findByDomainURL(url);</span>
+    }
+
+    public City getCityByName(String cityName) {
+<span class="nc" id="L129">        return cityRepository.findByName(cityName);</span>
+    }
+
+    public City getCityByCode(String code) {
+<span class="nc" id="L133">        return cityRepository.findByCode(code);</span>
+    }
+
+    public List&lt;City&gt; findAll() {
+<span class="nc" id="L137">        return cityRepository.findAll();</span>
+    }
+
+    public void sentFeedBackMail(String email, String subject, String message) {
+<span class="nc" id="L141">        notificationService.sendEmail(email, subject, message);</span>
+<span class="nc" id="L142">    }</span>
+
+    public Map&lt;String, Object&gt; cityDataAsMap() {
+<span class="nc" id="L145">        Map&lt;String, Object&gt; cityPrefs = cityPrefCache.entries(cityPrefCacheKey());</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (cityPrefs.isEmpty()) {</span>
+<span class="nc" id="L147">            cityPrefCache.putAll(cityPrefCacheKey(), getCityByURL(getDomainName()).toMap());</span>
+<span class="nc" id="L148">            cityPrefs = cityPrefCache.entries(cityPrefCacheKey());</span>
+        }
+<span class="nc" id="L150">        return cityPrefs;</span>
+    }
+
+    public String getCityCode() {
+<span class="nc" id="L154">        return (String) cityDataForKey(CITY_CODE_KEY);</span>
+    }
+
+    public String getMunicipalityName() {
+<span class="nc" id="L158">        return (String) cityDataForKey(CITY_CORP_NAME_KEY);</span>
+    }
+
+    public String getCityGrade() {
+<span class="nc" id="L162">        return (String) cityDataForKey(CITY_CORP_GRADE_KEY);</span>
+    }
+
+    public String getContactEmail() {
+<span class="nc" id="L166">        return (String) cityDataForKey(CITY_CORP_EMAIL_KEY);</span>
+    }
+
+    public String getDistrictName() {
+<span class="nc" id="L170">        return (String) cityDataForKey(CITY_DIST_NAME_KEY);</span>
+    }
+
+    public String getCityLogoURL() {
+<span class="nc" id="L174">        return format(CITY_LOGO_URL, getDomainURL());</span>
+    }
+
+    public byte[] getCityLogoAsBytes() {
+<span class="nc" id="L178">        byte[] cityLogo = (byte[]) cityLogoCache.get(cityLogoCacheKey(), CITY_LOGO_HASH_KEY);</span>
+<span class="nc bnc" id="L179" title="All 4 branches missed.">        if (cityLogo == null || cityLogo.length &lt; 1) {</span>
+//            cityLogo = fileStoreUtils.fileAsByteArray(getCityLogoFileStoreId(), getCityCode());
+<span class="nc" id="L181">            String logo_http_url = this.city_logo_aws_url;</span>
+<span class="nc" id="L182">            logo_http_url= StringUtils.replace(logo_http_url, ApplicationConstant.CITY_LOGO_URL_REPLACE_KEY, getUserTenantId());</span>
+<span class="nc" id="L183">            cityLogo = fileStoreUtils.httpImageAsByteArray(logo_http_url);</span>
+            
+<span class="nc" id="L185">            cityLogoCache.put(cityLogoCacheKey(), CITY_LOGO_HASH_KEY, cityLogo);</span>
+        }
+<span class="nc" id="L187">        return cityLogo;</span>
+    }
+
+    public InputStream getCityLogoAsStream() {
+<span class="nc" id="L191">        return new ByteArrayInputStream(getCityLogoAsBytes());</span>
+    }
+
+    public String getCityLogoFileStoreId() {
+<span class="nc" id="L195">        return (String) cityDataForKey(CITY_LOGO_FS_UUID_KEY);</span>
+    }
+
+    public Object cityDataForKey(String key) {
+<span class="nc" id="L199">        return cityPrefCache.get(cityPrefCacheKey(), key);</span>
+    }
+
+    private String cityPrefCacheKey() {
+<span class="nc" id="L203">        return format(CITY_DATA_CACHE_KEY, getTenantID());</span>
+    }
+
+    private String cityLogoCacheKey() {
+<span class="nc" id="L207">        return format(CITY_LOGO_CACHE_KEY, getTenantID());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Error.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Error.java</span></div><h1>Error.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+ 
+
+/**
+ * Error object will be returned as a part of reponse body in conjunction with ResponseInfo as part of ErrorResponse whenever the request processing status in the ResponseInfo is FAILED. HTTP return in this scenario will usually be HTTP 400.
+ */
+
+<span class="nc" id="L17">public class Error   {</span>
+<span class="nc" id="L18">  @JsonProperty(&quot;code&quot;)</span>
+  private String code = null;
+
+<span class="nc" id="L21">  @JsonProperty(&quot;message&quot;)</span>
+  private String message = null;
+
+<span class="nc" id="L24">  @JsonProperty(&quot;description&quot;)</span>
+  private String description = null;
+
+<span class="nc" id="L27">  @JsonProperty(&quot;params&quot;)</span>
+  private List&lt;String&gt; params = null;
+
+  public Error code(String code) {
+<span class="nc" id="L31">    this.code = code;</span>
+<span class="nc" id="L32">    return this;</span>
+  }
+
+   /**
+   * Error Code will be module specific error label/code to identiffy the error. All modules should also publish the Error codes with their specific localized values in localization service to ensure clients can print locale specific error messages. Example for error code would be User.NotFound to indicate User Not Found by User/Authentication service. All services must declare their possible Error Codes with brief description in the error response section of their API path.
+   * @return code
+  **/
+  @NotNull
+
+
+  public String getCode() {
+<span class="nc" id="L43">    return code;</span>
+  }
+
+  public void setCode(String code) {
+<span class="nc" id="L47">    this.code = code;</span>
+<span class="nc" id="L48">  }</span>
+
+  public Error message(String message) {
+<span class="nc" id="L51">    this.message = message;</span>
+<span class="nc" id="L52">    return this;</span>
+  }
+
+   /**
+   * English locale message of the error code. Clients should make a separate call to get the other locale description if configured with the service. Clients may choose to cache these locale specific messages to enhance performance with a reasonable TTL (May be defined by the localization service based on tenant + module combination).
+   * @return message
+  **/
+  @NotNull
+  public String getMessage() {
+<span class="nc" id="L61">    return message;</span>
+  }
+
+  public void setMessage(String message) {
+<span class="nc" id="L65">    this.message = message;</span>
+<span class="nc" id="L66">  }</span>
+
+  public Error description(String description) {
+<span class="nc" id="L69">    this.description = description;</span>
+<span class="nc" id="L70">    return this;</span>
+  }
+
+   /**
+   * Optional long description of the error to help clients take remedial action. This will not be available as part of localization service.
+   * @return description
+  **/
+
+
+  public String getDescription() {
+<span class="nc" id="L80">    return description;</span>
+  }
+
+  public void setDescription(String description) {
+<span class="nc" id="L84">    this.description = description;</span>
+<span class="nc" id="L85">  }</span>
+
+  public Error params(List&lt;String&gt; params) {
+<span class="nc" id="L88">    this.params = params;</span>
+<span class="nc" id="L89">    return this;</span>
+  }
+
+  public Error addParamsItem(String paramsItem) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (this.params == null) {</span>
+<span class="nc" id="L94">      this.params = new ArrayList&lt;String&gt;();</span>
+    }
+<span class="nc" id="L96">    this.params.add(paramsItem);</span>
+<span class="nc" id="L97">    return this;</span>
+  }
+
+   /**
+   * Some error messages may carry replaceable fields (say $1, $2) to provide more context to the message. E.g. Format related errors may want to indicate the actual field for which the format is invalid. Client's should use the values in the param array to replace those fields.
+   * @return params
+  **/
+   
+  public List&lt;String&gt; getParams() {
+<span class="nc" id="L106">    return params;</span>
+  }
+
+  public void setParams(List&lt;String&gt; params) {
+<span class="nc" id="L110">    this.params = params;</span>
+<span class="nc" id="L111">  }</span>
+
+
+  @Override
+  public boolean equals(java.lang.Object o) {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">    if (this == o) {</span>
+<span class="nc" id="L117">      return true;</span>
+    }
+<span class="nc bnc" id="L119" title="All 4 branches missed.">    if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L120">      return false;</span>
+    }
+<span class="nc" id="L122">    Error error = (Error) o;</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">    return Objects.equals(this.code, error.code) &amp;&amp;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        Objects.equals(this.message, error.message) &amp;&amp;</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        Objects.equals(this.description, error.description) &amp;&amp;</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        Objects.equals(this.params, error.params);</span>
+  }
+
+  @Override
+  public int hashCode() {
+<span class="nc" id="L131">    return Objects.hash(code, message, description, params);</span>
+  }
+
+  @Override
+  public String toString() {
+<span class="nc" id="L136">    StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L137">    sb.append(&quot;class Error {\n&quot;);</span>
+    
+<span class="nc" id="L139">    sb.append(&quot;    code: &quot;).append(toIndentedString(code)).append(&quot;\n&quot;);</span>
+<span class="nc" id="L140">    sb.append(&quot;    message: &quot;).append(toIndentedString(message)).append(&quot;\n&quot;);</span>
+<span class="nc" id="L141">    sb.append(&quot;    description: &quot;).append(toIndentedString(description)).append(&quot;\n&quot;);</span>
+<span class="nc" id="L142">    sb.append(&quot;    params: &quot;).append(toIndentedString(params)).append(&quot;\n&quot;);</span>
+<span class="nc" id="L143">    sb.append(&quot;}&quot;);</span>
+<span class="nc" id="L144">    return sb.toString();</span>
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(java.lang.Object o) {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">    if (o == null) {</span>
+<span class="nc" id="L153">      return &quot;null&quot;;</span>
+    }
+<span class="nc" id="L155">    return o.toString().replace(&quot;\n&quot;, &quot;\n    &quot;);</span>
+  }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

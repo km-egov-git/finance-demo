@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PositionHierarchyService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service</a> &gt; <span class="el_source">PositionHierarchyService.java</span></div><h1>PositionHierarchyService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.service;
+
+import org.egov.eis.entity.PositionHierarchy;
+import org.egov.eis.repository.PositionHierarchyRepository;
+import org.egov.pims.commons.Position;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+
+@Service
+@Transactional(readOnly = true)
+public class PositionHierarchyService {
+
+    private final PositionHierarchyRepository positionHierarchyRepository;
+
+    @Autowired
+<span class="nc" id="L67">    public PositionHierarchyService(final PositionHierarchyRepository positionHierarchyRepository) {</span>
+<span class="nc" id="L68">        this.positionHierarchyRepository = positionHierarchyRepository;</span>
+<span class="nc" id="L69">    }</span>
+
+    @Transactional
+    public void createPositionHierarchy(final PositionHierarchy positionHierarchy) {
+<span class="nc" id="L73">        positionHierarchyRepository.save(positionHierarchy);</span>
+<span class="nc" id="L74">    }</span>
+
+    @Transactional
+    public void updatePositionHierarchy(final PositionHierarchy positionHierarchy) {
+<span class="nc" id="L78">        positionHierarchyRepository.save(positionHierarchy);</span>
+<span class="nc" id="L79">    }</span>
+
+    public PositionHierarchy getPositionHierarchyByPosAndObjectType(final Long posId, final Integer objectId) {
+<span class="nc" id="L82">        return positionHierarchyRepository.getPositionHierarchyByPosAndObjectType(posId, objectId);</span>
+    }
+
+    public PositionHierarchy getPosHirByPosAndObjectTypeAndObjectSubType(final Long posId, final Integer objectId,
+                                                                         final String objectSubType) {
+<span class="nc" id="L87">        return positionHierarchyRepository.getPosHirByPosAndObjectTypeAndObjectSubType(posId, objectId, objectSubType);</span>
+    }
+
+    public void deleteAllInBatch(final List&lt;PositionHierarchy&gt; existingPosHierarchy) {
+<span class="nc" id="L91">        positionHierarchyRepository.deleteInBatch(existingPosHierarchy);</span>
+
+<span class="nc" id="L93">    }</span>
+
+    public List&lt;PositionHierarchy&gt; getPositionHeirarchyByFromPositionAndObjectType(Long fromPositionId, Integer objectId) {
+<span class="nc" id="L96">        return positionHierarchyRepository.getListOfPositionHeirarchyByFromPositionAndObjectType(fromPositionId, objectId);</span>
+    }
+
+    public List&lt;PositionHierarchy&gt; getListOfPositionHeirarchyByFromPositionAndObjectTypeAndSubType(Long fromPositionId, Integer objectId, final String objectSubType) {
+
+<span class="nc bnc" id="L101" title="All 6 branches missed.">        if (fromPositionId != 0 &amp;&amp; objectId != 0 &amp;&amp; objectSubType != null)</span>
+<span class="nc" id="L102">            return positionHierarchyRepository.getListOfPositionHeirarchyByFromPositionAndObjectTypeAndSubType(fromPositionId, objectId, objectSubType);</span>
+<span class="nc bnc" id="L103" title="All 6 branches missed.">        else if (fromPositionId == 0 &amp;&amp; objectId != 0 &amp;&amp; objectSubType != null)</span>
+<span class="nc" id="L104">            return positionHierarchyRepository.getPosHirByObjectTypeAndObjectSubType(objectId, objectSubType);</span>
+<span class="nc bnc" id="L105" title="All 6 branches missed.">        else if (fromPositionId != 0 &amp;&amp; objectId != 0 &amp;&amp; objectSubType == null)</span>
+<span class="nc" id="L106">            return positionHierarchyRepository.getListOfPositionHeirarchyByFromPositionAndObjectType(fromPositionId, objectId);</span>
+<span class="nc bnc" id="L107" title="All 6 branches missed.">        else if (fromPositionId == 0 &amp;&amp; objectId != 0 &amp;&amp; objectSubType == null)</span>
+<span class="nc" id="L108">            return positionHierarchyRepository.getListOfPositionHeirarchyByObjectType(objectId);</span>
+<span class="nc" id="L109">        else return Collections.emptyList();</span>
+    }
+
+    public List&lt;PositionHierarchy&gt; getListOfPositionHeirarchyByPositionObjectTypeSubType(final Integer objectType,
+                                                                                         final List&lt;String&gt; objectSubTypes,
+                                                                                         final Position fromPositionId) {
+<span class="nc" id="L115">        return positionHierarchyRepository.findPositionHierarchyByObjectSubTypeAndFromPosition(objectType, objectSubTypes,</span>
+                fromPositionId);
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

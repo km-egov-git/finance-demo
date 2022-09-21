@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeView.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.entity</a> &gt; <span class="el_source">EmployeeView.java</span></div><h1>EmployeeView.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.entity;
+
+import org.egov.commons.CFunction;
+import org.egov.commons.Functionary;
+import org.egov.commons.Fund;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import java.util.Date;
+
+@Entity
+@Table(name = &quot;view_egeis_employee&quot;)
+<span class="nc" id="L68">public class EmployeeView implements java.io.Serializable {</span>
+
+    private static final long serialVersionUID = -4195561328807134993L;
+    @Id
+    private Long id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;employee&quot;)
+    private Employee employee;
+    private String code;
+    private String name;
+    private String userName;
+    private boolean userActive;
+    private Date dateOfAppointment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;assignment&quot;)
+    private Assignment assignment;
+
+    private Date fromDate;
+    private Date toDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;department&quot;)
+    private Department department;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;designation&quot;)
+    private Designation designation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;position&quot;)
+    private Position position;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;functionary&quot;)
+    private Functionary functionary;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;function&quot;)
+    private CFunction function;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;fund&quot;)
+    private Fund fund;
+
+    @Column(name = &quot;isprimary&quot;)
+    private Boolean primary;
+
+    public Employee getEmployee() {
+<span class="nc" id="L117">        return employee;</span>
+    }
+
+    public void setEmployee(final Employee employee) {
+<span class="nc" id="L121">        this.employee = employee;</span>
+<span class="nc" id="L122">    }</span>
+
+    public String getCode() {
+<span class="nc" id="L125">        return code;</span>
+    }
+
+    public void setCode(final String code) {
+<span class="nc" id="L129">        this.code = code;</span>
+<span class="nc" id="L130">    }</span>
+
+    public String getName() {
+<span class="nc" id="L133">        return name;</span>
+    }
+
+    public void setName(final String name) {
+<span class="nc" id="L137">        this.name = name;</span>
+<span class="nc" id="L138">    }</span>
+
+    public String getUserName() {
+<span class="nc" id="L141">        return userName;</span>
+    }
+
+    public void setUserName(final String userName) {
+<span class="nc" id="L145">        this.userName = userName;</span>
+<span class="nc" id="L146">    }</span>
+
+    public boolean getUserActive() {
+<span class="nc" id="L149">        return userActive;</span>
+    }
+
+    public void setUserActive(final boolean userActive) {
+<span class="nc" id="L153">        this.userActive = userActive;</span>
+<span class="nc" id="L154">    }</span>
+
+    public Date getDateOfAppointment() {
+<span class="nc" id="L157">        return dateOfAppointment;</span>
+    }
+
+    public void setDateOfAppointment(final Date dateOfAppointment) {
+<span class="nc" id="L161">        this.dateOfAppointment = dateOfAppointment;</span>
+<span class="nc" id="L162">    }</span>
+
+    public Assignment getAssignment() {
+<span class="nc" id="L165">        return assignment;</span>
+    }
+
+    public void setAssignment(final Assignment assignment) {
+<span class="nc" id="L169">        this.assignment = assignment;</span>
+<span class="nc" id="L170">    }</span>
+
+    public Date getFromDate() {
+<span class="nc" id="L173">        return fromDate;</span>
+    }
+
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L177">        this.fromDate = fromDate;</span>
+<span class="nc" id="L178">    }</span>
+
+    public Date getToDate() {
+<span class="nc" id="L181">        return toDate;</span>
+    }
+
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L185">        this.toDate = toDate;</span>
+<span class="nc" id="L186">    }</span>
+
+    public Department getDepartment() {
+<span class="nc" id="L189">        return department;</span>
+    }
+
+    public void setDepartment(final Department department) {
+<span class="nc" id="L193">        this.department = department;</span>
+<span class="nc" id="L194">    }</span>
+
+    public Designation getDesignation() {
+<span class="nc" id="L197">        return designation;</span>
+    }
+
+    public void setDesignation(final Designation designation) {
+<span class="nc" id="L201">        this.designation = designation;</span>
+<span class="nc" id="L202">    }</span>
+
+    public Position getPosition() {
+<span class="nc" id="L205">        return position;</span>
+    }
+
+    public void setPosition(final Position position) {
+<span class="nc" id="L209">        this.position = position;</span>
+<span class="nc" id="L210">    }</span>
+
+    public Functionary getFunctionary() {
+<span class="nc" id="L213">        return functionary;</span>
+    }
+
+    public void setFunctionary(final Functionary functionary) {
+<span class="nc" id="L217">        this.functionary = functionary;</span>
+<span class="nc" id="L218">    }</span>
+
+    public CFunction getFunction() {
+<span class="nc" id="L221">        return function;</span>
+    }
+
+    public void setFunction(final CFunction function) {
+<span class="nc" id="L225">        this.function = function;</span>
+<span class="nc" id="L226">    }</span>
+
+    public Fund getFund() {
+<span class="nc" id="L229">        return fund;</span>
+    }
+
+    public void setFund(final Fund fund) {
+<span class="nc" id="L233">        this.fund = fund;</span>
+<span class="nc" id="L234">    }</span>
+
+    public Boolean getPrimary() {
+<span class="nc" id="L237">        return primary;</span>
+    }
+
+    public void setPrimary(final Boolean primary) {
+<span class="nc" id="L241">        this.primary = primary;</span>
+<span class="nc" id="L242">    }</span>
+
+    public Long getId() {
+<span class="nc" id="L245">        return id;</span>
+    }
+
+    public void setId(final Long id) {
+<span class="nc" id="L249">        this.id = id;</span>
+<span class="nc" id="L250">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

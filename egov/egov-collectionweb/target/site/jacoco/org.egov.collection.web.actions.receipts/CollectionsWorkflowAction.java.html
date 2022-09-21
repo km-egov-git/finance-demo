@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionsWorkflowAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">CollectionsWorkflowAction.java</span></div><h1>CollectionsWorkflowAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.service.ReceiptHeaderService;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.model.instrument.InstrumentHeader;
+import org.egov.pims.commons.Position;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Action class for &quot;Approve Collections&quot;
+ */
+@ParentPackage(&quot;egov&quot;)
+@Results({
+        @Result(name = CollectionsWorkflowAction.SUCCESS, location = &quot;collectionsWorkflow-success.jsp&quot;),
+        @Result(name = CollectionsWorkflowAction.INDEX, location = &quot;collectionsWorkflow-index.jsp&quot;),
+        @Result(name = CollectionsWorkflowAction.ERROR, location = &quot;collectionsWorkflow-error.jsp&quot;),
+        @Result(name = CollectionsWorkflowAction.SUBMISSION_REPORT_CASH, type = &quot;redirectAction&quot;, location = &quot;cashCollectionReport-submissionReport.action&quot;, params = {
+                &quot;namespace&quot;, &quot;/reports&quot;, &quot;receiptDate&quot;, &quot;${receiptDate}&quot; }),
+        @Result(name = CollectionsWorkflowAction.SUBMISSION_REPORT_CHEQUE, type = &quot;redirectAction&quot;, location = &quot;chequeCollectionReport-submissionReport.action&quot;, params = {
+                &quot;namespace&quot;, &quot;/reports&quot;, &quot;receiptDate&quot;, &quot;${receiptDate}&quot; }),
+        @Result(name = &quot;cancel&quot;, type = &quot;redirectAction&quot;, location = &quot;receipt&quot;, params = { &quot;namespace&quot;, &quot;/receipts&quot;,
+                &quot;method&quot;, &quot;cancel&quot; }) })
+public class CollectionsWorkflowAction extends BaseFormAction {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * List of receipt headers to be submitted/approved
+     */
+    private List&lt;ReceiptHeader&gt; receiptHeaders;
+
+    /**
+     * Array of selected receipt ids that are to be submitted/approved
+     */
+    private Long[] receiptIds;
+
+    /**
+     * Map of instrument type wise amounts for all receipts that are eligible for the workflow
+     */
+<span class="nc" id="L104">    private final Map&lt;String, BigDecimal&gt; instrumentWiseAmounts = new HashMap&lt;String, BigDecimal&gt;(4);</span>
+
+    /**
+     * Total amount of all receipts eligible for the workflow action
+     */
+    private BigDecimal totalAmount;
+
+    /**
+     * The counter id for which the receipt list is to be submitted/approved.
+     */
+<span class="nc" id="L114">    private Long counterId = -1l;</span>
+
+    /**
+     * The user name for which the receipt list is to be submitted/approved.
+     */
+    private String userName;
+
+    /**
+     * The service code for which the receipt list is to be submitted/approved.
+     */
+    private String serviceCode;
+
+    /**
+     * Workflow service for changing the state of the receipt
+     */
+
+    /**
+     * The collections utility object
+     */
+    private CollectionsUtil collectionsUtil;
+
+    /**
+     * Receipt header service
+     */
+    private ReceiptHeaderService receiptHeaderService;
+
+    /**
+     * Approval/Rejection remarks
+     */
+    private String remarks;
+
+    /**
+     * Workflow action (SUBMIT/APPROVE). Based on this, the JSP can decide to display/hide various buttons
+     */
+    private String wfAction;
+
+    public void setWfAction(final String wfAction) {
+<span class="nc" id="L151">        this.wfAction = wfAction;</span>
+<span class="nc" id="L152">    }</span>
+
+    private String receiptDate;
+    private String approverName;
+    /**
+     * Result for cash submission report (redirects to the cash collection report)
+     */
+    protected static final String SUBMISSION_REPORT_CASH = &quot;submissionReportCash&quot;;
+
+    /**
+     * Result for cheque submission report (redirects to the cheque collection report)
+     */
+    protected static final String SUBMISSION_REPORT_CHEQUE = &quot;submissionReportCheque&quot;;
+
+<span class="nc" id="L166">    private SortedMap&lt;String, String&gt; paymentModesMap = new TreeMap&lt;&gt;();</span>
+<span class="nc" id="L167">    private String paymentMode = CollectionConstants.ALL;</span>
+
+    @Autowired
+    private SecurityUtils securityUtils;
+    private String inboxItemDetails;
+
+    public String getInboxItemDetails() {
+<span class="nc" id="L174">        return inboxItemDetails;</span>
+    }
+
+    /**
+     * This method is called when user clicks on a collections work flow item in the inbox. The inbox item details contains the
+     * next work flow action to be performed, service code, user id and counter id in the following form:
+     * &lt;next-workflow-action&gt;-servicecode-username-counterid
+     *
+     * @param inboxItemDetails the id to set
+     */
+    public void setInboxItemDetails(final String inboxItemDetails) {
+<span class="nc" id="L185">        final String params[] = inboxItemDetails.split(CollectionConstants.SEPARATOR_HYPHEN, -1);</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (params.length &lt;= 7) {</span>
+<span class="nc" id="L187">            setWfAction(params[0]);</span>
+<span class="nc" id="L188">            setServiceCode(params[1]);</span>
+<span class="nc" id="L189">            setUserName(params[2]);</span>
+<span class="nc" id="L190">            setCounterId(Long.valueOf(params[4]));</span>
+<span class="nc" id="L191">            setReceiptDate(params[3]);</span>
+        }
+<span class="nc" id="L193">        this.inboxItemDetails = inboxItemDetails;</span>
+<span class="nc" id="L194">    }</span>
+
+    /**
+     * @param collectionsUtil the collectionsUtil to set
+     */
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L200">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L201">    }</span>
+
+    /**
+     * @param workflow the receipt workflow service
+     */
+    public void setReceiptHeaderService(final ReceiptHeaderService receiptHeaderService) {
+<span class="nc" id="L207">        this.receiptHeaderService = receiptHeaderService;</span>
+<span class="nc" id="L208">    }</span>
+
+    /**
+     * @return true if the current action is submit_for_approval
+     */
+    public Boolean getIsSubmitAction() {
+<span class="nc" id="L214">        return wfAction.equals(CollectionConstants.WF_ACTION_SUBMIT);</span>
+    }
+
+    /**
+     * @return true if partial selection is to be allowed for submission/approval, else false
+     */
+    public Boolean getAllowPartialSelection() {
+        // return wfAction.equals(CollectionConstants.WF_ACTION_SUBMIT);
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (getIsSubmitAction())</span>
+<span class="nc" id="L223">            return false;</span>
+        else
+<span class="nc" id="L225">            return true;</span>
+    }
+
+    /**
+     * @return true if the current action is approve
+     */
+    public Boolean getIsApproveAction() {
+<span class="nc" id="L232">        return wfAction.equals(CollectionConstants.WF_ACTION_APPROVE);</span>
+    }
+
+    /**
+     * @return true if the current action is approve
+     */
+    public Boolean getIsRejectAction() {
+<span class="nc" id="L239">        return wfAction.equals(CollectionConstants.WF_ACTION_REJECT);</span>
+    }
+
+    /**
+     * Constructor
+     */
+    public CollectionsWorkflowAction() {
+<span class="nc" id="L246">        super();</span>
+<span class="nc" id="L247">    }</span>
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L251">        return null;</span>
+    }
+
+    /**
+     * @return the counter id
+     */
+    public Long getCounterId() {
+<span class="nc" id="L258">        return counterId;</span>
+    }
+
+    /**
+     * @param counterId the counter id to be set
+     */
+    public void setCounterId(final Long counterId) {
+<span class="nc" id="L265">        this.counterId = counterId;</span>
+<span class="nc" id="L266">    }</span>
+
+    /**
+     * @return the user name
+     */
+    public String getUserName() {
+<span class="nc" id="L272">        return userName;</span>
+    }
+
+    /**
+     * @param userName the user name to set
+     */
+    public void setUserName(final String userName) {
+<span class="nc" id="L279">        this.userName = userName;</span>
+<span class="nc" id="L280">    }</span>
+
+    /**
+     * @return the service code
+     */
+    public String getServiceCode() {
+<span class="nc" id="L286">        return serviceCode;</span>
+    }
+
+    /**
+     * @param serviceCode the Service Code to set
+     */
+    public void setServiceCode(final String serviceCode) {
+<span class="nc" id="L293">        this.serviceCode = serviceCode;</span>
+<span class="nc" id="L294">    }</span>
+
+    /**
+     * @return List for receipt headers in status &quot;To be submitted&quot;
+     */
+    public List&lt;ReceiptHeader&gt; getReceiptHeaders() {
+<span class="nc" id="L300">        return receiptHeaders;</span>
+    }
+
+    /**
+     * @return The total amount of all receipts eligible for the workflow action
+     */
+    public BigDecimal getTotalAmount() {
+<span class="nc" id="L307">        return totalAmount;</span>
+    }
+
+    /**
+     * Returns amount for given instrument type
+     *
+     * @param instrumentType The instrument type
+     * @return amount for given instrument type
+     */
+    private BigDecimal getInstrumentTypeAmount(final String instrumentType) {
+<span class="nc" id="L317">        final BigDecimal amount = instrumentWiseAmounts.get(instrumentType);</span>
+
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        return amount == null ? BigDecimal.valueOf(0) : amount;</span>
+    }
+
+    /**
+     * @return Total amount collected as cash amongst all receipts eligible for the workflow action
+     */
+    public BigDecimal getCashAmount() {
+<span class="nc" id="L326">        return getInstrumentTypeAmount(CollectionConstants.INSTRUMENTTYPE_CASH);</span>
+    }
+
+    /**
+     * @return Total amount collected as cheque amongst all receipts eligible for the workflow action
+     */
+    public BigDecimal getChequeAmount() {
+<span class="nc" id="L333">        return getInstrumentTypeAmount(CollectionConstants.INSTRUMENTTYPE_CHEQUE);</span>
+    }
+
+    /**
+     * @return Total amount collected as dd amongst all receipts eligible for the workflow action
+     */
+    public BigDecimal getDdAmount() {
+<span class="nc" id="L340">        return getInstrumentTypeAmount(CollectionConstants.INSTRUMENTTYPE_DD);</span>
+    }
+
+    /**
+     * @return Total amount collected using card amongst all receipts eligible for the workflow action
+     */
+    public BigDecimal getCardAmount() {
+<span class="nc" id="L347">        return getInstrumentTypeAmount(CollectionConstants.INSTRUMENTTYPE_CARD);</span>
+    }
+
+    /**
+     * @return Total amount collected using bank amongst all receipts eligible for the workflow action
+     */
+    public BigDecimal getBankAmount() {
+<span class="nc" id="L354">        return getInstrumentTypeAmount(CollectionConstants.INSTRUMENTTYPE_BANK);</span>
+    }
+
+    /**
+     * @param Array of receipt Ids
+     */
+    public void setReceiptIds(final Long[] receiptIds) {
+<span class="nc" id="L361">        this.receiptIds = receiptIds;</span>
+<span class="nc" id="L362">    }</span>
+
+    /**
+     * @param Submission /Approval/Rejection remarks
+     */
+    public void setRemarks(final String remarks) {
+<span class="nc" id="L368">        this.remarks = remarks;</span>
+<span class="nc" id="L369">    }</span>
+
+    /**
+     * Updates the receipt's status by invoking the workflow action
+     *
+     * @param wfAction Workflow action e.g. submit_for_approval/approve/reject
+     * @param remarks Approval/rejection remarks
+     * @return SUCCESS/ERROR
+     */
+    private String updateReceiptWorkflowStatus(final String wfAction, final String remarks) {
+<span class="nc bnc" id="L379" title="All 2 branches missed.">        for (final Long receiptId : receiptIds) {</span>
+            // Get the next receipt that is to be updated
+<span class="nc" id="L381">            final ReceiptHeader receiptHeader = receiptHeaderService.findByNamedQuery(</span>
+                    CollectionConstants.QUERY_RECEIPT_BY_ID_AND_STATUSNOTCANCELLED, receiptId);
+<span class="nc bnc" id="L383" title="All 2 branches missed.">            if (receiptHeader != null) {</span>
+<span class="nc" id="L384">                receiptHeaderService.performWorkflow(wfAction, receiptHeader, remarks);</span>
+<span class="nc" id="L385">                approverName = collectionsUtil.getApproverName(receiptHeader.getState().getOwnerPosition());</span>
+            }
+        }
+        // Add the selected receipt ids to sereceiptHeader
+        // Need to find a better mechanism to achieve this.
+<span class="nc" id="L390">        getSession().put(CollectionConstants.SESSION_VAR_RECEIPT_IDS, receiptIds);</span>
+<span class="nc" id="L391">        return SUCCESS;</span>
+    }
+
+    private String updateReceiptWorkflowStatusForAll(final String wfAction, final String remarks) {
+<span class="nc" id="L395">        List&lt;Long&gt; positionIds = new ArrayList&lt;Long&gt;();</span>
+<span class="nc" id="L396">        final List&lt;Position&gt; positions = collectionsUtil.getPositionsForEmployee(securityUtils.getCurrentUser());</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">        for (Position pos : positions)</span>
+<span class="nc" id="L398">            positionIds.add(pos.getId());</span>
+<span class="nc" id="L399">        receiptHeaders = receiptHeaderService.findAllByPositionAndInboxItemDetails(positionIds, inboxItemDetails);</span>
+<span class="nc" id="L400">        final Position approverPosition = receiptHeaderService.getApproverPosition(receiptHeaders.get(0));</span>
+<span class="nc" id="L401">        receiptIds = new Long[receiptHeaders.size()];</span>
+<span class="nc" id="L402">        int i = 0;</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">        for (final ReceiptHeader receiptHeader : receiptHeaders) {</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">            if (receiptHeader != null)</span>
+<span class="nc" id="L405">                receiptIds[i] = receiptHeader.getId();</span>
+<span class="nc" id="L406">            i++;</span>
+<span class="nc" id="L407">        }</span>
+<span class="nc" id="L408">        receiptHeaderService.performWorkflowForAllReceipts(wfAction, receiptHeaders, remarks);</span>
+<span class="nc" id="L409">        approverName = collectionsUtil.getApproverName(approverPosition.getId());</span>
+        // Add the selected receipt ids to sereceiptHeader
+        // Need to find a better mechanism to achieve this.
+<span class="nc" id="L412">        getSession().put(CollectionConstants.SESSION_VAR_RECEIPT_IDS, receiptIds);</span>
+<span class="nc" id="L413">        return SUCCESS;</span>
+    }
+
+    /**
+     * Fetches all receipts for set user-counter combination and given status code. Also sets the work flow action code to given
+     * value, and calculates the various amounts using the fetched receipts.
+     *
+     * @param statusCode Status code for which receipts are to be fetched
+     * @param workflowAction Work flow action code
+     */
+    private void fetchReceipts(final String workflowAction) {// Get
+        // all
+        // receipts
+        // that
+        // are created by
+        // currently logged in user from
+        // his/her current counter and are in SUBMITTED status
+<span class="nc" id="L430">        final List&lt;Position&gt; positions = collectionsUtil.getPositionsForEmployee(securityUtils.getCurrentUser());</span>
+<span class="nc" id="L431">        List&lt;Long&gt; positionIds = new ArrayList&lt;Long&gt;();</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        for (Position pos : positions)</span>
+<span class="nc" id="L433">            positionIds.add(pos.getId());</span>
+<span class="nc" id="L434">        receiptHeaders = receiptHeaderService.findAllByPositionAndInboxItemDetails(positionIds, inboxItemDetails);</span>
+
+        // Populate the selected receipt IDs with all receipt ids
+<span class="nc" id="L437">        final int receiptCount = receiptHeaders.size();</span>
+<span class="nc" id="L438">        receiptIds = new Long[receiptCount];</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">        for (int i = 0; i &lt; receiptCount; i++)</span>
+<span class="nc" id="L440">            receiptIds[i] = receiptHeaders.get(i).getId();</span>
+
+<span class="nc" id="L442">        wfAction = workflowAction;</span>
+<span class="nc" id="L443">        calculateAmounts();</span>
+<span class="nc" id="L444">    }</span>
+
+    /**
+     * Action that will be called from the workflow inbox. The inbox also passes the id of the clicked item which is of the form:
+     * &lt;next-workflow-action&gt;-servicecode-userid-counterid
+     *
+     * @return Next page to be displayed (index)
+     */
+    @Action(value = &quot;/receipts/collectionsWorkflow-listWorkflow&quot;)
+    public String listWorkflow() {
+<span class="nc" id="L454">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CASH, CollectionConstants.INSTRUMENTTYPE_CASH);</span>
+<span class="nc" id="L455">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD, CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD);</span>
+<span class="nc" id="L456">        inboxItemDetails = inboxItemDetails.substring(0, (inboxItemDetails.lastIndexOf(CollectionConstants.SEPARATOR_HYPHEN)) + 1)</span>
+                + paymentMode;
+<span class="nc bnc" id="L458" title="All 4 branches missed.">        if (wfAction != null &amp;&amp; wfAction.equals(CollectionConstants.WF_ACTION_APPROVE))</span>
+<span class="nc" id="L459">            fetchReceipts(CollectionConstants.WF_ACTION_APPROVE);</span>
+        else
+<span class="nc" id="L461">            fetchReceipts(CollectionConstants.WF_ACTION_SUBMIT);</span>
+<span class="nc" id="L462">        return INDEX;</span>
+    }
+
+    /**
+     * Action for creating cash submission report
+     *
+     * @return submissionReport
+     */
+    @Action(value = &quot;/receipts/collectionsWorkflow-submissionReportCash&quot;)
+    public String submissionReportCash() {
+<span class="nc" id="L472">        return SUBMISSION_REPORT_CASH;</span>
+    }
+
+    /**
+     * Action for creating cash submission report
+     *
+     * @return submissionReport
+     */
+    @Action(value = &quot;/receipts/collectionsWorkflow-submissionReportCheque&quot;)
+    public String submissionReportCheque() {
+<span class="nc" id="L482">        return SUBMISSION_REPORT_CHEQUE;</span>
+    }
+
+    /**
+     * Action method to submit the selected receipt headers
+     *
+     * @return SUCCESS/ERROR
+     */
+    @ValidationErrorPage(value = INDEX)
+    @Action(value = &quot;/receipts/collectionsWorkflow-submitCollections&quot;)
+    public String submitCollections() {
+<span class="nc" id="L493">        wfAction = CollectionConstants.WF_ACTION_SUBMIT;</span>
+<span class="nc" id="L494">        return updateReceiptWorkflowStatus(wfAction, remarks);</span>
+    }
+
+    @ValidationErrorPage(value = INDEX)
+    @Action(value = &quot;/receipts/collectionsWorkflow-submitAllCollections&quot;)
+    public String submitAllCollections() {
+<span class="nc" id="L500">        setInboxItemDetails(inboxItemDetails);</span>
+<span class="nc" id="L501">        return updateReceiptWorkflowStatusForAll(wfAction, remarks);</span>
+    }
+
+    /**
+     * Action method to approve the selected receipt headers
+     *
+     * @return SUCCESS/ERROR
+     */
+    @Action(value = &quot;/receipts/collectionsWorkflow-approveCollections&quot;)
+    public String approveCollections() {
+<span class="nc" id="L511">        wfAction = CollectionConstants.WF_ACTION_APPROVE;</span>
+<span class="nc" id="L512">        return updateReceiptWorkflowStatus(wfAction, remarks);</span>
+    }
+
+    @Action(value = &quot;/receipts/collectionsWorkflow-approveAllCollections&quot;)
+    public String approveAllCollections() {
+<span class="nc" id="L517">        setInboxItemDetails(inboxItemDetails);</span>
+<span class="nc" id="L518">        return updateReceiptWorkflowStatusForAll(wfAction, remarks);</span>
+    }
+
+    /**
+     * Action method to reject the selected receipt headers
+     *
+     * @return SUCCESS/ERROR
+     */
+    @Action(value = &quot;/receipts/collectionsWorkflow-rejectCollections&quot;)
+    public String rejectCollections() {
+<span class="nc" id="L528">        wfAction = CollectionConstants.WF_ACTION_REJECT;</span>
+<span class="nc" id="L529">        return updateReceiptWorkflowStatus(wfAction, remarks);</span>
+    }
+
+    /**
+     * Calculates instrument type wise amounts of all receipts eligible for the workflow
+     */
+    private void calculateAmounts() {
+<span class="nc" id="L536">        totalAmount = BigDecimal.ZERO;</span>
+<span class="nc bnc" id="L537" title="All 2 branches missed.">        for (final ReceiptHeader receiptHeader : receiptHeaders) {</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">            for (final InstrumentHeader instrumentHeader : receiptHeader.getReceiptInstrument()) {</span>
+<span class="nc" id="L539">                final String instrumentType = instrumentHeader.getInstrumentType().getType();</span>
+                // Increment total amount
+<span class="nc" id="L541">                totalAmount = totalAmount.add(instrumentHeader.getInstrumentAmount()).setScale(2,</span>
+                        BigDecimal.ROUND_HALF_UP);
+
+<span class="nc" id="L544">                BigDecimal instrumentAmount = instrumentWiseAmounts.get(instrumentType);</span>
+<span class="nc bnc" id="L545" title="All 2 branches missed.">                if (instrumentAmount == null)</span>
+<span class="nc" id="L546">                    instrumentAmount = instrumentHeader.getInstrumentAmount();</span>
+                else
+<span class="nc" id="L548">                    instrumentAmount = instrumentAmount.add(instrumentHeader.getInstrumentAmount());</span>
+<span class="nc" id="L549">                instrumentWiseAmounts.put(instrumentType, instrumentAmount.setScale(2, BigDecimal.ROUND_HALF_UP));</span>
+<span class="nc" id="L550">            }</span>
+            // Add to ReceiptHeader to populate in jsp
+<span class="nc" id="L552">            receiptHeader.setInstrumentsAsString(receiptHeader.getInstrumentDetailAsString());</span>
+<span class="nc" id="L553">        }</span>
+<span class="nc" id="L554">    }</span>
+
+    public String getReceiptDate() {
+<span class="nc" id="L557">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(final String receiptDate) {
+<span class="nc" id="L561">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L562">    }</span>
+
+    public String getApproverName() {
+<span class="nc" id="L565">        return approverName;</span>
+    }
+
+    public void setApproverName(final String approverName) {
+<span class="nc" id="L569">        this.approverName = approverName;</span>
+<span class="nc" id="L570">    }</span>
+
+    public SortedMap&lt;String, String&gt; getPaymentModesMap() {
+<span class="nc" id="L573">        return paymentModesMap;</span>
+    }
+
+    public void setPaymentModesMap(final SortedMap&lt;String, String&gt; paymentModesMap) {
+<span class="nc" id="L577">        this.paymentModesMap = paymentModesMap;</span>
+<span class="nc" id="L578">    }</span>
+
+    public String getPaymentMode() {
+<span class="nc" id="L581">        return paymentMode;</span>
+    }
+
+    public void setPaymentMode(String paymentMode) {
+<span class="nc" id="L585">        this.paymentMode = paymentMode;</span>
+<span class="nc" id="L586">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

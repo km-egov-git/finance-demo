@@ -1,0 +1,7 @@
+org\egov\asset\web\controller\CreateAssetController.class
+org\egov\asset\web\controller\AssetCatagoryController.class
+org\egov\asset\web\controller\adaptor\AssetJsonAdaptor.class
+org\egov\asset\web\controller\AssetHistoryController.class
+org\egov\asset\web\controller\DepreciationController.class
+org\egov\asset\web\controller\RevaluationController.class
+org\egov\asset\web\controller\SaleDisposalController.class

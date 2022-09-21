@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationDetails.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.elasticsearch.entity.bean</a> &gt; <span class="el_source">ApplicationDetails.java</span></div><h1>ApplicationDetails.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.elasticsearch.entity.bean;
+
+import org.apache.commons.lang3.StringUtils;
+
+<span class="nc" id="L53">public class ApplicationDetails {</span>
+
+<span class="nc" id="L55">    private String region = StringUtils.EMPTY;</span>
+<span class="nc" id="L56">    private String district = StringUtils.EMPTY;</span>
+<span class="nc" id="L57">    private String grade = StringUtils.EMPTY;</span>
+<span class="nc" id="L58">    private String ulbName = StringUtils.EMPTY;</span>
+<span class="nc" id="L59">    private String ulbCode = StringUtils.EMPTY;</span>
+<span class="nc" id="L60">    private String revZone = StringUtils.EMPTY;</span>
+<span class="nc" id="L61">    private String revWard = StringUtils.EMPTY;</span>
+<span class="nc" id="L62">    private String admZone = StringUtils.EMPTY;</span>
+<span class="nc" id="L63">    private String admWard = StringUtils.EMPTY;</span>
+<span class="nc" id="L64">    private String locality = StringUtils.EMPTY;</span>
+<span class="nc" id="L65">    private String commName = StringUtils.EMPTY;</span>
+<span class="nc" id="L66">    private String commMobile = StringUtils.EMPTY;</span>
+<span class="nc" id="L67">    private String serviceGroup = StringUtils.EMPTY;</span>
+<span class="nc" id="L68">    private String serviceType = StringUtils.EMPTY;</span>
+<span class="nc" id="L69">    private String functionaryName = StringUtils.EMPTY;</span>
+<span class="nc" id="L70">    private String functionaryCode = StringUtils.EMPTY;</span>
+<span class="nc" id="L71">    private String source = StringUtils.EMPTY;</span>
+<span class="nc" id="L72">    private long totalReceived = 0;</span>
+<span class="nc" id="L73">    private long totalClosed = 0;</span>
+<span class="nc" id="L74">    private long totalOpen = 0;</span>
+<span class="nc" id="L75">    private long totalRejectedClosed=0;</span>
+<span class="nc" id="L76">    private long totalApprovedClosed=0;</span>
+<span class="nc" id="L77">    private long closedWithinSLA = 0;</span>
+<span class="nc" id="L78">    private long closedBeyondSLA = 0;</span>
+<span class="nc" id="L79">    private long openWithinSLA = 0;</span>
+<span class="nc" id="L80">    private long openBeyondSLA = 0;</span>
+<span class="nc" id="L81">    private long slab1beyondSLA = 0;</span>
+<span class="nc" id="L82">    private long slab2beyondSLA = 0;</span>
+<span class="nc" id="L83">    private long slab3beyondSLA = 0;</span>
+<span class="nc" id="L84">    private long slab4beyondSLA = 0;</span>
+<span class="nc" id="L85">    private long slab5beyondSLA = 0;</span>
+    private int slaPeriod;
+<span class="nc" id="L87">    private long cscTotal = 0;</span>
+<span class="nc" id="L88">    private long meesevaTotal = 0;</span>
+<span class="nc" id="L89">    private long onlineTotal = 0;</span>
+<span class="nc" id="L90">    private long ulbTotal = 0;</span>
+<span class="nc" id="L91">    private long othersTotal = 0;</span>
+    private long delayedDays;
+
+    public String getRegion() {
+<span class="nc" id="L95">        return region;</span>
+    }
+
+    public void setRegion(String region) {
+<span class="nc" id="L99">        this.region = region;</span>
+<span class="nc" id="L100">    }</span>
+
+    public String getDistrict() {
+<span class="nc" id="L103">        return district;</span>
+    }
+
+    public void setDistrict(String district) {
+<span class="nc" id="L107">        this.district = district;</span>
+<span class="nc" id="L108">    }</span>
+
+    public String getGrade() {
+<span class="nc" id="L111">        return grade;</span>
+    }
+
+    public void setGrade(String grade) {
+<span class="nc" id="L115">        this.grade = grade;</span>
+<span class="nc" id="L116">    }</span>
+
+    public String getUlbName() {
+<span class="nc" id="L119">        return ulbName;</span>
+    }
+
+    public void setUlbName(String ulbName) {
+<span class="nc" id="L123">        this.ulbName = ulbName;</span>
+<span class="nc" id="L124">    }</span>
+
+    public String getUlbCode() {
+<span class="nc" id="L127">        return ulbCode;</span>
+    }
+
+    public void setUlbCode(String ulbCode) {
+<span class="nc" id="L131">        this.ulbCode = ulbCode;</span>
+<span class="nc" id="L132">    }</span>
+
+    public String getRevZone() {
+<span class="nc" id="L135">        return revZone;</span>
+    }
+
+    public void setRevZone(String revZone) {
+<span class="nc" id="L139">        this.revZone = revZone;</span>
+<span class="nc" id="L140">    }</span>
+
+    public String getRevWard() {
+<span class="nc" id="L143">        return revWard;</span>
+    }
+
+    public void setRevWard(String revWard) {
+<span class="nc" id="L147">        this.revWard = revWard;</span>
+<span class="nc" id="L148">    }</span>
+
+    public String getAdmZone() {
+<span class="nc" id="L151">        return admZone;</span>
+    }
+
+    public void setAdmZone(String admZone) {
+<span class="nc" id="L155">        this.admZone = admZone;</span>
+<span class="nc" id="L156">    }</span>
+
+    public String getAdmWard() {
+<span class="nc" id="L159">        return admWard;</span>
+    }
+
+    public void setAdmWard(String admWard) {
+<span class="nc" id="L163">        this.admWard = admWard;</span>
+<span class="nc" id="L164">    }</span>
+
+    public String getLocality() {
+<span class="nc" id="L167">        return locality;</span>
+    }
+
+    public void setLocality(String locality) {
+<span class="nc" id="L171">        this.locality = locality;</span>
+<span class="nc" id="L172">    }</span>
+
+    public String getCommName() {
+<span class="nc" id="L175">        return commName;</span>
+    }
+
+    public void setCommName(String commName) {
+<span class="nc" id="L179">        this.commName = commName;</span>
+<span class="nc" id="L180">    }</span>
+
+    public String getCommMobile() {
+<span class="nc" id="L183">        return commMobile;</span>
+    }
+
+    public void setCommMobile(String commMobile) {
+<span class="nc" id="L187">        this.commMobile = commMobile;</span>
+<span class="nc" id="L188">    }</span>
+
+    public String getServiceGroup() {
+<span class="nc" id="L191">        return serviceGroup;</span>
+    }
+
+    public void setServiceGroup(String serviceGroup) {
+<span class="nc" id="L195">        this.serviceGroup = serviceGroup;</span>
+<span class="nc" id="L196">    }</span>
+
+    public String getServiceType() {
+<span class="nc" id="L199">        return serviceType;</span>
+    }
+
+    public void setServiceType(String serviceType) {
+<span class="nc" id="L203">        this.serviceType = serviceType;</span>
+<span class="nc" id="L204">    }</span>
+
+    public String getFunctionaryName() {
+<span class="nc" id="L207">        return functionaryName;</span>
+    }
+
+    public void setFunctionaryName(String functionaryName) {
+<span class="nc" id="L211">        this.functionaryName = functionaryName;</span>
+<span class="nc" id="L212">    }</span>
+
+    public String getFunctionaryCode() {
+<span class="nc" id="L215">        return functionaryCode;</span>
+    }
+
+    public void setFunctionaryCode(String functionaryCode) {
+<span class="nc" id="L219">        this.functionaryCode = functionaryCode;</span>
+<span class="nc" id="L220">    }</span>
+
+    public String getSource() {
+<span class="nc" id="L223">        return source;</span>
+    }
+
+    public void setSource(String source) {
+<span class="nc" id="L227">        this.source = source;</span>
+<span class="nc" id="L228">    }</span>
+
+    public long getTotalReceived() {
+<span class="nc" id="L231">        return totalReceived;</span>
+    }
+
+    public void setTotalReceived(long totalReceived) {
+<span class="nc" id="L235">        this.totalReceived = totalReceived;</span>
+<span class="nc" id="L236">    }</span>
+
+    public long getTotalClosed() {
+<span class="nc" id="L239">        return totalClosed;</span>
+    }
+
+    public void setTotalClosed(long totalClosed) {
+<span class="nc" id="L243">        this.totalClosed = totalClosed;</span>
+<span class="nc" id="L244">    }</span>
+
+    public long getTotalOpen() {
+<span class="nc" id="L247">        return totalOpen;</span>
+    }
+
+    public void setTotalOpen(long totalOpen) {
+<span class="nc" id="L251">        this.totalOpen = totalOpen;</span>
+<span class="nc" id="L252">    }</span>
+
+    public long getTotalRejectedClosed() {
+<span class="nc" id="L255">        return totalRejectedClosed;</span>
+    }
+
+    public void setTotalRejectedClosed(long totalRejectedClosed) {
+<span class="nc" id="L259">        this.totalRejectedClosed = totalRejectedClosed;</span>
+<span class="nc" id="L260">    }</span>
+
+    public long getTotalApprovedClosed() {
+<span class="nc" id="L263">        return totalApprovedClosed;</span>
+    }
+
+    public void setTotalApprovedClosed(long totalApprovedClosed) {
+<span class="nc" id="L267">        this.totalApprovedClosed = totalApprovedClosed;</span>
+<span class="nc" id="L268">    }</span>
+
+    public long getClosedWithinSLA() {
+<span class="nc" id="L271">        return closedWithinSLA;</span>
+    }
+
+    public void setClosedWithinSLA(long closedWithinSLA) {
+<span class="nc" id="L275">        this.closedWithinSLA = closedWithinSLA;</span>
+<span class="nc" id="L276">    }</span>
+
+    public long getClosedBeyondSLA() {
+<span class="nc" id="L279">        return closedBeyondSLA;</span>
+    }
+
+    public void setClosedBeyondSLA(long closedBeyondSLA) {
+<span class="nc" id="L283">        this.closedBeyondSLA = closedBeyondSLA;</span>
+<span class="nc" id="L284">    }</span>
+
+    public long getOpenWithinSLA() {
+<span class="nc" id="L287">        return openWithinSLA;</span>
+    }
+
+    public void setOpenWithinSLA(long openWithinSLA) {
+<span class="nc" id="L291">        this.openWithinSLA = openWithinSLA;</span>
+<span class="nc" id="L292">    }</span>
+
+    public long getOpenBeyondSLA() {
+<span class="nc" id="L295">        return openBeyondSLA;</span>
+    }
+
+    public void setOpenBeyondSLA(long openBeyondSLA) {
+<span class="nc" id="L299">        this.openBeyondSLA = openBeyondSLA;</span>
+<span class="nc" id="L300">    }</span>
+
+    public long getSlab1beyondSLA() {
+<span class="nc" id="L303">        return slab1beyondSLA;</span>
+    }
+
+    public void setSlab1beyondSLA(long slab1beyondSLA) {
+<span class="nc" id="L307">        this.slab1beyondSLA = slab1beyondSLA;</span>
+<span class="nc" id="L308">    }</span>
+
+    public long getSlab2beyondSLA() {
+<span class="nc" id="L311">        return slab2beyondSLA;</span>
+    }
+
+    public void setSlab2beyondSLA(long slab2beyondSLA) {
+<span class="nc" id="L315">        this.slab2beyondSLA = slab2beyondSLA;</span>
+<span class="nc" id="L316">    }</span>
+
+    public long getSlab3beyondSLA() {
+<span class="nc" id="L319">        return slab3beyondSLA;</span>
+    }
+
+    public void setSlab3beyondSLA(long slab3beyondSLA) {
+<span class="nc" id="L323">        this.slab3beyondSLA = slab3beyondSLA;</span>
+<span class="nc" id="L324">    }</span>
+
+    public long getSlab4beyondSLA() {
+<span class="nc" id="L327">        return slab4beyondSLA;</span>
+    }
+
+    public void setSlab4beyondSLA(long slab4beyondSLA) {
+<span class="nc" id="L331">        this.slab4beyondSLA = slab4beyondSLA;</span>
+<span class="nc" id="L332">    }</span>
+
+    public long getSlab5beyondSLA() {
+<span class="nc" id="L335">        return slab5beyondSLA;</span>
+    }
+
+    public void setSlab5beyondSLA(long slab5beyondSLA) {
+<span class="nc" id="L339">        this.slab5beyondSLA = slab5beyondSLA;</span>
+<span class="nc" id="L340">    }</span>
+
+    public int getSlaPeriod() {
+<span class="nc" id="L343">        return slaPeriod;</span>
+    }
+
+    public void setSlaPeriod(int slaPeriod) {
+<span class="nc" id="L347">        this.slaPeriod = slaPeriod;</span>
+<span class="nc" id="L348">    }</span>
+
+    public long getCscTotal() {
+<span class="nc" id="L351">        return cscTotal;</span>
+    }
+
+    public void setCscTotal(long cscTotal) {
+<span class="nc" id="L355">        this.cscTotal = cscTotal;</span>
+<span class="nc" id="L356">    }</span>
+
+    public long getMeesevaTotal() {
+<span class="nc" id="L359">        return meesevaTotal;</span>
+    }
+
+    public void setMeesevaTotal(long meesevaTotal) {
+<span class="nc" id="L363">        this.meesevaTotal = meesevaTotal;</span>
+<span class="nc" id="L364">    }</span>
+
+    public long getOnlineTotal() {
+<span class="nc" id="L367">        return onlineTotal;</span>
+    }
+
+    public void setOnlineTotal(long onlineTotal) {
+<span class="nc" id="L371">        this.onlineTotal = onlineTotal;</span>
+<span class="nc" id="L372">    }</span>
+
+    public long getUlbTotal() {
+<span class="nc" id="L375">        return ulbTotal;</span>
+    }
+
+    public void setUlbTotal(long ulbTotal) {
+<span class="nc" id="L379">        this.ulbTotal = ulbTotal;</span>
+<span class="nc" id="L380">    }</span>
+
+    public long getOthersTotal() {
+<span class="nc" id="L383">        return othersTotal;</span>
+    }
+
+    public void setOthersTotal(long othersTotal) {
+<span class="nc" id="L387">        this.othersTotal = othersTotal;</span>
+<span class="nc" id="L388">    }</span>
+
+    public long getDelayedDays() {
+<span class="nc" id="L391">        return delayedDays;</span>
+    }
+
+    public void setDelayedDays(long delayedDays) {
+<span class="nc" id="L395">        this.delayedDays = delayedDays;</span>
+<span class="nc" id="L396">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

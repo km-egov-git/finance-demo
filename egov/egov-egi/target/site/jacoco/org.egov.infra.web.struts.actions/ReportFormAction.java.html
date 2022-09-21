@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportFormAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.struts.actions</a> &gt; <span class="el_source">ReportFormAction.java</span></div><h1>ReportFormAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.struts.actions;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.reporting.engine.ReportDataSourceType;
+import org.egov.infra.reporting.engine.ReportFormat;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.reporting.engine.ReportRequest;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.reporting.viewer.ReportViewerUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Infrastructure class that provides generic reporting functionality. Can be
+ * extended by action classes for reports screen. Provides action method
+ * &quot;report&quot; for report generation. Implementing classes need to implement
+ * methods {@code ReportFormAction#getReportTemplateName()} and {@code
+ * ReportFormAction#criteria()}
+ */
+<span class="nc" id="L70">public abstract class ReportFormAction extends BaseFormAction {</span>
+
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The map of criteria parameters
+	 */
+<span class="nc" id="L77">	private final Map&lt;String, Object&gt; reportParams = new HashMap&lt;String, Object&gt;();</span>
+
+	/**
+	 * The report service used for creating reports
+	 */
+	private ReportService reportService;
+
+	/**
+	 * The ID of created report
+	 */
+	private String reportId;
+
+	/**
+	 * The result code for report action
+	 */
+	public static final String REPORT = &quot;report&quot;;
+
+	/**
+	 * The report format. default = PDF
+	 */
+<span class="nc" id="L97">	private ReportFormat reportFormat = ReportFormat.PDF;</span>
+
+	/**
+	 * The report data source type (jdbc/hibernate)
+	 */
+<span class="nc" id="L102">	private ReportDataSourceType dataSourceType = ReportDataSourceType.SQL;</span>
+
+	/**
+	 * The report data
+	 */
+<span class="nc" id="L107">	private Object reportData = null;</span>
+
+	@Autowired
+	private ReportViewerUtil reportViewerUtil;
+	/*
+	 * (non-Javadoc)
+	 * @see com.opensymphony.xwork2.ModelDriven#getModel()
+	 */
+	@Override
+	public Object getModel() {
+<span class="nc" id="L117">		return null;</span>
+	}
+
+	/**
+	 * @param reportService the reportService to set
+	 */
+	public void setReportService(final ReportService reportService) {
+<span class="nc" id="L124">		this.reportService = reportService;</span>
+<span class="nc" id="L125">	}</span>
+
+	/**
+	 * Clears all criteria parameters
+	 */
+	protected void clearCriteriaParams() {
+<span class="nc" id="L131">		this.reportParams.clear();</span>
+<span class="nc" id="L132">	}</span>
+
+	/**
+	 * Sets the given report parameter
+	 * @param paramName Name of report parameter
+	 * @param paramValue Value of report parameter
+	 */
+	public void setReportParam(final String paramName, final Object paramValue) {
+<span class="nc" id="L140">		this.reportParams.put(paramName, paramValue);</span>
+<span class="nc" id="L141">	}</span>
+
+	/**
+	 * Returns value of the given report parameter
+	 * @param paramName Name of report parameter
+	 */
+	protected Object getReportParam(final String paramName) {
+<span class="nc" id="L148">		return this.reportParams.get(paramName);</span>
+	}
+
+	/**
+	 * @param reportFormat the reportFormat to set
+	 */
+	public void setReportFormat(final ReportFormat reportFormat) {
+<span class="nc" id="L155">		this.reportFormat = reportFormat;</span>
+<span class="nc" id="L156">	}</span>
+
+	/**
+	 * @return the reportFormat
+	 */
+	public ReportFormat getReportFormat() {
+<span class="nc" id="L162">		return this.reportFormat;</span>
+	}
+
+	/**
+	 * @param dataSourceType the dataSourceType to set
+	 */
+	public void setDataSourceType(final ReportDataSourceType dataSourceType) {
+<span class="nc" id="L169">		this.dataSourceType = dataSourceType;</span>
+<span class="nc" id="L170">	}</span>
+
+	/**
+	 * @return the dataSourceType
+	 */
+	public ReportDataSourceType getDataSourceType() {
+<span class="nc" id="L176">		return this.dataSourceType;</span>
+	}
+
+	/**
+	 * @param reportData the reportData to set
+	 */
+	public void setReportData(final Object reportData) {
+<span class="nc" id="L183">		this.reportData = reportData;</span>
+<span class="nc" id="L184">	}</span>
+
+	/**
+	 * @return the reportData
+	 */
+	public Object getReportData() {
+<span class="nc" id="L190">		return this.reportData;</span>
+	}
+
+	/**
+	 * @return the reportId
+	 */
+	public String getReportId() {
+<span class="nc" id="L197">		return this.reportId;</span>
+	}
+
+	/**
+	 * Action method that creates the report
+	 * @return report
+	 */
+	public String report() {
+<span class="nc" id="L205">		ReportRequest reportInput = null;</span>
+<span class="nc" id="L206">		final String reportTemplateName = getReportTemplateName();</span>
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		if (this.dataSourceType == ReportDataSourceType.JAVABEAN) {</span>
+			// Array/Collection of objects
+<span class="nc bnc" id="L210" title="All 2 branches missed.">			if (this.reportData == null) {</span>
+<span class="nc" id="L211">				throw new ApplicationRuntimeException(&quot;Report Data not set!&quot;);</span>
+			}
+<span class="nc" id="L213">			reportInput = new ReportRequest(reportTemplateName, this.reportData, this.reportParams);</span>
+		} else {
+			// SQL/HQL
+<span class="nc" id="L216">			reportInput = new ReportRequest(reportTemplateName, this.reportParams, this.dataSourceType);</span>
+		}
+<span class="nc" id="L218">		reportInput.setReportFormat(this.reportFormat);</span>
+
+		// Create the report and add to session
+<span class="nc" id="L221">		final ReportOutput reportOutput = this.reportService.createReport(reportInput);</span>
+<span class="nc" id="L222">		this.reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L223">		return REPORT;</span>
+	}
+
+	/**
+	 * The criteria action method. Should populate the required data (e.g. drop down data and default values for criteria fields) and forward to appropriate jsp.
+	 * @return Result of criteria action
+	 */
+	public abstract String criteria();
+
+	/**
+	 * @return the report template name
+	 */
+	protected abstract String getReportTemplateName();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

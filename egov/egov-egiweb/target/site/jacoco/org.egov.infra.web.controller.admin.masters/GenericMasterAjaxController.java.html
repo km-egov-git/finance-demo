@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericMasterAjaxController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi web</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.controller.admin.masters</a> &gt; <span class="el_source">GenericMasterAjaxController.java</span></div><h1>GenericMasterAjaxController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.controller.admin.masters;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import org.apache.commons.io.IOUtils;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.BoundaryType;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.infra.admin.master.service.BoundaryTypeService;
+import org.egov.infra.admin.master.service.CrossHierarchyService;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@Controller
+<span class="nc" id="L80">public class GenericMasterAjaxController {</span>
+
+    private static final String BLOCK = &quot;Block&quot;;
+    private static final String REVENUE_HIERARCHY_TYPE = &quot;REVENUE&quot;;
+    private static final String DISPLAY_KEY = &quot;Text&quot;;
+    private static final String VALUE_KEY = &quot;Value&quot;;
+
+    @Autowired
+    private BoundaryTypeService boundaryTypeService;
+
+    @Autowired
+    private BoundaryService boundaryService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CrossHierarchyService crossHierarchyService;
+
+    @GetMapping(&quot;/boundarytype/ajax/boundarytypelist-for-hierarchy&quot;)
+    @ResponseBody
+    public void getBoundaryTypeByHierarchyType(@RequestParam Long hierarchyTypeId, HttpServletResponse response)
+            throws IOException {
+<span class="nc" id="L103">        final List&lt;BoundaryType&gt; boundaryTypes = boundaryTypeService.getAllBoundarTypesByHierarchyTypeId(hierarchyTypeId);</span>
+<span class="nc" id="L104">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L105">        IOUtils.write(buildJSONString(boundaryTypes), response.getWriter());</span>
+<span class="nc" id="L106">    }</span>
+
+    @GetMapping(&quot;/boundaries-by-boundaryType&quot;)
+    @ResponseBody
+    public void getBoundariesByBoundaryType(@RequestParam Long boundaryTypeId, HttpServletResponse response)
+            throws IOException {
+<span class="nc" id="L112">        BoundaryType boundaryType = boundaryTypeService.getBoundaryTypeById(boundaryTypeId);</span>
+<span class="nc" id="L113">        final List&lt;Boundary&gt; boundaries = boundaryService.getAllBoundariesOrderByBoundaryNumAsc(boundaryType);</span>
+<span class="nc" id="L114">        final JsonArray jsonArray = new JsonArray();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        for (final Boundary boundary : boundaries) {</span>
+<span class="nc" id="L116">            JsonObject jsonObject = new JsonObject();</span>
+<span class="nc" id="L117">            jsonObject.addProperty(DISPLAY_KEY, boundary.getLocalName());</span>
+<span class="nc" id="L118">            jsonObject.addProperty(VALUE_KEY, boundary.getId());</span>
+<span class="nc" id="L119">            jsonArray.add(jsonObject);</span>
+<span class="nc" id="L120">        }</span>
+<span class="nc" id="L121">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L122">        IOUtils.write(jsonArray.toString(), response.getWriter());</span>
+<span class="nc" id="L123">    }</span>
+
+    @GetMapping(&quot;/check-is-root&quot;)
+    @ResponseBody
+    public boolean isRootBoundary(@RequestParam Long boundaryTypeId, @RequestParam Long hierarchyTypeId) {
+<span class="nc" id="L128">        final BoundaryType boundaryType = boundaryTypeService.getBoundaryTypeByIdAndHierarchyType(boundaryTypeId,</span>
+                hierarchyTypeId);
+<span class="nc bnc" id="L130" title="All 4 branches missed.">        return boundaryType.getParent() != null &amp;&amp; boundaryType.getParent().getId() == 0;</span>
+    }
+
+    private String buildJSONString(List&lt;BoundaryType&gt; boundaryTypes) {
+<span class="nc" id="L134">        final JsonArray jsonArray = new JsonArray();</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        for (final BoundaryType boundaryType : boundaryTypes) {</span>
+<span class="nc" id="L136">            JsonObject jsonObject = new JsonObject();</span>
+<span class="nc" id="L137">            jsonObject.addProperty(DISPLAY_KEY, boundaryType.getName());</span>
+<span class="nc" id="L138">            jsonObject.addProperty(VALUE_KEY, boundaryType.getId());</span>
+<span class="nc" id="L139">            jsonArray.add(jsonObject);</span>
+<span class="nc" id="L140">        }</span>
+
+<span class="nc" id="L142">        return jsonArray.toString();</span>
+    }
+
+    /*
+     * Used in ajax validation to check if child exists for a boundary type -
+     * Add child screen
+     */
+    @GetMapping(&quot;/boundarytype/ajax/checkchild&quot;)
+    @ResponseBody
+    public boolean isChildBoundaryTypePresent(@RequestParam Long parentId) {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        return boundaryTypeService.getBoundaryTypeByParent(parentId) != null;</span>
+    }
+
+    @GetMapping(&quot;/userRole/ajax/rolelist-for-user&quot;)
+    @ResponseBody
+    public void getRolesByUserName(@RequestParam String username, HttpServletResponse response) throws IOException {
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (username != null) {</span>
+<span class="nc" id="L159">            final Set&lt;Role&gt; roles = userService.getRolesByUsername(username);</span>
+
+<span class="nc" id="L161">            response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L162">            IOUtils.write(buildRoles(roles), response.getWriter());</span>
+        }
+<span class="nc" id="L164">    }</span>
+
+    private String buildRoles(Set&lt;Role&gt; roles) {
+<span class="nc" id="L167">        final JsonArray jsonArray = new JsonArray();</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        for (final Role role : roles) {</span>
+<span class="nc" id="L169">            JsonObject jsonObject = new JsonObject();</span>
+<span class="nc" id="L170">            jsonObject.addProperty(VALUE_KEY, role.getId());</span>
+<span class="nc" id="L171">            jsonObject.addProperty(DISPLAY_KEY, role.getName());</span>
+<span class="nc" id="L172">            jsonArray.add(jsonObject);</span>
+<span class="nc" id="L173">        }</span>
+<span class="nc" id="L174">        return jsonArray.toString();</span>
+    }
+
+    @GetMapping(value = &quot;/userRole/ajax/userlist&quot;, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public void getAllActiveUserByNameLike(@RequestParam String userName, HttpServletResponse response) throws IOException {
+<span class="nc" id="L180">        final List&lt;User&gt; userList = userService.findAllByMatchingUserNameForType(userName, UserType.EMPLOYEE);</span>
+<span class="nc" id="L181">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L182">        IOUtils.write(buildUser(userList), response.getWriter());</span>
+<span class="nc" id="L183">    }</span>
+
+    private String buildUser(List&lt;User&gt; users) {
+<span class="nc" id="L186">        final JsonArray jsonArray = new JsonArray();</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        for (final User user : users) {</span>
+<span class="nc" id="L188">            JsonObject jsonObject = new JsonObject();</span>
+<span class="nc" id="L189">            jsonObject.addProperty(VALUE_KEY, user.getId());</span>
+<span class="nc" id="L190">            jsonObject.addProperty(DISPLAY_KEY, user.getUsername());</span>
+<span class="nc" id="L191">            jsonArray.add(jsonObject);</span>
+<span class="nc" id="L192">        }</span>
+<span class="nc" id="L193">        return jsonArray.toString();</span>
+    }
+
+    @GetMapping({&quot;/boundary/ajaxBoundary-blockByLocality&quot;, &quot;/public/boundary/ajaxBoundary-blockByLocality&quot;})
+    public void blockByLocality(@RequestParam Long locality, HttpServletResponse response) throws IOException {
+<span class="nc" id="L198">        BoundaryType blockType = boundaryTypeService.getBoundaryTypeByNameAndHierarchyTypeName(BLOCK, REVENUE_HIERARCHY_TYPE);</span>
+<span class="nc" id="L199">        List&lt;Boundary&gt; blocks = crossHierarchyService.getParentBoundaryByChildBoundaryAndParentBoundaryType(locality, blockType.getId());</span>
+<span class="nc" id="L200">        List&lt;Boundary&gt; streets = boundaryService.getActiveChildBoundariesByBoundaryId(locality);</span>
+<span class="nc" id="L201">        final List&lt;JsonObject&gt; wardJsonObjs = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L202">        final List&lt;Long&gt; boundaries = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        for (final Boundary block : blocks) {</span>
+<span class="nc" id="L204">            final Boundary ward = block.getParent();</span>
+<span class="nc" id="L205">            final JsonObject jsonObject = new JsonObject();</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">            if (!boundaries.contains(ward.getId())) {</span>
+<span class="nc" id="L207">                jsonObject.addProperty(&quot;wardId&quot;, ward.getId());</span>
+<span class="nc" id="L208">                jsonObject.addProperty(&quot;wardName&quot;, ward.getName());</span>
+            }
+<span class="nc" id="L210">            jsonObject.addProperty(&quot;blockId&quot;, block.getId());</span>
+<span class="nc" id="L211">            jsonObject.addProperty(&quot;blockName&quot;, block.getName());</span>
+<span class="nc" id="L212">            wardJsonObjs.add(jsonObject);</span>
+<span class="nc" id="L213">            boundaries.add(ward.getId());</span>
+<span class="nc" id="L214">        }</span>
+<span class="nc" id="L215">        final List&lt;JsonObject&gt; streetJsonObjs = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        for (final Boundary street : streets) {</span>
+<span class="nc" id="L217">            final JsonObject streetObj = new JsonObject();</span>
+<span class="nc" id="L218">            streetObj.addProperty(&quot;streetId&quot;, street.getId());</span>
+<span class="nc" id="L219">            streetObj.addProperty(&quot;streetName&quot;, street.getName());</span>
+<span class="nc" id="L220">            streetJsonObjs.add(streetObj);</span>
+<span class="nc" id="L221">        }</span>
+<span class="nc" id="L222">        final Map&lt;String, List&lt;JsonObject&gt;&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L223">        map.put(&quot;boundaries&quot;, wardJsonObjs);</span>
+<span class="nc" id="L224">        map.put(&quot;streets&quot;, streetJsonObjs);</span>
+<span class="nc" id="L225">        final JsonObject bj = new JsonObject();</span>
+<span class="nc" id="L226">        bj.add(&quot;results&quot;, new Gson().toJsonTree(map));</span>
+<span class="nc" id="L227">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L228">        IOUtils.write(bj.toString(), response.getWriter());</span>
+<span class="nc" id="L229">    }</span>
+
+    @GetMapping({&quot;/boundary/ajaxBoundary-blockByWard&quot;, &quot;/public/boundary/ajaxBoundary-blockByWard&quot;})
+    public void blockByWard(@RequestParam Long wardId, HttpServletResponse response) throws IOException {
+<span class="nc" id="L233">        List&lt;Boundary&gt; blocks = boundaryService.getActiveChildBoundariesByBoundaryId(wardId);</span>
+<span class="nc" id="L234">        final List&lt;JsonObject&gt; jsonObjects = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        for (final Boundary block : blocks) {</span>
+<span class="nc" id="L236">            final JsonObject jsonObj = new JsonObject();</span>
+<span class="nc" id="L237">            jsonObj.addProperty(&quot;blockId&quot;, block.getId());</span>
+<span class="nc" id="L238">            jsonObj.addProperty(&quot;blockName&quot;, block.getName());</span>
+<span class="nc" id="L239">            jsonObjects.add(jsonObj);</span>
+<span class="nc" id="L240">        }</span>
+<span class="nc" id="L241">        IOUtils.write(jsonObjects.toString(), response.getWriter());</span>
+<span class="nc" id="L242">    }</span>
+
+    @GetMapping(&quot;/boundary/ward-bylocality&quot;)
+    public void wardsByLocality(@RequestParam Long locality, HttpServletResponse response) throws IOException {
+<span class="nc" id="L246">        BoundaryType wardBoundaryType = boundaryTypeService.getBoundaryTypeByNameAndHierarchyTypeName(&quot;Ward&quot;, &quot;ADMINISTRATION&quot;);</span>
+<span class="nc" id="L247">        List&lt;Boundary&gt; wards = crossHierarchyService.getParentBoundaryByChildBoundaryAndParentBoundaryType(locality, wardBoundaryType.getId());</span>
+<span class="nc" id="L248">        final List&lt;JsonObject&gt; jsonObjects = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        for (final Boundary block : wards) {</span>
+<span class="nc" id="L250">            final JsonObject jsonObj = new JsonObject();</span>
+<span class="nc" id="L251">            jsonObj.addProperty(&quot;wardId&quot;, block.getId());</span>
+<span class="nc" id="L252">            jsonObj.addProperty(&quot;wardName&quot;, block.getName());</span>
+<span class="nc" id="L253">            jsonObjects.add(jsonObj);</span>
+<span class="nc" id="L254">        }</span>
+<span class="nc" id="L255">        IOUtils.write(jsonObjects.toString(), response.getWriter());</span>
+<span class="nc" id="L256">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

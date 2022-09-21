@@ -1,0 +1,713 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AjaxReceiptCreateAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">AjaxReceiptCreateAction.java</span></div><h1>AjaxReceiptCreateAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.commons.Accountdetailkey;
+import org.egov.commons.Accountdetailtype;
+import org.egov.commons.CChartOfAccountDetail;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.Scheme;
+import org.egov.commons.SubScheme;
+import org.egov.commons.service.AccountdetailtypeService;
+import org.egov.commons.service.ChartOfAccountsService;
+import org.egov.commons.service.EntityTypeService;
+import org.egov.commons.utils.EntityType;
+import org.egov.egf.commons.EgovCommon;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.exception.ApplicationException;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.microservice.models.BusinessAccountDetails;
+import org.egov.infra.microservice.models.BusinessAccountSubLedger;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.models.ChartOfAccounts;
+import org.egov.infra.microservice.models.GlCodeMaster;
+import org.egov.infra.microservice.models.TaxHeadMaster;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infstr.models.ServiceDetails;
+import org.hibernate.HibernateException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = &quot;schemeList&quot;, location = &quot;ajaxReceiptCreate-schemeList.jsp&quot;),
+        @Result(name = &quot;subSchemeList&quot;, location = &quot;ajaxReceiptCreate-subSchemeList.jsp&quot;),
+        @Result(name = AjaxReceiptCreateAction.SERVICE_LIST, location = &quot;ajaxReceiptCreate-serviceList.jsp&quot;),
+        @Result(name = &quot;serviceAccDtls&quot;, location = &quot;ajaxReceiptCreate-serviceAccDtls.jsp&quot;),
+        @Result(name = &quot;taxHeadDetails&quot;, location = &quot;ajaxReceiptCreate-taxHeadDetails.jsp&quot;),
+        @Result(name = &quot;subledger&quot;, location = &quot;ajaxReceiptCreate-subledger.jsp&quot;),
+        @Result(name = &quot;entities&quot;, location = &quot;ajaxReceiptCreate-entities.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.USERLIST, location = &quot;ajaxReceiptCreate-userList.jsp&quot;),
+        @Result(name = AjaxReceiptCreateAction.RESULT, location = &quot;ajaxReceiptCreate-result.jsp&quot;) })
+<span class="nc" id="L101">public class AjaxReceiptCreateAction extends BaseFormAction {</span>
+<span class="nc" id="L102">    private static final Logger LOGGER = Logger.getLogger(AjaxReceiptCreateAction.class);</span>
+    private static final long serialVersionUID = 1L;
+    private static final String DETAILTYPEID = &quot;detailtypeid&quot;;
+    protected static final String RESULT = &quot;result&quot;;
+    private static final String SERVICECATID = &quot;serviceCatId&quot;;
+    private static final String SERVICEID = &quot;serviceId&quot;;
+    protected static final String SERVICE_LIST = &quot;serviceList&quot;;
+    private String value;
+    private List&lt;EntityType&gt; entityList;
+    private static final String accountDetailTypeQuery = &quot; from Accountdetailtype where id=?&quot;;
+    private List&lt;Scheme&gt; schemeList;
+    private List&lt;SubScheme&gt; subSchemes;
+    private List&lt;ServiceDetails&gt; serviceList;
+    private List&lt;BusinessDetails&gt; businessDetailsList;
+    private List&lt;BusinessAccountDetails&gt; accountDetails;
+    private List&lt;GlCodeMaster&gt; glcodeMastersList;
+    private List&lt;TaxHeadMaster&gt; taxHeadMastersList;
+    private List&lt;BusinessAccountSubLedger&gt; subledgerDetails;
+    private String serviceClass;
+    private EgovCommon egovCommon;
+    private Long paymentServiceId;
+    private List&lt;User&gt; userList;
+    protected static final String USER_LIST = &quot;userList&quot;;
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    @Autowired
+    private AccountdetailtypeService accountdetailtypeService;
+    @Autowired
+    private ChartOfAccountsService chartOfAccountsService;
+
+    public String getAccountForService() {
+<span class="nc" id="L133">        setValue(CollectionConstants.BLANK);</span>
+<span class="nc" id="L134">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L135">        final String queryString = &quot;select sd.serviceAccount from ServiceDetails sd where sd.id='&quot; + serviceId + &quot;'&quot;;</span>
+<span class="nc" id="L136">        final List&lt;CChartOfAccounts&gt; list = getPersistenceService().findAllBy(queryString);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        for (final CChartOfAccounts accounts : list)</span>
+<span class="nc" id="L138">            value += accounts.getId().toString() + &quot;~&quot; + accounts.getGlcode() + &quot;~&quot; + accounts.getName() + &quot;#&quot;;</span>
+
+<span class="nc" id="L140">        return RESULT;</span>
+    }
+
+    public String getMISdetailsForService() {
+<span class="nc" id="L144">        value = &quot;&quot;;</span>
+<span class="nc" id="L145">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+
+<span class="nc" id="L147">        final ServiceDetails service = (ServiceDetails) getPersistenceService().find(&quot; from ServiceDetails where id=? &quot;,</span>
+<span class="nc" id="L148">                Long.valueOf(serviceId));</span>
+
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (null != service)</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            for (final Department department : service.getServiceDept())</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">                value = (null != service.getFund() ? service.getFund().getId() : -1) + &quot;~&quot;</span>
+<span class="nc" id="L153">                        + (null != department ? department.getId() : -1) + &quot;#&quot;;</span>
+
+<span class="nc" id="L155">        return RESULT;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-getDetailCode&quot;)
+    public String getDetailCode() throws ApplicationException {
+<span class="nc" id="L160">        value = &quot;&quot;;</span>
+<span class="nc" id="L161">        final String accountCodes = parameters.get(&quot;accountCodes&quot;)[0];</span>
+<span class="nc" id="L162">        final String arr[] = accountCodes.split(&quot;,&quot;);</span>
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        for (final String element : arr) {</span>
+<span class="nc" id="L165">            final CChartOfAccountDetail chartOfAccountDetail = (CChartOfAccountDetail) getPersistenceService().find(</span>
+                    &quot; from CChartOfAccountDetail&quot; + &quot; where glCodeId=(select id from CChartOfAccounts where glcode=?)&quot;,
+                    element);
+
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (null != chartOfAccountDetail)</span>
+<span class="nc" id="L170">                value += element + &quot;~&quot; + chartOfAccountDetail.getGlCodeId().getId().toString() + &quot;~&quot;;</span>
+        }
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (StringUtils.isNotBlank(value))</span>
+<span class="nc" id="L173">            value = value.substring(0, value.length() - 1);</span>
+<span class="nc" id="L174">        return RESULT;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-getDetailType&quot;)
+    public String getDetailType() throws ApplicationException {
+<span class="nc" id="L179">        value = &quot;&quot;;</span>
+<span class="nc" id="L180">        final String accountCode = parameters.get(&quot;accountCode&quot;)[0];</span>
+<span class="nc" id="L181">        final String index = parameters.get(INDEX)[0];</span>
+<span class="nc" id="L182">        final String selectedDetailType = parameters.get(&quot;selectedDetailType&quot;)[0];</span>
+<span class="nc" id="L183">        final String onload = parameters.get(&quot;onload&quot;)[0];</span>
+<span class="nc" id="L184">        final List&lt;Accountdetailtype&gt; list = getPersistenceService().findAllBy(</span>
+                &quot; from Accountdetailtype&quot;
+                        + &quot; where id in (select detailTypeId from CChartOfAccountDetail where glCodeId=(select id from CChartOfAccounts where glcode=?))  &quot;,
+                accountCode);
+<span class="nc bnc" id="L188" title="All 4 branches missed.">        if (list == null || list.isEmpty())</span>
+<span class="nc" id="L189">            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+        else
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            for (final Accountdetailtype accountdetailtype : list)</span>
+<span class="nc" id="L192">                value = value + index + &quot;~&quot; + selectedDetailType + &quot;~&quot; + onload + &quot;~&quot; + accountdetailtype.getName()</span>
+<span class="nc" id="L193">                        + &quot;~&quot; + accountdetailtype.getId().toString() + &quot;#&quot;;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (StringUtils.isNotBlank(value))</span>
+<span class="nc" id="L195">            value = value.substring(0, value.length() - 1);</span>
+<span class="nc" id="L196">        return RESULT;</span>
+    }
+
+    /**
+     * This method is accessed from challan.js and MiscReceipts.js
+     *
+     * @return
+     * @throws Exception
+     */
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxValidateDetailCodeNew&quot;)
+    public String ajaxValidateDetailCodeNew() throws Exception {
+<span class="nc" id="L207">        final String code = parameters.get(&quot;code&quot;)[0];</span>
+<span class="nc" id="L208">        final String index = parameters.get(INDEX)[0];</span>
+<span class="nc" id="L209">        final String codeorname = parameters.get(&quot;codeorname&quot;)[0];</span>
+
+<span class="nc" id="L211">        final Accountdetailtype adt = (Accountdetailtype) getPersistenceService().find(accountDetailTypeQuery,</span>
+<span class="nc" id="L212">                Integer.valueOf(parameters.get(DETAILTYPEID)[0]));</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (adt == null) {</span>
+<span class="nc" id="L214">            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L215">            return RESULT;</span>
+        }
+
+<span class="nc" id="L218">        final String table = adt.getFullQualifiedName();</span>
+<span class="nc" id="L219">        final Class&lt;?&gt; service = Class.forName(table);</span>
+<span class="nc" id="L220">        String simpleName = service.getSimpleName();</span>
+<span class="nc" id="L221">        simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1) + &quot;Service&quot;;</span>
+
+        final WebApplicationContext wac = WebApplicationContextUtils
+<span class="nc" id="L224">                .getWebApplicationContext(ServletActionContext.getServletContext());</span>
+<span class="nc" id="L225">        final EntityTypeService entityService = (EntityTypeService) wac.getBean(simpleName);</span>
+<span class="nc" id="L226">        entityList = (List&lt;EntityType&gt;) entityService.filterActiveEntities(code, 10, adt.getId());</span>
+
+<span class="nc bnc" id="L228" title="All 4 branches missed.">        if (entityList == null || entityList.isEmpty())</span>
+<span class="nc" id="L229">            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+        else {
+<span class="nc bnc" id="L231" title="All 2 branches missed.">            if (entityList.size() &gt; 1) {// To Check with same code/name if more</span>
+                                        // than one entity is returned
+<span class="nc" id="L233">                value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L234">                return RESULT;</span>
+            }
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            for (final EntityType entity : entityList)</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">                if (entity == null) {</span>
+<span class="nc" id="L238">                    value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L239">                    break;</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">                } else if (codeorname.equalsIgnoreCase(&quot;both&quot;)) {// To Check if</span>
+                    // both name
+                    // and code has
+                    // to be
+                    // compared
+<span class="nc bnc" id="L245" title="All 4 branches missed.">                    if (entity.getName().equals(code) || entity.getCode().equals(code)) {</span>
+<span class="nc" id="L246">                        value = index + &quot;~&quot; + entity.getEntityId() + &quot;~&quot; + entity.getName() + &quot;~&quot; + entity.getCode();</span>
+<span class="nc" id="L247">                        break;</span>
+                    } else
+<span class="nc" id="L249">                        value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">                } else if (entity.getCode().equals(code)) {// In case of view</span>
+                    // mode, to get the
+                    // details from the
+                    // code
+<span class="nc" id="L254">                    value = index + &quot;~&quot; + entity.getEntityId() + &quot;~&quot; + entity.getName() + &quot;~&quot; + entity.getCode();</span>
+<span class="nc" id="L255">                    break;</span>
+                } else
+<span class="nc" id="L257">                    value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+        }
+
+<span class="nc" id="L260">        return RESULT;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-getCodeNew&quot;)
+    public String getCodeNew() throws Exception {
+<span class="nc" id="L265">        value = &quot;&quot;;</span>
+<span class="nc" id="L266">        final String detailTypeId = parameters.get(&quot;detailTypeId&quot;)[0];</span>
+<span class="nc" id="L267">        final String filterKey = parameters.get(&quot;filterKey&quot;)[0];</span>
+<span class="nc" id="L268">        final Integer accountDetailTypeId = Integer.valueOf(detailTypeId);</span>
+<span class="nc" id="L269">        final Accountdetailtype adt = (Accountdetailtype) getPersistenceService().find(accountDetailTypeQuery,</span>
+                accountDetailTypeId);
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        if (adt == null)</span>
+<span class="nc" id="L272">            return RESULT;</span>
+<span class="nc" id="L273">        final String table = adt.getFullQualifiedName();</span>
+<span class="nc" id="L274">        final Class&lt;?&gt; service = Class.forName(table);</span>
+<span class="nc" id="L275">        String simpleName = service.getSimpleName();</span>
+<span class="nc" id="L276">        simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1) + &quot;Service&quot;;</span>
+
+        final WebApplicationContext wac = WebApplicationContextUtils
+<span class="nc" id="L279">                .getWebApplicationContext(ServletActionContext.getServletContext());</span>
+<span class="nc" id="L280">        final EntityTypeService entityService = (EntityTypeService) wac.getBean(simpleName);</span>
+<span class="nc" id="L281">        final List&lt;EntityType&gt; tempEntityList = (List&lt;EntityType&gt;) entityService.filterActiveEntities(filterKey, -1,</span>
+<span class="nc" id="L282">                adt.getId());</span>
+<span class="nc" id="L283">        entityList = new ArrayList&lt;EntityType&gt;();</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (final EntityType e : tempEntityList) {</span>
+<span class="nc bnc" id="L285" title="All 6 branches missed.">            if (e.getName().contains(&quot;@&quot;) || e.getName().contains(&quot;#&quot;) || e.getName().contains(&quot;$&quot;)</span>
+<span class="nc bnc" id="L286" title="All 6 branches missed.">                    || e.getName().contains(&quot;%&quot;) || e.getName().contains(&quot;^&quot;) || e.getName().contains(&quot;&amp;&quot;)</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">                    || e.getName().contains(&quot;*&quot;))</span>
+<span class="nc" id="L288">                e.getName().replace(&quot;@&quot;, &quot; &quot;).replace(&quot;#&quot;, &quot; &quot;).replace(&quot;$&quot;, &quot; &quot;).replace(&quot;%&quot;, &quot; &quot;).replace(&quot;^&quot;, &quot; &quot;)</span>
+<span class="nc" id="L289">                        .replace(&quot;&amp;&quot;, &quot; &quot;).replace(&quot;*&quot;, &quot; &quot;);</span>
+<span class="nc" id="L290">            entityList.add(e);</span>
+<span class="nc" id="L291">        }</span>
+<span class="nc" id="L292">        return &quot;entities&quot;;</span>
+    }
+
+    /*
+     * This code has to be deleted once autocomplete feature is changed in misc Receipts also
+     */
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxValidateDetailCode&quot;)
+    public String ajaxValidateDetailCode() {
+<span class="nc" id="L300">        final String code = parameters.get(&quot;code&quot;)[0];</span>
+<span class="nc" id="L301">        final String index = parameters.get(INDEX)[0];</span>
+        try {
+
+<span class="nc" id="L304">            final Accountdetailtype adt = (Accountdetailtype) getPersistenceService().find(accountDetailTypeQuery,</span>
+<span class="nc" id="L305">                    Integer.valueOf(parameters.get(DETAILTYPEID)[0]));</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">            if (adt == null) {</span>
+<span class="nc" id="L307">                value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L308">                return RESULT;</span>
+            }
+
+<span class="nc" id="L311">            final List&lt;EntityType&gt; entityList = getPersistenceService().findAllBy(</span>
+<span class="nc" id="L312">                    &quot; from &quot; + adt.getFullQualifiedName() + &quot;&quot;</span>
+                            + &quot; where id in (select detailkey from Accountdetailkey where accountdetailtype.id=?)  &quot;,
+<span class="nc" id="L314">                    Integer.valueOf(parameters.get(DETAILTYPEID)[0]));</span>
+
+<span class="nc bnc" id="L316" title="All 4 branches missed.">            if (getEntityList() == null || getEntityList().isEmpty())</span>
+<span class="nc" id="L317">                value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+            else
+<span class="nc bnc" id="L319" title="All 2 branches missed.">                for (final EntityType entity : entityList)</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">                    if (entity == null) {</span>
+<span class="nc" id="L321">                        value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L322">                        break;</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">                    } else if (entity.getCode().equals(code)) {</span>
+<span class="nc" id="L324">                        final Accountdetailkey key = (Accountdetailkey) getPersistenceService().find(</span>
+                                &quot; from Accountdetailkey where accountdetailtype.id=? and detailkey=? &quot;,
+<span class="nc" id="L326">                                Integer.valueOf(parameters.get(DETAILTYPEID)[0]), entity.getEntityId());</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">                        if (key == null)</span>
+<span class="nc" id="L328">                            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+                        else
+<span class="nc" id="L330">                            value = index + &quot;~&quot; + key.getId() + &quot;~&quot; + entity.getName();</span>
+<span class="nc" id="L331">                        break;</span>
+                    } else
+<span class="nc" id="L333">                        value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+
+<span class="nc" id="L335">        } catch (final HibernateException e) {</span>
+<span class="nc" id="L336">            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L337">        } catch (final Exception e) {</span>
+<span class="nc" id="L338">            value = index + &quot;~&quot; + ERROR + &quot;#&quot;;</span>
+<span class="nc" id="L339">        }</span>
+<span class="nc" id="L340">        return RESULT;</span>
+    }
+
+    public String getCode() throws ApplicationException {
+<span class="nc" id="L344">        value = &quot;&quot;;</span>
+<span class="nc" id="L345">        final String detailTypeId = parameters.get(&quot;detailTypeId&quot;)[0];</span>
+<span class="nc" id="L346">        final Accountdetailtype adt = (Accountdetailtype) getPersistenceService().find(accountDetailTypeQuery,</span>
+<span class="nc" id="L347">                Integer.valueOf(detailTypeId));</span>
+
+<span class="nc bnc" id="L349" title="All 2 branches missed.">        if (adt == null)</span>
+<span class="nc" id="L350">            return RESULT;</span>
+
+<span class="nc" id="L352">        setEntityList(getPersistenceService().findAllBy(</span>
+<span class="nc" id="L353">                &quot;select entity from &quot; + adt.getFullQualifiedName() + &quot; entity,Accountdetailkey adk&quot;</span>
+                        + &quot; where entity.id =adk.detailkey and adk.accountdetailtype.id=? &quot;,
+<span class="nc" id="L355">                Integer.valueOf(detailTypeId)));</span>
+
+<span class="nc" id="L357">        return &quot;entities&quot;;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-getDetailTypeForService&quot;)
+    public String getDetailTypeForService() throws ApplicationException {
+
+<span class="nc" id="L363">        value = &quot;&quot;;</span>
+<span class="nc" id="L364">        final String accountCode = parameters.get(&quot;accountCode&quot;)[0];</span>
+<span class="nc" id="L365">        final String index = parameters.get(INDEX)[0];</span>
+
+<span class="nc" id="L367">        final List&lt;Accountdetailtype&gt; list = getPersistenceService().findAllBy(</span>
+                &quot; from Accountdetailtype&quot;
+                        + &quot; where id in (select detailTypeId from CChartOfAccountDetail where glCodeId=(select id from CChartOfAccounts where glcode=?))  &quot;,
+                accountCode);
+
+<span class="nc bnc" id="L372" title="All 2 branches missed.">        for (final Accountdetailtype accountdetailtype : list)</span>
+<span class="nc" id="L373">            value = value + index + &quot;~&quot; + accountdetailtype.getDescription() + &quot;~&quot;</span>
+<span class="nc" id="L374">                    + accountdetailtype.getId().toString() + &quot;#&quot;;</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        if (!&quot;&quot;.equals(value))</span>
+<span class="nc" id="L376">            value = value.substring(0, value.length() - 1);</span>
+
+<span class="nc" id="L378">        return RESULT;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadSchemes&quot;)
+    public String ajaxLoadSchemes() {
+
+<span class="nc" id="L385">        final Integer fundId = Integer.valueOf(parameters.get(&quot;fundId&quot;)[0]);</span>
+<span class="nc bnc" id="L386" title="All 4 branches missed.">        if (null == fundId || fundId == -1)</span>
+<span class="nc" id="L387">            schemeList = getPersistenceService()</span>
+<span class="nc" id="L388">                    .findAllBy(&quot; from Scheme where fund.id=? and isActive=true order by name&quot;, -1);</span>
+        else
+<span class="nc" id="L390">            schemeList = getPersistenceService()</span>
+<span class="nc" id="L391">                    .findAllBy(&quot; from Scheme where fund.id=? and isActive=true order by name&quot;, fundId);</span>
+
+<span class="nc" id="L393">        return &quot;schemeList&quot;;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadSubSchemes&quot;)
+    public String ajaxLoadSubSchemes() {
+<span class="nc" id="L399">        final Integer schemeId = Integer.valueOf(parameters.get(&quot;schemeId&quot;)[0]);</span>
+<span class="nc bnc" id="L400" title="All 4 branches missed.">        if (null != schemeId &amp;&amp; schemeId != -1)</span>
+<span class="nc" id="L401">            subSchemes = getPersistenceService()</span>
+<span class="nc" id="L402">                    .findAllBy(&quot;from SubScheme where scheme.id=? and isActive=true order by name&quot;, schemeId);</span>
+        else
+<span class="nc" id="L404">            subSchemes = Collections.emptyList();</span>
+
+<span class="nc" id="L406">        return &quot;subSchemeList&quot;;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadServiceByCategory&quot;)
+    public String ajaxLoadServiceByCategory() {
+
+<span class="nc bnc" id="L413" title="All 4 branches missed.">        if (null != parameters.get(SERVICECATID) &amp;&amp; null != parameters.get(SERVICECATID)[0]</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">                &amp;&amp; Integer.valueOf(parameters.get(SERVICECATID)[0]) != -1)</span>
+<span class="nc" id="L415">            serviceList = getPersistenceService().findAllByNamedQuery(</span>
+<span class="nc" id="L416">                    CollectionConstants.QUERY_SERVICE_DETAIL_BY_CATEGORY, Long.valueOf(parameters.get(SERVICECATID)[0]),</span>
+                    Boolean.TRUE);
+        else
+<span class="nc" id="L419">            serviceList = Collections.emptyList();</span>
+
+<span class="nc" id="L421">        return SERVICE_LIST;</span>
+
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadServiceByCategoryForChallan&quot;)
+    public String ajaxLoadServiceByCategoryForChallan() {
+
+<span class="nc bnc" id="L429" title="All 4 branches missed.">        if (null != parameters.get(SERVICECATID) &amp;&amp; null != parameters.get(SERVICECATID)[0]</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">                &amp;&amp; Integer.valueOf(parameters.get(SERVICECATID)[0]) != -1)</span>
+<span class="nc" id="L431">            serviceList = getPersistenceService().findAllByNamedQuery(</span>
+                    CollectionConstants.QUERY_SERVICE_BY_CATEGORY_FOR_TYPE,
+<span class="nc" id="L433">                    Long.valueOf(parameters.get(SERVICECATID)[0]), CollectionConstants.SERVICE_TYPE_CHALLAN_COLLECTION,</span>
+                    Boolean.TRUE);
+        else
+<span class="nc" id="L436">            serviceList = Collections.emptyList();</span>
+
+<span class="nc" id="L438">        return SERVICE_LIST;</span>
+
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadServiceByCategoryForMisc&quot;)
+    public String ajaxLoadServiceByCategoryForMisc() {
+
+<span class="nc bnc" id="L446" title="All 4 branches missed.">        if (null != parameters.get(SERVICECATID) &amp;&amp; null != parameters.get(SERVICECATID)[0]</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">                &amp;&amp; !parameters.get(SERVICECATID)[0].isEmpty())</span>
+<span class="nc" id="L448">            businessDetailsList = microserviceUtils.getBusinessDetailsByCategoryCode(parameters.get(SERVICECATID)[0]);</span>
+        else
+<span class="nc" id="L450">            businessDetailsList = Collections.emptyList();</span>
+
+<span class="nc" id="L452">        return SERVICE_LIST;</span>
+
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxLoadServiceByClassification&quot;)
+    public String ajaxLoadServiceByClassification() {
+<span class="nc bnc" id="L459" title="All 4 branches missed.">        if (serviceClass != null &amp;&amp; !serviceClass.equals(&quot;-1&quot;))</span>
+<span class="nc" id="L460">            serviceList = getPersistenceService().findAllByNamedQuery(CollectionConstants.QUERY_SERVICES_BY_TYPE,</span>
+                    serviceClass);
+        else
+<span class="nc" id="L463">            serviceList = Collections.emptyList();</span>
+
+<span class="nc" id="L465">        return SERVICE_LIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxFinMiscDtlsByService&quot;)
+    public String ajaxFinMiscDtlsByService() {
+
+<span class="nc" id="L472">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L473">        List&lt;BusinessDetails&gt; service = microserviceUtils.getBusinessDetailsByCode(serviceId);</span>
+
+<span class="nc" id="L475">        final StringBuilder miscDetails = new StringBuilder();</span>
+<span class="nc bnc" id="L476" title="All 4 branches missed.">        if (null != service &amp;&amp; !service.isEmpty())</span>
+<span class="nc bnc" id="L477" title="All 2 branches missed.">            miscDetails.append(null != service.get(0).getFund() ? service.get(0).getFund() : &quot;-1&quot;).append('~') // fund</span>
+<span class="nc" id="L478">                    .append(&quot;-1&quot;).append('~') // scheme</span>
+<span class="nc" id="L479">                    .append(&quot;-1&quot;).append('~') // subScheme</span>
+<span class="nc bnc" id="L480" title="All 2 branches missed.">                    .append(null != service.get(0).getFundSource() ? service.get(0).getFundSource() : &quot;-1&quot;).append('~') // fundsource</span>
+<span class="nc bnc" id="L481" title="All 2 branches missed.">                    .append(null != service.get(0).getFunctionary() ? service.get(0).getFunctionary() : &quot;-1&quot;).append('~') // functionary</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">                    .append(null != service.get(0).getFunction() ? service.get(0).getFunction() : &quot;-1&quot;).append('~')// function</span>
+<span class="nc bnc" id="L483" title="All 2 branches missed.">                    .append(null != service.get(0).getDepartment() ? service.get(0).getDepartment() : &quot;-1&quot;); // department</span>
+        else
+<span class="nc" id="L485">            miscDetails.append(&quot;-1&quot;).append('~') // fund</span>
+<span class="nc" id="L486">                    .append(&quot;-1&quot;).append('~') // scheme</span>
+<span class="nc" id="L487">                    .append(&quot;-1&quot;).append('~') // subscheme</span>
+<span class="nc" id="L488">                    .append(&quot;-1&quot;).append('~') // fundsource</span>
+<span class="nc" id="L489">                    .append(&quot;-1&quot;).append('~') // functionary</span>
+<span class="nc" id="L490">                    .append(&quot;-1&quot;).append('~') // function</span>
+<span class="nc" id="L491">                    .append(&quot;-1&quot;); // department</span>
+<span class="nc" id="L492">        value = miscDetails.toString();</span>
+<span class="nc" id="L493">        return RESULT;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxFinAccDtlsByService&quot;)
+    public String ajaxFinAccDtlsByService() {
+
+<span class="nc" id="L500">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L501">        List&lt;BusinessDetails&gt; service = microserviceUtils.getBusinessDetailsByCode(serviceId);</span>
+<span class="nc" id="L502">        accountDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L503" title="All 6 branches missed.">        if (null != service &amp;&amp; !service.isEmpty() &amp;&amp; service.get(0).getAccountDetails() != null) {</span>
+<span class="nc" id="L504">            accountDetails.addAll(service.get(0).getAccountDetails());</span>
+<span class="nc bnc" id="L505" title="All 2 branches missed.">            for (BusinessAccountDetails bad : accountDetails) {</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">                if (bad.getChartOfAccounts() != null) {</span>
+<span class="nc" id="L507">                    CChartOfAccounts coa = chartOfAccountsService.getByGlCode(bad.getChartOfAccounts().toString());</span>
+<span class="nc" id="L508">                    bad.setGlCodeId(new ChartOfAccounts());</span>
+<span class="nc" id="L509">                    bad.getGlCodeId().setId(coa.getId());</span>
+<span class="nc" id="L510">                    bad.getGlCodeId().setGlcode(coa.getGlcode());</span>
+<span class="nc" id="L511">                    bad.getGlCodeId().setName(coa.getName());</span>
+                }
+<span class="nc" id="L513">            }</span>
+
+        } else
+<span class="nc" id="L516">            accountDetails.addAll(Collections.emptyList());</span>
+
+<span class="nc" id="L518">        return &quot;serviceAccDtls&quot;;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxGlcodeMasterByService&quot;)
+    public String ajaxGlcodeMasterByService() {
+
+<span class="nc" id="L525">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L526">        List&lt;GlCodeMaster&gt; glcodeMasters = microserviceUtils.getGlcodeMastersByService(serviceId);</span>
+<span class="nc" id="L527">        glcodeMastersList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L528" title="All 4 branches missed.">        if (null != glcodeMasters &amp;&amp; !glcodeMasters.isEmpty()) {</span>
+<span class="nc" id="L529">            glcodeMastersList.addAll(glcodeMasters);</span>
+        } else
+<span class="nc" id="L531">            glcodeMastersList.addAll(Collections.emptyList());</span>
+
+<span class="nc" id="L533">        return &quot;glcodeDetails&quot;;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxTaxHeadMasterByService&quot;)
+    public String ajaxTaxHeadMasterByService() {
+
+<span class="nc" id="L540">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L541">        List&lt;TaxHeadMaster&gt; taxHeadMasters = microserviceUtils.getTaxheadsByServiceCode(serviceId);</span>
+<span class="nc" id="L542">        taxHeadMastersList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L543" title="All 4 branches missed.">        if (null != taxHeadMasters &amp;&amp; !taxHeadMasters.isEmpty()) {</span>
+<span class="nc" id="L544">            taxHeadMastersList.addAll(taxHeadMasters);</span>
+        } else
+<span class="nc" id="L546">            taxHeadMastersList.addAll(Collections.emptyList());</span>
+
+<span class="nc" id="L548">        return &quot;taxHeadDetails&quot;;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxFinSubledgerByService&quot;)
+    public String ajaxFinSubledgerByService() {
+<span class="nc" id="L554">        final String serviceId = parameters.get(SERVICEID)[0];</span>
+<span class="nc" id="L555">        List&lt;BusinessDetails&gt; service = microserviceUtils.getBusinessDetailsByCode(serviceId);</span>
+<span class="nc" id="L556">        subledgerDetails = new ArrayList&lt;&gt;();</span>
+        BusinessAccountSubLedger servicInfo;
+<span class="nc bnc" id="L558" title="All 4 branches missed.">        if (null != service &amp;&amp; !service.isEmpty())</span>
+<span class="nc bnc" id="L559" title="All 2 branches missed.">            for (final BusinessAccountDetails account : service.get(0).getAccountDetails()) {</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">                if (account.getSubledgerDetails() != null)</span>
+<span class="nc" id="L561">                    subledgerDetails.addAll(account.getSubledgerDetails());</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">                if (subledgerDetails.isEmpty()) {</span>
+<span class="nc" id="L563">                    final CChartOfAccountDetail chartOfAccountDetail = (CChartOfAccountDetail) getPersistenceService()</span>
+<span class="nc" id="L564">                            .find(&quot;from CChartOfAccountDetail cd where cd.glCodeId.glcode=?&quot;,</span>
+<span class="nc" id="L565">                                    account.getChartOfAccounts().toString());</span>
+<span class="nc" id="L566">                    servicInfo = new BusinessAccountSubLedger();</span>
+<span class="nc bnc" id="L567" title="All 2 branches missed.">                    if (chartOfAccountDetail != null) {</span>
+<span class="nc" id="L568">                        servicInfo.setDetailType(chartOfAccountDetail.getDetailTypeId().getId().longValue());</span>
+<span class="nc" id="L569">                        servicInfo.setBusinessAccountDetails(account.getId());</span>
+<span class="nc" id="L570">                        subledgerDetails.add(servicInfo);</span>
+                    } else
+<span class="nc" id="L572">                        subledgerDetails.addAll(Collections.emptyList());</span>
+<span class="nc" id="L573">                } else</span>
+<span class="nc bnc" id="L574" title="All 2 branches missed.">                    for (final BusinessAccountSubLedger serviceSubledgerInfo : subledgerDetails)</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">                        if (serviceSubledgerInfo.getDetailType() != null</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">                                &amp;&amp; serviceSubledgerInfo.getDetailKey() != null) {</span>
+<span class="nc" id="L577">                            EntityType entityType = null;</span>
+                            try {
+<span class="nc" id="L579">                                Accountdetailtype adt = accountdetailtypeService</span>
+<span class="nc" id="L580">                                        .findByName(serviceSubledgerInfo.getDetailType().toString());</span>
+<span class="nc" id="L581">                                entityType = egovCommon.getEntityType(adt, serviceSubledgerInfo.getDetailKey());</span>
+<span class="nc" id="L582">                            } catch (final ApplicationException e) {</span>
+<span class="nc" id="L583">                                LOGGER.error(&quot;Exception while setting subledger details&quot;, e);</span>
+<span class="nc" id="L584">                                throw new ApplicationRuntimeException(&quot;Exception while setting subledger details&quot;, e);</span>
+<span class="nc" id="L585">                            }</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">                            if (entityType != null) {</span>
+<span class="nc" id="L587">                                serviceSubledgerInfo.setDetailType(Long.valueOf(entityType.getCode()));</span>
+<span class="nc" id="L588">                                serviceSubledgerInfo.setDetailKey(Long.valueOf(entityType.getName()));</span>
+                            }
+                        }
+<span class="nc" id="L591">            }</span>
+<span class="nc" id="L592">        return &quot;subledger&quot;;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxReceiptCreate-ajaxOnlineReceiptCreatedByList&quot;)
+    public String ajaxOnlineReceiptCreatedByList() {
+<span class="nc bnc" id="L597" title="All 2 branches missed.">        if (paymentServiceId != null)</span>
+<span class="nc" id="L598">            userList = persistenceService.findAllByNamedQuery(</span>
+                    CollectionConstants.QUERY_CREATEDBYUSERS_OF_PAYMENT_RECEIPTS, paymentServiceId);
+<span class="nc" id="L600">        return USER_LIST;</span>
+    }
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L605">        return null;</span>
+    }
+
+    public List&lt;EntityType&gt; getEntityList() {
+<span class="nc" id="L609">        return entityList;</span>
+    }
+
+    public void setEntityList(final List&lt;EntityType&gt; entityList) {
+<span class="nc" id="L613">        this.entityList = entityList;</span>
+<span class="nc" id="L614">    }</span>
+
+    public String getValue() {
+<span class="nc" id="L617">        return value;</span>
+    }
+
+    public void setValue(final String value) {
+<span class="nc" id="L621">        this.value = value;</span>
+<span class="nc" id="L622">    }</span>
+
+    public List&lt;Scheme&gt; getSchemeList() {
+<span class="nc" id="L625">        return schemeList;</span>
+    }
+
+    public void setSchemeList(final List&lt;Scheme&gt; schemeList) {
+<span class="nc" id="L629">        this.schemeList = schemeList;</span>
+<span class="nc" id="L630">    }</span>
+
+    public List&lt;SubScheme&gt; getSubSchemes() {
+<span class="nc" id="L633">        return subSchemes;</span>
+    }
+
+    public void setSubSchemes(final List&lt;SubScheme&gt; subSchemes) {
+<span class="nc" id="L637">        this.subSchemes = subSchemes;</span>
+<span class="nc" id="L638">    }</span>
+
+    public List&lt;ServiceDetails&gt; getServiceList() {
+<span class="nc" id="L641">        return serviceList;</span>
+    }
+
+    public List&lt;BusinessDetails&gt; getBusinessDetailsList() {
+<span class="nc" id="L645">        return businessDetailsList;</span>
+    }
+
+    public void setBusinessDetailsList(List&lt;BusinessDetails&gt; businessDetailsList) {
+<span class="nc" id="L649">        this.businessDetailsList = businessDetailsList;</span>
+<span class="nc" id="L650">    }</span>
+
+    public List&lt;BusinessAccountDetails&gt; getAccountDetails() {
+<span class="nc" id="L653">        return accountDetails;</span>
+    }
+
+    public void setAccountDetails(final List&lt;BusinessAccountDetails&gt; accountDetails) {
+<span class="nc" id="L657">        this.accountDetails = accountDetails;</span>
+<span class="nc" id="L658">    }</span>
+
+    public List&lt;BusinessAccountSubLedger&gt; getSubledgerDetails() {
+<span class="nc" id="L661">        return subledgerDetails;</span>
+    }
+
+    public void setSubledgerDetails(final List&lt;BusinessAccountSubLedger&gt; subledgerDetails) {
+<span class="nc" id="L665">        this.subledgerDetails = subledgerDetails;</span>
+<span class="nc" id="L666">    }</span>
+
+    public String getServiceClass() {
+<span class="nc" id="L669">        return serviceClass;</span>
+    }
+
+    public void setServiceClass(final String serviceClass) {
+<span class="nc" id="L673">        this.serviceClass = serviceClass;</span>
+<span class="nc" id="L674">    }</span>
+
+    public void setEgovCommon(final EgovCommon egovCommon) {
+<span class="nc" id="L677">        this.egovCommon = egovCommon;</span>
+<span class="nc" id="L678">    }</span>
+
+    public Long getPaymentServiceId() {
+<span class="nc" id="L681">        return paymentServiceId;</span>
+    }
+
+    public void setPaymentServiceId(final Long paymentServiceId) {
+<span class="nc" id="L685">        this.paymentServiceId = paymentServiceId;</span>
+<span class="nc" id="L686">    }</span>
+
+    public List&lt;User&gt; getUserList() {
+<span class="nc" id="L689">        return userList;</span>
+    }
+
+    public void setUserList(final List&lt;User&gt; userList) {
+<span class="nc" id="L693">        this.userList = userList;</span>
+<span class="nc" id="L694">    }</span>
+
+    public List&lt;GlCodeMaster&gt; getGlcodeMastersList() {
+<span class="nc" id="L697">        return glcodeMastersList;</span>
+    }
+
+    public void setGlcodeMastersList(List&lt;GlCodeMaster&gt; glcodeMastersList) {
+<span class="nc" id="L701">        this.glcodeMastersList = glcodeMastersList;</span>
+<span class="nc" id="L702">    }</span>
+
+    public List&lt;TaxHeadMaster&gt; getTaxHeadMastersList() {
+<span class="nc" id="L705">        return taxHeadMastersList;</span>
+    }
+
+    public void setTaxHeadMastersList(List&lt;TaxHeadMaster&gt; taxHeadMastersList) {
+<span class="nc" id="L709">        this.taxHeadMastersList = taxHeadMastersList;</span>
+<span class="nc" id="L710">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

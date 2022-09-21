@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionSchedulerConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.config</a> &gt; <span class="el_source">CollectionSchedulerConfiguration.java</span></div><h1>CollectionSchedulerConfiguration.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.config;
+
+import static org.quartz.CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.egov.collection.scheduler.AtomReconciliationJob;
+import org.egov.collection.scheduler.AxisReconciliationJob;
+import org.egov.collection.scheduler.RemittanceInstrumentJob;
+import org.egov.collection.scheduler.SbimopsReconciliationJob;
+import org.egov.infra.config.scheduling.QuartzSchedulerConfiguration;
+import org.egov.infra.config.scheduling.SchedulerConfigCondition;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
+import org.springframework.scheduling.quartz.JobDetailFactoryBean;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
+
+@Configuration
+@Conditional(SchedulerConfigCondition.class)
+<span class="nc" id="L73">public class CollectionSchedulerConfiguration extends QuartzSchedulerConfiguration {</span>
+
+    private static final String INSTRUMENT_TYPE_CASH = &quot;cash&quot;;
+    private static final String COLLECTION_JOB_GROUP = &quot;COLLECTION_JOB_GROUP&quot;;
+    private static final String COLLECTION_TRIGGER_GROUP = &quot;COLLECTION_TRIGGER_GROUP&quot;;
+
+    @Bean(destroyMethod = &quot;destroy&quot;)
+    public SchedulerFactoryBean collectionScheduler(DataSource dataSource) {
+<span class="nc" id="L81">        SchedulerFactoryBean collectionScheduler = createScheduler(dataSource);</span>
+<span class="nc" id="L82">        collectionScheduler.setSchedulerName(&quot;collection-scheduler&quot;);</span>
+<span class="nc" id="L83">        collectionScheduler.setAutoStartup(true);</span>
+<span class="nc" id="L84">        collectionScheduler.setOverwriteExistingJobs(true);</span>
+<span class="nc" id="L85">        collectionScheduler.setTriggers(</span>
+<span class="nc" id="L86">                axisReconciliationCronTrigger().getObject(),</span>
+<span class="nc" id="L87">                remittanceCashInstrumentCronTrigger0().getObject(),</span>
+<span class="nc" id="L88">                remittanceCashInstrumentCronTrigger1().getObject(),</span>
+<span class="nc" id="L89">                sbimopsReconciliationCronTrigger0().getObject(),</span>
+<span class="nc" id="L90">                sbimopsReconciliationCronTrigger1().getObject(),</span>
+<span class="nc" id="L91">                sbimopsReconciliationCronTrigger2().getObject(),</span>
+<span class="nc" id="L92">                sbimopsReconciliationCronTrigger3().getObject(),</span>
+<span class="nc" id="L93">                sbimopsReconciliationCronTrigger4().getObject());</span>
+<span class="nc" id="L94">        return collectionScheduler;</span>
+    }
+
+    private Map&lt;String, String&gt; prepareJobDetailMap() {
+<span class="nc" id="L98">        Map&lt;String, String&gt; jobDetailMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L99">        jobDetailMap.put(&quot;userName&quot;, &quot;system&quot;);</span>
+<span class="nc" id="L100">        jobDetailMap.put(&quot;cityDataRequired&quot;, &quot;true&quot;);</span>
+<span class="nc" id="L101">        jobDetailMap.put(&quot;moduleName&quot;, &quot;collection&quot;);</span>
+<span class="nc" id="L102">        return jobDetailMap;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean axisReconciliationJobDetail() {
+<span class="nc" id="L107">        JobDetailFactoryBean axisReconciliationJobDetail = new JobDetailFactoryBean();</span>
+<span class="nc" id="L108">        axisReconciliationJobDetail.setGroup(COLLECTION_JOB_GROUP);</span>
+<span class="nc" id="L109">        axisReconciliationJobDetail.setName(&quot;COLLECTION_AXIS_RECON_JOB&quot;);</span>
+<span class="nc" id="L110">        axisReconciliationJobDetail.setDurability(true);</span>
+<span class="nc" id="L111">        axisReconciliationJobDetail.setJobClass(AxisReconciliationJob.class);</span>
+<span class="nc" id="L112">        axisReconciliationJobDetail.setRequestsRecovery(true);</span>
+<span class="nc" id="L113">        Map&lt;String, String&gt; jobDetailMap = prepareJobDetailMap();</span>
+<span class="nc" id="L114">        jobDetailMap.put(&quot;jobBeanName&quot;, &quot;axisReconciliationJob&quot;);</span>
+<span class="nc" id="L115">        axisReconciliationJobDetail.setJobDataAsMap(jobDetailMap);</span>
+<span class="nc" id="L116">        return axisReconciliationJobDetail;</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean axisReconciliationCronTrigger() {
+<span class="nc" id="L121">        CronTriggerFactoryBean axisReconciliationCron = new CronTriggerFactoryBean();</span>
+<span class="nc" id="L122">        axisReconciliationCron.setJobDetail(axisReconciliationJobDetail().getObject());</span>
+<span class="nc" id="L123">        axisReconciliationCron.setGroup(COLLECTION_TRIGGER_GROUP);</span>
+<span class="nc" id="L124">        axisReconciliationCron.setName(&quot;COLLECTION_AXIS_RECON_TRIGGER&quot;);</span>
+<span class="nc" id="L125">        axisReconciliationCron.setCronExpression(&quot;0 */30 * * * ?&quot;);</span>
+<span class="nc" id="L126">        axisReconciliationCron.setMisfireInstruction(MISFIRE_INSTRUCTION_DO_NOTHING);</span>
+<span class="nc" id="L127">        return axisReconciliationCron;</span>
+    }
+
+    @Bean(&quot;axisReconciliationJob&quot;)
+    public AxisReconciliationJob axisReconciliationJob() {
+<span class="nc" id="L132">        return new AxisReconciliationJob();</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean remittanceCashInstrumentJobDetail0() {
+<span class="nc" id="L137">        return createJobDetailFactory(INSTRUMENT_TYPE_CASH, 0);</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean remittanceCashInstrumentJobDetail1() {
+<span class="nc" id="L142">        return createJobDetailFactory(INSTRUMENT_TYPE_CASH, 1);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean remittanceCashInstrumentCronTrigger0() {
+<span class="nc" id="L147">        return createCronTrigger(remittanceCashInstrumentJobDetail0(), INSTRUMENT_TYPE_CASH, 0);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean remittanceCashInstrumentCronTrigger1() {
+<span class="nc" id="L152">        return createCronTrigger(remittanceCashInstrumentJobDetail1(), INSTRUMENT_TYPE_CASH, 1);</span>
+    }
+
+    @Bean(&quot;remittancecashInstrumentJob0&quot;)
+    public RemittanceInstrumentJob remittancecashInstrumentJob0() {
+<span class="nc" id="L157">        RemittanceInstrumentJob remittanceInstrumentJob = new RemittanceInstrumentJob();</span>
+<span class="nc" id="L158">        remittanceInstrumentJob.setModulo(0);</span>
+<span class="nc" id="L159">        remittanceInstrumentJob.setInstrumentType(INSTRUMENT_TYPE_CASH);</span>
+<span class="nc" id="L160">        return remittanceInstrumentJob;</span>
+
+    }
+
+    @Bean(&quot;remittancecashInstrumentJob1&quot;)
+    public RemittanceInstrumentJob remittancecashInstrumentJob1() {
+<span class="nc" id="L166">        RemittanceInstrumentJob remittanceInstrumentJob = new RemittanceInstrumentJob();</span>
+<span class="nc" id="L167">        remittanceInstrumentJob.setModulo(1);</span>
+<span class="nc" id="L168">        remittanceInstrumentJob.setInstrumentType(INSTRUMENT_TYPE_CASH);</span>
+<span class="nc" id="L169">        return remittanceInstrumentJob;</span>
+
+    }
+
+    private JobDetailFactoryBean createJobDetailFactory(String instrumentType, int modulo) {
+<span class="nc" id="L174">        JobDetailFactoryBean remittanceInstrumentJobDetail = new JobDetailFactoryBean();</span>
+<span class="nc" id="L175">        remittanceInstrumentJobDetail.setGroup(COLLECTION_JOB_GROUP);</span>
+<span class="nc" id="L176">        remittanceInstrumentJobDetail.setName(String.format(&quot;COLLECTION_REMIT_INSTRMNT_%s%d_JOB&quot;, instrumentType, modulo));</span>
+<span class="nc" id="L177">        remittanceInstrumentJobDetail.setDurability(true);</span>
+<span class="nc" id="L178">        remittanceInstrumentJobDetail.setJobClass(RemittanceInstrumentJob.class);</span>
+<span class="nc" id="L179">        remittanceInstrumentJobDetail.setRequestsRecovery(true);</span>
+<span class="nc" id="L180">        Map&lt;String, String&gt; jobDetailMap = prepareJobDetailMap();</span>
+<span class="nc" id="L181">        jobDetailMap.put(&quot;jobBeanName&quot;, String.format(&quot;remittance%sInstrumentJob%d&quot;, instrumentType, modulo));</span>
+<span class="nc" id="L182">        remittanceInstrumentJobDetail.setJobDataAsMap(jobDetailMap);</span>
+<span class="nc" id="L183">        return remittanceInstrumentJobDetail;</span>
+    }
+
+    private CronTriggerFactoryBean createCronTrigger(JobDetailFactoryBean jobDetail, String instrumentType, int modulo) {
+<span class="nc" id="L187">        CronTriggerFactoryBean remittanceCron = new CronTriggerFactoryBean();</span>
+<span class="nc" id="L188">        remittanceCron.setJobDetail(jobDetail.getObject());</span>
+<span class="nc" id="L189">        remittanceCron.setGroup(COLLECTION_TRIGGER_GROUP);</span>
+<span class="nc" id="L190">        remittanceCron.setName(String.format(&quot;COLLECTION_REMIT_INSTRMNT_%s%d_TRIGGER&quot;, instrumentType, modulo));</span>
+<span class="nc" id="L191">        remittanceCron.setCronExpression(&quot;0 */30 * * * ?&quot;);</span>
+<span class="nc" id="L192">        remittanceCron.setMisfireInstruction(MISFIRE_INSTRUCTION_DO_NOTHING);</span>
+<span class="nc" id="L193">        return remittanceCron;</span>
+    }
+
+    public JobDetailFactoryBean createAtomJobDetailFactory(int modulo) {
+<span class="nc" id="L197">        JobDetailFactoryBean atomReconciliationJobDetail = new JobDetailFactoryBean();</span>
+<span class="nc" id="L198">        atomReconciliationJobDetail.setGroup(COLLECTION_JOB_GROUP);</span>
+<span class="nc" id="L199">        atomReconciliationJobDetail.setName(String.format(&quot;COLLECTION_ATOM_RECON_%d_JOB&quot;, modulo));</span>
+<span class="nc" id="L200">        atomReconciliationJobDetail.setDurability(true);</span>
+<span class="nc" id="L201">        atomReconciliationJobDetail.setJobClass(AtomReconciliationJob.class);</span>
+<span class="nc" id="L202">        atomReconciliationJobDetail.setRequestsRecovery(true);</span>
+<span class="nc" id="L203">        Map&lt;String, String&gt; jobDetailMap = prepareJobDetailMap();</span>
+<span class="nc" id="L204">        jobDetailMap.put(&quot;jobBeanName&quot;, String.format(&quot;atomReconciliationJob%d&quot;, modulo));</span>
+<span class="nc" id="L205">        atomReconciliationJobDetail.setJobDataAsMap(jobDetailMap);</span>
+<span class="nc" id="L206">        return atomReconciliationJobDetail;</span>
+    }
+
+    public CronTriggerFactoryBean createAtomCronTrigger(JobDetailFactoryBean jobDetail, int modulo) {
+<span class="nc" id="L210">        CronTriggerFactoryBean atomReconciliationCron = new CronTriggerFactoryBean();</span>
+<span class="nc" id="L211">        atomReconciliationCron.setJobDetail(jobDetail.getObject());</span>
+<span class="nc" id="L212">        atomReconciliationCron.setGroup(COLLECTION_TRIGGER_GROUP);</span>
+<span class="nc" id="L213">        atomReconciliationCron.setName(String.format(&quot;COLLECTION_ATOM_RECON_%d_TRIGGER&quot;, modulo));</span>
+<span class="nc" id="L214">        atomReconciliationCron.setCronExpression(&quot;0 */30 * * * ?&quot;);</span>
+<span class="nc" id="L215">        atomReconciliationCron.setMisfireInstruction(MISFIRE_INSTRUCTION_DO_NOTHING);</span>
+<span class="nc" id="L216">        return atomReconciliationCron;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean atomReconciliationJobDetail0() {
+<span class="nc" id="L221">        return createAtomJobDetailFactory(0);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean atomReconciliationCronTrigger0() {
+<span class="nc" id="L226">        return createAtomCronTrigger(atomReconciliationJobDetail0(), 0);</span>
+    }
+
+    @Bean(&quot;atomReconciliationJob0&quot;)
+    public AtomReconciliationJob atomReconciliationJob0() {
+<span class="nc" id="L231">        AtomReconciliationJob atomReconciliationJob = new AtomReconciliationJob();</span>
+<span class="nc" id="L232">        atomReconciliationJob.setModulo(0);</span>
+<span class="nc" id="L233">        return atomReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean atomReconciliationJobDetail1() {
+<span class="nc" id="L238">        return createAtomJobDetailFactory(1);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean atomReconciliationCronTrigger1() {
+<span class="nc" id="L243">        return createAtomCronTrigger(atomReconciliationJobDetail1(), 1);</span>
+    }
+
+    @Bean(&quot;atomReconciliationJob1&quot;)
+    public AtomReconciliationJob atomReconciliationJob1() {
+<span class="nc" id="L248">        AtomReconciliationJob atomReconciliationJob = new AtomReconciliationJob();</span>
+<span class="nc" id="L249">        atomReconciliationJob.setModulo(1);</span>
+<span class="nc" id="L250">        return atomReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean atomReconciliationJobDetail2() {
+<span class="nc" id="L255">        return createAtomJobDetailFactory(2);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean atomReconciliationCronTrigger2() {
+<span class="nc" id="L260">        return createAtomCronTrigger(atomReconciliationJobDetail2(), 2);</span>
+    }
+
+    @Bean(&quot;atomReconciliationJob2&quot;)
+    public AtomReconciliationJob atomReconciliationJob2() {
+<span class="nc" id="L265">        AtomReconciliationJob atomReconciliationJob = new AtomReconciliationJob();</span>
+<span class="nc" id="L266">        atomReconciliationJob.setModulo(2);</span>
+<span class="nc" id="L267">        return atomReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean atomReconciliationJobDetail3() {
+<span class="nc" id="L272">        return createAtomJobDetailFactory(3);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean atomReconciliationCronTrigger3() {
+<span class="nc" id="L277">        return createAtomCronTrigger(atomReconciliationJobDetail3(), 3);</span>
+    }
+
+    @Bean(&quot;atomReconciliationJob3&quot;)
+    public AtomReconciliationJob atomReconciliationJob3() {
+<span class="nc" id="L282">        AtomReconciliationJob atomReconciliationJob = new AtomReconciliationJob();</span>
+<span class="nc" id="L283">        atomReconciliationJob.setModulo(3);</span>
+<span class="nc" id="L284">        return atomReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean atomReconciliationJobDetail4() {
+<span class="nc" id="L289">        return createAtomJobDetailFactory(4);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean atomReconciliationCronTrigger4() {
+<span class="nc" id="L294">        return createAtomCronTrigger(atomReconciliationJobDetail4(), 4);</span>
+    }
+
+    @Bean(&quot;atomReconciliationJob4&quot;)
+    public AtomReconciliationJob atomReconciliationJob4() {
+<span class="nc" id="L299">        AtomReconciliationJob atomReconciliationJob = new AtomReconciliationJob();</span>
+<span class="nc" id="L300">        atomReconciliationJob.setModulo(4);</span>
+<span class="nc" id="L301">        return atomReconciliationJob;</span>
+    }
+
+    public JobDetailFactoryBean createSbimopsJobDetailFactory(int modulo) {
+<span class="nc" id="L305">        JobDetailFactoryBean sbimopsReconciliationJobDetail = new JobDetailFactoryBean();</span>
+<span class="nc" id="L306">        sbimopsReconciliationJobDetail.setGroup(COLLECTION_JOB_GROUP);</span>
+<span class="nc" id="L307">        sbimopsReconciliationJobDetail.setName(String.format(&quot;COLLECTION_SBIMOPS_RECON_%d_JOB&quot;, modulo));</span>
+<span class="nc" id="L308">        sbimopsReconciliationJobDetail.setDurability(true);</span>
+<span class="nc" id="L309">        sbimopsReconciliationJobDetail.setJobClass(SbimopsReconciliationJob.class);</span>
+<span class="nc" id="L310">        sbimopsReconciliationJobDetail.setRequestsRecovery(true);</span>
+<span class="nc" id="L311">        Map&lt;String, String&gt; jobDetailMap = prepareJobDetailMap();</span>
+<span class="nc" id="L312">        jobDetailMap.put(&quot;jobBeanName&quot;, String.format(&quot;sbimopsReconciliationJob%d&quot;, modulo));</span>
+<span class="nc" id="L313">        sbimopsReconciliationJobDetail.setJobDataAsMap(jobDetailMap);</span>
+<span class="nc" id="L314">        return sbimopsReconciliationJobDetail;</span>
+    }
+
+    public CronTriggerFactoryBean createSbimopsCronTrigger(JobDetailFactoryBean jobDetail, int modulo) {
+<span class="nc" id="L318">        CronTriggerFactoryBean sbimopsReconciliationCron = new CronTriggerFactoryBean();</span>
+<span class="nc" id="L319">        sbimopsReconciliationCron.setJobDetail(jobDetail.getObject());</span>
+<span class="nc" id="L320">        sbimopsReconciliationCron.setGroup(COLLECTION_TRIGGER_GROUP);</span>
+<span class="nc" id="L321">        sbimopsReconciliationCron.setName(String.format(&quot;COLLECTION_SBIMOPS_RECON_%d_TRIGGER&quot;, modulo));</span>
+<span class="nc" id="L322">        sbimopsReconciliationCron.setCronExpression(&quot;0 */45 * * * ?&quot;);</span>
+<span class="nc" id="L323">        sbimopsReconciliationCron.setMisfireInstruction(MISFIRE_INSTRUCTION_DO_NOTHING);</span>
+<span class="nc" id="L324">        return sbimopsReconciliationCron;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean sbimopsReconciliationJobDetail0() {
+<span class="nc" id="L329">        return createSbimopsJobDetailFactory(0);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean sbimopsReconciliationCronTrigger0() {
+<span class="nc" id="L334">        return createSbimopsCronTrigger(sbimopsReconciliationJobDetail0(), 0);</span>
+    }
+
+    @Bean(&quot;sbimopsReconciliationJob0&quot;)
+    public SbimopsReconciliationJob sbimopsReconciliationJob0() {
+<span class="nc" id="L339">        SbimopsReconciliationJob sbimopsReconciliationJob = new SbimopsReconciliationJob();</span>
+<span class="nc" id="L340">        sbimopsReconciliationJob.setModulo(0);</span>
+<span class="nc" id="L341">        return sbimopsReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean sbimopsReconciliationJobDetail1() {
+<span class="nc" id="L346">        return createSbimopsJobDetailFactory(1);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean sbimopsReconciliationCronTrigger1() {
+<span class="nc" id="L351">        return createSbimopsCronTrigger(sbimopsReconciliationJobDetail1(), 1);</span>
+    }
+
+    @Bean(&quot;sbimopsReconciliationJob1&quot;)
+    public SbimopsReconciliationJob sbimopsReconciliationJob1() {
+<span class="nc" id="L356">        SbimopsReconciliationJob sbimopsReconciliationJob = new SbimopsReconciliationJob();</span>
+<span class="nc" id="L357">        sbimopsReconciliationJob.setModulo(1);</span>
+<span class="nc" id="L358">        return sbimopsReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean sbimopsReconciliationJobDetail2() {
+<span class="nc" id="L363">        return createSbimopsJobDetailFactory(2);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean sbimopsReconciliationCronTrigger2() {
+<span class="nc" id="L368">        return createSbimopsCronTrigger(sbimopsReconciliationJobDetail2(), 2);</span>
+    }
+
+    @Bean(&quot;sbimopsReconciliationJob2&quot;)
+    public SbimopsReconciliationJob sbimopsReconciliationJob2() {
+<span class="nc" id="L373">        SbimopsReconciliationJob sbimopsReconciliationJob = new SbimopsReconciliationJob();</span>
+<span class="nc" id="L374">        sbimopsReconciliationJob.setModulo(2);</span>
+<span class="nc" id="L375">        return sbimopsReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean sbimopsReconciliationJobDetail3() {
+<span class="nc" id="L380">        return createSbimopsJobDetailFactory(3);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean sbimopsReconciliationCronTrigger3() {
+<span class="nc" id="L385">        return createSbimopsCronTrigger(sbimopsReconciliationJobDetail3(), 3);</span>
+    }
+
+    @Bean(&quot;sbimopsReconciliationJob3&quot;)
+    public SbimopsReconciliationJob sbimopsReconciliationJob3() {
+<span class="nc" id="L390">        SbimopsReconciliationJob sbimopsReconciliationJob = new SbimopsReconciliationJob();</span>
+<span class="nc" id="L391">        sbimopsReconciliationJob.setModulo(3);</span>
+<span class="nc" id="L392">        return sbimopsReconciliationJob;</span>
+    }
+
+    @Bean
+    public JobDetailFactoryBean sbimopsReconciliationJobDetail4() {
+<span class="nc" id="L397">        return createSbimopsJobDetailFactory(4);</span>
+    }
+
+    @Bean
+    public CronTriggerFactoryBean sbimopsReconciliationCronTrigger4() {
+<span class="nc" id="L402">        return createSbimopsCronTrigger(sbimopsReconciliationJobDetail4(), 4);</span>
+    }
+
+    @Bean(&quot;sbimopsReconciliationJob4&quot;)
+    public SbimopsReconciliationJob sbimopsReconciliationJob4() {
+<span class="nc" id="L407">        SbimopsReconciliationJob sbimopsReconciliationJob = new SbimopsReconciliationJob();</span>
+<span class="nc" id="L408">        sbimopsReconciliationJob.setModulo(4);</span>
+<span class="nc" id="L409">        return sbimopsReconciliationJob;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

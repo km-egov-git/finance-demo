@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionDocument.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity.es</a> &gt; <span class="el_source">CollectionDocument.java</span></div><h1>CollectionDocument.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.entity.es;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+import java.util.Date;
+
+import static org.egov.infra.utils.ApplicationConstant.DEFAULT_TIMEZONE;
+import static org.egov.infra.utils.ApplicationConstant.ES_DATE_FORMAT;
+
+@Document(indexName = &quot;receipts&quot;, type = &quot;receipts_bifurcation&quot;)
+<span class="nc" id="L65">public class CollectionDocument {</span>
+
+    @Id
+    private String id;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String receiptNumber;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String cityCode;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String billingService;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String paymentMode;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String channel;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String paymentGateway;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String billNumber;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String cityName;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String districtName;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String regionName;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String status;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String cityGrade;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String receiptCreator;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ES_DATE_FORMAT, timezone = DEFAULT_TIMEZONE)
+    @Field(type = FieldType.Date, format = DateFormat.date_optional_time, pattern = ES_DATE_FORMAT)
+    private Date receiptDate;
+
+    @Field(type = FieldType.Double)
+    private Double arrearAmount;
+
+    @Field(type = FieldType.Double)
+    private Double penaltyAmount;
+
+    @Field(type = FieldType.Double)
+    private Double currentAmount;
+
+    @Field(type = FieldType.Double)
+    private Double totalAmount;
+
+    @Field(type = FieldType.Double)
+    private Double advanceAmount;
+
+    @Field(type = FieldType.Double)
+    private Double latePaymentCharges;
+
+    @Field(type = FieldType.Double)
+    private Double arrearCess;
+
+    @Field(type = FieldType.Double)
+    private Double currentCess;
+
+    @Field(type = FieldType.String)
+    private String installmentFrom;
+
+    @Field(type = FieldType.String)
+    private String installmentTo;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String consumerName;
+
+    @Field(type = FieldType.Double)
+    private Double reductionAmount;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String consumerCode;
+
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String revenueWard;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ES_DATE_FORMAT, timezone = DEFAULT_TIMEZONE)
+    @Field(type = FieldType.Date, format = DateFormat.date_optional_time, pattern = ES_DATE_FORMAT)
+    private Date createdDate;
+    
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String consumerType;
+    
+    @Field(type = FieldType.Integer)
+    private Integer conflict;
+
+    public String getId() {
+<span class="nc" id="L166">        return id;</span>
+    }
+
+    public void setId(final String id) {
+<span class="nc" id="L170">        this.id = id;</span>
+<span class="nc" id="L171">    }</span>
+
+    public String getReceiptNumber() {
+<span class="nc" id="L174">        return receiptNumber;</span>
+    }
+
+    public void setReceiptNumber(final String receiptNumber) {
+<span class="nc" id="L178">        this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L179">    }</span>
+
+    public String getCityCode() {
+<span class="nc" id="L182">        return cityCode;</span>
+    }
+
+    public void setCityCode(final String cityCode) {
+<span class="nc" id="L186">        this.cityCode = cityCode;</span>
+<span class="nc" id="L187">    }</span>
+
+    public String getBillingService() {
+<span class="nc" id="L190">        return billingService;</span>
+    }
+
+    public void setBillingService(final String billingService) {
+<span class="nc" id="L194">        this.billingService = billingService;</span>
+<span class="nc" id="L195">    }</span>
+
+    public String getPaymentMode() {
+<span class="nc" id="L198">        return paymentMode;</span>
+    }
+
+    public void setPaymentMode(final String paymentMode) {
+<span class="nc" id="L202">        this.paymentMode = paymentMode;</span>
+<span class="nc" id="L203">    }</span>
+
+    public String getChannel() {
+<span class="nc" id="L206">        return channel;</span>
+    }
+
+    public void setChannel(final String channel) {
+<span class="nc" id="L210">        this.channel = channel;</span>
+<span class="nc" id="L211">    }</span>
+
+    public String getPaymentGateway() {
+<span class="nc" id="L214">        return paymentGateway;</span>
+    }
+
+    public void setPaymentGateway(final String paymentGateway) {
+<span class="nc" id="L218">        this.paymentGateway = paymentGateway;</span>
+<span class="nc" id="L219">    }</span>
+
+    public String getBillNumber() {
+<span class="nc" id="L222">        return billNumber;</span>
+    }
+
+    public void setBillNumber(final String billNumber) {
+<span class="nc" id="L226">        this.billNumber = billNumber;</span>
+<span class="nc" id="L227">    }</span>
+
+    public String getCityName() {
+<span class="nc" id="L230">        return cityName;</span>
+    }
+
+    public void setCityName(final String cityName) {
+<span class="nc" id="L234">        this.cityName = cityName;</span>
+<span class="nc" id="L235">    }</span>
+
+    public String getDistrictName() {
+<span class="nc" id="L238">        return districtName;</span>
+    }
+
+    public void setDistrictName(final String districtName) {
+<span class="nc" id="L242">        this.districtName = districtName;</span>
+<span class="nc" id="L243">    }</span>
+
+    public String getRegionName() {
+<span class="nc" id="L246">        return regionName;</span>
+    }
+
+    public void setRegionName(final String regionName) {
+<span class="nc" id="L250">        this.regionName = regionName;</span>
+<span class="nc" id="L251">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L254">        return status;</span>
+    }
+
+    public void setStatus(final String status) {
+<span class="nc" id="L258">        this.status = status;</span>
+<span class="nc" id="L259">    }</span>
+
+    public String getCityGrade() {
+<span class="nc" id="L262">        return cityGrade;</span>
+    }
+
+    public void setCityGrade(final String cityGrade) {
+<span class="nc" id="L266">        this.cityGrade = cityGrade;</span>
+<span class="nc" id="L267">    }</span>
+
+    public String getReceiptCreator() {
+<span class="nc" id="L270">        return receiptCreator;</span>
+    }
+
+    public void setReceiptCreator(final String receiptCreator) {
+<span class="nc" id="L274">        this.receiptCreator = receiptCreator;</span>
+<span class="nc" id="L275">    }</span>
+
+    public Date getReceiptDate() {
+<span class="nc" id="L278">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(final Date receiptDate) {
+<span class="nc" id="L282">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L283">    }</span>
+
+    public Double getArrearAmount() {
+<span class="nc" id="L286">        return arrearAmount;</span>
+    }
+
+    public void setArrearAmount(final Double arrearAmount) {
+<span class="nc" id="L290">        this.arrearAmount = arrearAmount;</span>
+<span class="nc" id="L291">    }</span>
+
+    public Double getPenaltyAmount() {
+<span class="nc" id="L294">        return penaltyAmount;</span>
+    }
+
+    public void setPenaltyAmount(final Double penaltyAmount) {
+<span class="nc" id="L298">        this.penaltyAmount = penaltyAmount;</span>
+<span class="nc" id="L299">    }</span>
+
+    public Double getCurrentAmount() {
+<span class="nc" id="L302">        return currentAmount;</span>
+    }
+
+    public void setCurrentAmount(final Double currentAmount) {
+<span class="nc" id="L306">        this.currentAmount = currentAmount;</span>
+<span class="nc" id="L307">    }</span>
+
+    public Double getTotalAmount() {
+<span class="nc" id="L310">        return totalAmount;</span>
+    }
+
+    public void setTotalAmount(final Double totalAmount) {
+<span class="nc" id="L314">        this.totalAmount = totalAmount;</span>
+<span class="nc" id="L315">    }</span>
+
+    public Double getAdvanceAmount() {
+<span class="nc" id="L318">        return advanceAmount;</span>
+    }
+
+    public void setAdvanceAmount(final Double advanceAmount) {
+<span class="nc" id="L322">        this.advanceAmount = advanceAmount;</span>
+<span class="nc" id="L323">    }</span>
+
+    public Double getLatePaymentCharges() {
+<span class="nc" id="L326">        return latePaymentCharges;</span>
+    }
+
+    public void setLatePaymentCharges(final Double latePaymentCharges) {
+<span class="nc" id="L330">        this.latePaymentCharges = latePaymentCharges;</span>
+<span class="nc" id="L331">    }</span>
+
+    public Double getArrearCess() {
+<span class="nc" id="L334">        return arrearCess;</span>
+    }
+
+    public void setArrearCess(final Double arrearCess) {
+<span class="nc" id="L338">        this.arrearCess = arrearCess;</span>
+<span class="nc" id="L339">    }</span>
+
+    public Double getCurrentCess() {
+<span class="nc" id="L342">        return currentCess;</span>
+    }
+
+    public void setCurrentCess(final Double currentCess) {
+<span class="nc" id="L346">        this.currentCess = currentCess;</span>
+<span class="nc" id="L347">    }</span>
+
+    public String getInstallmentFrom() {
+<span class="nc" id="L350">        return installmentFrom;</span>
+    }
+
+    public void setInstallmentFrom(final String installmentFrom) {
+<span class="nc" id="L354">        this.installmentFrom = installmentFrom;</span>
+<span class="nc" id="L355">    }</span>
+
+    public String getInstallmentTo() {
+<span class="nc" id="L358">        return installmentTo;</span>
+    }
+
+    public void setInstallmentTo(final String installmentTo) {
+<span class="nc" id="L362">        this.installmentTo = installmentTo;</span>
+<span class="nc" id="L363">    }</span>
+
+    public String getConsumerName() {
+<span class="nc" id="L366">        return consumerName;</span>
+    }
+
+    public void setConsumerName(final String consumerName) {
+<span class="nc" id="L370">        this.consumerName = consumerName;</span>
+<span class="nc" id="L371">    }</span>
+
+    public Double getReductionAmount() {
+<span class="nc" id="L374">        return reductionAmount;</span>
+    }
+
+    public void setReductionAmount(final Double reductionAmount) {
+<span class="nc" id="L378">        this.reductionAmount = reductionAmount;</span>
+<span class="nc" id="L379">    }</span>
+
+    public String getConsumerCode() {
+<span class="nc" id="L382">        return consumerCode;</span>
+    }
+
+    public void setConsumerCode(final String consumerCode) {
+<span class="nc" id="L386">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L387">    }</span>
+
+    public String getRevenueWard() {
+<span class="nc" id="L390">        return revenueWard;</span>
+    }
+
+    public void setRevenueWard(final String revenueWard) {
+<span class="nc" id="L394">        this.revenueWard = revenueWard;</span>
+<span class="nc" id="L395">    }</span>
+
+    public Date getCreatedDate() {
+<span class="nc" id="L398">        return createdDate;</span>
+    }
+
+    public void setCreatedDate(final Date createdDate) {
+<span class="nc" id="L402">        this.createdDate = createdDate;</span>
+<span class="nc" id="L403">    }</span>
+
+    public String getConsumerType() {
+<span class="nc" id="L406">        return consumerType;</span>
+    }
+
+    public void setConsumerType(String consumerType) {
+<span class="nc" id="L410">        this.consumerType = consumerType;</span>
+<span class="nc" id="L411">    }</span>
+
+    public Integer getConflict() {
+<span class="nc" id="L414">        return conflict;</span>
+    }
+
+    public void setConflict(Integer conflict) {
+<span class="nc" id="L418">        this.conflict = conflict;</span>
+<span class="nc" id="L419">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

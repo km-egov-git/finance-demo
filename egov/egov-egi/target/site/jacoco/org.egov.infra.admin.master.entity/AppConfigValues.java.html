@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppConfigValues.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.entity</a> &gt; <span class="el_source">AppConfigValues.java</span></div><h1>AppConfigValues.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.annotations.Expose;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.SafeHtml;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+import java.util.Objects;
+
+import static javax.persistence.FetchType.LAZY;
+import static javax.persistence.GenerationType.SEQUENCE;
+import static javax.persistence.TemporalType.DATE;
+import static org.egov.infra.admin.master.entity.AppConfigValues.SEQ_APPCONFIG_VALUE;
+
+@Entity
+@Table(name = &quot;eg_appconfig_values&quot;)
+@SequenceGenerator(name = SEQ_APPCONFIG_VALUE, sequenceName = SEQ_APPCONFIG_VALUE, allocationSize = 1)
+<span class="nc" id="L80">public class AppConfigValues extends AbstractAuditable {</span>
+
+    public static final String SEQ_APPCONFIG_VALUE = &quot;SEQ_EG_APPCONFIG_VALUES&quot;;
+    private static final long serialVersionUID = 1L;
+    @Expose
+    @Id
+    @GeneratedValue(generator = SEQ_APPCONFIG_VALUE, strategy = SEQUENCE)
+    private Long id;
+
+    @NotBlank
+    @SafeHtml
+    @Length(max = 4000)
+    @Column(name = &quot;value&quot;)
+    private String value;
+
+    @NotNull
+    @Temporal(DATE)
+    @Column(name = &quot;effective_from&quot;, updatable = false)
+    private Date effectiveFrom;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = &quot;key_id&quot;, nullable = false)
+    @JsonIgnore
+    private AppConfig config;
+
+    @Transient
+    private boolean markedForRemoval;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L110">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L115">        this.id = id;</span>
+<span class="nc" id="L116">    }</span>
+
+    public Date getEffectiveFrom() {
+<span class="nc" id="L119">        return effectiveFrom;</span>
+    }
+
+    public void setEffectiveFrom(final Date effectiveFrom) {
+<span class="nc" id="L123">        this.effectiveFrom = effectiveFrom;</span>
+<span class="nc" id="L124">    }</span>
+
+    public String getValue() {
+<span class="nc" id="L127">        return value;</span>
+    }
+
+    public void setValue(final String value) {
+<span class="nc" id="L131">        this.value = value;</span>
+<span class="nc" id="L132">    }</span>
+
+    public AppConfig getConfig() {
+<span class="nc" id="L135">        return config;</span>
+    }
+
+    public void setConfig(final AppConfig config) {
+<span class="nc" id="L139">        this.config = config;</span>
+<span class="nc" id="L140">    }</span>
+
+    public boolean isMarkedForRemoval() {
+<span class="nc" id="L143">        return markedForRemoval;</span>
+    }
+
+    public void setMarkedForRemoval(final boolean markedForRemoval) {
+<span class="nc" id="L147">        this.markedForRemoval = markedForRemoval;</span>
+<span class="nc" id="L148">    }</span>
+
+    @Override
+    public boolean equals(final Object o) {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (this == o)</span>
+<span class="nc" id="L153">            return true;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (!(o instanceof AppConfigValues))</span>
+<span class="nc" id="L155">            return false;</span>
+<span class="nc" id="L156">        final AppConfigValues that = (AppConfigValues) o;</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        return Objects.equals(id, that.id) &amp;&amp;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">                Objects.equals(value, that.value);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L163">        return Objects.hash(id, value);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DishonoredChequeBean.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">DishonoredChequeBean.java</span></div><h1>DishonoredChequeBean.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+<span class="nc" id="L54">public class DishonoredChequeBean {</span>
+    
+    private String voucherNumber;
+    private String receiptNumber;
+    private String receiptDate;
+    private String instrumentNumber;
+    private String instrumentDate;
+    private String bankName;
+    private String accountNumber;
+    private String payTo;
+    private String description;
+    private BigDecimal instrumentAmount;
+    private Long receiptHeaderid;
+    private Long instrumentHeaderid;
+    private Long voucherHeaderId;
+    private String receiptHeaderIds;
+    private String glcodeId;
+    private String functionId;
+    private String glcode;
+    private String debitAmount;
+    private String creditAmount;
+    private String detailKeyId;
+    private String detailTypeId;
+    private String amount;
+   
+
+    private Date transactionDate;
+    private String dishonorReason;
+    private String remarks;
+    private String referenceNo;
+    private String instHeaderIds;
+    private String voucherHeaderIds;
+    private String receiptGLDetails;
+    private String remittanceGLDetails;
+    
+    private String instrumentMode;
+    private String receiptSourceUrl;
+    private List&lt;AccountCode&gt; receiptVoucherGLDetails;
+    private List&lt;AccountCode&gt; payInSlipVoucherGLDetails;
+    private Date dishonorDate;
+    private String bankBranch;
+    
+    private Date fromDate;
+    private Date toDate;
+    private String service;
+
+    public Date getFromDate() {
+<span class="nc" id="L101">        return fromDate;</span>
+    }
+
+    public void setFromDate(Date fromDate) {
+<span class="nc" id="L105">        this.fromDate = fromDate;</span>
+<span class="nc" id="L106">    }</span>
+
+    public Date getToDate() {
+<span class="nc" id="L109">        return toDate;</span>
+    }
+
+    public void setToDate(Date toDate) {
+<span class="nc" id="L113">        this.toDate = toDate;</span>
+<span class="nc" id="L114">    }</span>
+
+    public String getService() {
+<span class="nc" id="L117">        return service;</span>
+    }
+
+    public void setService(String service) {
+<span class="nc" id="L121">        this.service = service;</span>
+<span class="nc" id="L122">    }</span>
+
+    public String getReceiptNumber() {
+<span class="nc" id="L125">        return receiptNumber;</span>
+    }
+
+    public void setReceiptNumber(final String receiptNumber) {
+<span class="nc" id="L129">        this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L130">    }</span>
+
+   
+
+    public String getInstrumentNumber() {
+<span class="nc" id="L135">        return instrumentNumber;</span>
+    }
+
+    public void setInstrumentNumber(final String instrumentNumber) {
+<span class="nc" id="L139">        this.instrumentNumber = instrumentNumber;</span>
+<span class="nc" id="L140">    }</span>
+
+    public String getInstrumentDate() {
+<span class="nc" id="L143">        return instrumentDate;</span>
+    }
+
+    public void setInstrumentDate(final String instrumentDate) {
+<span class="nc" id="L147">        this.instrumentDate = instrumentDate;</span>
+<span class="nc" id="L148">    }</span>
+
+    public String getBankName() {
+<span class="nc" id="L151">        return bankName;</span>
+    }
+
+    public void setBankName(final String bankName) {
+<span class="nc" id="L155">        this.bankName = bankName;</span>
+<span class="nc" id="L156">    }</span>
+
+    public String getAccountNumber() {
+<span class="nc" id="L159">        return accountNumber;</span>
+    }
+
+    public void setAccountNumber(final String accountNumber) {
+<span class="nc" id="L163">        this.accountNumber = accountNumber;</span>
+<span class="nc" id="L164">    }</span>
+
+    public String getPayTo() {
+<span class="nc" id="L167">        return payTo;</span>
+    }
+
+    public void setPayTo(final String payTo) {
+<span class="nc" id="L171">        this.payTo = payTo;</span>
+<span class="nc" id="L172">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L175">        return description;</span>
+    }
+
+    public void setDescription(final String description) {
+<span class="nc" id="L179">        this.description = description;</span>
+<span class="nc" id="L180">    }</span>
+
+    public BigDecimal getInstrumentAmount() {
+<span class="nc" id="L183">        return instrumentAmount;</span>
+    }
+
+    public void setInstrumentAmount(final BigDecimal instrumentAmount) {
+<span class="nc" id="L187">        this.instrumentAmount = instrumentAmount;</span>
+<span class="nc" id="L188">    }</span>
+
+    public Long getInstrumentHeaderid() {
+<span class="nc" id="L191">        return instrumentHeaderid;</span>
+    }
+
+    public void setInstrumentHeaderid(final Long instrumentHeaderid) {
+<span class="nc" id="L195">        this.instrumentHeaderid = instrumentHeaderid;</span>
+<span class="nc" id="L196">    }</span>
+
+    public Long getReceiptHeaderid() {
+<span class="nc" id="L199">        return receiptHeaderid;</span>
+    }
+
+    public void setReceiptHeaderid(final Long receiptHeaderid) {
+<span class="nc" id="L203">        this.receiptHeaderid = receiptHeaderid;</span>
+<span class="nc" id="L204">    }</span>
+
+    public String getVoucherNumber() {
+<span class="nc" id="L207">        return voucherNumber;</span>
+    }
+
+    public void setVoucherNumber(String voucherNumber) {
+<span class="nc" id="L211">        this.voucherNumber = voucherNumber;</span>
+<span class="nc" id="L212">    }</span>
+
+    public Long getVoucherHeaderId() {
+<span class="nc" id="L215">        return voucherHeaderId;</span>
+    }
+
+    public void setVoucherHeaderId(Long voucherHeaderId) {
+<span class="nc" id="L219">        this.voucherHeaderId = voucherHeaderId;</span>
+<span class="nc" id="L220">    }</span>
+
+    public String getReceiptHeaderIds() {
+<span class="nc" id="L223">        return receiptHeaderIds;</span>
+    }
+
+    public void setReceiptHeaderIds(String receiptHeaderIds) {
+<span class="nc" id="L227">        this.receiptHeaderIds = receiptHeaderIds;</span>
+<span class="nc" id="L228">    }</span>
+
+    public String getGlcodeId() {
+<span class="nc" id="L231">        return glcodeId;</span>
+    }
+
+    public void setGlcodeId(String glcodeId) {
+<span class="nc" id="L235">        this.glcodeId = glcodeId;</span>
+<span class="nc" id="L236">    }</span>
+
+    public String getFunctionId() {
+<span class="nc" id="L239">        return functionId;</span>
+    }
+
+    public void setFunctionId(String functionId) {
+<span class="nc" id="L243">        this.functionId = functionId;</span>
+<span class="nc" id="L244">    }</span>
+
+    public String getGlcode() {
+<span class="nc" id="L247">        return glcode;</span>
+    }
+
+    public void setGlcode(String glcode) {
+<span class="nc" id="L251">        this.glcode = glcode;</span>
+<span class="nc" id="L252">    }</span>
+
+    public String getDebitAmount() {
+<span class="nc" id="L255">        return debitAmount;</span>
+    }
+
+    public void setDebitAmount(String debitAmount) {
+<span class="nc" id="L259">        this.debitAmount = debitAmount;</span>
+<span class="nc" id="L260">    }</span>
+
+    public String getCreditAmount() {
+<span class="nc" id="L263">        return creditAmount;</span>
+    }
+
+    public void setCreditAmount(String creditAmount) {
+<span class="nc" id="L267">        this.creditAmount = creditAmount;</span>
+<span class="nc" id="L268">    }</span>
+
+    public String getDetailKeyId() {
+<span class="nc" id="L271">        return detailKeyId;</span>
+    }
+
+    public void setDetailKeyId(String detailKeyId) {
+<span class="nc" id="L275">        this.detailKeyId = detailKeyId;</span>
+<span class="nc" id="L276">    }</span>
+
+    public String getDetailTypeId() {
+<span class="nc" id="L279">        return detailTypeId;</span>
+    }
+
+    public void setDetailTypeId(String detailTypeId) {
+<span class="nc" id="L283">        this.detailTypeId = detailTypeId;</span>
+<span class="nc" id="L284">    }</span>
+
+    public String getAmount() {
+<span class="nc" id="L287">        return amount;</span>
+    }
+
+    public void setAmount(String amount) {
+<span class="nc" id="L291">        this.amount = amount;</span>
+<span class="nc" id="L292">    }</span>
+
+    public Date getTransactionDate() {
+<span class="nc" id="L295">        return transactionDate;</span>
+    }
+
+    public void setTransactionDate(Date transactionDate) {
+<span class="nc" id="L299">        this.transactionDate = transactionDate;</span>
+<span class="nc" id="L300">    }</span>
+
+    public String getDishonorReason() {
+<span class="nc" id="L303">        return dishonorReason;</span>
+    }
+
+    public void setDishonorReason(String dishonorReason) {
+<span class="nc" id="L307">        this.dishonorReason = dishonorReason;</span>
+<span class="nc" id="L308">    }</span>
+
+    public String getRemarks() {
+<span class="nc" id="L311">        return remarks;</span>
+    }
+
+    public void setRemarks(String remarks) {
+<span class="nc" id="L315">        this.remarks = remarks;</span>
+<span class="nc" id="L316">    }</span>
+
+    public String getReferenceNo() {
+<span class="nc" id="L319">        return referenceNo;</span>
+    }
+
+    public void setReferenceNo(String referenceNo) {
+<span class="nc" id="L323">        this.referenceNo = referenceNo;</span>
+<span class="nc" id="L324">    }</span>
+
+    public String getInstHeaderIds() {
+<span class="nc" id="L327">        return instHeaderIds;</span>
+    }
+
+    public void setInstHeaderIds(String instHeaderIds) {
+<span class="nc" id="L331">        this.instHeaderIds = instHeaderIds;</span>
+<span class="nc" id="L332">    }</span>
+
+    public String getVoucherHeaderIds() {
+<span class="nc" id="L335">        return voucherHeaderIds;</span>
+    }
+
+    public void setVoucherHeaderIds(String voucherHeaderIds) {
+<span class="nc" id="L339">        this.voucherHeaderIds = voucherHeaderIds;</span>
+<span class="nc" id="L340">    }</span>
+
+    public String getReceiptGLDetails() {
+<span class="nc" id="L343">        return receiptGLDetails;</span>
+    }
+
+    public void setReceiptGLDetails(String receiptGLDetails) {
+<span class="nc" id="L347">        this.receiptGLDetails = receiptGLDetails;</span>
+<span class="nc" id="L348">    }</span>
+
+    public String getRemittanceGLDetails() {
+<span class="nc" id="L351">        return remittanceGLDetails;</span>
+    }
+
+    public void setRemittanceGLDetails(String remittanceGLDetails) {
+<span class="nc" id="L355">        this.remittanceGLDetails = remittanceGLDetails;</span>
+<span class="nc" id="L356">    }</span>
+
+    public String getInstrumentMode() {
+<span class="nc" id="L359">        return instrumentMode;</span>
+    }
+
+    public void setInstrumentMode(String instrumentMode) {
+<span class="nc" id="L363">        this.instrumentMode = instrumentMode;</span>
+<span class="nc" id="L364">    }</span>
+
+    public String getReceiptSourceUrl() {
+<span class="nc" id="L367">        return receiptSourceUrl;</span>
+    }
+
+    public void setReceiptSourceUrl(String receiptSourceUrl) {
+<span class="nc" id="L371">        this.receiptSourceUrl = receiptSourceUrl;</span>
+<span class="nc" id="L372">    }</span>
+
+    public List&lt;AccountCode&gt; getReceiptVoucherGLDetails() {
+<span class="nc" id="L375">        return receiptVoucherGLDetails;</span>
+    }
+
+    public void setReceiptVoucherGLDetails(List&lt;AccountCode&gt; receiptVoucherGLDetails) {
+<span class="nc" id="L379">        this.receiptVoucherGLDetails = receiptVoucherGLDetails;</span>
+<span class="nc" id="L380">    }</span>
+
+    public List&lt;AccountCode&gt; getPayInSlipVoucherGLDetails() {
+<span class="nc" id="L383">        return payInSlipVoucherGLDetails;</span>
+    }
+
+    public void setPayInSlipVoucherGLDetails(List&lt;AccountCode&gt; payInSlipVoucherGLDetails) {
+<span class="nc" id="L387">        this.payInSlipVoucherGLDetails = payInSlipVoucherGLDetails;</span>
+<span class="nc" id="L388">    }</span>
+
+    public Date getDishonorDate() {
+<span class="nc" id="L391">        return dishonorDate;</span>
+    }
+
+    public void setDishonorDate(Date dishonorDate) {
+<span class="nc" id="L395">        this.dishonorDate = dishonorDate;</span>
+<span class="nc" id="L396">    }</span>
+
+    public String getBankBranch() {
+<span class="nc" id="L399">        return bankBranch;</span>
+    }
+
+    public void setBankBranch(String bankBranch) {
+<span class="nc" id="L403">        this.bankBranch = bankBranch;</span>
+<span class="nc" id="L404">    }</span>
+
+    public static class  AccountCode {
+        private String glcode;
+        private String accounthead;
+        private Double debitamount;
+        private Double creditamount;
+<span class="nc" id="L411">        public AccountCode() {</span>
+            // TODO Auto-generated constructor stub
+<span class="nc" id="L413">        }</span>
+<span class="nc" id="L414">        public AccountCode(String glcode, String accounthead, Double debitamount, Double creditamount) {</span>
+<span class="nc" id="L415">            this.glcode = glcode;</span>
+<span class="nc" id="L416">            this.accounthead = accounthead;</span>
+<span class="nc" id="L417">            this.debitamount = debitamount;</span>
+<span class="nc" id="L418">            this.creditamount = creditamount;</span>
+<span class="nc" id="L419">        }</span>
+        public String getGlcode() {
+<span class="nc" id="L421">            return glcode;</span>
+        }
+        public void setGlcode(String glcode) {
+<span class="nc" id="L424">            this.glcode = glcode;</span>
+<span class="nc" id="L425">        }</span>
+        public String getAccounthead() {
+<span class="nc" id="L427">            return accounthead;</span>
+        }
+        public void setAccounthead(String accounthead) {
+<span class="nc" id="L430">            this.accounthead = accounthead;</span>
+<span class="nc" id="L431">        }</span>
+        public Double getDebitamount() {
+<span class="nc" id="L433">            return debitamount;</span>
+        }
+        public void setDebitamount(Double debitamount) {
+<span class="nc" id="L436">            this.debitamount = debitamount;</span>
+<span class="nc" id="L437">        }</span>
+        public Double getCreditamount() {
+<span class="nc" id="L439">            return creditamount;</span>
+        }
+        public void setCreditamount(Double creditamount) {
+<span class="nc" id="L442">            this.creditamount = creditamount;</span>
+<span class="nc" id="L443">        }</span>
+    }
+
+	public String getReceiptDate() {
+<span class="nc" id="L447">		return receiptDate;</span>
+	}
+
+	public void setReceiptDate(String receiptDate) {
+<span class="nc" id="L451">		this.receiptDate = receiptDate;</span>
+<span class="nc" id="L452">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

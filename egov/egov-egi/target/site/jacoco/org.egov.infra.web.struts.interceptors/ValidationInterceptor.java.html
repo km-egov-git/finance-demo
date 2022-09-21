@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValidationInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.struts.interceptors</a> &gt; <span class="el_source">ValidationInterceptor.java</span></div><h1>ValidationInterceptor.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.struts.interceptors;
+
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
+import com.opensymphony.xwork2.interceptor.ValidationAware;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infra.web.struts.annotation.ValidationErrorPageExt;
+import org.egov.infra.web.struts.annotation.ValidationErrorPageForward;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.List;
+
+<span class="nc" id="L65">public class ValidationInterceptor extends AbstractInterceptor {</span>
+
+	private static final long serialVersionUID = 1L;
+
+	@Override
+	public String intercept(final ActionInvocation invocation) throws Exception {
+<span class="nc" id="L71">		String form = &quot;edit&quot;;</span>
+<span class="nc" id="L72">		Method actionMethod = null;</span>
+<span class="nc" id="L73">		final Object action = invocation.getAction();</span>
+<span class="nc" id="L74">		boolean isInvokeAndForward = false;</span>
+		try {
+<span class="nc" id="L76">			final String method = invocation.getProxy().getMethod();</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">			if (&quot;create&quot;.equals(method)) {</span>
+<span class="nc" id="L78">				form = &quot;new&quot;;</span>
+			}
+<span class="nc" id="L80">			final Method m = action.getClass().getMethod(method);</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			if (m.isAnnotationPresent(ValidationErrorPage.class)) {</span>
+<span class="nc" id="L83">				form = m.getAnnotation(ValidationErrorPage.class).value();</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">			} else if (m.isAnnotationPresent(ValidationErrorPageExt.class)) {</span>
+<span class="nc" id="L85">				final ValidationErrorPageExt validationErrorPageExt = m.getAnnotation(ValidationErrorPageExt.class);</span>
+<span class="nc" id="L86">				form = validationErrorPageExt.action();</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">				if (validationErrorPageExt.makeCall()) {</span>
+<span class="nc" id="L88">					actionMethod = action.getClass().getMethod(validationErrorPageExt.toMethod());</span>
+				}
+<span class="nc bnc" id="L90" title="All 2 branches missed.">			} else if (m.isAnnotationPresent(ValidationErrorPageForward.class)) {</span>
+<span class="nc" id="L91">				final ValidationErrorPageForward forwarder = m.getAnnotation(ValidationErrorPageForward.class);</span>
+<span class="nc" id="L92">				actionMethod = action.getClass().getDeclaredMethod(forwarder.forwarderMethod());</span>
+<span class="nc" id="L93">				isInvokeAndForward = true;</span>
+			}
+<span class="nc" id="L95">			final ValidationAware validationAwareAction = (ValidationAware) invocation.getAction();</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">			if (validationAwareAction.hasErrors()) {</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">				if (isInvokeAndForward) {</span>
+<span class="nc" id="L98">					return (String) actionMethod.invoke(action);</span>
+				} else {
+<span class="nc" id="L100">					this.invokeActionMethod(actionMethod, action);</span>
+<span class="nc" id="L101">					return form;</span>
+				}
+			}
+<span class="nc" id="L104">			return invocation.invoke();</span>
+<span class="nc" id="L105">		} catch (final ValidationException e) {</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">			if (BaseFormAction.class.isAssignableFrom(invocation.getAction().getClass())) {</span>
+<span class="nc" id="L107">				this.transformValidationErrors(invocation, e);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">				if (isInvokeAndForward) {</span>
+<span class="nc" id="L109">					return (String) actionMethod.invoke(action);</span>
+				} else {
+<span class="nc" id="L111">					this.invokeActionMethod(actionMethod, action);</span>
+<span class="nc" id="L112">					return form;</span>
+				}
+			}
+<span class="nc" id="L115">			throw e;</span>
+		}
+	}
+
+	private void invokeActionMethod(final Method actionMethod, final Object action) throws IllegalAccessException, InvocationTargetException, RuntimeException {
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		if (actionMethod != null) {</span>
+<span class="nc" id="L121">			actionMethod.setAccessible(true);</span>
+<span class="nc" id="L122">			actionMethod.invoke(action);</span>
+		}
+<span class="nc" id="L124">	}</span>
+
+	private void transformValidationErrors(final ActionInvocation invocation, final ValidationException e) {
+<span class="nc" id="L127">		final BaseFormAction action = (BaseFormAction) invocation.getAction();</span>
+<span class="nc" id="L128">		final List&lt;ValidationError&gt; errors = e.getErrors();</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		for (final ValidationError error : errors) {</span>
+<span class="nc bnc" id="L130" title="All 4 branches missed.">			if (error.getArgs() == null || error.getArgs().length == 0) {</span>
+<span class="nc" id="L131">				action.addFieldError(&quot;model.&quot; + error.getKey(), action.getText(error.getMessage(), error.getMessage()));</span>
+			} else {
+<span class="nc" id="L133">				action.addFieldError(&quot;model.&quot; + error.getKey(), action.getText(error.getMessage(), error.getMessage(), error.getArgs()));</span>
+			}
+<span class="nc" id="L135">		}</span>
+<span class="nc" id="L136">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

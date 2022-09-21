@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CityPreferences.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.entity</a> &gt; <span class="el_source">CityPreferences.java</span></div><h1>CityPreferences.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.entity;
+
+import org.egov.infra.filestore.entity.FileStoreMapper;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.SafeHtml;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.egov.infra.admin.master.entity.CityPreferences.SEQ_CITY_PREF;
+
+@Entity
+@Table(name = &quot;eg_citypreferences&quot;)
+@SequenceGenerator(name = SEQ_CITY_PREF, sequenceName = SEQ_CITY_PREF, allocationSize = 1)
+<span class="nc" id="L76">public class CityPreferences extends AbstractAuditable {</span>
+
+    protected static final String SEQ_CITY_PREF = &quot;SEQ_EG_CITYPREFERENCES&quot;;
+    private static final long serialVersionUID = -7160795726709889116L;
+
+    @Id
+    @GeneratedValue(generator = SEQ_CITY_PREF, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = &quot;municipalityLogo&quot;)
+    @Fetch(FetchMode.JOIN)
+    private FileStoreMapper municipalityLogo;
+
+    @NotNull
+    @SafeHtml
+    @Length(max = 50)
+    private String municipalityName;
+
+    @SafeHtml
+    @Length(max = 20)
+    private String municipalityContactNo;
+
+    @SafeHtml
+    @Length(max = 200)
+    private String municipalityAddress;
+
+    @SafeHtml
+    @Length(max = 50)
+    private String municipalityContactEmail;
+
+    @SafeHtml
+    @Length(max = 100)
+    private String municipalityGisLocation;
+
+    @SafeHtml
+    @Length(max = 20)
+    private String municipalityCallCenterNo;
+
+    @SafeHtml
+    @Length(max = 100)
+    private String municipalityFacebookLink;
+
+    @SafeHtml
+    @Length(max = 100)
+    private String municipalityTwitterLink;
+
+    @SafeHtml
+    @Length(max = 64)
+    private String recaptchaPK;
+
+    @SafeHtml
+    @Length(max = 64)
+    private String recaptchaPub;
+
+    @SafeHtml
+    @NotBlank
+    @Length(max = 50)
+    private String googleApiKey;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L138">        return id;</span>
+    }
+
+    @Override
+    protected void setId(Long id) {
+<span class="nc" id="L143">        this.id = id;</span>
+<span class="nc" id="L144">    }</span>
+
+    public FileStoreMapper getMunicipalityLogo() {
+<span class="nc" id="L147">        return municipalityLogo;</span>
+    }
+
+    public void setMunicipalityLogo(FileStoreMapper municipalityLogo) {
+<span class="nc" id="L151">        this.municipalityLogo = municipalityLogo;</span>
+<span class="nc" id="L152">    }</span>
+
+    public String getMunicipalityName() {
+<span class="nc" id="L155">        return municipalityName;</span>
+    }
+
+    public void setMunicipalityName(String municipalityName) {
+<span class="nc" id="L159">        this.municipalityName = municipalityName;</span>
+<span class="nc" id="L160">    }</span>
+
+    public String getMunicipalityContactNo() {
+<span class="nc" id="L163">        return municipalityContactNo;</span>
+    }
+
+    public void setMunicipalityContactNo(String municipalityContactNo) {
+<span class="nc" id="L167">        this.municipalityContactNo = municipalityContactNo;</span>
+<span class="nc" id="L168">    }</span>
+
+    public String getMunicipalityAddress() {
+<span class="nc" id="L171">        return municipalityAddress;</span>
+    }
+
+    public void setMunicipalityAddress(String municipalityAddress) {
+<span class="nc" id="L175">        this.municipalityAddress = municipalityAddress;</span>
+<span class="nc" id="L176">    }</span>
+
+    public String getMunicipalityContactEmail() {
+<span class="nc" id="L179">        return municipalityContactEmail;</span>
+    }
+
+    public void setMunicipalityContactEmail(String municipalityContactEmail) {
+<span class="nc" id="L183">        this.municipalityContactEmail = municipalityContactEmail;</span>
+<span class="nc" id="L184">    }</span>
+
+    public String getMunicipalityGisLocation() {
+<span class="nc" id="L187">        return municipalityGisLocation;</span>
+    }
+
+    public void setMunicipalityGisLocation(String municipalityGisLocation) {
+<span class="nc" id="L191">        this.municipalityGisLocation = municipalityGisLocation;</span>
+<span class="nc" id="L192">    }</span>
+
+    public String getMunicipalityCallCenterNo() {
+<span class="nc" id="L195">        return municipalityCallCenterNo;</span>
+    }
+
+    public void setMunicipalityCallCenterNo(String municipalityCallCenterNo) {
+<span class="nc" id="L199">        this.municipalityCallCenterNo = municipalityCallCenterNo;</span>
+<span class="nc" id="L200">    }</span>
+
+    public String getMunicipalityFacebookLink() {
+<span class="nc" id="L203">        return municipalityFacebookLink;</span>
+    }
+
+    public void setMunicipalityFacebookLink(String municipalityFacebookLink) {
+<span class="nc" id="L207">        this.municipalityFacebookLink = municipalityFacebookLink;</span>
+<span class="nc" id="L208">    }</span>
+
+    public String getMunicipalityTwitterLink() {
+<span class="nc" id="L211">        return municipalityTwitterLink;</span>
+    }
+
+    public void setMunicipalityTwitterLink(String municipalityTwitterLink) {
+<span class="nc" id="L215">        this.municipalityTwitterLink = municipalityTwitterLink;</span>
+<span class="nc" id="L216">    }</span>
+
+    public String getRecaptchaPK() {
+<span class="nc" id="L219">        return recaptchaPK;</span>
+    }
+
+    public void setRecaptchaPK(String recaptchaPK) {
+<span class="nc" id="L223">        this.recaptchaPK = recaptchaPK;</span>
+<span class="nc" id="L224">    }</span>
+
+    public String getRecaptchaPub() {
+<span class="nc" id="L227">        return recaptchaPub;</span>
+    }
+
+    public void setRecaptchaPub(String recaptchaPub) {
+<span class="nc" id="L231">        this.recaptchaPub = recaptchaPub;</span>
+<span class="nc" id="L232">    }</span>
+
+    public String getGoogleApiKey() {
+<span class="nc" id="L235">        return googleApiKey;</span>
+    }
+
+    public void setGoogleApiKey(final String googleApiKey) {
+<span class="nc" id="L239">        this.googleApiKey = googleApiKey;</span>
+<span class="nc" id="L240">    }</span>
+
+    public boolean logoExist() {
+<span class="nc bnc" id="L243" title="All 4 branches missed.">        return municipalityLogo != null &amp;&amp; isNotBlank(municipalityLogo.getFileStoreId());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

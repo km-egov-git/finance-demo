@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceCategoryAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.service</a> &gt; <span class="el_source">ServiceCategoryAction.java</span></div><h1>ServiceCategoryAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.service;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infstr.models.ServiceCategory;
+import org.egov.infstr.services.PersistenceService;
+
+import java.util.Collection;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = ServiceCategoryAction.NEW, location = &quot;serviceCategory-new.jsp&quot;),
+        @Result(name = ServiceCategoryAction.EDIT, location = &quot;serviceCategory-edit.jsp&quot;),
+        @Result(name = ServiceCategoryAction.INDEX, location = &quot;serviceCategory-index.jsp&quot;),
+        @Result(name = ServiceCategoryAction.MESSAGE, location = &quot;serviceCategory-message.jsp&quot;) })
+<span class="nc" id="L66">public class ServiceCategoryAction extends BaseFormAction {</span>
+
+    private static final long serialVersionUID = 1L;
+    private PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService;
+<span class="nc" id="L70">    private Collection&lt;ServiceCategory&gt; serviceCategoryList = null;</span>
+<span class="nc" id="L71">    private ServiceCategory serviceCategoryInstance = new ServiceCategory();</span>
+    private String code;
+    protected static final String MESSAGE = &quot;message&quot;;
+
+    @Action(value = &quot;/service/serviceCategory-newform&quot;)
+    public String newform() {
+<span class="nc" id="L77">        return NEW;</span>
+    }
+
+    @Action(value = &quot;/service/serviceCategory-list&quot;)
+    public String list() {
+<span class="nc" id="L82">        serviceCategoryList = serviceCategoryService.findAll(CollectionConstants.SERVICECATEGORY_CODE);</span>
+<span class="nc" id="L83">        return INDEX;</span>
+    }
+
+    @Action(value = &quot;/service/serviceCategory-edit&quot;)
+    public String edit() {
+<span class="nc" id="L88">        serviceCategoryInstance = serviceCategoryService</span>
+<span class="nc" id="L89">                .findByNamedQuery(CollectionConstants.QUERY_SERVICE_CATEGORY_BY_CODE, code);</span>
+<span class="nc" id="L90">        return EDIT;</span>
+    }
+
+    @Action(value = &quot;/service/serviceCategory-save&quot;)
+    public String save() {
+<span class="nc" id="L95">        serviceCategoryService.update(serviceCategoryInstance);</span>
+<span class="nc" id="L96">        return list();</span>
+    }
+
+    @Action(value = &quot;/service/serviceCategory-create&quot;)
+    public String create() {
+<span class="nc" id="L101">        serviceCategoryService.create(serviceCategoryInstance);</span>
+<span class="nc" id="L102">        addActionMessage(getText(&quot;service.create.success.msg&quot;,</span>
+<span class="nc" id="L103">                new String[] { serviceCategoryInstance.getCode(), serviceCategoryInstance.getName() }));</span>
+<span class="nc" id="L104">        return MESSAGE;</span>
+
+    }
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L110">        return serviceCategoryInstance;</span>
+    }
+
+    /**
+     * @return the serviceCategoryList
+     */
+    public Collection&lt;ServiceCategory&gt; getServiceCategoryList() {
+<span class="nc" id="L117">        return serviceCategoryList;</span>
+    }
+
+    public void setServiceCategoryService(final PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService) {
+<span class="nc" id="L121">        this.serviceCategoryService = serviceCategoryService;</span>
+<span class="nc" id="L122">    }</span>
+
+    public String getCode() {
+<span class="nc" id="L125">        return code;</span>
+    }
+
+    public void setCode(final String code) {
+<span class="nc" id="L129">        this.code = code;</span>
+<span class="nc" id="L130">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionSummaryAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.reports</a> &gt; <span class="el_source">CollectionSummaryAction.java</span></div><h1>CollectionSummaryAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.reports;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.service.CollectionReportService;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.entity.Source;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.service.CityService;
+import org.egov.infra.reporting.engine.ReportDataSourceType;
+import org.egov.infra.reporting.engine.ReportFormat;
+import org.egov.infra.web.struts.actions.ReportFormAction;
+import org.egov.infstr.models.ServiceDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * Action class for the cash collection summary report
+ */
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = CollectionSummaryAction.INDEX, location = &quot;collectionSummary-index.jsp&quot;),
+        @Result(name = CollectionSummaryAction.REPORT, location = &quot;collectionSummary-report.jsp&quot;) })
+<span class="nc" id="L80">public class CollectionSummaryAction extends ReportFormAction {</span>
+
+    private static final long serialVersionUID = 1L;
+
+    private static final String EGOV_FROM_DATE = &quot;EGOV_FROM_DATE&quot;;
+    private static final String EGOV_TO_DATE = &quot;EGOV_TO_DATE&quot;;
+    private static final String EGOV_PAYMENT_MODE = &quot;EGOV_PAYMENT_MODE&quot;;
+    private static final String COLLECTION_SUMMARY_TEMPLATE = &quot;collection_summary&quot;;
+    private static final String EGOV_SOURCE = &quot;EGOV_SOURCE&quot;;
+    private static final String EGOV_SERVICE_ID = &quot;EGOV_SERVICE_ID&quot;;
+    private static final String EGOV_SERVICE_NAME = &quot;EGOV_SERVICE_NAME&quot;;
+    private static final String EGOV_STATUS = &quot;EGOV_STATUS&quot;;
+    private static final String EGOV_CLASSIFICATION = &quot;EGOV_CLASSIFICATION&quot;;
+
+    private Integer statusId;
+
+<span class="nc" id="L96">    private final Map&lt;String, String&gt; paymentModes = createPaymentModeList();</span>
+<span class="nc" id="L97">    private final Map&lt;String, String&gt; sources = createSourceList();</span>
+<span class="nc" id="L98">    private TreeMap&lt;String, String&gt; serviceTypeMap = new TreeMap&lt;String, String&gt;();</span>
+    private CollectionsUtil collectionsUtil;
+    @Autowired
+    private CollectionReportService reportService;
+    @PersistenceContext
+    EntityManager entityManager;
+    private String serviceType;
+    @Autowired
+    private CityService cityService;
+
+    /**
+     * @return the payment mode list to be shown to user in criteria screen
+     */
+    private Map&lt;String, String&gt; createPaymentModeList() {
+<span class="nc" id="L112">        final Map&lt;String, String&gt; paymentModesMap = new HashMap&lt;String, String&gt;(0);</span>
+<span class="nc" id="L113">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CASH, CollectionConstants.INSTRUMENTTYPE_CASH);</span>
+<span class="nc" id="L114">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD,</span>
+                CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD);
+<span class="nc" id="L116">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_ONLINE, CollectionConstants.INSTRUMENTTYPE_ONLINE);</span>
+<span class="nc" id="L117">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_BANK, CollectionConstants.INSTRUMENTTYPE_BANK);</span>
+<span class="nc" id="L118">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CARD, CollectionConstants.INSTRUMENTTYPE_CARD);</span>
+<span class="nc" id="L119">        return paymentModesMap;</span>
+    }
+
+    private Map&lt;String, String&gt; createSourceList() {
+<span class="nc" id="L123">        final Map&lt;String, String&gt; sourcesMap = new HashMap&lt;String, String&gt;(0);</span>
+<span class="nc" id="L124">        sourcesMap.put(Source.APONLINE.toString(), Source.APONLINE.toString());</span>
+<span class="nc" id="L125">        sourcesMap.put(Source.ESEVA.toString(), Source.ESEVA.toString());</span>
+<span class="nc" id="L126">        sourcesMap.put(Source.MEESEVA.toString(), Source.MEESEVA.toString());</span>
+<span class="nc" id="L127">        sourcesMap.put(Source.SYSTEM.toString(), Source.SYSTEM.toString());</span>
+<span class="nc" id="L128">        return sourcesMap;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infra.web.struts.actions.BaseFormAction#prepare()
+     */
+    @Override
+    public void prepare() {
+<span class="nc" id="L137">        setReportFormat(ReportFormat.PDF);</span>
+<span class="nc" id="L138">        setDataSourceType(ReportDataSourceType.JAVABEAN);</span>
+<span class="nc" id="L139">    }</span>
+
+    /**
+     * Action method for criteria screen
+     *
+     * @return index
+     */
+    @Override
+    @Action(value = &quot;/reports/collectionSummary-criteria&quot;)
+    public String criteria() {
+        // Setup drop down data for department list
+<span class="nc" id="L150">        addRelatedEntity(&quot;department&quot;, Department.class, &quot;name&quot;);</span>
+<span class="nc" id="L151">        addDropdownData(&quot;servicetypeList&quot;, collectionsUtil.getBillingServiceList());</span>
+<span class="nc" id="L152">        setupDropdownDataExcluding();</span>
+
+        // Set default values of criteria fields
+<span class="nc" id="L155">        setReportParam(EGOV_FROM_DATE, new Date());</span>
+<span class="nc" id="L156">        setReportParam(EGOV_TO_DATE, new Date());</span>
+<span class="nc" id="L157">        addDropdownData(&quot;receiptStatuses&quot;,</span>
+<span class="nc" id="L158">                getPersistenceService().findAllByNamedQuery(CollectionConstants.STATUS_OF_RECEIPTS));</span>
+<span class="nc" id="L159">        serviceTypeMap.putAll(CollectionConstants.SERVICE_TYPE_CLASSIFICATION);</span>
+<span class="nc" id="L160">        serviceTypeMap.remove(CollectionConstants.SERVICE_TYPE_PAYMENT);</span>
+<span class="nc" id="L161">        return INDEX;</span>
+    }
+
+    @Override
+    @Action(value = &quot;/reports/collectionSummary-report&quot;)
+    public String report() {
+<span class="nc bnc" id="L167" title="All 4 branches missed.">        if (getServiceId() != null &amp;&amp; getServiceId() != -1) {</span>
+<span class="nc" id="L168">            ServiceDetails serviceDets = entityManager.find(ServiceDetails.class, getServiceId());</span>
+<span class="nc" id="L169">            setServiceName(serviceDets.getName());</span>
+        }
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (getStatusId() != -1) {</span>
+<span class="nc" id="L172">            EgwStatus statusObj = entityManager.find(EgwStatus.class, getStatusId());</span>
+<span class="nc" id="L173">            setStatusName(statusObj.getDescription());</span>
+        }
+<span class="nc" id="L175">        setClassification(getServiceType());</span>
+<span class="nc" id="L176">        setReportData(reportService.getCollectionSummaryReport(getFromDate(), getToDate(), getPaymentMode(), getSource(),</span>
+<span class="nc" id="L177">                getServiceId(), getStatusId(), getServiceType()));</span>
+<span class="nc" id="L178">        setReportParam(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L179">        return super.report();</span>
+    }
+
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L183">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L184">    }</span>
+
+    /**
+     * @return the from date
+     */
+    public Date getFromDate() {
+<span class="nc" id="L190">        return (Date) getReportParam(EGOV_FROM_DATE);</span>
+    }
+
+    /**
+     * @param fromDate the from date to set
+     */
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L197">        setReportParam(EGOV_FROM_DATE, fromDate);</span>
+<span class="nc" id="L198">    }</span>
+
+    /**
+     * @return the do date
+     */
+    public Date getToDate() {
+<span class="nc" id="L204">        return (Date) getReportParam(EGOV_TO_DATE);</span>
+    }
+
+    /**
+     * @param toDate the to date to set
+     */
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L211">        setReportParam(EGOV_TO_DATE, toDate);</span>
+<span class="nc" id="L212">    }</span>
+
+    /**
+     * @return the payment mode (cash/cheque)
+     */
+    public String getPaymentMode() {
+<span class="nc" id="L218">        return (String) getReportParam(EGOV_PAYMENT_MODE);</span>
+    }
+
+    /**
+     * @param paymentMode the payment mode to set (cash/cheque)
+     */
+    public void setPaymentMode(final String paymentMode) {
+<span class="nc" id="L225">        setReportParam(EGOV_PAYMENT_MODE, paymentMode);</span>
+<span class="nc" id="L226">    }</span>
+
+    /**
+     * @return the payment modes
+     */
+    public Map&lt;String, String&gt; getPaymentModes() {
+<span class="nc" id="L232">        return paymentModes;</span>
+    }
+
+    /**
+     * @return the do date
+     */
+    public String getSource() {
+<span class="nc" id="L239">        return (String) getReportParam(EGOV_SOURCE);</span>
+    }
+
+    public void setSource(final String source) {
+<span class="nc" id="L243">        setReportParam(EGOV_SOURCE, source);</span>
+<span class="nc" id="L244">    }</span>
+
+    public Map&lt;String, String&gt; getSources() {
+<span class="nc" id="L247">        return sources;</span>
+    }
+
+    public Long getServiceId() {
+<span class="nc" id="L251">        return (Long) getReportParam(EGOV_SERVICE_ID);</span>
+    }
+
+    public void setServiceId(final Long serviceId) {
+<span class="nc" id="L255">        setReportParam(EGOV_SERVICE_ID, serviceId);</span>
+<span class="nc" id="L256">    }</span>
+
+    public Long getServiceName() {
+<span class="nc" id="L259">        return (Long) getReportParam(EGOV_SERVICE_ID);</span>
+    }
+
+    public void setServiceName(final String serviceName) {
+<span class="nc" id="L263">        setReportParam(EGOV_SERVICE_NAME, serviceName);</span>
+<span class="nc" id="L264">    }</span>
+
+    @Override
+    protected String getReportTemplateName() {
+<span class="nc" id="L268">        return COLLECTION_SUMMARY_TEMPLATE;</span>
+    }
+
+    public int getStatusId() {
+<span class="nc" id="L272">        return statusId;</span>
+    }
+
+    public void setStatusId(int statusId) {
+<span class="nc" id="L276">        this.statusId = statusId;</span>
+<span class="nc" id="L277">    }</span>
+
+    public String getStatusName() {
+<span class="nc" id="L280">        return (String) getReportParam(EGOV_STATUS);</span>
+    }
+
+    public void setStatusName(final String statusName) {
+<span class="nc" id="L284">        setReportParam(EGOV_STATUS, statusName);</span>
+<span class="nc" id="L285">    }</span>
+
+    public TreeMap&lt;String, String&gt; getServiceTypeMap() {
+<span class="nc" id="L288">        return serviceTypeMap;</span>
+    }
+
+    public void setServiceTypeMap(final TreeMap&lt;String, String&gt; serviceTypeMap) {
+<span class="nc" id="L292">        this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L293">    }</span>
+
+    public String getServiceType() {
+<span class="nc" id="L296">        return serviceType;</span>
+    }
+
+    public void setServiceType(String serviceType) {
+<span class="nc" id="L300">        this.serviceType = serviceType;</span>
+<span class="nc" id="L301">    }</span>
+
+    public String getClassification() {
+<span class="nc" id="L304">        return (String) getReportParam(EGOV_CLASSIFICATION);</span>
+    }
+
+    public void setClassification(final String classification) {
+<span class="nc" id="L308">        setReportParam(EGOV_CLASSIFICATION, classification);</span>
+<span class="nc" id="L309">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

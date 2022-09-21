@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AjaxWorkFlowController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.web.controller.workflow</a> &gt; <span class="el_source">AjaxWorkFlowController.java</span></div><h1>AjaxWorkFlowController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.web.controller.workflow;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+//import org.egov.eis.entity.Assignment;
+//import org.egov.eis.entity.AssignmentAdaptor;
+import org.egov.eis.service.AssignmentService;
+import org.egov.eis.service.DesignationService;
+import org.egov.infra.microservice.models.Assignment;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.web.support.json.adapter.AssignmentAdaptor;
+import org.egov.infra.workflow.matrix.entity.WorkFlowDeptDesgMap;
+import org.egov.infra.workflow.matrix.service.CustomizedWorkFlowService;
+import org.egov.infra.workflow.matrix.service.WorkFlowDeptDesgMapService;
+import org.egov.pims.commons.Designation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Controller
+<span class="nc" id="L84">public class AjaxWorkFlowController {</span>
+
+<span class="nc" id="L86">	private static final List&lt;String&gt; WF_DEPT_DESG_MAP = Arrays.asList(&quot;CouncilPreamble&quot;,&quot;MeetingMOM&quot;,&quot;CouncilMeeting&quot;,&quot;ApnimandiContractor&quot;,&quot;ApnimandiCollectionDetails&quot;);</span>
+	
+    @Autowired
+    private CustomizedWorkFlowService customizedWorkFlowService;
+
+    @Autowired
+    private DesignationService designationService;
+
+    @Autowired
+    private AssignmentService assignmentService;
+    
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    
+    @Autowired
+    private WorkFlowDeptDesgMapService workFlowDeptDesgMapService;
+    
+    @RequestMapping(value = &quot;/ajaxWorkFlow-getDesignationsByObjectType&quot;, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List&lt;Designation&gt; getDesignationsByObjectType(
+            @ModelAttribute(&quot;designations&quot;) @RequestParam final String departmentRule, @RequestParam final String currentState,
+            @RequestParam final String type,
+            @RequestParam final String amountRule, @RequestParam final String additionalRule,
+            @RequestParam final String pendingAction, @RequestParam final String approvalDepartment) {
+
+<span class="nc" id="L111">    	List&lt;Designation&gt; designationList = new ArrayList&lt;Designation&gt;();</span>
+    	
+<span class="nc bnc" id="L113" title="All 2 branches missed.">    	if(WF_DEPT_DESG_MAP.contains(type)) {</span>
+<span class="nc" id="L114">    		List&lt;WorkFlowDeptDesgMap&gt; deptDesgMap = null;</span>
+    		
+<span class="nc bnc" id="L116" title="All 2 branches missed.">    		if(!StringUtils.isBlank(additionalRule)) {</span>
+<span class="nc" id="L117">    			deptDesgMap = workFlowDeptDesgMapService.findByObjectTypeAndCurrentStateAndAddRuleAndNextDept</span>
+<span class="nc" id="L118">    					(type, currentState, additionalRule, approvalDepartment);</span>
+    		}else {
+<span class="nc" id="L120">    			deptDesgMap = workFlowDeptDesgMapService.findByObjectTypeAndCurrentStateAndNextDept</span>
+<span class="nc" id="L121">    					(type, currentState, approvalDepartment);</span>
+    		}
+    		
+<span class="nc bnc" id="L124" title="All 2 branches missed.">    		if(!CollectionUtils.isEmpty(deptDesgMap)) {</span>
+<span class="nc" id="L125">				String desigCodes = deptDesgMap.stream().map(WorkFlowDeptDesgMap::getNextDesignation).collect(Collectors.joining(&quot;,&quot;));</span>
+<span class="nc" id="L126">				List&lt;org.egov.infra.microservice.models.Designation&gt; tempDesignationList = microserviceUtils.getDesignation(desigCodes);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">				if(!CollectionUtils.isEmpty(tempDesignationList)) {</span>
+<span class="nc" id="L128">					Designation desig = null;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">					for(org.egov.infra.microservice.models.Designation tempDesig : tempDesignationList) {</span>
+<span class="nc" id="L130">						desig = new Designation();</span>
+<span class="nc" id="L131">						desig.setName(tempDesig.getName());</span>
+<span class="nc" id="L132">						desig.setCode(tempDesig.getCode());</span>
+<span class="nc" id="L133">						designationList.add(desig);</span>
+<span class="nc" id="L134">					}</span>
+				}
+			}
+<span class="nc" id="L137">    	}else {</span>
+<span class="nc" id="L138">    		designationList = designationService.getDesignationsByNames(</span>
+<span class="nc" id="L139">                    customizedWorkFlowService.getNextDesignations(type,</span>
+                            departmentRule, null, additionalRule, currentState,
+                            pendingAction, new Date()));
+    	}
+		
+        //if (designationList.isEmpty())
+          //  designationList = designationService.getAllDesignationByDepartment(approvalDepartment, new Date());
+<span class="nc" id="L146">        return designationList;</span>
+
+    }
+
+    @RequestMapping(value = &quot;/ajaxWorkFlow-getDesignationsForActiveAssignmentsByObjectType&quot;, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List&lt;Designation&gt; getDesignationsForActiveAssignmentsByObjectType(
+            @ModelAttribute(&quot;designations&quot;) @RequestParam final String departmentRule, @RequestParam final String currentState,
+            @RequestParam final String type,
+            @RequestParam final String amountRule, @RequestParam final String additionalRule,
+            @RequestParam final String pendingAction, @RequestParam final String approvalDepartment) {
+<span class="nc" id="L157">    	System.out.println(&quot;type : &quot;+type);</span>
+<span class="nc" id="L158">        List&lt;Designation&gt; designationList = assignmentService</span>
+<span class="nc" id="L159">                .getDesignationsByActiveAssignmentAndDesignationNames(</span>
+<span class="nc" id="L160">                        customizedWorkFlowService.getNextDesignationsForActiveAssignments(type,</span>
+                                departmentRule, null, additionalRule, currentState,
+                                pendingAction, new Date()));
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (designationList.isEmpty())</span>
+        {
+<span class="nc" id="L165">        	System.out.println(&quot;EMPTY DESIG&quot;);</span>
+        }
+            //designationList = designationService.getAllDesignationByDepartment(approvalDepartment, new Date());
+<span class="nc" id="L168">        return designationList;</span>
+
+    }
+
+    @RequestMapping(value = &quot;/ajaxWorkFlow-getDesignationsForActiveAssignmentsByObjectTypeAndDesignation&quot;, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List&lt;Designation&gt; getDesignationsForActiveAssignmentsByObjectTypeAndDesignation(
+            @ModelAttribute(&quot;designations&quot;) @RequestParam final String departmentRule, @RequestParam final String currentState,
+            @RequestParam final String type,
+            @RequestParam final String amountRule, @RequestParam final String additionalRule,
+            @RequestParam final String pendingAction, @RequestParam final Long approvalDepartment,
+            @RequestParam final String currentDesignation) {
+
+<span class="nc" id="L181">        List&lt;Designation&gt; designationList = assignmentService</span>
+<span class="nc" id="L182">                .getDesignationsByActiveAssignmentAndDesignationNames(customizedWorkFlowService.getNextDesignationsForActiveAssignments(type,</span>
+                        departmentRule, null, additionalRule, currentState,
+                        pendingAction, new Date(), currentDesignation));
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (designationList.isEmpty())</span>
+<span class="nc" id="L186">            designationList = designationService.getAllDesignationByDepartment(approvalDepartment, new Date());</span>
+<span class="nc" id="L187">        return designationList;</span>
+
+    }
+
+    @RequestMapping(value = &quot;/ajaxWorkFlow-getDesignationsByObjectTypeAndDesignation&quot;, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List&lt;Designation&gt; getDesignationsByObjectTypeAndDesignation(
+            @ModelAttribute(&quot;designations&quot;) @RequestParam final String departmentRule, @RequestParam final String currentState,
+            @RequestParam final String type,
+            @RequestParam final String amountRule, @RequestParam final String additionalRule,
+            @RequestParam final String pendingAction, @RequestParam final Long approvalDepartment,
+            @RequestParam final String currentDesignation) {
+
+<span class="nc" id="L200">        List&lt;Designation&gt; designationList = designationService.getDesignationsByNames(customizedWorkFlowService.getNextDesignations(type,</span>
+                departmentRule, null, additionalRule, currentState,
+                pendingAction, new Date(), currentDesignation));
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (designationList.isEmpty())</span>
+<span class="nc" id="L204">            designationList = designationService.getAllDesignationByDepartment(approvalDepartment, new Date());</span>
+<span class="nc" id="L205">        return designationList;</span>
+
+    }
+
+    @RequestMapping(value = &quot;/ajaxWorkFlow-positionsByDepartmentAndDesignation&quot;, method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
+    @ResponseBody
+    public String getWorkFlowPositionByDepartmentAndDesignation(@RequestParam final String approvalDepartment,
+                                                                @RequestParam final String approvalDesignation) {
+<span class="nc bnc" id="L213" title="All 6 branches missed.">    	 if (approvalDesignation != null &amp;&amp; !approvalDesignation.equalsIgnoreCase(&quot;-1&quot;) &amp;&amp; approvalDepartment != null</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">                 &amp;&amp; !approvalDepartment.equalsIgnoreCase(&quot;-1&quot;)) {</span>
+        	
+<span class="nc" id="L216">    		List&lt;Assignment&gt; assignmentList = microserviceUtils.getAssignments(approvalDepartment, approvalDesignation);</span>
+            //List&lt;Assignment&gt; assignmentList = assignmentService.findAllAssignmentsByDeptDesigAndDates(approvalDepartment,approvalDesignation, new Date());
+<span class="nc" id="L218">            final Gson jsonCreator = new GsonBuilder().registerTypeAdapter(Assignment.class, new AssignmentAdaptor())</span>
+<span class="nc" id="L219">                    .create();</span>
+<span class="nc" id="L220">            return jsonCreator.toJson(assignmentList, new TypeToken&lt;Collection&lt;Assignment&gt;&gt;() {</span>
+<span class="nc" id="L221">            }.getType());</span>
+        }
+<span class="nc" id="L223">        return &quot;[]&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

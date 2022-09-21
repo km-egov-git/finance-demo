@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Assignment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Assignment.java</span></div><h1>Assignment.java</h1><pre class="source lang-java linenums">/*
+ * eGov suite of products aim to improve the internal efficiency,transparency,
+ * accountability and the service delivery of the government  organizations.
+ *
+ *  Copyright (C) 2016  eGovernments Foundation
+ *
+ *  The updated version of eGov suite of products as by eGovernments Foundation
+ *  is available at http://www.egovernments.org
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see http://www.gnu.org/licenses/ or
+ *  http://www.gnu.org/licenses/gpl.html .
+ *
+ *  In addition to the terms of the GPL license to be adhered to in using this
+ *  program, the following additional terms are to be complied with:
+ *
+ *      1) All versions of this program, verbatim or modified must carry this
+ *         Legal Notice.
+ *
+ *      2) Any misrepresentation of the origin of the material is prohibited. It
+ *         is required that all modified versions of this material be marked in
+ *         reasonable ways as different from the original version.
+ *
+ *      3) This license does not grant any rights to any user of the program
+ *         with regards to rights under trademark law for use of the trade names
+ *         or trademarks of eGovernments Foundation.
+ *
+ *  In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
+
+package org.egov.infra.microservice.models;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class Assignment {
+
+    private String id;
+    private Long empId;
+
+    @NotNull
+    private Long position;
+
+    private Long fund;
+
+    private Long functionary;
+
+    private Long function;
+
+    @NotNull
+    private String department;
+
+    @NotNull
+    private String designation;
+
+<span class="nc" id="L74">    @Valid</span>
+    private List&lt;HODDepartment&gt; hod = new ArrayList&lt;HODDepartment&gt;();
+
+    @NotNull
+    private Boolean isPrimary;
+
+    private float fromDate;
+
+    private float toDate;
+
+    private Long grade;
+
+    private String govtOrderNumber;
+
+<span class="nc" id="L88">    private List&lt;String&gt; documents = new ArrayList&lt;String&gt;();</span>
+
+    private Long createdBy;
+
+    @DateTimeFormat(pattern = &quot;dd/MM/yyyy&quot;)
+    @JsonFormat(pattern = &quot;dd/MM/yyyy&quot;)
+    private Date createdDate;
+
+    private Long lastModifiedBy;
+
+    @DateTimeFormat(pattern = &quot;dd/MM/yyyy&quot;)
+    @JsonFormat(pattern = &quot;dd/MM/yyyy&quot;)
+    private Date lastModifiedDate;
+
+    private String employeeName;
+
+    private String tenantId;
+
+<span class="nc" id="L106">    public Assignment() {</span>
+<span class="nc" id="L107">    }</span>
+
+    public Assignment(String id, Long position, Long fund, Long functionary, Long function, String department,
+            String designation, List&lt;HODDepartment&gt; hod, Boolean isPrimary, float fromDate, float toDate, Long grade,
+            String govtOrderNumber, List&lt;String&gt; documents, Long createdBy, Date createdDate, Long lastModifiedBy,
+<span class="nc" id="L112">            Date lastModifiedDate, String tenantId) {</span>
+<span class="nc" id="L113">        this.id = id;</span>
+<span class="nc" id="L114">        this.position = position;</span>
+<span class="nc" id="L115">        this.fund = fund;</span>
+<span class="nc" id="L116">        this.functionary = functionary;</span>
+<span class="nc" id="L117">        this.function = function;</span>
+<span class="nc" id="L118">        this.department = department;</span>
+<span class="nc" id="L119">        this.designation = designation;</span>
+<span class="nc" id="L120">        this.hod = hod;</span>
+<span class="nc" id="L121">        this.isPrimary = isPrimary;</span>
+<span class="nc" id="L122">        this.fromDate = fromDate;</span>
+<span class="nc" id="L123">        this.toDate = toDate;</span>
+<span class="nc" id="L124">        this.grade = grade;</span>
+<span class="nc" id="L125">        this.govtOrderNumber = govtOrderNumber;</span>
+<span class="nc" id="L126">        this.documents = documents;</span>
+<span class="nc" id="L127">        this.createdBy = createdBy;</span>
+<span class="nc" id="L128">        this.createdDate = createdDate;</span>
+<span class="nc" id="L129">        this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L130">        this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L131">        this.tenantId = tenantId;</span>
+<span class="nc" id="L132">    }</span>
+
+    public String getId() {
+<span class="nc" id="L135">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L139">        this.id = id;</span>
+<span class="nc" id="L140">    }</span>
+
+    public Long getPosition() {
+<span class="nc" id="L143">        return position;</span>
+    }
+
+    public void setPosition(Long position) {
+<span class="nc" id="L147">        this.position = position;</span>
+<span class="nc" id="L148">    }</span>
+
+    public Long getFund() {
+<span class="nc" id="L151">        return fund;</span>
+    }
+
+    public void setFund(Long fund) {
+<span class="nc" id="L155">        this.fund = fund;</span>
+<span class="nc" id="L156">    }</span>
+
+    public Long getFunctionary() {
+<span class="nc" id="L159">        return functionary;</span>
+    }
+
+    public void setFunctionary(Long functionary) {
+<span class="nc" id="L163">        this.functionary = functionary;</span>
+<span class="nc" id="L164">    }</span>
+
+    public Long getFunction() {
+<span class="nc" id="L167">        return function;</span>
+    }
+
+    public void setFunction(Long function) {
+<span class="nc" id="L171">        this.function = function;</span>
+<span class="nc" id="L172">    }</span>
+
+    public String getDepartment() {
+<span class="nc" id="L175">        return department;</span>
+    }
+
+    public void setDepartment(String department) {
+<span class="nc" id="L179">        this.department = department;</span>
+<span class="nc" id="L180">    }</span>
+
+    public String getDesignation() {
+<span class="nc" id="L183">        return designation;</span>
+    }
+
+    public void setDesignation(String designation) {
+<span class="nc" id="L187">        this.designation = designation;</span>
+<span class="nc" id="L188">    }</span>
+
+    public List&lt;HODDepartment&gt; getHod() {
+<span class="nc" id="L191">        return hod;</span>
+    }
+
+    public void setHod(List&lt;HODDepartment&gt; hod) {
+<span class="nc" id="L195">        this.hod = hod;</span>
+<span class="nc" id="L196">    }</span>
+
+    public Boolean getIsPrimary() {
+<span class="nc" id="L199">        return isPrimary;</span>
+    }
+
+    public void setIsPrimary(Boolean isPrimary) {
+<span class="nc" id="L203">        this.isPrimary = isPrimary;</span>
+<span class="nc" id="L204">    }</span>
+
+    public float getFromDate() {
+<span class="nc" id="L207">        return fromDate;</span>
+    }
+
+    public void setFromDate(float fromDate) {
+<span class="nc" id="L211">        this.fromDate = fromDate;</span>
+<span class="nc" id="L212">    }</span>
+
+    public float getToDate() {
+<span class="nc" id="L215">        return toDate;</span>
+    }
+
+    public void setToDate(float toDate) {
+<span class="nc" id="L219">        this.toDate = toDate;</span>
+<span class="nc" id="L220">    }</span>
+
+    public Long getGrade() {
+<span class="nc" id="L223">        return grade;</span>
+    }
+
+    public void setGrade(Long grade) {
+<span class="nc" id="L227">        this.grade = grade;</span>
+<span class="nc" id="L228">    }</span>
+
+    public String getGovtOrderNumber() {
+<span class="nc" id="L231">        return govtOrderNumber;</span>
+    }
+
+    public void setGovtOrderNumber(String govtOrderNumber) {
+<span class="nc" id="L235">        this.govtOrderNumber = govtOrderNumber;</span>
+<span class="nc" id="L236">    }</span>
+
+    public List&lt;String&gt; getDocuments() {
+<span class="nc" id="L239">        return documents;</span>
+    }
+
+    public void setDocuments(List&lt;String&gt; documents) {
+<span class="nc" id="L243">        this.documents = documents;</span>
+<span class="nc" id="L244">    }</span>
+
+    public Long getCreatedBy() {
+<span class="nc" id="L247">        return createdBy;</span>
+    }
+
+    public void setCreatedBy(Long createdBy) {
+<span class="nc" id="L251">        this.createdBy = createdBy;</span>
+<span class="nc" id="L252">    }</span>
+
+    public Date getCreatedDate() {
+<span class="nc" id="L255">        return createdDate;</span>
+    }
+
+    public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L259">        this.createdDate = createdDate;</span>
+<span class="nc" id="L260">    }</span>
+
+    public Long getLastModifiedBy() {
+<span class="nc" id="L263">        return lastModifiedBy;</span>
+    }
+
+    public void setLastModifiedBy(Long lastModifiedBy) {
+<span class="nc" id="L267">        this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L268">    }</span>
+
+    public Date getLastModifiedDate() {
+<span class="nc" id="L271">        return lastModifiedDate;</span>
+    }
+
+    public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L275">        this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L276">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L279">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L283">        this.tenantId = tenantId;</span>
+<span class="nc" id="L284">    }</span>
+
+    // @Override
+    // public int hashCode() {
+    // final int prime = 31;
+    // int result = 1;
+    // result = prime * result + ((createdBy == null) ? 0 : createdBy.hashCode());
+    // result = prime * result + ((createdDate == null) ? 0 : createdDate.hashCode());
+    // result = prime * result + ((department == null) ? 0 : department.hashCode());
+    // result = prime * result + ((designation == null) ? 0 : designation.hashCode());
+    // result = prime * result + ((documents == null) ? 0 : documents.hashCode());
+    // result = prime * result + ((fromDate == null) ? 0 : fromDate.hashCode());
+    // result = prime * result + ((function == null) ? 0 : function.hashCode());
+    // result = prime * result + ((functionary == null) ? 0 : functionary.hashCode());
+    // result = prime * result + ((fund == null) ? 0 : fund.hashCode());
+    // result = prime * result + ((govtOrderNumber == null) ? 0 : govtOrderNumber.hashCode());
+    // result = prime * result + ((grade == null) ? 0 : grade.hashCode());
+    // result = prime * result + ((hod == null) ? 0 : hod.hashCode());
+    // result = prime * result + ((id == null) ? 0 : id.hashCode());
+    // result = prime * result + ((isPrimary == null) ? 0 : isPrimary.hashCode());
+    // result = prime * result + ((lastModifiedBy == null) ? 0 : lastModifiedBy.hashCode());
+    // result = prime * result + ((lastModifiedDate == null) ? 0 : lastModifiedDate.hashCode());
+    // result = prime * result + ((position == null) ? 0 : position.hashCode());
+    // result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
+    // result = prime * result + ((toDate == null) ? 0 : toDate.hashCode());
+    // return result;
+    // }
+
+    public String getEmployeeName() {
+<span class="nc" id="L313">        return employeeName;</span>
+    }
+
+    public void setEmployeeName(String employeeName) {
+<span class="nc" id="L317">        this.employeeName = employeeName;</span>
+<span class="nc" id="L318">    }</span>
+
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (this == obj)</span>
+<span class="nc" id="L323">            return true;</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">        if (obj == null)</span>
+<span class="nc" id="L325">            return false;</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        if (getClass() != obj.getClass())</span>
+<span class="nc" id="L327">            return false;</span>
+<span class="nc" id="L328">        Assignment other = (Assignment) obj;</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        if (createdBy == null) {</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">            if (other.createdBy != null)</span>
+<span class="nc" id="L331">                return false;</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        } else if (!createdBy.equals(other.createdBy))</span>
+<span class="nc" id="L333">            return false;</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        if (createdDate == null) {</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">            if (other.createdDate != null)</span>
+<span class="nc" id="L336">                return false;</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        } else if (!createdDate.equals(other.createdDate))</span>
+<span class="nc" id="L338">            return false;</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        if (department == null) {</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">            if (other.department != null)</span>
+<span class="nc" id="L341">                return false;</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        } else if (!department.equals(other.department))</span>
+<span class="nc" id="L343">            return false;</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">        if (designation == null) {</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">            if (other.designation != null)</span>
+<span class="nc" id="L346">                return false;</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">        } else if (!designation.equals(other.designation))</span>
+<span class="nc" id="L348">            return false;</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">        if (documents == null) {</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">            if (other.documents != null)</span>
+<span class="nc" id="L351">                return false;</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">        } else if (!documents.equals(other.documents))</span>
+<span class="nc" id="L353">            return false;</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">        if (fromDate == 0) {</span>
+<span class="nc bnc" id="L355" title="All 2 branches missed.">            if (other.fromDate != 0)</span>
+<span class="nc" id="L356">                return false;</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">        } else if (fromDate != other.fromDate)</span>
+<span class="nc" id="L358">            return false;</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        if (function == null) {</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">            if (other.function != null)</span>
+<span class="nc" id="L361">                return false;</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">        } else if (!function.equals(other.function))</span>
+<span class="nc" id="L363">            return false;</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">        if (functionary == null) {</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">            if (other.functionary != null)</span>
+<span class="nc" id="L366">                return false;</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">        } else if (!functionary.equals(other.functionary))</span>
+<span class="nc" id="L368">            return false;</span>
+<span class="nc bnc" id="L369" title="All 2 branches missed.">        if (fund == null) {</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">            if (other.fund != null)</span>
+<span class="nc" id="L371">                return false;</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">        } else if (!fund.equals(other.fund))</span>
+<span class="nc" id="L373">            return false;</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">        if (govtOrderNumber == null) {</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">            if (other.govtOrderNumber != null)</span>
+<span class="nc" id="L376">                return false;</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">        } else if (!govtOrderNumber.equals(other.govtOrderNumber))</span>
+<span class="nc" id="L378">            return false;</span>
+<span class="nc bnc" id="L379" title="All 2 branches missed.">        if (grade == null) {</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">            if (other.grade != null)</span>
+<span class="nc" id="L381">                return false;</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        } else if (!grade.equals(other.grade))</span>
+<span class="nc" id="L383">            return false;</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">        if (hod == null) {</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">            if (other.hod != null)</span>
+<span class="nc" id="L386">                return false;</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">        } else if (!hod.equals(other.hod))</span>
+<span class="nc" id="L388">            return false;</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">        if (id == null) {</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">            if (other.id != null)</span>
+<span class="nc" id="L391">                return false;</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">        } else if (!id.equals(other.id))</span>
+<span class="nc" id="L393">            return false;</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (isPrimary == null) {</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">            if (other.isPrimary != null)</span>
+<span class="nc" id="L396">                return false;</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">        } else if (!isPrimary.equals(other.isPrimary))</span>
+<span class="nc" id="L398">            return false;</span>
+<span class="nc bnc" id="L399" title="All 2 branches missed.">        if (lastModifiedBy == null) {</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">            if (other.lastModifiedBy != null)</span>
+<span class="nc" id="L401">                return false;</span>
+<span class="nc bnc" id="L402" title="All 2 branches missed.">        } else if (!lastModifiedBy.equals(other.lastModifiedBy))</span>
+<span class="nc" id="L403">            return false;</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">        if (lastModifiedDate == null) {</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">            if (other.lastModifiedDate != null)</span>
+<span class="nc" id="L406">                return false;</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">        } else if (!lastModifiedDate.equals(other.lastModifiedDate))</span>
+<span class="nc" id="L408">            return false;</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">        if (position == null) {</span>
+<span class="nc bnc" id="L410" title="All 2 branches missed.">            if (other.position != null)</span>
+<span class="nc" id="L411">                return false;</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">        } else if (!position.equals(other.position))</span>
+<span class="nc" id="L413">            return false;</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">        if (tenantId == null) {</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">            if (other.tenantId != null)</span>
+<span class="nc" id="L416">                return false;</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">        } else if (!tenantId.equals(other.tenantId))</span>
+<span class="nc" id="L418">            return false;</span>
+<span class="nc bnc" id="L419" title="All 2 branches missed.">        if (toDate == 0) {</span>
+<span class="nc bnc" id="L420" title="All 2 branches missed.">            if (other.toDate != 0)</span>
+<span class="nc" id="L421">                return false;</span>
+<span class="nc bnc" id="L422" title="All 2 branches missed.">        } else if (toDate != other.toDate)</span>
+<span class="nc" id="L423">            return false;</span>
+<span class="nc" id="L424">        return true;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L429">        return &quot;Assignment [id=&quot; + id + &quot;, position=&quot; + position + &quot;, fund=&quot; + fund + &quot;, functionary=&quot; + functionary</span>
+                + &quot;, function=&quot; + function + &quot;, department=&quot; + department + &quot;, designation=&quot; + designation + &quot;, hod=&quot;
+                + hod + &quot;, isPrimary=&quot; + isPrimary + &quot;, fromDate=&quot; + fromDate + &quot;, toDate=&quot; + toDate + &quot;, grade=&quot;
+                + grade + &quot;, govtOrderNumber=&quot; + govtOrderNumber + &quot;, documents=&quot; + documents + &quot;, createdBy=&quot;
+                + createdBy + &quot;, createdDate=&quot; + createdDate + &quot;, lastModifiedBy=&quot; + lastModifiedBy
+                + &quot;, lastModifiedDate=&quot; + lastModifiedDate + &quot;, tenantId=&quot; + tenantId + &quot;]&quot;;
+    }
+
+	public Long getEmpId() {
+<span class="nc" id="L438">		return empId;</span>
+	}
+
+	public void setEmpId(Long empId) {
+<span class="nc" id="L442">		this.empId = empId;</span>
+<span class="nc" id="L443">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

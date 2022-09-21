@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionSummaryHeadWiseReport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">CollectionSummaryHeadWiseReport.java</span></div><h1>CollectionSummaryHeadWiseReport.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+<span class="nc" id="L50">public class CollectionSummaryHeadWiseReport {</span>
+
+    private String source;
+    private String glCode;
+    private String cashCount;
+    private Double cashAmount;
+    private String chequeddCount;
+    private Double chequeddAmount;
+    private String onlineCount;
+    private Double onlineAmount;
+    private String totalReceiptCount;
+    private Double totalAmount;
+    private String employeeName;
+    private String counterName;
+    private Double cardAmount;
+    private String cardCount;
+
+<span class="nc" id="L67">    private Double totalCashRebateAmount = new Double(0.0);</span>
+<span class="nc" id="L68">    private Double totalChequeddRebateAmount = new Double(0.0);</span>
+<span class="nc" id="L69">    private Double totalOnlineRebateAmount = new Double(0.0);</span>
+<span class="nc" id="L70">    private Double totalCardRebateAmount = new Double(0.0);</span>
+<span class="nc" id="L71">    private Double totalRebateAmount = new Double(0.0);</span>
+
+    public String getSource() {
+<span class="nc" id="L74">        return source;</span>
+    }
+
+    public void setSource(final String source) {
+<span class="nc" id="L78">        this.source = source;</span>
+<span class="nc" id="L79">    }</span>
+
+    public String getGlCode() {
+<span class="nc" id="L82">        return glCode;</span>
+    }
+
+    public void setGlCode(final String glCode) {
+<span class="nc" id="L86">        this.glCode = glCode;</span>
+<span class="nc" id="L87">    }</span>
+
+    public String getCashCount() {
+<span class="nc" id="L90">        return cashCount;</span>
+    }
+
+    public void setCashCount(final String cashCount) {
+<span class="nc" id="L94">        this.cashCount = cashCount;</span>
+<span class="nc" id="L95">    }</span>
+
+    public Double getCashAmount() {
+<span class="nc" id="L98">        return cashAmount;</span>
+    }
+
+    public void setCashAmount(final Double cashAmount) {
+<span class="nc" id="L102">        this.cashAmount = cashAmount;</span>
+<span class="nc" id="L103">    }</span>
+
+    public String getChequeddCount() {
+<span class="nc" id="L106">        return chequeddCount;</span>
+    }
+
+    public void setChequeddCount(final String chequeddCount) {
+<span class="nc" id="L110">        this.chequeddCount = chequeddCount;</span>
+<span class="nc" id="L111">    }</span>
+
+    public Double getChequeddAmount() {
+<span class="nc" id="L114">        return chequeddAmount;</span>
+    }
+
+    public void setChequeddAmount(final Double chequeddAmount) {
+<span class="nc" id="L118">        this.chequeddAmount = chequeddAmount;</span>
+<span class="nc" id="L119">    }</span>
+
+    public String getOnlineCount() {
+<span class="nc" id="L122">        return onlineCount;</span>
+    }
+
+    public void setOnlineCount(final String onlineCount) {
+<span class="nc" id="L126">        this.onlineCount = onlineCount;</span>
+<span class="nc" id="L127">    }</span>
+
+    public Double getOnlineAmount() {
+<span class="nc" id="L130">        return onlineAmount;</span>
+    }
+
+    public void setOnlineAmount(final Double onlineAmount) {
+<span class="nc" id="L134">        this.onlineAmount = onlineAmount;</span>
+<span class="nc" id="L135">    }</span>
+
+    public String getTotalReceiptCount() {
+<span class="nc" id="L138">        return totalReceiptCount;</span>
+    }
+
+    public void setTotalReceiptCount(final String totalReceiptCount) {
+<span class="nc" id="L142">        this.totalReceiptCount = totalReceiptCount;</span>
+<span class="nc" id="L143">    }</span>
+
+    public Double getTotalAmount() {
+<span class="nc" id="L146">        return totalAmount;</span>
+    }
+
+    public void setTotalAmount(final Double totalAmount) {
+<span class="nc" id="L150">        this.totalAmount = totalAmount;</span>
+<span class="nc" id="L151">    }</span>
+
+    public String getEmployeeName() {
+<span class="nc" id="L154">        return employeeName;</span>
+    }
+
+    public void setEmployeeName(final String employeeName) {
+<span class="nc" id="L158">        this.employeeName = employeeName;</span>
+<span class="nc" id="L159">    }</span>
+
+    public String getCounterName() {
+<span class="nc" id="L162">        return counterName;</span>
+    }
+
+    public void setCounterName(final String counterName) {
+<span class="nc" id="L166">        this.counterName = counterName;</span>
+<span class="nc" id="L167">    }</span>
+
+    public String getCardCount() {
+<span class="nc" id="L170">        return cardCount;</span>
+    }
+
+    public void setCardCount(final String cardCount) {
+<span class="nc" id="L174">        this.cardCount = cardCount;</span>
+<span class="nc" id="L175">    }</span>
+
+    public Double getCardAmount() {
+<span class="nc" id="L178">        return cardAmount;</span>
+    }
+
+    public void setCardAmount(final Double cardAmount) {
+<span class="nc" id="L182">        this.cardAmount = cardAmount;</span>
+<span class="nc" id="L183">    }</span>
+
+    public Double getTotalCashRebateAmount() {
+<span class="nc" id="L186">        return totalCashRebateAmount;</span>
+    }
+
+    public void setTotalCashRebateAmount(Double totalCashRebateAmount) {
+<span class="nc" id="L190">        this.totalCashRebateAmount = totalCashRebateAmount;</span>
+<span class="nc" id="L191">    }</span>
+
+    public Double getTotalChequeddRebateAmount() {
+<span class="nc" id="L194">        return totalChequeddRebateAmount;</span>
+    }
+
+    public void setTotalChequeddRebateAmount(Double totalChequeddRebateAmount) {
+<span class="nc" id="L198">        this.totalChequeddRebateAmount = totalChequeddRebateAmount;</span>
+<span class="nc" id="L199">    }</span>
+
+    public Double getTotalOnlineRebateAmount() {
+<span class="nc" id="L202">        return totalOnlineRebateAmount;</span>
+    }
+
+    public void setTotalOnlineRebateAmount(Double totalOnlineRebateAmount) {
+<span class="nc" id="L206">        this.totalOnlineRebateAmount = totalOnlineRebateAmount;</span>
+<span class="nc" id="L207">    }</span>
+
+    public Double getTotalCardRebateAmount() {
+<span class="nc" id="L210">        return totalCardRebateAmount;</span>
+    }
+
+    public void setTotalCardRebateAmount(Double totalCardRebateAmount) {
+<span class="nc" id="L214">        this.totalCardRebateAmount = totalCardRebateAmount;</span>
+<span class="nc" id="L215">    }</span>
+
+    public Double getTotalRebateAmount() {
+<span class="nc" id="L218">        return totalRebateAmount;</span>
+    }
+
+    public void setTotalRebateAmount(Double totalRebateAmount) {
+<span class="nc" id="L222">        this.totalRebateAmount = totalRebateAmount;</span>
+<span class="nc" id="L223">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

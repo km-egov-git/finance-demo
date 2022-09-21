@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MisRemittanceDetailService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.service</a> &gt; <span class="el_source">MisRemittanceDetailService.java</span></div><h1>MisRemittanceDetailService.java</h1><pre class="source lang-java linenums">package org.egov.collection.service;
+
+import org.egov.infra.microservice.models.MisRemittanceDetails;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import org.egov.collection.repository.MisRemittanceDetailRepo;
+import org.egov.infra.microservice.models.MisRemittancePOJO;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.voucher.VoucherDraftDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class MisRemittanceDetailService extends PersistenceService&lt;MisRemittanceDetails, Long&gt; {
+
+		@Autowired
+		MisRemittanceDetailRepo misRemittanceDetailRepo;
+		
+		@PersistenceContext
+	    private EntityManager entityManager;
+		
+		@Autowired
+		@Qualifier(&quot;persistenceService&quot;)
+		protected PersistenceService persistenceService;
+		
+		public MisRemittanceDetailService(Class&lt;MisRemittanceDetails&gt; MisRemittanceDetails) {
+<span class="nc" id="L31">			super(MisRemittanceDetails);</span>
+			// TODO Auto-generated constructor stub
+<span class="nc" id="L33">		}</span>
+	    
+	    public MisRemittanceDetailService() {
+<span class="nc" id="L36">			super(MisRemittanceDetails.class);</span>
+<span class="nc" id="L37">		}</span>
+		
+		public MisRemittanceDetails save(MisRemittanceDetails MisRemittanceDetail) {
+<span class="nc" id="L40">			MisRemittanceDetails m =null;</span>
+			try {
+<span class="nc" id="L42">				m = null;//misRemittanceDetailRepo.create(MisRemittanceDetail);</span>
+<span class="nc" id="L43">			}catch(Exception ex) {</span>
+<span class="nc" id="L44">				m=null;</span>
+<span class="nc" id="L45">				ex.printStackTrace();</span>
+<span class="nc" id="L46">			}</span>
+<span class="nc" id="L47">			return m;</span>
+			
+		}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

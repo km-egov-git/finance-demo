@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EgovPaginatedList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.utils</a> &gt; <span class="el_source">EgovPaginatedList.java</span></div><h1>EgovPaginatedList.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.utils;
+
+import org.displaytag.pagination.PaginatedList;
+import org.displaytag.properties.SortOrderEnum;
+import org.egov.infra.persistence.utils.Page;
+
+import java.util.List;
+
+/**
+ * The Class EgovPaginatedList.
+ * @author Sahina
+ */
+public class EgovPaginatedList implements PaginatedList {
+	
+	/** The full list size. */
+	private int fullListSize;
+	
+	/** The page number. */
+	private int pageNumber;
+	
+	/** The list. */
+	private List list;
+	
+	/** The objects per page. */
+	private int objectsPerPage;
+	
+	/** The sort criterion. */
+	private String sortCriterion;
+	
+	/** The sort direction. */
+<span class="nc" id="L79">	private SortOrderEnum sortDirection = SortOrderEnum.ASCENDING;</span>
+	
+	/**
+	 * Instantiates a new egov paginated list.
+	 * @param page the page
+	 */
+	public EgovPaginatedList(final Page page, int fullListSize) {
+<span class="nc" id="L86">		this(page, fullListSize, null, SortOrderEnum.ASCENDING);</span>
+<span class="nc" id="L87">	}</span>
+
+	/**
+	 * Instantiates a new egov paginated list.
+	 * 
+	 * @param page
+	 *            the page
+	 * @param fullListSize
+	 *            Size of the full list
+	 * @param sortCriterion
+	 *            Sort criteria (field name)
+	 * @param sortDir
+	 *            Sort direction (ascending/descending)
+	 */
+	public EgovPaginatedList(final Page page, int fullListSize,
+			final String sortCriterion, final SortOrderEnum sortDir) {
+<span class="nc" id="L103">		super();</span>
+<span class="nc" id="L104">		this.pageNumber = page.getPageNo();</span>
+<span class="nc" id="L105">		this.objectsPerPage = page.getPageSize();</span>
+<span class="nc" id="L106">		this.fullListSize = fullListSize;</span>
+<span class="nc" id="L107">		this.list = page.getList();</span>
+<span class="nc" id="L108">		this.sortCriterion = sortCriterion;</span>
+<span class="nc" id="L109">		this.sortDirection = sortDir;</span>
+<span class="nc" id="L110">	}</span>
+	
+	/**
+	 * Instantiates a new egov paginated list.
+	 * @param pageNumber the page number
+	 * @param objectsPerPage the objects per page
+	 */
+	public EgovPaginatedList(final int pageNumber, final int objectsPerPage) {
+<span class="nc" id="L118">		super();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		if (pageNumber &lt; 0) {</span>
+<span class="nc" id="L120">			this.pageNumber  = 0;</span>
+		} else {
+<span class="nc" id="L122">			this.pageNumber = pageNumber;</span>
+		}
+<span class="nc" id="L124">		this.objectsPerPage = objectsPerPage;</span>
+<span class="nc" id="L125">	}</span>
+	
+	/**
+	 * Instantiates a new egov paginated list.
+	 * @param page the page
+	 * @param sortCriterion the sort criterion
+	 * @param sortDir the sort dir
+	 */
+	public EgovPaginatedList(final Page page, final String sortCriterion, final SortOrderEnum sortDir) {
+<span class="nc" id="L134">		super();</span>
+<span class="nc" id="L135">		this.pageNumber = page.getPageNo();</span>
+<span class="nc" id="L136">		this.objectsPerPage = page.getPageSize();</span>
+<span class="nc" id="L137">		this.sortCriterion = sortCriterion;</span>
+<span class="nc" id="L138">		this.sortDirection = sortDir;</span>
+<span class="nc" id="L139">	}</span>
+	
+	/**
+	 * Instantiates a new egov paginated list.
+	 * @param pageNumber the page number
+	 * @param objectsPerPage the objects per page
+	 * @param sortCriterion the sort criterion
+	 * @param sortDir the sort dir
+	 */
+	public EgovPaginatedList(final int pageNumber, final int objectsPerPage, final String sortCriterion, final SortOrderEnum sortDir) {
+<span class="nc" id="L149">		super();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">		if (pageNumber &lt; 0) {</span>
+<span class="nc" id="L151">			this.pageNumber = 0;</span>
+		} else {
+<span class="nc" id="L153">			this.pageNumber = pageNumber;</span>
+		}
+<span class="nc" id="L155">		this.objectsPerPage = objectsPerPage;</span>
+<span class="nc" id="L156">		this.sortCriterion = sortCriterion;</span>
+<span class="nc" id="L157">		this.sortDirection = sortDir;</span>
+<span class="nc" id="L158">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getFullListSize()
+	 */
+	@Override
+	public int getFullListSize() {
+<span class="nc" id="L165">		return this.fullListSize;</span>
+	}
+	
+	/**
+	 * Sets the full list size.
+	 * @param fullListSize the new full list size
+	 */
+	public void setFullListSize(final int fullListSize) {
+<span class="nc" id="L173">		this.fullListSize = fullListSize;</span>
+<span class="nc" id="L174">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getList()
+	 */
+	@Override
+	public List getList() {
+<span class="nc" id="L181">		return this.list;</span>
+	}
+	
+	/**
+	 * Sets the list.
+	 * @param list the new list
+	 */
+	public void setList(final List list) {
+<span class="nc" id="L189">		this.list = list;</span>
+<span class="nc" id="L190">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getObjectsPerPage()
+	 */
+	@Override
+	public int getObjectsPerPage() {
+<span class="nc" id="L197">		return this.objectsPerPage;</span>
+	}
+	
+	/**
+	 * Sets the objects per page.
+	 * @param objectsPerPage the new objects per page
+	 */
+	public void setObjectsPerPage(final int objectsPerPage) {
+<span class="nc" id="L205">		this.objectsPerPage = objectsPerPage;</span>
+<span class="nc" id="L206">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getPageNumber()
+	 */
+	@Override
+	public int getPageNumber() {
+<span class="nc" id="L213">		return this.pageNumber;</span>
+	}
+	
+	/**
+	 * Sets the page number.
+	 * @param pageNumber the new page number
+	 */
+	public void setPageNumber(final int pageNumber) {
+<span class="nc bnc" id="L221" title="All 2 branches missed.">		if (pageNumber &lt; 0) {</span>
+<span class="nc" id="L222">			this.pageNumber = 0;</span>
+		} else {
+<span class="nc" id="L224">			this.pageNumber = pageNumber;</span>
+		}
+<span class="nc" id="L226">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getSearchId()
+	 */
+	@Override
+	public String getSearchId() {
+<span class="nc" id="L233">		return null;</span>
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getSortCriterion()
+	 */
+	@Override
+	public String getSortCriterion() {
+<span class="nc" id="L241">		return this.sortCriterion;</span>
+	}
+	
+	/**
+	 * Sets the sort criterion.
+	 * @param sortCriterion the new sort criterion
+	 */
+	public void setSortCriterion(final String sortCriterion) {
+<span class="nc" id="L249">		this.sortCriterion = sortCriterion;</span>
+<span class="nc" id="L250">	}</span>
+	
+	/* (non-Javadoc)
+	 * @see org.displaytag.pagination.PaginatedList#getSortDirection()
+	 */
+	@Override
+	public SortOrderEnum getSortDirection() {
+<span class="nc" id="L257">		return this.sortDirection;</span>
+	}
+	
+	/**
+	 * Sets the sort direction.
+	 * @param sortDirection the new sort direction
+	 */
+	public void setSortDirection(final SortOrderEnum sortDirection) {
+<span class="nc" id="L265">		this.sortDirection = sortDirection;</span>
+<span class="nc" id="L266">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

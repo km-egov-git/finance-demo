@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillAccountDetails.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">BillAccountDetails.java</span></div><h1>BillAccountDetails.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.models;
+
+import java.math.BigDecimal;
+
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
+
+@XStreamAlias(&quot;account&quot;)
+public class BillAccountDetails implements Comparable&lt;BillAccountDetails&gt; {
+
+<span class="nc" id="L58">    public enum PURPOSE {</span>
+<span class="nc" id="L59">        ARREAR_AMOUNT, CURRENT_AMOUNT, ADVANCE_AMOUNT, ARREAR_LATEPAYMENT_CHARGES, CURRENT_LATEPAYMENT_CHARGES, CHEQUE_BOUNCE_PENALTY, REBATE, OTHERS, SERVICETAX, CG_SERVICETAX, SG_SERVICETAX</span>
+    };
+
+    @XStreamAsAttribute
+    private final String glCode;
+
+    @XStreamAsAttribute
+    private final Integer order;
+
+    @XStreamAsAttribute
+    private final String description;
+
+    @XStreamAlias(&quot;crAmount&quot;)
+    private final BigDecimal crAmount;
+    @XStreamAlias(&quot;drAmount&quot;)
+    private final BigDecimal drAmount;
+    private final String functionCode;
+
+    @XStreamAsAttribute
+    private final Boolean isActualDemand;
+
+    @XStreamAsAttribute
+    private final PURPOSE purpose;
+
+    @XStreamAsAttribute
+    private Integer groupId;
+
+    public BillAccountDetails(final String glCode, final Integer order, final BigDecimal crAmount,
+            final BigDecimal drAmount, final String functionCode, final String description, final Boolean isActualDemand,
+<span class="nc" id="L88">            final PURPOSE purpose) {</span>
+<span class="nc" id="L89">        this.glCode = glCode;</span>
+<span class="nc" id="L90">        this.order = order;</span>
+<span class="nc" id="L91">        this.crAmount = crAmount;</span>
+<span class="nc" id="L92">        this.drAmount = drAmount;</span>
+<span class="nc" id="L93">        this.functionCode = functionCode;</span>
+<span class="nc" id="L94">        this.description = description;</span>
+<span class="nc" id="L95">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L96">        this.purpose = purpose;</span>
+<span class="nc" id="L97">    }</span>
+
+    public BillAccountDetails(final String glCode, final Integer order, final BigDecimal crAmount,
+            final BigDecimal drAmount, final String functionCode, final String description, final Boolean isActualDemand,
+<span class="nc" id="L101">            final PURPOSE purpose, final Integer groupId) {</span>
+<span class="nc" id="L102">        this.glCode = glCode;</span>
+<span class="nc" id="L103">        this.order = order;</span>
+<span class="nc" id="L104">        this.crAmount = crAmount;</span>
+<span class="nc" id="L105">        this.drAmount = drAmount;</span>
+<span class="nc" id="L106">        this.functionCode = functionCode;</span>
+<span class="nc" id="L107">        this.description = description;</span>
+<span class="nc" id="L108">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L109">        this.purpose = purpose;</span>
+<span class="nc" id="L110">        this.groupId = groupId;</span>
+<span class="nc" id="L111">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L115">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L116">        sb.append(order).append(&quot;,&quot;).append(glCode).append(&quot;,&quot;).append(crAmount).append(&quot;,&quot;).append(crAmount)</span>
+<span class="nc" id="L117">                .append(&quot;,&quot;).append(description).append(&quot;,&quot;).append(isActualDemand);</span>
+<span class="nc" id="L118">        return sb.toString();</span>
+    }
+
+    public String getGlCode() {
+<span class="nc" id="L122">        return glCode;</span>
+    }
+
+    public Integer getOrder() {
+<span class="nc" id="L126">        return order;</span>
+    }
+
+    public BigDecimal getDrAmount() {
+<span class="nc" id="L130">        return drAmount;</span>
+    }
+
+    public BigDecimal getCrAmount() {
+<span class="nc" id="L134">        return crAmount;</span>
+    }
+
+    public String getFunctionCode() {
+<span class="nc" id="L138">        return functionCode;</span>
+    }
+
+    public String getDescription() {
+<span class="nc" id="L142">        return description;</span>
+    }
+
+    public Boolean getIsActualDemand() {
+<span class="nc" id="L146">        return isActualDemand;</span>
+    }
+
+    public PURPOSE getPurpose() {
+<span class="nc" id="L150">        return purpose;</span>
+    }
+
+    @Override
+    public int compareTo(final BillAccountDetails obj) {
+<span class="nc" id="L155">        return order - obj.order;</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (obj instanceof BillAccountDetails) {</span>
+<span class="nc" id="L161">            final BillAccountDetails account = (BillAccountDetails) obj;</span>
+<span class="nc bnc" id="L162" title="All 6 branches missed.">            if (glCode.equals(account.glCode) &amp;&amp; order.equals(account.order) &amp;&amp; crAmount.equals(account.crAmount)</span>
+<span class="nc bnc" id="L163" title="All 4 branches missed.">                    &amp;&amp; drAmount.equals(account.drAmount) &amp;&amp; description.equals(account.description)</span>
+<span class="nc bnc" id="L164" title="All 4 branches missed.">                    &amp;&amp; functionCode.equals(account.functionCode) &amp;&amp; isActualDemand.equals(account.isActualDemand))</span>
+<span class="nc" id="L165">                return true;</span>
+        }
+<span class="nc" id="L167">        return false;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+<span class="nc" id="L176">        return glCode.hashCode() + order.hashCode() + crAmount.hashCode() + drAmount.hashCode()</span>
+<span class="nc" id="L177">                + description.hashCode() + functionCode.hashCode() + isActualDemand.hashCode();</span>
+    }
+
+    public Integer getGroupId() {
+<span class="nc" id="L181">        return groupId;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

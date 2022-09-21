@@ -1,0 +1,2493 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchReceiptAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">SearchReceiptAction.java</span></div><h1>SearchReceiptAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.egov.collection.bean.ReceiptReportBean;
+import org.egov.collection.bean.SubDivison;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.eis.service.AssignmentService;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.microservice.models.Amount;
+import org.egov.infra.microservice.models.BillDetail;
+import org.egov.infra.microservice.models.BillDetailAdditional;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.microservice.models.EmployeeInfo;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.microservice.models.RemittanceDepositWorkDetail;
+import org.egov.infra.microservice.models.RemittanceResponseDepositWorkDetails;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.persistence.utils.Page;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.web.struts.actions.SearchFormAction;
+import org.egov.infra.web.utils.EgovPaginatedList;
+import org.egov.infstr.search.SearchQuery;
+import org.egov.infstr.search.SearchQueryHQL;
+import org.egov.infstr.utils.EgovMasterDataCaching;
+import org.hibernate.SQLQuery;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = SearchReceiptAction.SUCCESS, location = &quot;searchReceipt.jsp&quot;),
+		@Result(name = SearchReceiptAction.SUCCESSNEW, location = &quot;searchReceiptNew.jsp&quot;),
+		@Result(name = &quot;XLS&quot;, type = &quot;stream&quot;, location = &quot;inputStream&quot;, params = { &quot;inputName&quot;, &quot;inputStream&quot;,
+				&quot;contentType&quot;, &quot;application/xls&quot;, &quot;contentDisposition&quot;, &quot;no-cache;filename=ReceiptReport.xls&quot; }),
+		@Result(name = SearchReceiptAction.DAYBOOKREPORTNEW, location = &quot;dayBookReportNew.jsp&quot;),
+		@Result(name = SearchReceiptAction.DAYBOOKREPORT, location = &quot;dayBookReport.jsp&quot;) })
+<span class="nc" id="L122">public class SearchReceiptAction extends SearchFormAction {</span>
+
+	private static final long serialVersionUID = 1L;
+	protected static final String DAYBOOKREPORT = &quot;dayBookReport&quot;;
+	protected static final String DAYBOOKREPORTNEW = &quot;dayBookReportNew&quot;;
+	protected static final String SUCCESSNEW = &quot;searchReceiptNew&quot;;
+<span class="nc" id="L128">	private String serviceTypeId = null;</span>
+<span class="nc" id="L129">	private String serviceTypeIdforExcel = null;</span>
+<span class="nc" id="L130">	private String serviceTypeDuringDownload = null;</span>
+
+	public String getServiceTypeDuringDownload() {
+<span class="nc" id="L133">		return serviceTypeDuringDownload;</span>
+	}
+
+	public void setServiceTypeDuringDownload(String serviceTypeDuringDownload) {
+<span class="nc" id="L137">		this.serviceTypeDuringDownload = serviceTypeDuringDownload;</span>
+<span class="nc" id="L138">	}</span>
+
+<span class="nc" id="L140">	private String deptId = null;</span>
+<span class="nc" id="L141">	private Long userId = (long) -1;</span>
+	private String instrumentType;
+	private String receiptNumber;
+<span class="nc" id="L144">	private String collectedBy = &quot;&quot;;</span>
+<span class="nc" id="L145">	private String modeOfPayment = &quot;&quot;;</span>
+<span class="nc" id="L146">	private String searchAmount = &quot;0&quot;;</span>
+	private Date fromDate;
+	private Date toDate;
+<span class="nc" id="L149">	private Integer searchStatus = -1;</span>
+<span class="nc" id="L150">	private String target = &quot;new&quot;;</span>
+	private String manualReceiptNumber;
+<span class="nc" id="L152">	private List resultList = new ArrayList();</span>
+<span class="nc" id="L153">	private String serviceClass = &quot;-1&quot;;</span>
+<span class="nc" id="L154">	private TreeMap&lt;String, String&gt; serviceClassMap = new TreeMap&lt;String, String&gt;();</span>
+	private CollectionsUtil collectionsUtil;
+	private Integer branchId;
+	private String reportId;
+	private ReportService reportService;
+	private InputStream inputStream;
+	private String receiptType;
+	private String serviceId;
+<span class="nc" id="L162">	public static final Locale LOCALE = new Locale(&quot;en&quot;, &quot;IN&quot;);</span>
+<span class="nc" id="L163">	public static final SimpleDateFormat DDMMYYYYFORMAT1 = new SimpleDateFormat(&quot;dd/MMM/yyyy&quot;, LOCALE);</span>
+	@Autowired
+	private AssignmentService assignmentService;
+
+	@Autowired
+	protected EgovMasterDataCaching masterDataCache;
+
+	@Autowired
+	private MicroserviceUtils microserviceUtils;
+
+	private String collectionVersion;
+
+	private String subdivison;
+	@PersistenceContext
+	private EntityManager entityManager;
+
+	@Autowired
+	private AppConfigValueService appConfigValuesService;
+
+	@Override
+	public Object getModel() {
+<span class="nc" id="L184">		return null;</span>
+	}
+
+	public String getServiceTypeId() {
+<span class="nc" id="L188">		return serviceTypeId;</span>
+	}
+
+	public void setServiceTypeId(final String serviceType) {
+<span class="nc" id="L192">		serviceTypeId = serviceType;</span>
+<span class="nc" id="L193">	}</span>
+
+	public String getInstrumentType() {
+<span class="nc" id="L196">		return instrumentType;</span>
+	}
+
+	public void setInstrumentType(final String instrumentType) {
+<span class="nc" id="L200">		this.instrumentType = instrumentType;</span>
+<span class="nc" id="L201">	}</span>
+
+	public String getReceiptNumber() {
+<span class="nc" id="L204">		return receiptNumber;</span>
+	}
+
+	public void setReceiptNumber(final String receiptNumber) {
+<span class="nc" id="L208">		this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L209">	}</span>
+
+	public Date getFromDate() {
+<span class="nc" id="L212">		return fromDate;</span>
+	}
+
+	public void setFromDate(final Date fromDate) {
+<span class="nc" id="L216">		this.fromDate = fromDate;</span>
+<span class="nc" id="L217">	}</span>
+
+	public Date getToDate() {
+<span class="nc" id="L220">		return toDate;</span>
+	}
+
+	public void setToDate(final Date toDate) {
+<span class="nc" id="L224">		this.toDate = toDate;</span>
+<span class="nc" id="L225">	}</span>
+
+<span class="nc" id="L227">	Map&lt;String, String&gt; serviceCategoryNames = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L228">	Map&lt;String, String&gt; serviceCategoryNames2 = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L229">	Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap = new HashMap&lt;&gt;();</span>
+
+	@Action(value = &quot;/receipts/searchReceipt-reset&quot;)
+	public String reset() {
+<span class="nc" id="L233">		setPage(1);</span>
+<span class="nc" id="L234">		serviceTypeId = null;</span>
+<span class="nc" id="L235">		userId = (long) -1;</span>
+<span class="nc" id="L236">		receiptNumber = &quot;&quot;;</span>
+<span class="nc" id="L237">		fromDate = null;</span>
+<span class="nc" id="L238">		toDate = null;</span>
+<span class="nc" id="L239">		instrumentType = &quot;&quot;;</span>
+<span class="nc" id="L240">		searchStatus = -1;</span>
+<span class="nc" id="L241">		manualReceiptNumber = &quot;&quot;;</span>
+<span class="nc" id="L242">		serviceClass = &quot;-1&quot;;</span>
+<span class="nc" id="L243">		branchId = -1;</span>
+<span class="nc" id="L244">		return SUCCESS;</span>
+	}
+
+	@Override
+	public void prepare() {
+<span class="nc" id="L249">		super.prepare();</span>
+		// if(searchResult==null)
+		// searchResult = new EgovPaginatedList();
+<span class="nc" id="L252">		this.getServiceCategoryList();</span>
+
+<span class="nc" id="L254">		setupDropdownDataExcluding();</span>
+		// addDropdownData(&quot;instrumentTypeList&quot;,
+		// getPersistenceService().findAllBy(&quot;from InstrumentType i where i.isActive =
+		// true order by type&quot;));
+		// addDropdownData(&quot;userList&quot;,
+		// getPersistenceService().findAllByNamedQuery(CollectionConstants.QUERY_CREATEDBYUSERS_OF_RECEIPTS));
+
+		// serviceClassMap.putAll(CollectionConstants.SERVICE_TYPE_CLASSIFICATION);
+		// serviceClassMap.remove(CollectionConstants.SERVICE_TYPE_PAYMENT);
+		// addDropdownData(&quot;serviceTypeList&quot;, Collections.EMPTY_LIST);
+		// addDropdownData(&quot;businessCategorylist&quot;,
+		// microserviceUtils.getBusinessCategories());
+
+<span class="nc" id="L267">		addDropdownData(&quot;serviceTypeList&quot;, microserviceUtils.getBusinessService(null));</span>
+<span class="nc" id="L268">		addDropdownData(&quot;departmentList&quot;, masterDataCache.get(&quot;egi-department&quot;));</span>
+		// addDropdownData(&quot;bankBranchList&quot;,
+		// collectionsUtil.getBankCollectionBankBranchList());
+<span class="nc" id="L271">		List&lt;AppConfigValues&gt; appConfigValuesList = appConfigValuesService.getConfigValuesByModuleAndKey(&quot;EGF&quot;,</span>
+				&quot;receipt_sub_divison&quot;);
+<span class="nc" id="L273">		List&lt;SubDivison&gt; subdivisonList = new ArrayList&lt;SubDivison&gt;();</span>
+<span class="nc" id="L274">		SubDivison subdivison = null;</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">		for (AppConfigValues value : appConfigValuesList) {</span>
+<span class="nc" id="L276">			subdivison = new SubDivison();</span>
+<span class="nc" id="L277">			subdivison.setSubdivisonCode(value.getValue());</span>
+<span class="nc" id="L278">			subdivison.setSubdivisonName(value.getValue());</span>
+<span class="nc" id="L279">			subdivisonList.add(subdivison);</span>
+<span class="nc" id="L280">		}</span>
+<span class="nc" id="L281">		addDropdownData(&quot;subdivisonList&quot;, subdivisonList);</span>
+<span class="nc" id="L282">	}</span>
+
+	private void getServiceCategoryList() {
+<span class="nc" id="L285">		List&lt;BusinessService&gt; businessService = microserviceUtils.getBusinessService(null);</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">		for (BusinessService bs : businessService) {</span>
+<span class="nc" id="L287">			String[] splitServName = bs.getBusinessService().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L288">			String[] splitSerCode = bs.getCode().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc bnc" id="L289" title="All 4 branches missed.">			if (splitServName.length == 2 &amp;&amp; splitSerCode.length == 2) {</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">				if (!serviceCategoryNames.containsKey(splitSerCode[0])) {</span>
+<span class="nc" id="L291">					serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+				}
+<span class="nc bnc" id="L293" title="All 2 branches missed.">				if (serviceTypeMap.containsKey(splitSerCode[0])) {</span>
+<span class="nc" id="L294">					Map&lt;String, String&gt; map = serviceTypeMap.get(splitSerCode[0]);</span>
+<span class="nc" id="L295">					map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L296">					serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L297">				} else {</span>
+<span class="nc" id="L298">					Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L299">					map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L300">					serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L301">				}</span>
+			} else {
+<span class="nc" id="L303">				serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+			}
+<span class="nc" id="L305">		}</span>
+<span class="nc" id="L306">	}</span>
+
+	@Override
+	@Action(value = &quot;/receipts/searchReceipt&quot;)
+	public String execute() {
+<span class="nc" id="L311">		return SUCCESS;</span>
+	}
+
+	@Action(value = &quot;/receipts/searchReceiptNew&quot;)
+	public String executeNew() {
+<span class="nc" id="L316">		return SUCCESSNEW;</span>
+	}
+
+	@Action(value = &quot;/receipts/daybookReport&quot;)
+	public String dayBookReport() {
+<span class="nc" id="L321">		return DAYBOOKREPORT;</span>
+	}
+
+	// Added by Anshuman
+	@Action(value = &quot;/receipts/daybookReportNew&quot;)
+	public String dayBookReportNew() {
+<span class="nc" id="L327">		return DAYBOOKREPORTNEW;</span>
+	}
+
+	public List getReceiptStatuses() {
+<span class="nc" id="L331">		return persistenceService.findAllBy(&quot;from EgwStatus s where moduletype=? and code != ? order by description&quot;,</span>
+<span class="nc" id="L332">				ReceiptHeader.class.getSimpleName(), CollectionConstants.RECEIPT_STATUS_CODE_PENDING);</span>
+	}
+
+	@Override
+	@Action(value = &quot;/receipts/searchReceipt-search&quot;)
+	public String search() {
+<span class="nc" id="L338">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L339">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+
+<span class="nc" id="L341">		List&lt;ReceiptHeader&gt; receiptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L342">		System.out.println(&quot;receipt :::&quot; + getReceiptNumber());</span>
+<span class="nc" id="L343">		String type = &quot;search&quot;;</span>
+<span class="nc bnc" id="L344" title="All 4 branches missed.">		if (getServiceTypeId() != null &amp;&amp; getServiceTypeId().equalsIgnoreCase(&quot;-1&quot;)) {</span>
+<span class="nc" id="L345">			setServiceTypeId(null);</span>
+		}
+<span class="nc" id="L347">		List&lt;Receipt&gt; receipts = microserviceUtils.searchRecieptsFinance(&quot;MISCELLANEOUS&quot;, getFromDate(), getToDate(),</span>
+<span class="nc bnc" id="L348" title="All 4 branches missed.">				getServiceTypeId(), (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">						&amp;&amp; !&quot;&quot;.equalsIgnoreCase(getReceiptNumber())) ? getReceiptNumber() : null,</span>
+				type);
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">		for (Receipt receipt : receipts) {</span>
+
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			for (org.egov.infra.microservice.models.Bill bill : receipt.getBill()) {</span>
+
+<span class="nc bnc" id="L356" title="All 2 branches missed.">				for (BillDetail billDetail : bill.getBillDetails()) {</span>
+
+<span class="nc" id="L358">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L359">					receiptHeader.setPaymentId(receipt.getPaymentId());</span>
+<span class="nc" id="L360">					receiptHeader.setReceiptnumber(billDetail.getReceiptNumber());</span>
+<span class="nc" id="L361">					populateBifurcationAmount(receiptHeader);</span>
+<span class="nc" id="L362">					receiptHeader.setReceiptdate(new Date(billDetail.getReceiptDate()));</span>
+<span class="nc" id="L363">					receiptHeader.setService(</span>
+<span class="nc" id="L364">							microserviceUtils.getBusinessServiceNameByCode(billDetail.getBusinessService()));</span>
+<span class="nc" id="L365">					receiptHeader.setReferencenumber(billDetail.getBillNumber());</span>
+<span class="nc" id="L366">					receiptHeader.setReferenceDesc(bill.getNarration());</span>
+<span class="nc" id="L367">					receiptHeader.setPayeeAddress(bill.getPayerAddress());</span>
+<span class="nc" id="L368">					receiptHeader.setPaidBy((bill.getPaidBy()).split(&quot;&amp;&quot;)[0] + &quot;  &quot; + bill.getPayerAddress());</span>
+<span class="nc" id="L369">					receiptHeader.setPayeeName(bill.getPayerName());</span>
+<span class="nc" id="L370">					System.out.println(&quot;subdivison ::: &quot; + receipt.getSubdivison());</span>
+<span class="nc" id="L371">					System.out.println(&quot;gst ::: &quot; + receipt.getGstNo());</span>
+<span class="nc" id="L372">					receiptHeader.setSubdivison(receipt.getSubdivison());</span>
+<span class="nc" id="L373">					receiptHeader.setGstno(receipt.getGstNo());</span>
+					// receiptHeader.setTotalAmount(billDetail.getTotalAmount());
+<span class="nc" id="L375">					receiptHeader.setCurretnStatus(receipt.getPaymentStatus());</span>
+<span class="nc" id="L376">					receiptHeader.setCurrentreceipttype(billDetail.getReceiptType());</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">					if (null != billDetail.getManualReceiptNumber()) {</span>
+<span class="nc" id="L378">						receiptHeader.setManualreceiptnumber(billDetail.getManualReceiptNumber());</span>
+<span class="nc" id="L379">						receiptHeader.setG8data(billDetail.getManualReceiptNumber());</span>
+					}
+<span class="nc bnc" id="L381" title="All 4 branches missed.">					if (billDetail.getManualReceiptDate() != null &amp;&amp; billDetail.getManualReceiptDate() != 0) {</span>
+<span class="nc" id="L382">						receiptHeader.setManualreceiptdate(new Date(billDetail.getManualReceiptDate()));</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">						if (null != billDetail.getManualReceiptNumber()) {</span>
+<span class="nc" id="L384">							receiptHeader.setG8data(billDetail.getManualReceiptNumber() + &quot;/&quot;</span>
+<span class="nc" id="L385">									+ new Date(billDetail.getManualReceiptDate()).toString());</span>
+						} else
+<span class="nc" id="L387">							receiptHeader.setG8data(new Date(billDetail.getManualReceiptDate()).toString());</span>
+					}
+<span class="nc" id="L389">					receiptHeader.setModOfPayment(receipt.getInstrument().getInstrumentType().getName());</span>
+
+<span class="nc" id="L391">					JsonNode jsonNode = billDetail.getAdditionalDetails();</span>
+<span class="nc" id="L392">					BillDetailAdditional additional = null;</span>
+					try {
+<span class="nc bnc" id="L394" title="All 2 branches missed.">						if (null != jsonNode)</span>
+<span class="nc" id="L395">							additional = (BillDetailAdditional) new ObjectMapper().readValue(jsonNode.toString(),</span>
+									BillDetailAdditional.class);
+<span class="nc" id="L397">					} catch (Exception e) {</span>
+<span class="nc" id="L398">						e.printStackTrace();</span>
+<span class="nc" id="L399">					}</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">					if (null != additional) {</span>
+						// if (null != additional.getBusinessReason()) {
+						// if (additional.getBusinessReason().contains(&quot;-&quot;)) {
+						// receiptHeader.setService(additional.getBusinessReason().split(&quot;-&quot;)[0]);
+						// } else {
+						// receiptHeader.setService(additional.getBusinessReason());
+						// }
+						// }
+
+						// if (null != additional.getNarration())
+						// receiptHeader.setReferenceDesc(additional.getNarration());
+						// if (null != additional.getPayeeaddress())
+						// receiptHeader.setPayeeAddress(additional.getPayeeaddress());
+					}
+
+<span class="nc" id="L415">					receiptList.add(receiptHeader);</span>
+
+<span class="nc bnc" id="L417" title="All 2 branches missed.">					List&lt;ReceiptHeader&gt; beerDrinkers = receiptList.stream().filter(p -&gt; p.getModOfPayment() == &quot;&quot;)</span>
+<span class="nc" id="L418">							.collect(Collectors.toList());</span>
+<span class="nc" id="L419">				}</span>
+<span class="nc" id="L420">			}</span>
+
+<span class="nc" id="L422">		}</span>
+
+<span class="nc bnc" id="L424" title="All 2 branches missed.">		if (searchResult == null) {</span>
+<span class="nc" id="L425">			Page page = new Page&lt;ReceiptHeader&gt;(1, receiptList.size(), receiptList);</span>
+<span class="nc" id="L426">			searchResult = new EgovPaginatedList(page, receiptList.size());</span>
+<span class="nc" id="L427">		} else {</span>
+<span class="nc" id="L428">			searchResult.getList().clear();</span>
+<span class="nc" id="L429">			searchResult.getList().addAll(receiptList);</span>
+		}
+
+<span class="nc" id="L432">		resultList = searchResult.getList();</span>
+<span class="nc" id="L433">		return SUCCESS;</span>
+	}
+
+	@Action(value = &quot;/receipts/searchReceipt-searchNew&quot;)
+	public String searchNew() {
+<span class="nc" id="L438">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L439">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+
+<span class="nc" id="L441">		long start = System.currentTimeMillis();</span>
+<span class="nc" id="L442">		String servicecategory1 = null;</span>
+<span class="nc" id="L443">		String servicecategory = null;</span>
+<span class="nc" id="L444">		String sertype = null;</span>
+<span class="nc" id="L445">		String sertype1 = null;</span>
+<span class="nc" id="L446">		String servicesearch = null;</span>
+<span class="nc" id="L447">		List&lt;ReceiptHeader&gt; receiptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L448">		List&lt;ReceiptHeader&gt; receiptListfinal = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L449">		resultList.clear();</span>
+
+<span class="nc" id="L451">		System.out.println(&quot;::::getFromDate:::: &quot; + getFromDate());</span>
+<span class="nc" id="L452">		System.out.println(&quot;getToDate()() :::&quot; + getToDate());</span>
+<span class="nc" id="L453">		System.out.println(&quot;:::::getServiceTypeId:::: &quot; + getServiceTypeId());</span>
+<span class="nc" id="L454">		System.out.println(&quot;:::::getReceiptNumber:::: &quot; + getReceiptNumber());</span>
+<span class="nc" id="L455">		servicesearch = getServiceTypeId();</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">		if (getServiceTypeId().equalsIgnoreCase(&quot;&quot;)) {</span>
+<span class="nc" id="L457">			setServiceTypeId(null);</span>
+		}
+<span class="nc" id="L459">		serviceTypeIdforExcel = getServiceTypeId();</span>
+<span class="nc" id="L460">		List&lt;Receipt&gt; receipts = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L462">		Map&lt;String, Amount&gt; gllist = populateBifurcationAmountNew(getDeptId());</span>
+<span class="nc" id="L463">		Map&lt;String, String&gt; dplist = getAlldepartment();</span>
+
+<span class="nc" id="L465">		final StringBuffer query = new StringBuffer(500);</span>
+<span class="nc" id="L466">		List&lt;Object[]&gt; list = null;</span>
+
+<span class="nc" id="L468">		query.append(</span>
+				&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy'),mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode,mrd.payments_id from mis_receipts_details mrd  &quot;);
+				//&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy'),mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode,mrd.payments_id,mrd.chequeddno,mrd.to_char(chequedddate, 'dd/mm/yyyy') from mis_receipts_details mrd  &quot;);
+<span class="nc bnc" id="L471" title="All 4 branches missed.">		if (getFromDate() != null || getToDate() != null</span>
+<span class="nc bnc" id="L472" title="All 6 branches missed.">				|| (getServiceTypeId() != null &amp;&amp; !getServiceTypeId().isEmpty() &amp;&amp; !getServiceTypeId().equals(&quot;-1&quot;))</span>
+<span class="nc bnc" id="L473" title="All 4 branches missed.">				|| (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty())) {</span>
+<span class="nc" id="L474">			query.append(&quot; where &quot;);</span>
+<span class="nc" id="L475">			query.append(getDateQuery(getFromDate(), getToDate()));</span>
+<span class="nc bnc" id="L476" title="All 4 branches missed.">			if (getFromDate() != null || getToDate() != null) {</span>
+<span class="nc bnc" id="L477" title="All 6 branches missed.">				if (getServiceTypeId() != null &amp;&amp; !getServiceTypeId().isEmpty() &amp;&amp; !getServiceTypeId().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L478">					query.append(&quot; and mrd.servicename='&quot;).append(servicesearch).append(&quot;'&quot;);</span>
+				}
+<span class="nc bnc" id="L480" title="All 4 branches missed.">				if (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()) {</span>
+<span class="nc" id="L481">					query.append(&quot; and lower(mrd.receipt_number)  like lower('%&quot;).append(getReceiptNumber())</span>
+<span class="nc" id="L482">							.append(&quot;%')&quot;);</span>
+				}
+<span class="nc bnc" id="L484" title="All 6 branches missed.">			} else if (getServiceTypeId() != null &amp;&amp; !getServiceTypeId().isEmpty() &amp;&amp; !getServiceTypeId().equals(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L485" title="All 4 branches missed.">					&amp;&amp; (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty())) {</span>
+<span class="nc bnc" id="L486" title="All 6 branches missed.">				if (getServiceTypeId() != null &amp;&amp; !getServiceTypeId().isEmpty() &amp;&amp; !getServiceTypeId().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L487">					query.append(&quot; mrd.servicename='&quot;).append(servicesearch).append(&quot;'&quot;);</span>
+				}
+<span class="nc bnc" id="L489" title="All 4 branches missed.">				if (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()) {</span>
+<span class="nc" id="L490">					query.append(&quot; and lower(mrd.receipt_number)  like lower('%&quot;).append(getReceiptNumber())</span>
+<span class="nc" id="L491">							.append(&quot;%')&quot;);</span>
+				}
+			} else {
+<span class="nc bnc" id="L494" title="All 6 branches missed.">				if (getServiceTypeId() != null &amp;&amp; !getServiceTypeId().isEmpty() &amp;&amp; !getServiceTypeId().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L495">					query.append(&quot; mrd.servicename='&quot;).append(servicesearch).append(&quot;'&quot;);</span>
+				}
+<span class="nc bnc" id="L497" title="All 4 branches missed.">				if (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()) {</span>
+<span class="nc" id="L498">					query.append(&quot; lower(mrd.receipt_number)  like lower('%&quot;).append(getReceiptNumber()).append(&quot;%')&quot;);</span>
+				}
+			}
+		}
+
+<span class="nc" id="L503">		System.out.println(&quot;&gt;&gt;&gt; &quot; + query);</span>
+		try {
+<span class="nc" id="L505">			Query q = entityManager.createNativeQuery(query.toString());</span>
+<span class="nc" id="L506">			list = q.getResultList();</span>
+
+<span class="nc" id="L508">		} catch (Exception e) {</span>
+<span class="nc" id="L509">			e.printStackTrace();</span>
+<span class="nc" id="L510">		}</span>
+<span class="nc" id="L511">		System.out.println(&quot;&gt;List Size&gt;&gt; &quot; + list.size());</span>
+<span class="nc" id="L512">		int i = 1;</span>
+<span class="nc bnc" id="L513" title="All 2 branches missed.">		if (list.size() != 0) {</span>
+			try {
+<span class="nc bnc" id="L515" title="All 2 branches missed.">				for (final Object[] ob : list) {</span>
+
+<span class="nc" id="L517">					String depcode = &quot;&quot;;</span>
+<span class="nc" id="L518">					String service = null;</span>
+<span class="nc" id="L519">					String serviceType = null;</span>
+<span class="nc" id="L520">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+					// receiptHeader.setPaymentId(receipt.getPaymentId());
+<span class="nc" id="L522">					receiptHeader.setReceiptnumber(ob[1].toString());</span>
+
+<span class="nc bnc" id="L524" title="All 2 branches missed.">					receiptHeader.setReceiptdatenew((ob[2] != null ? ob[2].toString() : &quot;&quot;));</span>
+<span class="nc bnc" id="L525" title="All 4 branches missed.">					if (ob[10] != null &amp;&amp; ob[10].toString() != null) {</span>
+<span class="nc" id="L526">						String s3 = null;</span>
+<span class="nc" id="L527">						String s4 = null;</span>
+<span class="nc" id="L528">						String s1 = null;</span>
+<span class="nc" id="L529">						String s2 = null;</span>
+
+<span class="nc" id="L531">						String[] split = ob[10].toString().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L532">						s1 = split[0];</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">						if (split.length == 2) {</span>
+<span class="nc" id="L534">							s2 = split[1];</span>
+
+						}
+<span class="nc bnc" id="L537" title="All 2 branches missed.">						if (serviceCategoryNames.containsKey(s1)) {</span>
+<span class="nc" id="L538">							s3 = serviceCategoryNames.get(s1);</span>
+						}
+<span class="nc bnc" id="L540" title="All 2 branches missed.">						if (serviceCategoryNames.containsKey(s2)) {</span>
+<span class="nc" id="L541">							s4 = serviceCategoryNames.get(s2);</span>
+						}
+
+						/*
+						 * if (s4 != null) { if (s3 != null) { service = s3 + &quot;.&quot; + s4; } else { service
+						 * = s4; }
+						 * 
+						 * } else { service = s3; }
+						 */
+<span class="nc" id="L550">						service=s3;</span>
+<span class="nc" id="L551">						serviceType=s2;</span>
+					}
+<span class="nc bnc" id="L553" title="All 2 branches missed.">					receiptHeader.setServiceType(serviceType!= null ? serviceType : &quot;&quot;);</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">					receiptHeader.setService((service != null ? service : &quot;&quot;));</span>
+					//receiptHeader.setChequeddno(ob[14]!=null?ob[14].toString():&quot;&quot;);
+					//receiptHeader.setChequedddate(ob[15]!=null?ob[15].toString():&quot;&quot;);
+<span class="nc" id="L557">					receiptHeader.setReferencenumber(&quot;&quot;);</span>
+
+<span class="nc bnc" id="L559" title="All 2 branches missed.">					if (ob[5] != null) {</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">						receiptHeader.setReferenceDesc((ob[5] != null ? ob[5].toString() : &quot;&quot;));</span>
+					}
+
+<span class="nc" id="L563">					receiptHeader.setPayeeName(&quot;&quot;);</span>
+
+<span class="nc bnc" id="L565" title="All 2 branches missed.">					if (ob[4] != null) {</span>
+<span class="nc bnc" id="L566" title="All 2 branches missed.">						receiptHeader.setPayeeAddress((ob[4] != null ? ob[4].toString() : &quot;&quot;));</span>
+					}
+
+					// System.out.println(&quot;10&quot;);
+<span class="nc bnc" id="L570" title="All 2 branches missed.">					receiptHeader.setPaidBy((ob[3] != null ? ob[3].toString() : &quot;&quot;));</span>
+
+<span class="nc bnc" id="L572" title="All 2 branches missed.">					receiptHeader.setCurretnStatus((ob[6] != null ? ob[6].toString() : &quot;&quot;));</span>
+<span class="nc bnc" id="L573" title="All 2 branches missed.">					if (ob[9] != null) {</span>
+<span class="nc bnc" id="L574" title="All 2 branches missed.">						receiptHeader.setSubdivison((ob[9] != null ? ob[9].toString() : &quot;&quot;));</span>
+					}
+
+<span class="nc bnc" id="L577" title="All 2 branches missed.">					if (ob[12] != null) {</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">						receiptHeader.setGstno((ob[12] != null ? ob[12].toString() : &quot;&quot;));</span>
+					}
+
+<span class="nc" id="L581">					receiptHeader.setCurrentreceipttype(&quot;test&quot;);</span>
+
+<span class="nc bnc" id="L583" title="All 2 branches missed.">					receiptHeader.setModOfPayment((ob[13] != null ? ob[13].toString() : &quot;&quot;));</span>
+
+<span class="nc bnc" id="L585" title="All 2 branches missed.">					if (ob[0] != null) {</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">						receiptHeader.setDepositAmount((ob[0] != null ? ob[0].toString() : &quot;&quot;));</span>
+					}
+<span class="nc bnc" id="L588" title="All 2 branches missed.">					if (ob[14] != null) {</span>
+<span class="nc bnc" id="L589" title="All 2 branches missed.">						receiptHeader.setPaymentId((ob[14] != null ? ob[14].toString() : &quot;&quot;));</span>
+					}
+					//if (ob[15] != null) {
+<span class="nc bnc" id="L592" title="All 2 branches missed.">						receiptHeader.setBank((ob[7] != null ? ob[7].toString() : &quot;&quot;));</span>
+						//receiptHeader.setBank((ob[15] != null ? ob[15].toString() : &quot;&quot;));
+					//}
+<span class="nc" id="L595">					EmployeeInfo empInfo = null;</span>
+<span class="nc bnc" id="L596" title="All 2 branches missed.">					if (ob[11] != null) {</span>
+<span class="nc bnc" id="L597" title="All 2 branches missed.">						receiptHeader.setCreatedUser((ob[11] != null ? ob[11].toString() : &quot;&quot;));</span>
+					}
+
+<span class="nc" id="L600">					String dep = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L602" title="All 4 branches missed.">					if (gllist != null &amp;&amp; !gllist.isEmpty()) {</span>
+
+<span class="nc bnc" id="L604" title="All 2 branches missed.">						if (gllist.containsKey(ob[1].toString())) {</span>
+
+<span class="nc" id="L606">							receiptHeader.setPrincipalAmount(gllist.get(ob[1].toString()).getPaAmount());</span>
+<span class="nc" id="L607">							receiptHeader.setGstAmount(gllist.get(ob[1].toString()).getGstAmount());</span>
+<span class="nc" id="L608">							receiptHeader.setTotalAmount(</span>
+<span class="nc" id="L609">									(receiptHeader.getPrincipalAmount()).add(receiptHeader.getGstAmount()));</span>
+<span class="nc" id="L610">							receiptHeader.setDepartment(dplist.get(gllist.get(ob[1].toString()).getDepartment()));</span>
+<span class="nc" id="L611">							depcode = gllist.get(ob[1].toString()).getDepartment();</span>
+						}
+
+					}
+
+<span class="nc bnc" id="L616" title="All 4 branches missed.">					if (getDeptId() != null &amp;&amp; !getDeptId().isEmpty()) {</span>
+<span class="nc bnc" id="L617" title="All 2 branches missed.">						if (getDeptId().equals(depcode)) {</span>
+<span class="nc" id="L618">							receiptList.add(receiptHeader);</span>
+						}
+
+					} else {
+
+<span class="nc" id="L623">						receiptList.add(receiptHeader);</span>
+<span class="nc" id="L624">						i++;</span>
+					}
+
+<span class="nc" id="L627">				}</span>
+<span class="nc" id="L628">			} catch (Exception e) {</span>
+<span class="nc" id="L629">				e.printStackTrace();</span>
+<span class="nc" id="L630">			}</span>
+
+		}
+<span class="nc" id="L633">		long end = System.currentTimeMillis();</span>
+<span class="nc" id="L634">		System.out.println(&quot;total time taken :: &quot; + (end - start));</span>
+<span class="nc" id="L635">		System.out.println(&quot;Total Record found &quot; + i);</span>
+<span class="nc" id="L636">		System.out.println(&quot;:::::: page  &quot; + getPage());</span>
+
+<span class="nc bnc" id="L638" title="All 2 branches missed.">		if (getPage() &gt;= 1) {</span>
+<span class="nc" id="L639">			int showlist = 490 * getPage();</span>
+<span class="nc" id="L640">			int fromIndex = 0;</span>
+<span class="nc" id="L641">			int toIndex = 0;</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">			if (showlist &gt; receiptList.size()) {</span>
+<span class="nc" id="L643">				fromIndex = (490 * (getPage() - 1));</span>
+<span class="nc" id="L644">				toIndex = receiptList.size();</span>
+			} else {
+<span class="nc bnc" id="L646" title="All 2 branches missed.">				if (receiptList.size() &lt; 490) {</span>
+<span class="nc" id="L647">					fromIndex = 0;</span>
+<span class="nc" id="L648">					toIndex = receiptList.size();</span>
+				} else {
+<span class="nc" id="L650">					fromIndex = showlist - 490;</span>
+<span class="nc" id="L651">					toIndex = showlist;</span>
+				}
+			}
+
+<span class="nc" id="L655">			System.out.println(&quot;from::: &quot; + fromIndex + &quot;to:::: &quot; + toIndex);</span>
+<span class="nc" id="L656">			receiptListfinal = receiptList.subList(fromIndex, toIndex);</span>
+		}
+
+<span class="nc" id="L659">		System.out.println(&quot;::::final list size:  &quot; + receiptListfinal.size());</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">		if (searchResult == null) {</span>
+			// Page page = new Page&lt;ReceiptHeader&gt;(getPage(), 490, receiptList);
+<span class="nc" id="L662">			Page page = new Page&lt;ReceiptHeader&gt;(getPage(), 490, receiptListfinal);</span>
+<span class="nc" id="L663">			searchResult = new EgovPaginatedList(page, receiptList.size());</span>
+			// searchResult = new EgovPaginatedList(page, receiptListfinal.size());
+<span class="nc" id="L665">		} else {</span>
+<span class="nc" id="L666">			searchResult.getList().clear();</span>
+<span class="nc" id="L667">			searchResult.getList().addAll(receiptList);</span>
+		}
+
+<span class="nc" id="L670">		resultList = searchResult.getList();</span>
+<span class="nc" id="L671">		return SUCCESSNEW;</span>
+	}
+
+	@Action(value = &quot;/receipts/searchReceipt-searchDayBookReport&quot;)
+	public String searchDayBookReport() {
+<span class="nc" id="L676">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L677">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+
+<span class="nc" id="L679">		List&lt;ReceiptHeader&gt; receiptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L680">		System.out.println(&quot;from date ::&quot; + getFromDate());</span>
+<span class="nc" id="L681">		System.out.println(&quot;to date :::&quot; + getToDate());</span>
+<span class="nc" id="L682">		System.out.println(&quot;getServiceTypeId() :::&quot; + getServiceTypeId());</span>
+<span class="nc bnc" id="L683" title="All 2 branches missed.">		if (getServiceTypeId().equalsIgnoreCase(&quot;&quot;)) {</span>
+<span class="nc" id="L684">			setServiceTypeId(null);</span>
+		}
+<span class="nc" id="L686">		serviceTypeIdforExcel = getServiceTypeId();</span>
+<span class="nc" id="L687">		List&lt;Receipt&gt; receipts = microserviceUtils.searchReciepts(&quot;MISCELLANEOUS&quot;, getFromDate(), getToDate(),</span>
+<span class="nc bnc" id="L688" title="All 4 branches missed.">				getServiceTypeId(), getDeptId(), (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()</span>
+<span class="nc bnc" id="L689" title="All 2 branches missed.">						&amp;&amp; !&quot;&quot;.equalsIgnoreCase(getReceiptNumber())) ? getReceiptNumber() : null);</span>
+
+<span class="nc" id="L691">		List&lt;RemittanceDepositWorkDetail&gt; remittanceResponselist = null;</span>
+
+<span class="nc" id="L693">		BigDecimal totalReciptAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L694">		BigDecimal totalReciptAmount2 = BigDecimal.ZERO;</span>
+<span class="nc" id="L695">		totalReciptAmount2 = totalReciptAmount.setScale(2, BigDecimal.ROUND_DOWN);</span>
+<span class="nc" id="L696">		System.out.println(&quot;check total amount=&quot; + totalReciptAmount2);</span>
+
+<span class="nc" id="L698">		BigDecimal totalDepositAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L699">		BigDecimal totalDepositAmount2 = BigDecimal.ZERO;</span>
+<span class="nc" id="L700">		totalDepositAmount2 = totalDepositAmount2.setScale(2, BigDecimal.ROUND_DOWN);</span>
+
+<span class="nc bnc" id="L702" title="All 4 branches missed.">		if (receipts != null &amp;&amp; !receipts.isEmpty()) {</span>
+<span class="nc" id="L703">			remittanceResponselist = getDepositWork(receipts);</span>
+		}
+
+<span class="nc bnc" id="L706" title="All 2 branches missed.">		for (Receipt receipt : receipts) {</span>
+<span class="nc" id="L707">			System.out.println(&quot;1&quot;);</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">			for (org.egov.infra.microservice.models.Bill bill : receipt.getBill()) {</span>
+<span class="nc" id="L709">				System.out.println(&quot;2&quot;);</span>
+<span class="nc bnc" id="L710" title="All 2 branches missed.">				for (BillDetail billDetail : bill.getBillDetails()) {</span>
+<span class="nc" id="L711">					System.out.println(&quot;3&quot;);</span>
+<span class="nc" id="L712">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L713">					receiptHeader.setPaymentId(receipt.getPaymentId());</span>
+<span class="nc" id="L714">					receiptHeader.setReceiptnumber(billDetail.getReceiptNumber());</span>
+<span class="nc" id="L715">					populateBifurcationAmount(receiptHeader);</span>
+<span class="nc" id="L716">					System.out.println(&quot;4&quot;);</span>
+<span class="nc" id="L717">					receiptHeader.setReceiptdate(new Date(billDetail.getReceiptDate()));</span>
+<span class="nc" id="L718">					System.out.println(&quot;5&quot;);</span>
+<span class="nc" id="L719">					receiptHeader.setService(</span>
+<span class="nc" id="L720">							microserviceUtils.getBusinessServiceNameByCode(billDetail.getBusinessService()));</span>
+<span class="nc" id="L721">					System.out.println(&quot;6&quot;);</span>
+<span class="nc" id="L722">					receiptHeader.setReferencenumber(&quot;&quot;);</span>
+<span class="nc" id="L723">					System.out.println(&quot;7&quot;);</span>
+<span class="nc" id="L724">					receiptHeader.setReferenceDesc(bill.getNarration());</span>
+<span class="nc" id="L725">					System.out.println(&quot;8&quot;);</span>
+<span class="nc" id="L726">					receiptHeader.setPayeeName(bill.getPayerName());</span>
+<span class="nc" id="L727">					System.out.println(&quot;9&quot;);</span>
+<span class="nc" id="L728">					receiptHeader.setPayeeAddress(bill.getPayerAddress());</span>
+<span class="nc" id="L729">					System.out.println(&quot;10&quot;);</span>
+<span class="nc" id="L730">					receiptHeader.setPaidBy(bill.getPaidBy().split(&quot;&amp;&quot;)[0]);</span>
+<span class="nc" id="L731">					System.out.println(&quot;11&quot;);</span>
+<span class="nc bnc" id="L732" title="All 6 branches missed.">					if (subdivison != null &amp;&amp; !subdivison.isEmpty() &amp;&amp; !subdivison.equalsIgnoreCase(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L733" title="All 4 branches missed.">							&amp;&amp; !subdivison.contains(&quot;-1&quot;) &amp;&amp; !subdivison.equalsIgnoreCase(receipt.getSubdivison())) {</span>
+<span class="nc" id="L734">						continue;</span>
+					}
+<span class="nc" id="L736">					receiptHeader.setCurretnStatus(receipt.getPaymentStatus());</span>
+<span class="nc bnc" id="L737" title="All 6 branches missed.">					if (receiptType != null &amp;&amp; !receiptType.isEmpty() &amp;&amp; !receiptType.equalsIgnoreCase(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">							&amp;&amp; !receiptType.contains(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L739" title="All 2 branches missed.">							&amp;&amp; !receiptType.equalsIgnoreCase(receiptHeader.getCurretnStatus())) {</span>
+<span class="nc" id="L740">						continue;</span>
+					}
+<span class="nc" id="L742">					receiptHeader.setSubdivison(receipt.getSubdivison());</span>
+<span class="nc" id="L743">					System.out.println(&quot;12&quot;);</span>
+<span class="nc" id="L744">					receiptHeader.setGstno(receipt.getGstNo());</span>
+<span class="nc" id="L745">					System.out.println(&quot;13&quot;);</span>
+
+<span class="nc" id="L747">					System.out.println(&quot;14&quot;);</span>
+<span class="nc" id="L748">					receiptHeader.setCurrentreceipttype(billDetail.getReceiptType());</span>
+<span class="nc" id="L749">					System.out.println(&quot;15&quot;);</span>
+<span class="nc" id="L750">					receiptHeader.setModOfPayment(receipt.getInstrument().getInstrumentType().getName());</span>
+<span class="nc" id="L751">					System.out.println(&quot;16&quot;);</span>
+<span class="nc" id="L752">					EmployeeInfo empInfo = null;</span>
+					try {
+<span class="nc" id="L754">						empInfo = microserviceUtils</span>
+<span class="nc" id="L755">								.getEmployee(Long.parseLong(receipt.getAuditDetails().getCreatedBy()), null, null, null)</span>
+<span class="nc" id="L756">								.get(0);</span>
+<span class="nc" id="L757">					} catch (Exception e) {</span>
+<span class="nc" id="L758">						System.out.println(&quot;employee not found&quot;);</span>
+<span class="nc" id="L759">					}</span>
+<span class="nc" id="L760">					System.out.println(&quot;17&quot;);</span>
+<span class="nc bnc" id="L761" title="All 4 branches missed.">					if (null != empInfo &amp;&amp; empInfo.getUser().getUserName() != null</span>
+<span class="nc bnc" id="L762" title="All 2 branches missed.">							&amp;&amp; !empInfo.getUser().getUserName().isEmpty()) {</span>
+<span class="nc" id="L763">						receiptHeader.setCreatedUser(empInfo.getUser().getName());</span>
+					} else {
+<span class="nc" id="L765">						receiptHeader.setCreatedUser(&quot;&quot;);</span>
+					}
+<span class="nc" id="L767">					System.out.println(&quot;18&quot;);</span>
+
+					// add Work Deposit
+
+<span class="nc bnc" id="L771" title="All 4 branches missed.">					if (remittanceResponselist != null &amp;&amp; remittanceResponselist != null) {</span>
+<span class="nc bnc" id="L772" title="All 2 branches missed.">						for (RemittanceDepositWorkDetail remittance : remittanceResponselist) {</span>
+
+<span class="nc bnc" id="L774" title="All 2 branches missed.">							if (billDetail.getReceiptNumber().equals(remittance.getReciptNumber())) {</span>
+<span class="nc" id="L775">								receiptHeader.setReferencenumber(remittance.getReferenceNumber());</span>
+<span class="nc" id="L776">								receiptHeader.setRrDate(new Date(remittance.getReferenceDate()));</span>
+<span class="nc" id="L777">								receiptHeader.setDepositAmount(remittance.getCreditAmount());</span>
+
+<span class="nc" id="L779">								BigDecimal depositAmount = new BigDecimal(remittance.getCreditAmount());</span>
+<span class="nc" id="L780">								receiptHeader.setTotalDepositAmount(depositAmount);</span>
+								// totalDepositAmount2=totalDepositAmount2.add(depositAmount.setScale(4,
+								// BigDecimal.ROUND_DOWN));
+
+<span class="nc" id="L784">							} else {</span>
+<span class="nc" id="L785">								receiptHeader.setReferencenumber(&quot;&quot;);</span>
+							}
+
+<span class="nc" id="L788">						}</span>
+					}
+
+<span class="nc" id="L791">					System.out.println(&quot;19&quot;);</span>
+<span class="nc" id="L792">					receiptList.add(receiptHeader);</span>
+
+<span class="nc" id="L794">				}</span>
+<span class="nc" id="L795">			}</span>
+
+<span class="nc" id="L797">		}</span>
+<span class="nc" id="L798">		System.out.println(&quot;20&quot;);</span>
+<span class="nc" id="L799">		System.out.println(&quot;receiptList  :::::&quot; + receiptList.size());</span>
+		/// Bhushan :added filter to list
+<span class="nc" id="L801">		List&lt;ReceiptHeader&gt; receiptListfilterList = receiptList;</span>
+<span class="nc" id="L802">		List&lt;ReceiptHeader&gt; receiptListnew = new ArrayList&lt;&gt;();</span>
+		// receiptList.clear();
+<span class="nc" id="L804">		System.out.println(&quot;receiptListfilterList  :::::&quot; + receiptListfilterList.size());</span>
+<span class="nc" id="L805">		System.out.println(&quot;searchAmount  ::::&quot; + searchAmount);</span>
+<span class="nc" id="L806">		System.out.println(&quot;modeOfPayment  ::::&quot; + modeOfPayment);</span>
+<span class="nc" id="L807">		System.out.println(&quot;collectedBy  ::::&quot; + collectedBy);</span>
+<span class="nc bnc" id="L808" title="All 2 branches missed.">		for (ReceiptHeader receiptHeader2 : receiptListfilterList) {</span>
+
+<span class="nc" id="L810">			BigDecimal searchamt = new BigDecimal(searchAmount);</span>
+<span class="nc" id="L811">			System.out.println(&quot;inside1  ::::&quot;);</span>
+<span class="nc" id="L812">			BigDecimal searchamtbig = null;</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">			if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L814">				System.out.println(&quot;inside3  ::::&quot;);</span>
+<span class="nc" id="L815">				searchamtbig = receiptHeader2.getTotalAmount().setScale(4, BigDecimal.ROUND_DOWN);</span>
+<span class="nc" id="L816">				System.out.println(&quot;inside4  ::::&quot;);</span>
+			}
+<span class="nc" id="L818">			System.out.println(&quot;inside5  ::::&quot;);</span>
+<span class="nc" id="L819">			searchamt = searchamt.setScale(4, BigDecimal.ROUND_DOWN);</span>
+
+<span class="nc bnc" id="L821" title="All 6 branches missed.">			if (searchAmount != null &amp;&amp; !searchAmount.equals(&quot;0&quot;) &amp;&amp; !searchAmount.isEmpty()) {</span>
+<span class="nc bnc" id="L822" title="All 4 branches missed.">				if (collectedBy != null &amp;&amp; !collectedBy.isEmpty()) {</span>
+<span class="nc bnc" id="L823" title="All 4 branches missed.">					if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">						if (searchamtbig.equals(searchamt)</span>
+<span class="nc bnc" id="L825" title="All 2 branches missed.">								&amp;&amp; (receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())</span>
+<span class="nc bnc" id="L826" title="All 2 branches missed.">								&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L827" title="All 2 branches missed.">							if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L828">								totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L829">										.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc bnc" id="L831" title="All 2 branches missed.">							if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L832">								totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L833">										.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc" id="L835">							receiptListnew.add(receiptHeader2);</span>
+
+						}
+					} else {
+<span class="nc bnc" id="L839" title="All 2 branches missed.">						if (searchamtbig.equals(searchamt) &amp;&amp; (receiptHeader2.getCreatedUser().toLowerCase())</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">								.contains(collectedBy.toLowerCase())) {</span>
+<span class="nc bnc" id="L841" title="All 2 branches missed.">							if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L842">								totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L843">										.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc bnc" id="L845" title="All 2 branches missed.">							if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L846">								totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L847">										.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc" id="L849">							receiptListnew.add(receiptHeader2);</span>
+
+						}
+
+					}
+<span class="nc bnc" id="L854" title="All 4 branches missed.">				} else if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc bnc" id="L855" title="All 2 branches missed.">					if (searchamtbig.equals(searchamt)</span>
+<span class="nc bnc" id="L856" title="All 2 branches missed.">							&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L857" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L858">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L859">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L861" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L862">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L863">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L865">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				} else {
+<span class="nc bnc" id="L869" title="All 2 branches missed.">					if (searchamtbig.equals(searchamt)) {</span>
+<span class="nc bnc" id="L870" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L871">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L872">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L874" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L875">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L876">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L878">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				}
+<span class="nc bnc" id="L882" title="All 4 branches missed.">			} else if (collectedBy != null &amp;&amp; !collectedBy.isEmpty()) {</span>
+<span class="nc bnc" id="L883" title="All 4 branches missed.">				if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc bnc" id="L884" title="All 2 branches missed.">					if ((receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())</span>
+<span class="nc bnc" id="L885" title="All 2 branches missed.">							&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L886" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L887">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L888">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L890" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L891">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L892">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L894">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				} else {
+<span class="nc bnc" id="L898" title="All 2 branches missed.">					if ((receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())) {</span>
+<span class="nc bnc" id="L899" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L900">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L901">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L903" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L904">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L905">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L907">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				}
+
+<span class="nc bnc" id="L912" title="All 4 branches missed.">			} else if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc bnc" id="L913" title="All 2 branches missed.">				if (receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L914" title="All 2 branches missed.">					if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L915">						totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L916">								.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+					}
+<span class="nc bnc" id="L918" title="All 2 branches missed.">					if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L919">						totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L920">								.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+					}
+<span class="nc" id="L922">					receiptListnew.add(receiptHeader2);</span>
+
+				}
+
+			} else {
+<span class="nc bnc" id="L927" title="All 2 branches missed.">				if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L928">					totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L929">							.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+				}
+<span class="nc bnc" id="L931" title="All 2 branches missed.">				if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L932">					totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L933">							.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+				}
+<span class="nc" id="L935">				receiptListnew.add(receiptHeader2);</span>
+			}
+
+<span class="nc" id="L938">		}</span>
+
+<span class="nc" id="L940">		System.out.println(&quot;receiptListnew  ::::&quot; + receiptListnew.size());</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">		for (ReceiptHeader receiptHeadern : receiptListnew) {</span>
+<span class="nc" id="L942">			receiptHeadern.setTotalreciptAmount(totalReciptAmount2);</span>
+<span class="nc" id="L943">			receiptHeadern.setTotalDepositAmount(totalDepositAmount2);</span>
+<span class="nc" id="L944">		}</span>
+
+<span class="nc bnc" id="L946" title="All 2 branches missed.">		if (searchResult == null) {</span>
+<span class="nc" id="L947">			Page page = new Page&lt;ReceiptHeader&gt;(1, receiptListnew.size(), receiptListnew);</span>
+<span class="nc" id="L948">			searchResult = new EgovPaginatedList(page, receiptListnew.size());</span>
+<span class="nc" id="L949">		} else {</span>
+<span class="nc" id="L950">			searchResult.getList().clear();</span>
+<span class="nc" id="L951">			searchResult.getList().addAll(receiptListnew);</span>
+		}
+
+<span class="nc" id="L954">		resultList = searchResult.getList();</span>
+<span class="nc" id="L955">		return DAYBOOKREPORT;</span>
+	}
+
+	private void populateBifurcationAmount(ReceiptHeader receiptHeader) {
+<span class="nc" id="L959">		SQLQuery query = null;</span>
+<span class="nc" id="L960">		List&lt;Object[]&gt; rows = null;</span>
+<span class="nc" id="L961">		BigDecimal pAmount = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc" id="L962">		BigDecimal gstAmount = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc" id="L963">		BigDecimal totalAmount = new BigDecimal(&quot;0&quot;);</span>
+		try {
+<span class="nc" id="L965">			query = this.persistenceService.getSession().createSQLQuery(</span>
+					&quot;select gl.id,gl.glcode,gl.debitamount,gl.creditamount from generalledger gl where voucherheaderid =(select vmis.voucherheaderid from vouchermis vmis where vmis.reciept_number =:receipt_no)&quot;);
+<span class="nc" id="L967">			query.setString(&quot;receipt_no&quot;, receiptHeader.getReceiptnumber());</span>
+<span class="nc" id="L968">			rows = query.list();</span>
+
+<span class="nc bnc" id="L970" title="All 4 branches missed.">			if (rows != null &amp;&amp; !rows.isEmpty()) {</span>
+<span class="nc bnc" id="L971" title="All 2 branches missed.">				for (Object[] element : rows) {</span>
+<span class="nc bnc" id="L972" title="All 2 branches missed.">					if (!element[3].toString().equalsIgnoreCase(&quot;0.00&quot;)) {</span>
+<span class="nc bnc" id="L973" title="All 2 branches missed.">						if (element[1].toString().equalsIgnoreCase(&quot;3502020&quot;)</span>
+<span class="nc bnc" id="L974" title="All 2 branches missed.">								|| element[1].toString().equalsIgnoreCase(&quot;3502019&quot;)) {</span>
+<span class="nc" id="L975">							gstAmount = gstAmount.add(new BigDecimal(element[3].toString()));</span>
+						} else {
+<span class="nc" id="L977">							pAmount = pAmount.add(new BigDecimal(element[3].toString()));</span>
+						}
+					} else {
+<span class="nc" id="L980">						totalAmount = totalAmount.add(new BigDecimal(element[2].toString()));</span>
+					}
+
+<span class="nc" id="L983">				}</span>
+<span class="nc" id="L984">				receiptHeader.setPrincipalAmount(pAmount);</span>
+<span class="nc" id="L985">				receiptHeader.setGstAmount(gstAmount);</span>
+<span class="nc" id="L986">				receiptHeader.setTotalAmount(totalAmount);</span>
+			}
+<span class="nc" id="L988">		} catch (Exception e) {</span>
+<span class="nc" id="L989">			e.printStackTrace();</span>
+<span class="nc" id="L990">		}</span>
+
+<span class="nc" id="L992">	}</span>
+
+	@SuppressWarnings(&quot;deprecation&quot;)
+	@Action(value = &quot;/receipts/searchReceipt-searchDayBookReportNew&quot;)
+	public String searchDayBookReportNew() {
+<span class="nc" id="L997">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L998">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+
+<span class="nc" id="L1000">		long start = System.currentTimeMillis();</span>
+<span class="nc" id="L1001">		String servicecategory1 = null;</span>
+<span class="nc" id="L1002">		String servicecategory = null;</span>
+<span class="nc" id="L1003">		String sertype = null;</span>
+<span class="nc" id="L1004">		String sertype1 = null;</span>
+<span class="nc" id="L1005">		String servicesearch = null;</span>
+<span class="nc" id="L1006">		List&lt;ReceiptHeader&gt; receiptList = null;</span>
+<span class="nc" id="L1007">		List&lt;ReceiptHeader&gt; receiptListfinal = new ArrayList&lt;&gt;();</span>
+		//receiptList.clear();
+
+<span class="nc" id="L1010">		System.out.println(&quot;::::Service Search:::: &quot; + servicesearch);</span>
+<span class="nc" id="L1011">		System.out.println(&quot;getServiceTypeId() :::&quot; + getServiceTypeId());</span>
+<span class="nc" id="L1012">		System.out.println(&quot;:::::getDeptId:::: &quot; + getDeptId());</span>
+<span class="nc" id="L1013">		System.out.println(&quot;:::::getCollectedBy:::: &quot; + getCollectedBy());</span>
+<span class="nc" id="L1014">		System.out.println(&quot;:::::Amount:::: &quot; + getSearchAmount());</span>
+<span class="nc" id="L1015">		System.out.println(&quot;:::::getModeOfPayment:::: &quot; + getModeOfPayment());</span>
+<span class="nc" id="L1016">		System.out.println(&quot;:::::getSubdivison:::: &quot; + getSubdivison());</span>
+<span class="nc" id="L1017">		System.out.println(&quot;:::::Amount:::: &quot; + getReceiptType());</span>
+<span class="nc" id="L1018">		System.out.println(&quot;:::::servicetype:::: &quot; + getServiceId());</span>
+<span class="nc bnc" id="L1019" title="All 2 branches missed.">		if (getServiceTypeId().equalsIgnoreCase(&quot;&quot;)) {</span>
+<span class="nc" id="L1020">			setServiceTypeId(null);</span>
+		}
+<span class="nc" id="L1022">		serviceTypeIdforExcel = getServiceTypeId();</span>
+<span class="nc" id="L1023">		List&lt;Receipt&gt; receipts = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1024">		servicesearch = getServiceTypeId();</span>
+
+<span class="nc" id="L1026">		Map&lt;String, Amount&gt; gllist = populateBifurcationAmountNew(getDeptId());</span>
+<span class="nc" id="L1027">		Map&lt;String, String&gt; dplist = getAlldepartment();</span>
+
+<span class="nc" id="L1029">		final StringBuffer query = new StringBuffer(500);</span>
+<span class="nc" id="L1030">		List&lt;Object[]&gt; list = null;</span>
+
+<span class="nc" id="L1032">		query.append(</span>
+				&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy') as recDate,mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode from mis_receipts_details mrd where &quot;);
+		//&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy') as recDate,mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode,mrd.chequeddno ,to_char(mrd.chequedddate, 'dd/mm/yyyy') from mis_receipts_details mrd where &quot;);
+<span class="nc" id="L1035">		query.append(getDateQuery(getFromDate(), getToDate()));</span>
+<span class="nc" id="L1036">		query.append(getMisQuery(servicesearch, null, null, getCollectedBy(), getSearchAmount(), getModeOfPayment(),</span>
+<span class="nc" id="L1037">				getSubdivison(), getReceiptType()));</span>
+
+<span class="nc" id="L1039">		System.out.println(&quot;receipt query&gt;&gt;&gt; &quot; + query);</span>
+		try {
+<span class="nc" id="L1041">			Query q = entityManager.createNativeQuery(query.toString());</span>
+<span class="nc" id="L1042">			list = q.getResultList();</span>
+
+<span class="nc" id="L1044">		} catch (Exception e) {</span>
+<span class="nc" id="L1045">			e.printStackTrace();</span>
+<span class="nc" id="L1046">		}</span>
+<span class="nc" id="L1047">		System.out.println(&quot;::::Size of receipt list::: &quot; + list.size());</span>
+<span class="nc" id="L1048">		final StringBuffer query1 = new StringBuffer(500);</span>
+<span class="nc" id="L1049">		List&lt;Object[]&gt; remittlist = null;</span>
+<span class="nc" id="L1050">		HashMap&lt;String, List&lt;ReceiptHeader&gt;&gt; receiptMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1051">		HashMap&lt;String, List&lt;ReceiptHeader&gt;&gt; remittMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1052">		query1.append(</span>
+				&quot;select mrd.voucher_number,to_char(mrd.voucher_date,'dd/mm/yyyy'),mrd.bankaccount,mrd.amount,mrd.receiptnumbers,mrd.department from mis_remittance_details mrd where &quot;);
+<span class="nc" id="L1054">		query1.append(getDateQuery1(getFromDate(), getToDate()));</span>
+<span class="nc bnc" id="L1055" title="All 6 branches missed.">		if (getSubdivison() != null &amp;&amp; !getSubdivison().isEmpty() &amp;&amp; !getSubdivison().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1056">			query1.append(&quot; and mrd.subdivison='&quot;).append(getSubdivison()).append(&quot;'&quot;);</span>
+		}
+<span class="nc" id="L1058">		System.out.println(&quot;remittance query&gt;&gt;&gt; &quot; + query1);</span>
+		try {
+<span class="nc" id="L1060">			Query q1 = entityManager.createNativeQuery(query1.toString());</span>
+<span class="nc" id="L1061">			remittlist = q1.getResultList();</span>
+
+<span class="nc" id="L1063">		} catch (Exception e) {</span>
+<span class="nc" id="L1064">			e.printStackTrace();</span>
+<span class="nc" id="L1065">		}</span>
+<span class="nc" id="L1066">		System.out.println(&quot;::::Size of remitt list::: &quot; + remittlist.size());</span>
+<span class="nc bnc" id="L1067" title="All 2 branches missed.">		if (list.size() != 0) {</span>
+<span class="nc bnc" id="L1068" title="All 2 branches missed.">			for (final Object[] ob : list) {</span>
+				//receipytHeader --&gt;receipt
+<span class="nc" id="L1070">					String depcode = &quot;&quot;;</span>
+<span class="nc" id="L1071">					String service = null;</span>
+<span class="nc" id="L1072">					String serviceType = null;</span>
+<span class="nc" id="L1073">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L1074">						receiptHeader.setReceiptnumber(ob[1].toString());</span>
+<span class="nc bnc" id="L1075" title="All 2 branches missed.">						receiptHeader.setReceiptdatenew(ob[2] != null ? ob[2].toString() : &quot;&quot;);</span>
+<span class="nc bnc" id="L1076" title="All 2 branches missed.">						if (ob[10] != null) {</span>
+<span class="nc" id="L1077">							String s3 = null;</span>
+<span class="nc" id="L1078">							String s4 = null;</span>
+<span class="nc" id="L1079">							String s1 = null;</span>
+<span class="nc" id="L1080">							String s2 = null;</span>
+<span class="nc" id="L1081">							String[] split = ob[10].toString().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L1082">							s1 = split[0];</span>
+<span class="nc bnc" id="L1083" title="All 2 branches missed.">							if (split.length == 2) {</span>
+<span class="nc" id="L1084">								s2 = split[1];</span>
+							}
+<span class="nc bnc" id="L1086" title="All 2 branches missed.">							if (serviceCategoryNames.containsKey(s1)) {</span>
+<span class="nc" id="L1087">								s3 = serviceCategoryNames.get(s1);</span>
+							}
+<span class="nc bnc" id="L1089" title="All 2 branches missed.">							if (serviceCategoryNames.containsKey(s2)) {</span>
+<span class="nc" id="L1090">								s4 = serviceCategoryNames.get(s2);</span>
+							}
+					/*
+					 * if (s4 != null) { if (s3 != null) { service = s3 + &quot;.&quot; + s4; } else { service
+					 * = s4; } } else { service = s3; }
+					 */
+<span class="nc" id="L1096">							service=s3;</span>
+<span class="nc" id="L1097">							serviceType=s2;</span>
+						}
+<span class="nc bnc" id="L1099" title="All 2 branches missed.">						receiptHeader.setServiceType(serviceType!= null ? serviceType : &quot;&quot;);</span>
+<span class="nc bnc" id="L1100" title="All 2 branches missed.">						receiptHeader.setService((service != null ? service : &quot;&quot;));</span>
+						//receiptHeader.setChequeddno(ob[14]!=null?ob[14].toString():&quot;&quot;);
+						//receiptHeader.setChequedddate(ob[15]!=null?ob[15].toString():&quot;&quot;);
+<span class="nc bnc" id="L1103" title="All 2 branches missed.">						receiptHeader.setBank(ob[7]!=null?ob[7].toString():&quot;&quot;);</span>
+<span class="nc" id="L1104">						receiptHeader.setReferencenumber(&quot;&quot;);</span>
+<span class="nc bnc" id="L1105" title="All 2 branches missed.">						if (ob[5] != null) {</span>
+<span class="nc" id="L1106">							receiptHeader.setReferenceDesc(ob[5].toString());</span>
+						}
+<span class="nc" id="L1108">						receiptHeader.setPayeeName(&quot;&quot;);</span>
+<span class="nc bnc" id="L1109" title="All 2 branches missed.">						if (ob[4] != null) {</span>
+<span class="nc" id="L1110">							receiptHeader.setPayeeAddress(ob[4].toString());</span>
+						}
+<span class="nc bnc" id="L1112" title="All 2 branches missed.">						if (ob[3] != null) {</span>
+<span class="nc" id="L1113">							receiptHeader.setPaidBy(ob[3].toString());</span>
+						}
+<span class="nc" id="L1115">						receiptHeader.setCurretnStatus(ob[6].toString());</span>
+<span class="nc bnc" id="L1116" title="All 2 branches missed.">						if (ob[9] != null) {</span>
+<span class="nc" id="L1117">							receiptHeader.setSubdivison(ob[9].toString());</span>
+						}
+<span class="nc bnc" id="L1119" title="All 2 branches missed.">						if (ob[12] != null) {</span>
+<span class="nc" id="L1120">							receiptHeader.setGstno(ob[12].toString());</span>
+						}
+<span class="nc" id="L1122">						receiptHeader.setCurrentreceipttype(&quot;test&quot;);</span>
+<span class="nc" id="L1123">						receiptHeader.setModOfPayment(ob[13].toString());</span>
+<span class="nc bnc" id="L1124" title="All 2 branches missed.">						if (ob[11] != null) {</span>
+<span class="nc" id="L1125">							receiptHeader.setCreatedUser(ob[11].toString());</span>
+						}
+<span class="nc bnc" id="L1127" title="All 4 branches missed.">						if (gllist != null &amp;&amp; !gllist.isEmpty()) {</span>
+<span class="nc bnc" id="L1128" title="All 2 branches missed.">							if (gllist.containsKey(ob[1].toString())) {</span>
+<span class="nc" id="L1129">								receiptHeader.setPrincipalAmount(gllist.get(ob[1].toString()).getPaAmount());</span>
+<span class="nc" id="L1130">								receiptHeader.setGstAmount(gllist.get(ob[1].toString()).getGstAmount());</span>
+<span class="nc bnc" id="L1131" title="All 4 branches missed.">						if (receiptHeader.getGstAmount() != null &amp;&amp; receiptHeader.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L1132">									receiptHeader.setTotalAmount(</span>
+<span class="nc" id="L1133">											(receiptHeader.getPrincipalAmount()).add(receiptHeader.getGstAmount()));</span>
+<span class="nc bnc" id="L1134" title="All 2 branches missed.">								} else if (receiptHeader.getGstAmount() == null</span>
+<span class="nc bnc" id="L1135" title="All 2 branches missed.">										&amp;&amp; receiptHeader.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L1136">									receiptHeader.setTotalAmount(receiptHeader.getPrincipalAmount());</span>
+<span class="nc bnc" id="L1137" title="All 2 branches missed.">								} else if (receiptHeader.getGstAmount() != null</span>
+<span class="nc bnc" id="L1138" title="All 2 branches missed.">										&amp;&amp; receiptHeader.getPrincipalAmount() == null) {</span>
+<span class="nc" id="L1139">									receiptHeader.setTotalAmount(receiptHeader.getGstAmount());</span>
+								}
+<span class="nc" id="L1141">								receiptHeader.setDepartment(dplist.get(gllist.get(ob[1].toString()).getDepartment()));</span>
+<span class="nc" id="L1142">								depcode = gllist.get(ob[1].toString()).getDepartment();</span>
+							}
+						}
+<span class="nc bnc" id="L1145" title="All 4 branches missed.">						if (getDeptId() != null &amp;&amp; !getDeptId().isEmpty()) {</span>
+<span class="nc bnc" id="L1146" title="All 2 branches missed.">					if (!getDeptId().equals(depcode)) {</span>
+						//receiptList.add(receiptHeader);
+<span class="nc" id="L1148">						continue;</span>
+					}
+							}
+<span class="nc bnc" id="L1151" title="All 2 branches missed.">				if(receiptMap.get(receiptHeader.getReceiptdatenew()) == null ){</span>
+<span class="nc" id="L1152">					receiptList=new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1153">							receiptList.add(receiptHeader);</span>
+<span class="nc" id="L1154">					receiptMap.put(receiptHeader.getReceiptdatenew(),receiptList);</span>
+						}
+				else{
+<span class="nc" id="L1157">					receiptMap.get(receiptHeader.getReceiptdatenew()).add(receiptHeader);//map.get().add();</span>
+						}
+<span class="nc" id="L1159">							}</span>
+						}
+<span class="nc bnc" id="L1161" title="All 2 branches missed.">		if (remittlist.size() != 0) {</span>
+<span class="nc bnc" id="L1162" title="All 2 branches missed.">			for (final Object[] ob : remittlist) {</span>
+<span class="nc" id="L1163">					String depcode = &quot;&quot;;</span>
+<span class="nc" id="L1164">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+				try {
+<span class="nc bnc" id="L1166" title="All 2 branches missed.">					receiptHeader.setReferencenumber(ob[0]!=null ? ob[0].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L1167" title="All 2 branches missed.">					receiptHeader.setDepositDate(ob[1]!=null ? ob[1].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L1168" title="All 2 branches missed.">					receiptHeader.setBankAccountNumber(ob[2]!=null ? ob[2].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L1169" title="All 2 branches missed.">					receiptHeader.setDepositAmount(ob[3]!=null ? ob[3].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L1170" title="All 2 branches missed.">					receiptHeader.setReceiptnumber(ob[4]!=null ? ob[4].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L1171" title="All 2 branches missed.">					receiptHeader.setDepartment(ob[5]!=null ? dplist.get(ob[5].toString()): &quot;&quot;);</span>
+<span class="nc bnc" id="L1172" title="All 4 branches missed.">					if (getDeptId() != null &amp;&amp; !getDeptId().isEmpty()) {</span>
+<span class="nc bnc" id="L1173" title="All 2 branches missed.">						if (!getDeptId().equals(receiptHeader.getDepartment())) {</span>
+<span class="nc" id="L1174">							continue;//receiptList.add(receiptHeader);</span>
+						}
+						}
+<span class="nc bnc" id="L1177" title="All 2 branches missed.">					if(remittMap.get(receiptHeader.getDepositDate()) == null ){</span>
+<span class="nc" id="L1178">						receiptList=new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1179">						receiptList.add(receiptHeader);</span>
+<span class="nc" id="L1180">						remittMap.put(receiptHeader.getDepositDate(),receiptList);//map.put</span>
+						}
+					else{
+<span class="nc" id="L1183">						remittMap.get(receiptHeader.getDepositDate()).add(receiptHeader);//map.get().add();</span>
+						}
+<span class="nc" id="L1185">				} catch (Exception e) {</span>
+<span class="nc" id="L1186">					e.printStackTrace();</span>
+<span class="nc" id="L1187">					}</span>
+
+<span class="nc" id="L1189">					}</span>
+					}
+<span class="nc" id="L1191">		List&lt;ReceiptHeader&gt; finalList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1192">		List&lt;Date&gt; dates = new ArrayList&lt;Date&gt;();</span>
+		DateFormat formatter;
+<span class="nc" id="L1194">		formatter = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+<span class="nc" id="L1195">		Date startDate = null;</span>
+<span class="nc" id="L1196">		Date endDate = null;</span>
+					try {
+<span class="nc" id="L1198">			startDate = getFromDate();// (Date)formatter.parse(str_date);</span>
+<span class="nc" id="L1199">			endDate = getToDate();// (Date)formatter.parse(end_date);</span>
+<span class="nc" id="L1200">					} catch (Exception e) {</span>
+<span class="nc" id="L1201">						e.printStackTrace();</span>
+<span class="nc" id="L1202">					}</span>
+<span class="nc" id="L1203">		long interval = 24 * 1000 * 60 * 60; // 1 hour in millis</span>
+<span class="nc" id="L1204">		long endTime = endDate.getTime(); // create your endtime here, possibly using Calendar or Date</span>
+<span class="nc" id="L1205">		long curTime = startDate.getTime();</span>
+<span class="nc bnc" id="L1206" title="All 2 branches missed.">		while (curTime &lt;= endTime) {</span>
+<span class="nc" id="L1207">			dates.add(new Date(curTime));</span>
+<span class="nc" id="L1208">			curTime += interval;</span>
+		}
+<span class="nc bnc" id="L1210" title="All 2 branches missed.">		for (Date d:dates) {</span>
+<span class="nc" id="L1211">			Date lDate = (Date) d;</span>
+<span class="nc" id="L1212">			String ds = formatter.format(lDate);</span>
+<span class="nc" id="L1213">			System.out.println(&quot; Date is ...&quot; + ds);</span>
+<span class="nc bnc" id="L1214" title="All 2 branches missed.">			if(receiptMap.get(ds)!=null)</span>
+<span class="nc" id="L1215">				finalList.addAll(receiptMap.get(ds));</span>
+<span class="nc bnc" id="L1216" title="All 2 branches missed.">			if(remittMap.get(ds)!=null)</span>
+<span class="nc" id="L1217">			finalList.addAll(remittMap.get(ds));</span>
+<span class="nc" id="L1218">					}</span>
+<span class="nc" id="L1219">		System.out.println(&quot;finalList.size  :::::&quot; + finalList.size());</span>
+		/// Bhushan :added filter to list
+<span class="nc" id="L1221">		List&lt;ReceiptHeader&gt; receiptListfilterList = finalList;</span>
+<span class="nc" id="L1222">		List&lt;ReceiptHeader&gt; receiptListnew = new ArrayList&lt;&gt;();</span>
+		// receiptList.clear();
+
+<span class="nc" id="L1225">		System.out.println(&quot;receiptListfilterList  :::::&quot; + receiptListfilterList.size());</span>
+
+<span class="nc bnc" id="L1227" title="All 4 branches missed.">		if (getDeptId() != null &amp;&amp; !getDeptId().isEmpty()) {</span>
+<span class="nc" id="L1228">			setDeptId(getDeptId());</span>
+		}
+<span class="nc bnc" id="L1230" title="All 2 branches missed.">		if (getPage() &gt;= 1) {</span>
+<span class="nc" id="L1231">			int showlist = 490 * getPage();</span>
+<span class="nc" id="L1232">			int fromIndex = 0;</span>
+<span class="nc" id="L1233">			int toIndex = 0;</span>
+<span class="nc bnc" id="L1234" title="All 2 branches missed.">			if (showlist &gt; finalList.size()) {</span>
+<span class="nc" id="L1235">				fromIndex = (490 * (getPage() - 1));</span>
+<span class="nc" id="L1236">				toIndex = finalList.size();</span>
+			} else {
+<span class="nc bnc" id="L1238" title="All 2 branches missed.">				if (finalList.size() &lt; 490) {</span>
+<span class="nc" id="L1239">					fromIndex = 0;</span>
+<span class="nc" id="L1240">					toIndex = finalList.size();</span>
+				} else {
+<span class="nc" id="L1242">					fromIndex = showlist - 490;</span>
+<span class="nc" id="L1243">					toIndex = showlist;</span>
+				}
+			}
+
+<span class="nc" id="L1247">			System.out.println(&quot;from::: &quot; + fromIndex + &quot;to:::: &quot; + toIndex);</span>
+<span class="nc" id="L1248">			receiptListfinal = finalList.subList(fromIndex, toIndex);</span>
+		}
+
+<span class="nc" id="L1251">		System.out.println(&quot;::::final list size:  &quot; + receiptListfinal.size());</span>
+
+<span class="nc bnc" id="L1253" title="All 2 branches missed.">		if (searchResult == null) {</span>
+<span class="nc" id="L1254">			Page page = new Page&lt;ReceiptHeader&gt;(getPage(), 490, receiptListfinal);</span>
+<span class="nc" id="L1255">			searchResult = new EgovPaginatedList(page, finalList.size());</span>
+<span class="nc" id="L1256">		} else {</span>
+<span class="nc" id="L1257">			searchResult.getList().clear();</span>
+<span class="nc" id="L1258">			searchResult.getList().addAll(receiptListnew);</span>
+		}
+<span class="nc" id="L1260">		long end = System.currentTimeMillis();</span>
+<span class="nc" id="L1261">		System.out.println(&quot;:::::total time taken:: &quot; + (end - start));</span>
+<span class="nc" id="L1262">		resultList = searchResult.getList();</span>
+<span class="nc" id="L1263">		return DAYBOOKREPORTNEW;</span>
+	}
+
+	private Map&lt;String, Amount&gt; populateBifurcationAmountNew(String dept) {
+<span class="nc" id="L1267">		final StringBuffer query = new StringBuffer(500);</span>
+<span class="nc" id="L1268">		List&lt;Object[]&gt; rows = null;</span>
+<span class="nc" id="L1269">		BigDecimal pAmount = null;</span>
+<span class="nc" id="L1270">		BigDecimal gstAmount = null;</span>
+<span class="nc" id="L1271">		BigDecimal totalAmount = null;</span>
+<span class="nc" id="L1272">		Map&lt;String, Amount&gt; amtReceiptMap = new HashMap&lt;&gt;();</span>
+		try {
+<span class="nc" id="L1274">			query.append(</span>
+					&quot;select gl.id,gl.glcode,gl.debitamount,gl.creditamount,v2.departmentcode,v2.reciept_number from generalledger gl left join vouchermis v2 on gl.voucherheaderid =v2.voucherheaderid where v2.reciept_number notnull &quot;);
+<span class="nc bnc" id="L1276" title="All 4 branches missed.">			if (dept != null &amp;&amp; !dept.isEmpty()) {</span>
+<span class="nc" id="L1277">				query.append(&quot; and v2.departmentcode ='&quot; + dept + &quot;'&quot;);</span>
+			}
+<span class="nc" id="L1279">			System.out.println(&quot;Query&gt;&gt;&gt;&gt; &quot; + query);</span>
+<span class="nc" id="L1280">			Query q = entityManager.createNativeQuery(query.toString());</span>
+<span class="nc" id="L1281">			rows = q.getResultList();</span>
+<span class="nc" id="L1282">			System.out.println(&quot;:::::::General Ledger List size::: &quot; + rows.size());</span>
+<span class="nc" id="L1283">			Amount amt = null;</span>
+<span class="nc bnc" id="L1284" title="All 2 branches missed.">			for (Object[] element : rows) {</span>
+<span class="nc bnc" id="L1285" title="All 2 branches missed.">				if (amtReceiptMap.get(element[5].toString()) == null) {</span>
+<span class="nc" id="L1286">					pAmount = new BigDecimal(0);</span>
+<span class="nc" id="L1287">					gstAmount = new BigDecimal(0);</span>
+<span class="nc" id="L1288">					totalAmount = new BigDecimal(0);</span>
+<span class="nc bnc" id="L1289" title="All 2 branches missed.">					if (!element[3].toString().equalsIgnoreCase(&quot;0.00&quot;)) {</span>
+<span class="nc bnc" id="L1290" title="All 2 branches missed.">						if (element[1].toString().equalsIgnoreCase(&quot;3502020&quot;)</span>
+<span class="nc bnc" id="L1291" title="All 2 branches missed.">								|| element[1].toString().equalsIgnoreCase(&quot;3502019&quot;)) {</span>
+<span class="nc" id="L1292">							gstAmount = gstAmount.add(new BigDecimal(element[3].toString()));</span>
+						} else {
+<span class="nc" id="L1294">							pAmount = pAmount.add(new BigDecimal(element[3].toString()));</span>
+						}
+					} else {
+<span class="nc" id="L1297">						totalAmount = totalAmount.add(new BigDecimal(element[2].toString()));</span>
+					}
+<span class="nc" id="L1299">					amt = new Amount();</span>
+<span class="nc" id="L1300">					amt.setPaAmount(pAmount);</span>
+<span class="nc" id="L1301">					amt.setGstAmount(gstAmount);</span>
+<span class="nc" id="L1302">					amt.setTotalAmount(totalAmount);</span>
+<span class="nc" id="L1303">					amt.setDepartment(element[4].toString());</span>
+<span class="nc" id="L1304">					amtReceiptMap.put(element[5].toString(), amt);</span>
+				} else {
+<span class="nc" id="L1306">					pAmount = amtReceiptMap.get(element[5].toString()).getPaAmount();</span>
+<span class="nc" id="L1307">					gstAmount = amtReceiptMap.get(element[5].toString()).getGstAmount();</span>
+<span class="nc" id="L1308">					totalAmount = amtReceiptMap.get(element[5].toString()).getGstAmount();</span>
+<span class="nc bnc" id="L1309" title="All 2 branches missed.">					if (!element[3].toString().equalsIgnoreCase(&quot;0.00&quot;)) {</span>
+<span class="nc bnc" id="L1310" title="All 2 branches missed.">						if (element[1].toString().equalsIgnoreCase(&quot;3502020&quot;)</span>
+<span class="nc bnc" id="L1311" title="All 2 branches missed.">								|| element[1].toString().equalsIgnoreCase(&quot;3502019&quot;)) {</span>
+<span class="nc" id="L1312">							gstAmount = gstAmount.add(new BigDecimal(element[3].toString()));</span>
+						} else {
+<span class="nc" id="L1314">							pAmount = pAmount.add(new BigDecimal(element[3].toString()));</span>
+						}
+					} else {
+<span class="nc" id="L1317">						totalAmount = totalAmount.add(new BigDecimal(element[2].toString()));</span>
+					}
+<span class="nc" id="L1319">					amt = new Amount();</span>
+<span class="nc" id="L1320">					amt.setPaAmount(pAmount);</span>
+<span class="nc" id="L1321">					amt.setGstAmount(gstAmount);</span>
+<span class="nc" id="L1322">					amt.setTotalAmount(totalAmount);</span>
+<span class="nc" id="L1323">					amt.setDepartment(element[4].toString());</span>
+<span class="nc" id="L1324">					amtReceiptMap.put(element[5].toString(), amt);</span>
+				}
+
+<span class="nc" id="L1327">			}</span>
+<span class="nc" id="L1328">			return amtReceiptMap;</span>
+<span class="nc" id="L1329">		} catch (Exception e) {</span>
+<span class="nc" id="L1330">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L1332">		return amtReceiptMap;</span>
+	}
+
+	public Map&lt;String, String&gt; getAlldepartment() {
+<span class="nc" id="L1336">		List&lt;Object[]&gt; dep = null;</span>
+<span class="nc" id="L1337">		Map&lt;String, String&gt; depar = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1338">		final StringBuffer query = new StringBuffer(500);</span>
+		try {
+<span class="nc" id="L1340">			query.append(&quot;select ed.code ,ed.name from eg_department ed &quot;);</span>
+
+<span class="nc" id="L1342">			System.out.println(&quot;Query&gt;&gt;&gt;&gt; &quot; + query);</span>
+<span class="nc" id="L1343">			Query q = entityManager.createNativeQuery(query.toString());</span>
+<span class="nc" id="L1344">			dep = q.getResultList();</span>
+<span class="nc bnc" id="L1345" title="All 2 branches missed.">			if (dep.size() &gt; 0) {</span>
+<span class="nc bnc" id="L1346" title="All 2 branches missed.">				for (final Object[] ob : dep) {</span>
+<span class="nc" id="L1347">					depar.put(ob[0].toString(), ob[1].toString());</span>
+<span class="nc" id="L1348">				}</span>
+			}
+
+<span class="nc" id="L1351">			return depar;</span>
+<span class="nc" id="L1352">		} catch (Exception e) {</span>
+<span class="nc" id="L1353">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L1356">		return depar;</span>
+	}
+
+	public String getMisQuery(String serviceCategory, String serviceType, String dep, String collectedby, String amount,
+			String mop, String subDivision, String status) {
+
+<span class="nc" id="L1362">		final StringBuffer misQuery = new StringBuffer(300);</span>
+
+<span class="nc bnc" id="L1364" title="All 4 branches missed.">		if (collectedby != null &amp;&amp; !collectedby.isEmpty()) {</span>
+<span class="nc" id="L1365">			misQuery.append(&quot; and lower(mrd.collectedbyname)  like lower('%&quot;).append(collectedby).append(&quot;%')&quot;);</span>
+		}
+<span class="nc bnc" id="L1367" title="All 4 branches missed.">		if (serviceCategory != null &amp;&amp; !serviceCategory.isEmpty()) {</span>
+<span class="nc" id="L1368">			misQuery.append(&quot; and mrd.servicename='&quot;).append(serviceCategory).append(&quot;'&quot;);</span>
+		}
+<span class="nc bnc" id="L1370" title="All 6 branches missed.">		if (amount != null &amp;&amp; !amount.isEmpty() &amp;&amp; !amount.equals(&quot;0&quot;)) {</span>
+<span class="nc" id="L1371">			misQuery.append(&quot; and mrd.total_amt_paid='&quot;).append(amount).append(&quot;'&quot;);</span>
+		}
+<span class="nc bnc" id="L1373" title="All 6 branches missed.">		if (mop != null &amp;&amp; !mop.isEmpty() &amp;&amp; !mop.equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1374">			misQuery.append(&quot; and mrd.payment_mode='&quot;).append(mop).append(&quot;'&quot;);</span>
+		}
+<span class="nc bnc" id="L1376" title="All 6 branches missed.">		if (subDivision != null &amp;&amp; !subDivision.isEmpty() &amp;&amp; !subDivision.equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1377">			misQuery.append(&quot; and mrd.subdivison='&quot;).append(subDivision).append(&quot;'&quot;);</span>
+		}
+<span class="nc bnc" id="L1379" title="All 6 branches missed.">		if (status != null &amp;&amp; !status.isEmpty() &amp;&amp; !status.equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1380">			misQuery.append(&quot; and mrd.payment_status='&quot;).append(status).append(&quot;'&quot;);</span>
+		}
+
+<span class="nc" id="L1383">		return misQuery.toString();</span>
+
+	}
+
+	@Action(value = &quot;/receipts/searchReceipt-downloadDayBookReport&quot;)
+	public String downloadDayBookReport() {
+<span class="nc" id="L1389">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L1390">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+<span class="nc" id="L1391">		System.out.println(&quot;from date ::&quot; + getFromDate());</span>
+<span class="nc" id="L1392">		System.out.println(&quot;to date :::&quot; + getToDate());</span>
+<span class="nc" id="L1393">		System.out.println(&quot;getServiceTypeId() :::&quot; + getServiceTypeId());</span>
+<span class="nc" id="L1394">		System.out.println(&quot;serviceTypeDuringDownload :::&quot; + serviceTypeDuringDownload);</span>
+
+<span class="nc bnc" id="L1396" title="All 4 branches missed.">		if (serviceTypeDuringDownload.equalsIgnoreCase(&quot;&quot;) || serviceTypeDuringDownload.contains(&quot;0&quot;)</span>
+<span class="nc bnc" id="L1397" title="All 2 branches missed.">				|| serviceTypeDuringDownload.contains(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1398">			serviceTypeDuringDownload = null;</span>
+		}
+
+<span class="nc" id="L1401">		List&lt;ReceiptHeader&gt; receiptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1402">		List&lt;Receipt&gt; receipts = microserviceUtils.searchReciepts(&quot;MISCELLANEOUS&quot;, getFromDate(), getToDate(),</span>
+<span class="nc bnc" id="L1403" title="All 4 branches missed.">				serviceTypeDuringDownload, getDeptId(), (getReceiptNumber() != null &amp;&amp; !getReceiptNumber().isEmpty()</span>
+<span class="nc bnc" id="L1404" title="All 2 branches missed.">						&amp;&amp; !&quot;&quot;.equalsIgnoreCase(getReceiptNumber())) ? getReceiptNumber() : null);</span>
+
+<span class="nc" id="L1406">		List&lt;RemittanceDepositWorkDetail&gt; remittanceResponselist = null;</span>
+
+<span class="nc" id="L1408">		BigDecimal totalReciptAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L1409">		BigDecimal totalReciptAmount2 = BigDecimal.ZERO;</span>
+<span class="nc" id="L1410">		totalReciptAmount2 = totalReciptAmount.setScale(2, BigDecimal.ROUND_DOWN);</span>
+
+<span class="nc" id="L1412">		BigDecimal totalDepositAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L1413">		BigDecimal totalDepositAmount2 = BigDecimal.ZERO;</span>
+<span class="nc" id="L1414">		totalDepositAmount2 = totalDepositAmount2.setScale(2, BigDecimal.ROUND_DOWN);</span>
+<span class="nc bnc" id="L1415" title="All 4 branches missed.">		if (receipts != null &amp;&amp; !receipts.isEmpty()) {</span>
+<span class="nc" id="L1416">			remittanceResponselist = getDepositWork(receipts);</span>
+		}
+
+<span class="nc" id="L1419">		System.out.println(&quot;subdivison ::::&quot; + subdivison);</span>
+<span class="nc bnc" id="L1420" title="All 2 branches missed.">		for (Receipt receipt : receipts) {</span>
+<span class="nc" id="L1421">			System.out.println(&quot;R&quot;);</span>
+<span class="nc bnc" id="L1422" title="All 2 branches missed.">			for (org.egov.infra.microservice.models.Bill bill : receipt.getBill()) {</span>
+<span class="nc" id="L1423">				System.out.println(&quot;R1&quot;);</span>
+<span class="nc bnc" id="L1424" title="All 2 branches missed.">				for (BillDetail billDetail : bill.getBillDetails()) {</span>
+<span class="nc" id="L1425">					System.out.println(&quot;R2&quot;);</span>
+<span class="nc" id="L1426">					ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L1427">					receiptHeader.setPaymentId(receipt.getPaymentId());</span>
+<span class="nc" id="L1428">					receiptHeader.setReceiptnumber(billDetail.getReceiptNumber());</span>
+<span class="nc" id="L1429">					System.out.println(&quot;11&quot;);</span>
+<span class="nc" id="L1430">					populateBifurcationAmount(receiptHeader);</span>
+<span class="nc" id="L1431">					System.out.println(&quot;22&quot;);</span>
+<span class="nc" id="L1432">					receiptHeader.setReceiptdate(new Date(billDetail.getReceiptDate()));</span>
+<span class="nc" id="L1433">					System.out.println(&quot;33&quot;);</span>
+<span class="nc" id="L1434">					receiptHeader.setService(</span>
+<span class="nc" id="L1435">							microserviceUtils.getBusinessServiceNameByCode(billDetail.getBusinessService()));</span>
+<span class="nc" id="L1436">					System.out.println(&quot;44&quot;);</span>
+<span class="nc" id="L1437">					receiptHeader.setReferencenumber(&quot;&quot;);</span>
+<span class="nc" id="L1438">					System.out.println(&quot;55&quot;);</span>
+<span class="nc" id="L1439">					receiptHeader.setReferenceDesc(bill.getNarration());</span>
+<span class="nc" id="L1440">					System.out.println(&quot;66&quot;);</span>
+<span class="nc" id="L1441">					receiptHeader.setPayeeAddress(bill.getPayerAddress());</span>
+<span class="nc" id="L1442">					System.out.println(&quot;77&quot;);</span>
+<span class="nc" id="L1443">					receiptHeader.setPaidBy(bill.getPaidBy().split(&quot;&amp;&quot;)[0]);</span>
+<span class="nc" id="L1444">					System.out.println(&quot;88&quot;);</span>
+<span class="nc bnc" id="L1445" title="All 6 branches missed.">					if (subdivison != null &amp;&amp; !subdivison.isEmpty() &amp;&amp; !subdivison.equalsIgnoreCase(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L1446" title="All 4 branches missed.">							&amp;&amp; !subdivison.contains(&quot;-1&quot;) &amp;&amp; !subdivison.equalsIgnoreCase(receipt.getSubdivison())) {</span>
+<span class="nc" id="L1447">						continue;</span>
+					}
+
+<span class="nc" id="L1450">					System.out.println(&quot;99&quot;);</span>
+<span class="nc" id="L1451">					receiptHeader.setSubdivison(receipt.getSubdivison());</span>
+<span class="nc" id="L1452">					System.out.println(&quot;10&quot;);</span>
+<span class="nc" id="L1453">					receiptHeader.setGstno(receipt.getGstNo());</span>
+<span class="nc" id="L1454">					System.out.println(&quot;11&quot;);</span>
+<span class="nc" id="L1455">					receiptHeader.setTotalreciptAmount(totalReciptAmount);</span>
+<span class="nc" id="L1456">					System.out.println(&quot;12&quot;);</span>
+<span class="nc" id="L1457">					receiptHeader.setCurretnStatus(receipt.getPaymentStatus());</span>
+<span class="nc" id="L1458">					System.out.println(&quot;receiptType  ::::&quot; + receiptType);</span>
+<span class="nc" id="L1459">					System.out.println(&quot;receiptHeader.getCurretnStatus()  ::::&quot; + receiptHeader.getCurretnStatus());</span>
+<span class="nc bnc" id="L1460" title="All 6 branches missed.">					if (receiptType != null &amp;&amp; !receiptType.isEmpty() &amp;&amp; !receiptType.equalsIgnoreCase(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L1461" title="All 2 branches missed.">							&amp;&amp; !receiptType.contains(&quot;-1&quot;)</span>
+<span class="nc bnc" id="L1462" title="All 2 branches missed.">							&amp;&amp; !receiptType.equalsIgnoreCase(receiptHeader.getCurretnStatus())) {</span>
+<span class="nc" id="L1463">						continue;</span>
+					}
+<span class="nc" id="L1465">					System.out.println(&quot;13&quot;);</span>
+<span class="nc" id="L1466">					receiptHeader.setCurrentreceipttype(billDetail.getReceiptType());</span>
+<span class="nc" id="L1467">					System.out.println(&quot;Mid&quot;);</span>
+<span class="nc" id="L1468">					receiptHeader.setModOfPayment(receipt.getInstrument().getInstrumentType().getName());</span>
+<span class="nc" id="L1469">					EmployeeInfo empInfo = null;</span>
+					try {
+<span class="nc" id="L1471">						empInfo = microserviceUtils</span>
+<span class="nc" id="L1472">								.getEmployee(Long.parseLong(receipt.getAuditDetails().getCreatedBy()), null, null, null)</span>
+<span class="nc" id="L1473">								.get(0);</span>
+<span class="nc" id="L1474">					} catch (Exception e) {</span>
+<span class="nc" id="L1475">						System.out.println(&quot;employee not found&quot;);</span>
+<span class="nc" id="L1476">					}</span>
+<span class="nc" id="L1477">					System.out.println(&quot;after employee&quot;);</span>
+<span class="nc bnc" id="L1478" title="All 4 branches missed.">					if (null != empInfo &amp;&amp; empInfo.getUser().getUserName() != null</span>
+<span class="nc bnc" id="L1479" title="All 2 branches missed.">							&amp;&amp; !empInfo.getUser().getUserName().isEmpty()) {</span>
+<span class="nc" id="L1480">						receiptHeader.setCreatedUser(empInfo.getUser().getName());</span>
+					} else {
+<span class="nc" id="L1482">						receiptHeader.setCreatedUser(&quot;&quot;);</span>
+					}
+
+					// add Work Deposit
+<span class="nc" id="L1486">					System.out.println(&quot;before remmittance&quot;);</span>
+
+<span class="nc bnc" id="L1488" title="All 4 branches missed.">					if (remittanceResponselist != null &amp;&amp; !remittanceResponselist.isEmpty()) {</span>
+<span class="nc bnc" id="L1489" title="All 2 branches missed.">						for (RemittanceDepositWorkDetail remittance : remittanceResponselist) {</span>
+
+<span class="nc bnc" id="L1491" title="All 2 branches missed.">							if (billDetail.getReceiptNumber().equals(remittance.getReciptNumber())) {</span>
+<span class="nc" id="L1492">								receiptHeader.setReferencenumber(remittance.getReferenceNumber());</span>
+<span class="nc" id="L1493">								receiptHeader.setRrDate(new Date(remittance.getReferenceDate()));</span>
+<span class="nc" id="L1494">								receiptHeader.setDepositAmount(remittance.getCreditAmount());</span>
+
+<span class="nc" id="L1496">								BigDecimal depositAmount = new BigDecimal(remittance.getCreditAmount());</span>
+<span class="nc" id="L1497">								receiptHeader.setTotalDepositAmount(depositAmount);</span>
+
+<span class="nc" id="L1499">							} else {</span>
+<span class="nc" id="L1500">								receiptHeader.setReferencenumber(&quot;&quot;);</span>
+							}
+
+<span class="nc" id="L1503">						}</span>
+					}
+<span class="nc" id="L1505">					System.out.println(&quot;list addition&quot;);</span>
+<span class="nc" id="L1506">					receiptList.add(receiptHeader);</span>
+
+<span class="nc" id="L1508">				}</span>
+<span class="nc" id="L1509">			}</span>
+
+<span class="nc" id="L1511">		}</span>
+
+<span class="nc" id="L1513">		System.out.println(&quot;receiptList.size() ::::&quot; + receiptList.size());</span>
+		/// Bhushan
+<span class="nc" id="L1515">		List&lt;ReceiptHeader&gt; receiptListfilterList = receiptList;</span>
+<span class="nc" id="L1516">		System.out.println(&quot;receiptListfilterList.size() ::::&quot; + receiptListfilterList.size());</span>
+<span class="nc" id="L1517">		List&lt;ReceiptHeader&gt; receiptListnew = new ArrayList&lt;&gt;();</span>
+		// receiptList.clear();
+
+<span class="nc" id="L1520">		System.out.println(&quot;searchAmount :::&quot; + searchAmount);</span>
+<span class="nc bnc" id="L1521" title="All 2 branches missed.">		for (ReceiptHeader receiptHeader2 : receiptListfilterList) {</span>
+
+<span class="nc" id="L1523">			BigDecimal searchamt = new BigDecimal(searchAmount);</span>
+<span class="nc" id="L1524">			BigDecimal searchamtbig = null;</span>
+<span class="nc bnc" id="L1525" title="All 2 branches missed.">			if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1526">				searchamtbig = receiptHeader2.getTotalAmount().setScale(4, BigDecimal.ROUND_DOWN);</span>
+			}
+<span class="nc" id="L1528">			searchamt = searchamt.setScale(4, BigDecimal.ROUND_DOWN);</span>
+
+<span class="nc bnc" id="L1530" title="All 6 branches missed.">			if (searchAmount != null &amp;&amp; !searchAmount.equals(&quot;0&quot;) &amp;&amp; !searchAmount.isEmpty()) {</span>
+<span class="nc" id="L1531">				System.out.println(&quot;111111&quot;);</span>
+<span class="nc bnc" id="L1532" title="All 4 branches missed.">				if (collectedBy != null &amp;&amp; !collectedBy.isEmpty()) {</span>
+<span class="nc" id="L1533">					System.out.println(&quot;222222&quot;);</span>
+<span class="nc bnc" id="L1534" title="All 4 branches missed.">					if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc" id="L1535">						System.out.println(&quot;333333&quot;);</span>
+<span class="nc bnc" id="L1536" title="All 2 branches missed.">						if (searchamtbig.equals(searchamt)</span>
+<span class="nc bnc" id="L1537" title="All 2 branches missed.">								&amp;&amp; (receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())</span>
+<span class="nc bnc" id="L1538" title="All 2 branches missed.">								&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L1539" title="All 2 branches missed.">							if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1540">								totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1541">										.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc bnc" id="L1543" title="All 2 branches missed.">							if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1544">								totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1545">										.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc" id="L1547">							receiptListnew.add(receiptHeader2);</span>
+
+						}
+					} else {
+<span class="nc" id="L1551">						System.out.println(&quot;55555&quot;);</span>
+<span class="nc bnc" id="L1552" title="All 2 branches missed.">						if (searchamtbig.equals(searchamt) &amp;&amp; (receiptHeader2.getCreatedUser().toLowerCase())</span>
+<span class="nc bnc" id="L1553" title="All 2 branches missed.">								.contains(collectedBy.toLowerCase())) {</span>
+<span class="nc bnc" id="L1554" title="All 2 branches missed.">							if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1555">								totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1556">										.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc bnc" id="L1558" title="All 2 branches missed.">							if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1559">								totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1560">										.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+							}
+<span class="nc" id="L1562">							receiptListnew.add(receiptHeader2);</span>
+
+						}
+
+					}
+<span class="nc bnc" id="L1567" title="All 4 branches missed.">				} else if (modeOfPayment != null &amp;&amp; !modeOfPayment.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1568">					System.out.println(&quot;XXXXX&quot;);</span>
+<span class="nc bnc" id="L1569" title="All 2 branches missed.">					if (searchamtbig.equals(searchamt)</span>
+<span class="nc bnc" id="L1570" title="All 2 branches missed.">							&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L1571" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1572">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1573">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L1575" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1576">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1577">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L1579">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				} else {
+<span class="nc" id="L1583">					System.out.println(&quot;AAAA&quot;);</span>
+<span class="nc bnc" id="L1584" title="All 2 branches missed.">					if (searchamtbig.equals(searchamt)) {</span>
+<span class="nc bnc" id="L1585" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1586">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1587">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L1589" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1590">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1591">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L1593">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				}
+<span class="nc bnc" id="L1597" title="All 4 branches missed.">			} else if (collectedBy != null &amp;&amp; !collectedBy.isEmpty()) {</span>
+<span class="nc" id="L1598">				System.out.println(&quot;777777&quot;);</span>
+<span class="nc bnc" id="L1599" title="All 4 branches missed.">				if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc" id="L1600">					System.out.println(&quot;888888&quot;);</span>
+<span class="nc bnc" id="L1601" title="All 2 branches missed.">					if ((receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())</span>
+<span class="nc bnc" id="L1602" title="All 2 branches missed.">							&amp;&amp; receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L1603" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1604">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1605">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L1607" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1608">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1609">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L1611">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				} else {
+<span class="nc" id="L1615">					System.out.println(&quot;9999&quot;);</span>
+<span class="nc bnc" id="L1616" title="All 2 branches missed.">					if ((receiptHeader2.getCreatedUser().toLowerCase()).contains(collectedBy.toLowerCase())) {</span>
+<span class="nc bnc" id="L1617" title="All 2 branches missed.">						if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1618">							totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1619">									.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc bnc" id="L1621" title="All 2 branches missed.">						if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1622">							totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1623">									.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+						}
+<span class="nc" id="L1625">						receiptListnew.add(receiptHeader2);</span>
+
+					}
+				}
+
+<span class="nc bnc" id="L1630" title="All 4 branches missed.">			} else if (modeOfPayment != null &amp;&amp; !modeOfPayment.isEmpty()) {</span>
+<span class="nc" id="L1631">				System.out.println(&quot;WWWWWW&quot;);</span>
+<span class="nc bnc" id="L1632" title="All 2 branches missed.">				if (receiptHeader2.getModOfPayment().equalsIgnoreCase(modeOfPayment)) {</span>
+<span class="nc bnc" id="L1633" title="All 2 branches missed.">					if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1634">						totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1635">								.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+					}
+<span class="nc bnc" id="L1637" title="All 2 branches missed.">					if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1638">						totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1639">								.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+					}
+<span class="nc" id="L1641">					receiptListnew.add(receiptHeader2);</span>
+
+				}
+
+			} else {
+<span class="nc" id="L1646">				System.out.println(&quot;GGGG&quot;);</span>
+<span class="nc bnc" id="L1647" title="All 2 branches missed.">				if (receiptHeader2.getTotalDepositAmount() != null) {</span>
+<span class="nc" id="L1648">					totalDepositAmount2 = totalDepositAmount2</span>
+<span class="nc" id="L1649">							.add(receiptHeader2.getTotalDepositAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+				}
+<span class="nc bnc" id="L1651" title="All 2 branches missed.">				if (receiptHeader2.getTotalAmount() != null) {</span>
+<span class="nc" id="L1652">					totalReciptAmount2 = totalReciptAmount2</span>
+<span class="nc" id="L1653">							.add(receiptHeader2.getTotalAmount().setScale(2, BigDecimal.ROUND_DOWN));</span>
+				}
+<span class="nc" id="L1655">				receiptListnew.add(receiptHeader2);</span>
+			}
+
+<span class="nc" id="L1658">		}</span>
+<span class="nc" id="L1659">		System.out.println(&quot;receiptListnew :::::&quot; + receiptListnew.size());</span>
+<span class="nc" id="L1660">		List&lt;ReceiptReportBean&gt; receiptReportList = new ArrayList&lt;ReceiptReportBean&gt;();</span>
+<span class="nc" id="L1661">		ReceiptReportBean bean = null;</span>
+<span class="nc" id="L1662">		int i = 1;</span>
+<span class="nc bnc" id="L1663" title="All 4 branches missed.">		if (receiptListnew != null &amp;&amp; !receiptListnew.isEmpty()) {</span>
+<span class="nc" id="L1664">			System.out.println(&quot;receipt non empty&quot;);</span>
+<span class="nc bnc" id="L1665" title="All 2 branches missed.">			for (ReceiptHeader header : receiptListnew) {</span>
+<span class="nc" id="L1666">				bean = new ReceiptReportBean();</span>
+<span class="nc" id="L1667">				bean.setSlNo(String.valueOf(i++));</span>
+<span class="nc" id="L1668">				bean.setParamDate(getDateString(header.getReceiptdate()));</span>
+<span class="nc" id="L1669">				bean.setReceiptNo(header.getReceiptnumber());</span>
+<span class="nc" id="L1670">				bean.setCollectedBy(header.getCreatedUser());</span>
+<span class="nc" id="L1671">				bean.setPayeeName(header.getPaidBy().split(&quot;&amp;&quot;)[0]);</span>
+<span class="nc" id="L1672">				bean.setServiceType(header.getService());</span>
+<span class="nc" id="L1673">				bean.setModeOfPayment(header.getModOfPayment());</span>
+<span class="nc" id="L1674">				bean.setParticulars(header.getReferenceDesc());</span>
+<span class="nc" id="L1675">				bean.setTotalReceiptAmount(header.getTotalAmount());</span>
+<span class="nc" id="L1676">				bean.setStatus(header.getCurretnStatus());</span>
+<span class="nc bnc" id="L1677" title="All 2 branches missed.">				if (header.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L1678">					bean.setPrincipalAmt(header.getPrincipalAmount());</span>
+				} else {
+<span class="nc" id="L1680">					bean.setPrincipalAmt(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc bnc" id="L1682" title="All 2 branches missed.">				if (header.getGstAmount() != null) {</span>
+<span class="nc" id="L1683">					bean.setGstAmount(header.getGstAmount());</span>
+				} else {
+<span class="nc" id="L1685">					bean.setPrincipalAmt(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc bnc" id="L1687" title="All 2 branches missed.">				if (header.getRrDate() != null) {</span>
+<span class="nc" id="L1688">					bean.setDateOfDeposite(getDateString(header.getRrDate()));</span>
+				} else {
+<span class="nc" id="L1690">					bean.setDateOfDeposite(&quot;&quot;);</span>
+				}
+<span class="nc bnc" id="L1692" title="All 2 branches missed.">				if (header.getRemittanceReferenceNumber() != null) {</span>
+<span class="nc" id="L1693">					bean.setRemitanceNo(String.valueOf(header.getReferencenumber()));</span>
+				} else {
+<span class="nc" id="L1695">					bean.setRemitanceNo(&quot;&quot;);</span>
+				}
+<span class="nc bnc" id="L1697" title="All 2 branches missed.">				if (header.getBankAccountNumber() != null) {</span>
+<span class="nc" id="L1698">					bean.setBankAccountNo(header.getBankAccountNumber());</span>
+				} else {
+<span class="nc" id="L1700">					bean.setBankAccountNo(&quot;&quot;);</span>
+				}
+
+<span class="nc bnc" id="L1703" title="All 2 branches missed.">				if (header.getDepositAmount() != null) {</span>
+<span class="nc" id="L1704">					bean.setDepositAmount(new BigDecimal(header.getDepositAmount()));</span>
+				} else {
+<span class="nc" id="L1706">					bean.setDepositAmount(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc" id="L1708">				receiptReportList.add(bean);</span>
+<span class="nc" id="L1709">			}</span>
+
+		}
+<span class="nc" id="L1712">		System.out.println(&quot;report size ::&quot; + receiptReportList.size());</span>
+<span class="nc" id="L1713">		Map&lt;String, Object&gt; paramMap = new HashMap&lt;String, Object&gt;();</span>
+<span class="nc" id="L1714">		String jasperName = &quot;CollectionReport&quot;;</span>
+<span class="nc" id="L1715">		paramMap.put(&quot;CollectionReportDataSource&quot;, getDataSource(receiptReportList));</span>
+<span class="nc" id="L1716">		paramMap.put(&quot;HeaderParameter&quot;, &quot;Detail of Collection Report between &quot; + getDateString(getFromDate()) + &quot; and &quot;</span>
+<span class="nc" id="L1717">				+ getDateString(getToDate()));</span>
+<span class="nc" id="L1718">		System.out.println(&quot;Start of report&quot;);</span>
+		try {
+<span class="nc" id="L1720">			byte[] fileContent = populateExcel(receiptReportList, paramMap);</span>
+<span class="nc" id="L1721">			inputStream = new ByteArrayInputStream(fileContent);</span>
+<span class="nc" id="L1722">		} catch (Exception e) {</span>
+<span class="nc" id="L1723">			e.printStackTrace();</span>
+<span class="nc" id="L1724">		}</span>
+<span class="nc" id="L1725">		System.out.println(&quot;END&quot;);</span>
+<span class="nc" id="L1726">		return &quot;XLS&quot;;</span>
+	}
+
+	private byte[] populateExcel(List&lt;ReceiptReportBean&gt; receiptReportList, Map&lt;String, Object&gt; paramMap)
+			throws IOException {
+<span class="nc" id="L1731">		HSSFWorkbook wb = new HSSFWorkbook();</span>
+<span class="nc" id="L1732">		HSSFSheet sheet = wb.createSheet(&quot;Receipt Report&quot;);</span>
+<span class="nc" id="L1733">		HSSFRow row = sheet.createRow(1);</span>
+		HSSFCell cell;
+<span class="nc" id="L1735">		cell = row.createCell(0);</span>
+<span class="nc" id="L1736">		cell.setCellValue((String) paramMap.get(&quot;HeaderParameter&quot;));</span>
+<span class="nc" id="L1737">		HSSFRow rowhead = sheet.createRow(5);</span>
+<span class="nc" id="L1738">		rowhead.createCell(0).setCellValue(&quot;Sl No.&quot;);</span>
+<span class="nc" id="L1739">		rowhead.createCell(1).setCellValue(&quot;Date&quot;);</span>
+<span class="nc" id="L1740">		rowhead.createCell(2).setCellValue(&quot;Receipt No.&quot;);</span>
+<span class="nc" id="L1741">		rowhead.createCell(3).setCellValue(&quot;GST No.&quot;);</span>
+<span class="nc" id="L1742">		rowhead.createCell(4).setCellValue(&quot;Collected By&quot;);</span>
+<span class="nc" id="L1743">		rowhead.createCell(5).setCellValue(&quot;Payee Name&quot;);</span>
+		//rowhead.createCell(6).setCellValue(&quot;Service Type&quot;);
+		//rowhead.createCell(7).setCellValue(&quot;Service Category&quot;);
+		//rowhead.createCell(8).setCellValue(&quot;Cheque/DD No&quot;);
+		//rowhead.createCell(9).setCellValue(&quot;Cheque/DD Date&quot;);
+		//rowhead.createCell(10).setCellValue(&quot;Bank&quot;);
+<span class="nc" id="L1749">		rowhead.createCell(6).setCellValue(&quot;Mode of Payment&quot;);</span>
+<span class="nc" id="L1750">		rowhead.createCell(7).setCellValue(&quot;Particulars&quot;);</span>
+<span class="nc" id="L1751">		rowhead.createCell(8).setCellValue(&quot;Prinicpal Amount&quot;);</span>
+<span class="nc" id="L1752">		rowhead.createCell(9).setCellValue(&quot;GST&quot;);</span>
+<span class="nc" id="L1753">		rowhead.createCell(10).setCellValue(&quot;Total Receipt Amount&quot;);</span>
+<span class="nc" id="L1754">		rowhead.createCell(11).setCellValue(&quot;Date of Deposit&quot;);</span>
+<span class="nc" id="L1755">		rowhead.createCell(12).setCellValue(&quot;Remittance No.&quot;);</span>
+<span class="nc" id="L1756">		rowhead.createCell(13).setCellValue(&quot;Bank Account No.&quot;);</span>
+<span class="nc" id="L1757">		rowhead.createCell(14).setCellValue(&quot;Deposit Amount&quot;);</span>
+<span class="nc" id="L1758">		rowhead.createCell(15).setCellValue(&quot;Status&quot;);</span>
+<span class="nc" id="L1759">		int index = 1;</span>
+<span class="nc" id="L1760">		int rowCount = 6;</span>
+		HSSFRow details;
+<span class="nc" id="L1762">		BigDecimal principalAmt = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc" id="L1763">		BigDecimal gstAmt = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc" id="L1764">		BigDecimal receiptAmt = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc" id="L1765">		BigDecimal depositAmt = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L1766" title="All 2 branches missed.">		for (ReceiptReportBean bean : receiptReportList) {</span>
+<span class="nc" id="L1767">			details = sheet.createRow(rowCount++);</span>
+<span class="nc" id="L1768">			details.createCell(0).setCellValue(index++);</span>
+<span class="nc" id="L1769">			details.createCell(1).setCellValue(bean.getParamDate());</span>
+<span class="nc" id="L1770">			details.createCell(2).setCellValue(bean.getReceiptNo());</span>
+<span class="nc" id="L1771">			details.createCell(3).setCellValue(bean.getGstNo());</span>
+<span class="nc" id="L1772">			details.createCell(4).setCellValue(bean.getCollectedBy());</span>
+<span class="nc" id="L1773">			details.createCell(5).setCellValue(bean.getPayeeName());</span>
+			//details.createCell(6).setCellValue(bean.getServiceCategory());
+			//details.createCell(7).setCellValue(bean.getServiceType());
+			//details.createCell(8).setCellValue(bean.getChequeddno());
+			//details.createCell(9).setCellValue(bean.getChequedddate());
+			//details.createCell(10).setCellValue(bean.getBank());
+<span class="nc" id="L1779">			details.createCell(6).setCellValue(bean.getModeOfPayment());</span>
+<span class="nc" id="L1780">			details.createCell(7).setCellValue(bean.getParticulars());</span>
+<span class="nc bnc" id="L1781" title="All 2 branches missed.">			if (bean.getPrincipalAmt() != null) {</span>
+<span class="nc" id="L1782">				details.createCell(8).setCellValue(bean.getPrincipalAmt().doubleValue());</span>
+<span class="nc" id="L1783">				principalAmt = principalAmt.add(bean.getPrincipalAmt());</span>
+			} else {
+<span class="nc" id="L1785">				details.createCell(8).setCellValue(&quot;&quot;);</span>
+			}
+<span class="nc bnc" id="L1787" title="All 2 branches missed.">			if (bean.getGstAmount() != null) {</span>
+<span class="nc" id="L1788">				details.createCell(9).setCellValue(bean.getGstAmount().doubleValue());</span>
+<span class="nc" id="L1789">				gstAmt = gstAmt.add(bean.getGstAmount());</span>
+			} else {
+<span class="nc" id="L1791">				details.createCell(9).setCellValue(&quot;&quot;);</span>
+			}
+<span class="nc bnc" id="L1793" title="All 2 branches missed.">			if (bean.getTotalReceiptAmount() != null) {</span>
+<span class="nc" id="L1794">				details.createCell(10).setCellValue(bean.getTotalReceiptAmount().doubleValue());</span>
+<span class="nc" id="L1795">				receiptAmt = receiptAmt.add(bean.getTotalReceiptAmount());</span>
+			} else {
+<span class="nc" id="L1797">				details.createCell(10).setCellValue(&quot;&quot;);</span>
+			}
+
+<span class="nc" id="L1800">			details.createCell(11).setCellValue(bean.getDateOfDeposite());</span>
+<span class="nc" id="L1801">			details.createCell(12).setCellValue(bean.getRemitanceNo());</span>
+<span class="nc" id="L1802">			details.createCell(13).setCellValue(bean.getBankAccountNo());</span>
+<span class="nc bnc" id="L1803" title="All 2 branches missed.">			if (bean.getDepositAmount() != null) {</span>
+<span class="nc" id="L1804">				details.createCell(14).setCellValue(bean.getDepositAmount().doubleValue());</span>
+<span class="nc" id="L1805">				depositAmt = depositAmt.add(bean.getDepositAmount());</span>
+			} else {
+<span class="nc" id="L1807">				details.createCell(14).setCellValue(&quot;&quot;);</span>
+			}
+<span class="nc" id="L1809">			details.createCell(15).setCellValue(bean.getStatus());</span>
+<span class="nc" id="L1810">		}</span>
+<span class="nc" id="L1811">		details = sheet.createRow(rowCount);</span>
+<span class="nc" id="L1812">		details.createCell(7).setCellValue(&quot;Total&quot;);</span>
+<span class="nc bnc" id="L1813" title="All 2 branches missed.">		if (principalAmt != null) {</span>
+<span class="nc" id="L1814">			details.createCell(8).setCellValue(principalAmt.doubleValue());</span>
+		} else {
+<span class="nc" id="L1816">			details.createCell(8).setCellValue(&quot;&quot;);</span>
+		}
+
+<span class="nc bnc" id="L1819" title="All 2 branches missed.">		if (gstAmt != null) {</span>
+<span class="nc" id="L1820">			details.createCell(9).setCellValue(gstAmt.doubleValue());</span>
+		} else {
+<span class="nc" id="L1822">			details.createCell(9).setCellValue(&quot;&quot;);</span>
+		}
+<span class="nc bnc" id="L1824" title="All 2 branches missed.">		if (receiptAmt != null) {</span>
+<span class="nc" id="L1825">			details.createCell(10).setCellValue(receiptAmt.doubleValue());</span>
+		} else {
+<span class="nc" id="L1827">			details.createCell(10).setCellValue(&quot;&quot;);</span>
+		}
+<span class="nc" id="L1829">		details.createCell(13).setCellValue(&quot;Total&quot;);</span>
+<span class="nc bnc" id="L1830" title="All 2 branches missed.">		if (depositAmt != null) {</span>
+<span class="nc" id="L1831">			details.createCell(14).setCellValue(depositAmt.doubleValue());</span>
+		} else {
+<span class="nc" id="L1833">			details.createCell(14).setCellValue(&quot;&quot;);</span>
+		}
+
+<span class="nc" id="L1836">		ByteArrayOutputStream os = new ByteArrayOutputStream();</span>
+<span class="nc" id="L1837">		System.out.println(&quot;XYZ&quot;);</span>
+<span class="nc" id="L1838">		wb.write(os);</span>
+<span class="nc" id="L1839">		System.out.println(&quot;UVW&quot;);</span>
+<span class="nc" id="L1840">		byte[] fileContent = os.toByteArray();</span>
+<span class="nc" id="L1841">		System.out.println(&quot;CCCC&quot;);</span>
+
+<span class="nc" id="L1843">		return fileContent;</span>
+	}
+
+	@Action(value = &quot;/receipts/searchReceipt-downloadDayBookReportNew&quot;)
+	public String downloadDayBookReportNew() {
+<span class="nc" id="L1848">		target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L1849">		collectionVersion = ApplicationThreadLocals.getCollectionVersion();</span>
+<span class="nc" id="L1850">		System.out.println(&quot;from date ::&quot; + getFromDate());</span>
+<span class="nc" id="L1851">		System.out.println(&quot;to date :::&quot; + getToDate());</span>
+<span class="nc" id="L1852">		System.out.println(&quot;getServiceTypeId() :::&quot; + getServiceTypeId());</span>
+<span class="nc" id="L1853">		System.out.println(&quot;serviceTypeDuringDownload :::&quot; + serviceTypeDuringDownload);</span>
+<span class="nc" id="L1854">		System.out.println(&quot;DepartmentDownload :::&quot; + getDeptId());</span>
+		// getServiceCategoryList2();
+<span class="nc" id="L1856">		String dep=getDeptId();</span>
+<span class="nc bnc" id="L1857" title="All 2 branches missed.">		if(dep.equalsIgnoreCase(&quot;, &quot;))</span>
+<span class="nc" id="L1858">			dep=null;</span>
+<span class="nc bnc" id="L1859" title="All 2 branches missed.">		String[] dept = dep!=null?dep.split(&quot;,&quot;):null;</span>
+
+<span class="nc" id="L1861">		String servicecategory1 = null;</span>
+<span class="nc" id="L1862">		String servicecategory = null;</span>
+<span class="nc" id="L1863">		String sertype = null;</span>
+<span class="nc" id="L1864">		String sertype1 = null;</span>
+<span class="nc" id="L1865">		String servicesearch = null;</span>
+
+<span class="nc" id="L1867">		servicesearch = serviceTypeDuringDownload;</span>
+<span class="nc bnc" id="L1868" title="All 2 branches missed.">		Map&lt;String, Amount&gt; gllist = populateBifurcationAmountNew(dept!=null?dept[0]:&quot;&quot;);</span>
+<span class="nc" id="L1869">		Map&lt;String, String&gt; dplist = getAlldepartment();</span>
+<span class="nc bnc" id="L1870" title="All 4 branches missed.">		if (serviceTypeDuringDownload.equalsIgnoreCase(&quot;&quot;) || serviceTypeDuringDownload.contains(&quot;0&quot;)</span>
+<span class="nc bnc" id="L1871" title="All 2 branches missed.">				|| serviceTypeDuringDownload.contains(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1872">			serviceTypeDuringDownload = null;</span>
+		}
+
+<span class="nc" id="L1875">		List&lt;ReceiptHeader&gt; receiptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1876">		final StringBuffer query = new StringBuffer(500);</span>
+<span class="nc" id="L1877">		List&lt;Object[]&gt; list = null;</span>
+
+<span class="nc" id="L1879">		query.append(</span>
+				//&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy') as recDate,mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode,mrd.chequeddno,to_char(mrd.chequedddate,'dd/mm/yyyy') from mis_receipts_details mrd where &quot;);
+				&quot;select mrd.total_amt_paid,mrd.receipt_number,to_char(mrd.receipt_date,'dd/mm/yyyy') as recDate,mrd.paid_by,mrd.payer_address,mrd.narration,mrd.payment_status,mrd.bank_name,mrd.bank_branch,mrd.subdivison,mrd.servicename,mrd.collectedbyname,mrd.gstno,mrd.payment_mode from mis_receipts_details mrd where &quot;);
+<span class="nc" id="L1882">		query.append(getDateQuery(getFromDate(), getToDate()));</span>
+<span class="nc" id="L1883">		query.append(getMisQuery(servicesearch, null, null, getCollectedBy(), getSearchAmount(), getModeOfPayment(),</span>
+<span class="nc" id="L1884">				getSubdivison(), getReceiptType()));</span>
+
+<span class="nc" id="L1886">		System.out.println(&quot;receipt query&gt;&gt;&gt; &quot; + query);</span>
+		try {
+<span class="nc" id="L1888">			Query q = entityManager.createNativeQuery(query.toString());</span>
+<span class="nc" id="L1889">			list = q.getResultList();</span>
+
+<span class="nc" id="L1891">		} catch (Exception e) {</span>
+<span class="nc" id="L1892">			e.printStackTrace();</span>
+<span class="nc" id="L1893">		}</span>
+<span class="nc" id="L1894">		System.out.println(&quot;::::Size of receipt list::: &quot; + list.size());</span>
+<span class="nc" id="L1895">		final StringBuffer query1 = new StringBuffer(500);</span>
+<span class="nc" id="L1896">		List&lt;Object[]&gt; remittlist = null;</span>
+<span class="nc" id="L1897">		HashMap&lt;String, List&lt;ReceiptHeader&gt;&gt; receiptMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1898">		HashMap&lt;String, List&lt;ReceiptHeader&gt;&gt; remittMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1899">		query1.append(</span>
+				&quot;select mrd.voucher_number,to_char(mrd.voucher_date,'dd/mm/yyyy'),mrd.bankaccount,mrd.amount,mrd.receiptnumbers,mrd.department from mis_remittance_details mrd where &quot;);
+<span class="nc" id="L1901">		query1.append(getDateQuery1(getFromDate(), getToDate()));</span>
+<span class="nc bnc" id="L1902" title="All 6 branches missed.">		if (getSubdivison() != null &amp;&amp; !getSubdivison().isEmpty() &amp;&amp; !getSubdivison().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L1903">			query1.append(&quot; and mrd.subdivison='&quot;).append(getSubdivison()).append(&quot;'&quot;);</span>
+			}
+<span class="nc" id="L1905">		System.out.println(&quot;remittance query&gt;&gt;&gt; &quot; + query1);</span>
+		try {
+<span class="nc" id="L1907">			Query q1 = entityManager.createNativeQuery(query1.toString());</span>
+<span class="nc" id="L1908">			remittlist = q1.getResultList();</span>
+
+<span class="nc" id="L1910">		} catch (Exception e) {</span>
+<span class="nc" id="L1911">			e.printStackTrace();</span>
+<span class="nc" id="L1912">		}</span>
+<span class="nc" id="L1913">		System.out.println(&quot;::::Size of remitt list::: &quot; + remittlist.size());</span>
+<span class="nc bnc" id="L1914" title="All 2 branches missed.">		if (list.size() != 0) {</span>
+<span class="nc bnc" id="L1915" title="All 2 branches missed.">			for (final Object[] ob : list) {</span>
+				//receipytHeader --&gt;receipt
+<span class="nc" id="L1917">				String depcode = &quot;&quot;;</span>
+<span class="nc" id="L1918">				String service = null;</span>
+<span class="nc" id="L1919">				String serviceType=null;</span>
+<span class="nc" id="L1920">				ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L1921">				receiptHeader.setReceiptnumber(ob[1].toString());</span>
+<span class="nc bnc" id="L1922" title="All 2 branches missed.">				receiptHeader.setReceiptdatenew(ob[2] != null ? ob[2].toString() : &quot;&quot;);</span>
+<span class="nc bnc" id="L1923" title="All 2 branches missed.">				if (ob[10] != null) {</span>
+<span class="nc" id="L1924">					String s3 = null;</span>
+<span class="nc" id="L1925">					String s4 = null;</span>
+<span class="nc" id="L1926">					String s1 = null;</span>
+<span class="nc" id="L1927">					String s2 = null;</span>
+<span class="nc" id="L1928">					String[] split = ob[10].toString().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L1929">					s1 = split[0];</span>
+<span class="nc bnc" id="L1930" title="All 2 branches missed.">					if (split.length == 2) {</span>
+<span class="nc" id="L1931">						s2 = split[1];</span>
+					}
+<span class="nc bnc" id="L1933" title="All 2 branches missed.">					if (serviceCategoryNames.containsKey(s1)) {</span>
+<span class="nc" id="L1934">						s3 = serviceCategoryNames.get(s1);</span>
+					}
+<span class="nc bnc" id="L1936" title="All 2 branches missed.">					if (serviceCategoryNames.containsKey(s2)) {</span>
+<span class="nc" id="L1937">						s4 = serviceCategoryNames.get(s2);</span>
+					}
+					/*
+					 * if (s4 != null) { if (s3 != null) { service = s3 + &quot;.&quot; + s4; } else { service
+					 * = s4; } } else { service = s3; }
+					 */
+<span class="nc" id="L1943">					service=s3;</span>
+<span class="nc" id="L1944">					serviceType=s2;</span>
+				}
+<span class="nc bnc" id="L1946" title="All 2 branches missed.">				receiptHeader.setServiceType(serviceType!= null ? serviceType : &quot;&quot;);</span>
+<span class="nc bnc" id="L1947" title="All 2 branches missed.">				receiptHeader.setService((service != null ? service : &quot;&quot;));</span>
+			//	receiptHeader.setChequeddno(ob[14]!=null?ob[14].toString():&quot;&quot;);
+			//	receiptHeader.setChequedddate(ob[15]!=null?ob[15].toString():&quot;&quot;);
+<span class="nc bnc" id="L1950" title="All 2 branches missed.">				receiptHeader.setBank(ob[7]!=null?ob[7].toString():&quot;&quot;);</span>
+<span class="nc bnc" id="L1951" title="All 2 branches missed.">				receiptHeader.setService(service != null ? service : &quot;&quot;);</span>
+<span class="nc" id="L1952">				receiptHeader.setReferencenumber(&quot;&quot;);</span>
+<span class="nc bnc" id="L1953" title="All 2 branches missed.">				if (ob[5] != null) {</span>
+<span class="nc" id="L1954">					receiptHeader.setReferenceDesc(ob[5].toString());</span>
+				}
+<span class="nc" id="L1956">				receiptHeader.setPayeeName(&quot;&quot;);</span>
+<span class="nc bnc" id="L1957" title="All 2 branches missed.">				if (ob[4] != null) {</span>
+<span class="nc" id="L1958">					receiptHeader.setPayeeAddress(ob[4].toString());</span>
+				}
+<span class="nc bnc" id="L1960" title="All 2 branches missed.">				if (ob[3] != null) {</span>
+<span class="nc" id="L1961">					receiptHeader.setPaidBy(ob[3].toString());</span>
+				}
+<span class="nc" id="L1963">				receiptHeader.setCurretnStatus(ob[6].toString());</span>
+<span class="nc bnc" id="L1964" title="All 2 branches missed.">				if (ob[9] != null) {</span>
+<span class="nc" id="L1965">					receiptHeader.setSubdivison(ob[9].toString());</span>
+				}
+<span class="nc bnc" id="L1967" title="All 2 branches missed.">				if (ob[12] != null) {</span>
+<span class="nc" id="L1968">					receiptHeader.setGstno(ob[12].toString());</span>
+				}
+<span class="nc" id="L1970">				receiptHeader.setCurrentreceipttype(&quot;test&quot;);</span>
+<span class="nc" id="L1971">				receiptHeader.setModOfPayment(ob[13].toString());</span>
+<span class="nc bnc" id="L1972" title="All 2 branches missed.">				if (ob[11] != null) {</span>
+<span class="nc" id="L1973">					receiptHeader.setCreatedUser(ob[11].toString());</span>
+				}
+<span class="nc bnc" id="L1975" title="All 4 branches missed.">				if (gllist != null &amp;&amp; !gllist.isEmpty()) {</span>
+<span class="nc bnc" id="L1976" title="All 2 branches missed.">					if (gllist.containsKey(ob[1].toString())) {</span>
+<span class="nc" id="L1977">						receiptHeader.setPrincipalAmount(gllist.get(ob[1].toString()).getPaAmount());</span>
+<span class="nc" id="L1978">						receiptHeader.setGstAmount(gllist.get(ob[1].toString()).getGstAmount());</span>
+<span class="nc bnc" id="L1979" title="All 4 branches missed.">						if (receiptHeader.getGstAmount() != null &amp;&amp; receiptHeader.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L1980">							receiptHeader.setTotalAmount(</span>
+<span class="nc" id="L1981">									(receiptHeader.getPrincipalAmount()).add(receiptHeader.getGstAmount()));</span>
+<span class="nc bnc" id="L1982" title="All 2 branches missed.">						} else if (receiptHeader.getGstAmount() == null</span>
+<span class="nc bnc" id="L1983" title="All 2 branches missed.">								&amp;&amp; receiptHeader.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L1984">							receiptHeader.setTotalAmount(receiptHeader.getPrincipalAmount());</span>
+<span class="nc bnc" id="L1985" title="All 2 branches missed.">						} else if (receiptHeader.getGstAmount() != null</span>
+<span class="nc bnc" id="L1986" title="All 2 branches missed.">								&amp;&amp; receiptHeader.getPrincipalAmount() == null) {</span>
+<span class="nc" id="L1987">							receiptHeader.setTotalAmount(receiptHeader.getGstAmount());</span>
+						}
+<span class="nc" id="L1989">						receiptHeader.setDepartment(dplist.get(gllist.get(ob[1].toString()).getDepartment()));</span>
+<span class="nc" id="L1990">						depcode = gllist.get(ob[1].toString()).getDepartment();</span>
+					}
+				}
+<span class="nc bnc" id="L1993" title="All 2 branches missed.">				if(dept!=null)</span>
+<span class="nc bnc" id="L1994" title="All 4 branches missed.">				if (dept[0] != null &amp;&amp; !dept[0].isEmpty()) {</span>
+<span class="nc bnc" id="L1995" title="All 2 branches missed.">					if (!dept[0].equals(depcode)) {</span>
+						//receiptList.add(receiptHeader);
+<span class="nc" id="L1997">						continue;</span>
+					}
+				}
+<span class="nc bnc" id="L2000" title="All 2 branches missed.">				if(receiptMap.get(receiptHeader.getReceiptdatenew()) == null ){</span>
+<span class="nc" id="L2001">					receiptList=new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L2002">						receiptList.add(receiptHeader);</span>
+<span class="nc" id="L2003">					receiptMap.put(receiptHeader.getReceiptdatenew(),receiptList);</span>
+				}
+				else{
+<span class="nc" id="L2006">					receiptMap.get(receiptHeader.getReceiptdatenew()).add(receiptHeader);//map.get().add();</span>
+				}
+<span class="nc" id="L2008">			}</span>
+		}
+<span class="nc bnc" id="L2010" title="All 2 branches missed.">		if (remittlist.size() != 0) {</span>
+<span class="nc bnc" id="L2011" title="All 2 branches missed.">			for (final Object[] ob : remittlist) {</span>
+<span class="nc" id="L2012">				String depcode = &quot;&quot;;</span>
+<span class="nc" id="L2013">				ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+				try {
+<span class="nc bnc" id="L2015" title="All 2 branches missed.">					receiptHeader.setReferencenumber(ob[0]!=null ? ob[0].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L2016" title="All 2 branches missed.">					receiptHeader.setDepositDate(ob[1]!=null ? ob[1].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L2017" title="All 2 branches missed.">					receiptHeader.setBankAccountNumber(ob[2]!=null ? ob[2].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L2018" title="All 2 branches missed.">					receiptHeader.setDepositAmount(ob[3]!=null ? ob[3].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L2019" title="All 2 branches missed.">					receiptHeader.setReceiptnumber(ob[4]!=null ? ob[4].toString(): &quot;&quot;);</span>
+<span class="nc bnc" id="L2020" title="All 2 branches missed.">					receiptHeader.setDepartment(ob[5]!=null ? dplist.get(ob[5].toString()): &quot;&quot;);</span>
+<span class="nc bnc" id="L2021" title="All 4 branches missed.">					if (dep != null &amp;&amp; !dep.isEmpty()) {</span>
+<span class="nc bnc" id="L2022" title="All 2 branches missed.">						if (!dep.equals(receiptHeader.getDepartment())) {</span>
+<span class="nc" id="L2023">							continue;//receiptList.add(receiptHeader);</span>
+						}
+					}
+<span class="nc bnc" id="L2026" title="All 2 branches missed.">					if(remittMap.get(receiptHeader.getDepositDate()) == null ){</span>
+<span class="nc" id="L2027">						receiptList=new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L2028">					receiptList.add(receiptHeader);</span>
+<span class="nc" id="L2029">						remittMap.put(receiptHeader.getDepositDate(),receiptList);//map.put</span>
+					}
+					else{
+<span class="nc" id="L2032">						remittMap.get(receiptHeader.getDepositDate()).add(receiptHeader);//map.get().add();</span>
+					}
+<span class="nc" id="L2034">				} catch (Exception e) {</span>
+<span class="nc" id="L2035">					e.printStackTrace();</span>
+<span class="nc" id="L2036">				}</span>
+
+<span class="nc" id="L2038">				}</span>
+			}
+<span class="nc" id="L2040">		List&lt;ReceiptHeader&gt; finalList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L2041">		List&lt;Date&gt; dates = new ArrayList&lt;Date&gt;();</span>
+		DateFormat formatter;
+<span class="nc" id="L2043">		formatter = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+<span class="nc" id="L2044">		Date startDate = null;</span>
+<span class="nc" id="L2045">		Date endDate = null;</span>
+		try {
+<span class="nc" id="L2047">			startDate = getFromDate();// (Date)formatter.parse(str_date);</span>
+<span class="nc" id="L2048">			endDate = getToDate();// (Date)formatter.parse(end_date);</span>
+<span class="nc" id="L2049">		} catch (Exception e) {</span>
+<span class="nc" id="L2050">			e.printStackTrace();</span>
+<span class="nc" id="L2051">		}</span>
+<span class="nc" id="L2052">		long interval = 24 * 1000 * 60 * 60; // 1 hour in millis</span>
+<span class="nc" id="L2053">		long endTime = endDate.getTime(); // create your endtime here, possibly using Calendar or Date</span>
+<span class="nc" id="L2054">		long curTime = startDate.getTime();</span>
+<span class="nc bnc" id="L2055" title="All 2 branches missed.">		while (curTime &lt;= endTime) {</span>
+<span class="nc" id="L2056">			dates.add(new Date(curTime));</span>
+<span class="nc" id="L2057">			curTime += interval;</span>
+		}
+<span class="nc bnc" id="L2059" title="All 2 branches missed.">		for (Date d:dates) {</span>
+<span class="nc" id="L2060">			Date lDate = (Date) d;</span>
+<span class="nc" id="L2061">			String ds = formatter.format(lDate);</span>
+<span class="nc" id="L2062">			System.out.println(&quot; Date is ...&quot; + ds);</span>
+<span class="nc bnc" id="L2063" title="All 2 branches missed.">			if(receiptMap.get(ds)!=null)</span>
+<span class="nc" id="L2064">				finalList.addAll(receiptMap.get(ds));</span>
+<span class="nc bnc" id="L2065" title="All 2 branches missed.">			if(remittMap.get(ds)!=null)</span>
+<span class="nc" id="L2066">			finalList.addAll(remittMap.get(ds));</span>
+<span class="nc" id="L2067">		}</span>
+
+<span class="nc" id="L2069">		System.out.println(&quot;finalList.size() ::::&quot; + finalList.size());</span>
+		/// Bhushan
+<span class="nc" id="L2071">		List&lt;ReceiptHeader&gt; receiptListfilterList = finalList;</span>
+<span class="nc" id="L2072">		System.out.println(&quot;receiptListfilterList.size() ::::&quot; + receiptListfilterList.size());</span>
+<span class="nc" id="L2073">		List&lt;ReceiptHeader&gt; receiptListnew = new ArrayList&lt;&gt;();</span>
+		// receiptList.clear();
+
+<span class="nc" id="L2076">		List&lt;ReceiptReportBean&gt; receiptReportList = new ArrayList&lt;ReceiptReportBean&gt;();</span>
+<span class="nc" id="L2077">		ReceiptReportBean bean = null;</span>
+<span class="nc" id="L2078">		int i = 1;</span>
+		try {
+<span class="nc bnc" id="L2080" title="All 4 branches missed.">		if (finalList != null &amp;&amp; !finalList.isEmpty()) {</span>
+<span class="nc" id="L2081">			System.out.println(&quot;receipt non empty&quot;);</span>
+<span class="nc bnc" id="L2082" title="All 2 branches missed.">			for (ReceiptHeader header : finalList) {</span>
+<span class="nc" id="L2083">				bean = new ReceiptReportBean();</span>
+<span class="nc" id="L2084">				bean.setSlNo(String.valueOf(i++));</span>
+				// bean.setParamDate(getDateString(header.getReceiptdate()));
+<span class="nc bnc" id="L2086" title="All 2 branches missed.">				bean.setParamDate(header.getReceiptdatenew()!=null?header.getReceiptdatenew():&quot;&quot;);</span>
+<span class="nc bnc" id="L2087" title="All 2 branches missed.">				bean.setReceiptNo(header.getReceiptnumber()!=null?header.getReceiptnumber():&quot;&quot;);</span>
+<span class="nc bnc" id="L2088" title="All 2 branches missed.">				bean.setCollectedBy(header.getCreatedUser()!=null?header.getCreatedUser():&quot;&quot;);</span>
+<span class="nc bnc" id="L2089" title="All 2 branches missed.">				bean.setPayeeName(header.getPaidBy()!=null?header.getPaidBy().split(&quot;&amp;&quot;)[0]:&quot;&quot;);</span>
+<span class="nc bnc" id="L2090" title="All 2 branches missed.">				bean.setServiceType(header.getService()!=null?header.getService():&quot;&quot;);</span>
+				//bean.setServiceCategory(header.getServiceType()!=null?header.getServiceType():&quot;&quot;);
+				//bean.setChequeddno(header.getChequeddno()!=null?header.getChequeddno():&quot;&quot;);
+				//bean.setChequedddate(header.getChequedddate()!=null?header.getChequedddate():&quot;&quot;);
+				//bean.setBank(header.getBank()!=null?header.getBank():&quot;&quot;);
+<span class="nc bnc" id="L2095" title="All 2 branches missed.">				bean.setModeOfPayment(header.getModOfPayment()!=null?header.getModOfPayment():&quot;&quot;);</span>
+<span class="nc bnc" id="L2096" title="All 2 branches missed.">				bean.setParticulars(header.getReferenceDesc()!=null?header.getReferenceDesc():&quot;&quot;);</span>
+<span class="nc" id="L2097">				bean.setTotalReceiptAmount(header.getTotalAmount());</span>
+<span class="nc bnc" id="L2098" title="All 2 branches missed.">				bean.setGstNo(header.getGstno()!=null?header.getGstno():&quot;&quot;);</span>
+<span class="nc bnc" id="L2099" title="All 2 branches missed.">				bean.setStatus(header.getCurretnStatus()!=null?header.getCurretnStatus():&quot;&quot;);</span>
+<span class="nc bnc" id="L2100" title="All 2 branches missed.">				bean.setDepartment(header.getDepartment()!=null?header.getDepartment():&quot;&quot;);</span>
+<span class="nc bnc" id="L2101" title="All 2 branches missed.">				if (header.getPrincipalAmount() != null) {</span>
+<span class="nc" id="L2102">					bean.setPrincipalAmt(header.getPrincipalAmount());</span>
+				} else {
+<span class="nc" id="L2104">					bean.setPrincipalAmt(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc bnc" id="L2106" title="All 2 branches missed.">				if (header.getGstAmount() != null) {</span>
+<span class="nc" id="L2107">					bean.setGstAmount(header.getGstAmount());</span>
+				} else {
+<span class="nc" id="L2109">					bean.setPrincipalAmt(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc bnc" id="L2111" title="All 2 branches missed.">				if (header.getDepositDate() != null) {</span>
+<span class="nc" id="L2112">					bean.setDateOfDeposite(header.getDepositDate());</span>
+				} else {
+<span class="nc" id="L2114">					bean.setDateOfDeposite(&quot;&quot;);</span>
+				}
+<span class="nc bnc" id="L2116" title="All 2 branches missed.">				if (header.getReferencenumber() != null) {</span>
+<span class="nc" id="L2117">					bean.setRemitanceNo(header.getReferencenumber());</span>
+				} else {
+<span class="nc" id="L2119">					bean.setRemitanceNo(&quot;&quot;);</span>
+				}
+<span class="nc bnc" id="L2121" title="All 2 branches missed.">				if (header.getBankAccountNumber() != null) {</span>
+<span class="nc" id="L2122">					bean.setBankAccountNo(header.getBankAccountNumber());</span>
+				} else {
+<span class="nc" id="L2124">					bean.setBankAccountNo(&quot;&quot;);</span>
+				}
+
+<span class="nc bnc" id="L2127" title="All 2 branches missed.">				if (header.getDepositAmount() != null) {</span>
+<span class="nc" id="L2128">					bean.setDepositAmount(new BigDecimal(header.getDepositAmount()));</span>
+				} else {
+<span class="nc" id="L2130">					bean.setDepositAmount(new BigDecimal(&quot;0&quot;));</span>
+				}
+<span class="nc" id="L2132">				receiptReportList.add(bean);</span>
+<span class="nc" id="L2133">			}</span>
+
+		}
+		}
+<span class="nc" id="L2137">		catch(Exception e){</span>
+<span class="nc" id="L2138">			e.printStackTrace();</span>
+<span class="nc" id="L2139">		}</span>
+<span class="nc" id="L2140">		System.out.println(&quot;report size ::&quot; + receiptReportList.size());</span>
+<span class="nc" id="L2141">		Map&lt;String, Object&gt; paramMap = new HashMap&lt;String, Object&gt;();</span>
+<span class="nc" id="L2142">		String jasperName = &quot;CollectionReport&quot;;</span>
+<span class="nc" id="L2143">		paramMap.put(&quot;CollectionReportDataSource&quot;, getDataSource(receiptReportList));</span>
+<span class="nc" id="L2144">		paramMap.put(&quot;HeaderParameter&quot;, &quot;Detail of Collection Report between &quot; + getDateString(getFromDate()) + &quot; and &quot;</span>
+<span class="nc" id="L2145">				+ getDateString(getToDate()));</span>
+<span class="nc" id="L2146">		System.out.println(&quot;Start of report&quot;);</span>
+		try {
+<span class="nc" id="L2148">			byte[] fileContent = populateExcel(receiptReportList, paramMap);</span>
+<span class="nc" id="L2149">			inputStream = new ByteArrayInputStream(fileContent);</span>
+<span class="nc" id="L2150">		} catch (Exception e) {</span>
+<span class="nc" id="L2151">			e.printStackTrace();</span>
+<span class="nc" id="L2152">		}</span>
+<span class="nc" id="L2153">		System.out.println(&quot;END&quot;);</span>
+<span class="nc" id="L2154">		return &quot;XLS&quot;;</span>
+	}
+
+	private List&lt;RemittanceDepositWorkDetail&gt; getDepositWork(List&lt;Receipt&gt; receipts) {
+
+<span class="nc" id="L2159">		Set&lt;String&gt; reciptNumber = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L2161" title="All 2 branches missed.">		for (Receipt receipt : receipts) {</span>
+
+<span class="nc bnc" id="L2163" title="All 2 branches missed.">			for (org.egov.infra.microservice.models.Bill bill : receipt.getBill()) {</span>
+
+<span class="nc bnc" id="L2165" title="All 2 branches missed.">				for (BillDetail billDetail : bill.getBillDetails()) {</span>
+
+<span class="nc" id="L2167">					reciptNumber.add(billDetail.getReceiptNumber());</span>
+
+<span class="nc" id="L2169">				}</span>
+
+<span class="nc" id="L2171">			}</span>
+<span class="nc" id="L2172">		}</span>
+
+<span class="nc" id="L2174">		RemittanceResponseDepositWorkDetails remittanceResponse = microserviceUtils.getDayWorkHistory(reciptNumber);</span>
+<span class="nc" id="L2175">		return remittanceResponse.getRemittanceDepositWorkDetail();</span>
+	}
+
+	private List&lt;RemittanceDepositWorkDetail&gt; getDepositWorknew(List&lt;String&gt; receipts) {
+
+<span class="nc" id="L2180">		Set&lt;String&gt; reciptNumber = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L2182" title="All 2 branches missed.">		for (String receipt : receipts) {</span>
+
+<span class="nc" id="L2184">			reciptNumber.add(receipt);</span>
+<span class="nc" id="L2185">		}</span>
+
+<span class="nc" id="L2187">		RemittanceResponseDepositWorkDetails remittanceResponse = microserviceUtils.getDayWorkHistory(reciptNumber);</span>
+<span class="nc" id="L2188">		return remittanceResponse.getRemittanceDepositWorkDetail();</span>
+	}
+
+	/**
+	 * @return the target
+	 */
+	public String getTarget() {
+<span class="nc" id="L2195">		return target;</span>
+	}
+
+	public Long getUserId() {
+<span class="nc" id="L2199">		return userId;</span>
+	}
+
+	public void setUserId(final Long userId) {
+<span class="nc" id="L2203">		this.userId = userId;</span>
+<span class="nc" id="L2204">	}</span>
+
+	public Map&lt;String, String&gt; getServiceCategoryNames() {
+<span class="nc" id="L2207">		return serviceCategoryNames;</span>
+	}
+
+	public void setServiceCategoryNames(Map&lt;String, String&gt; serviceCategoryNames) {
+<span class="nc" id="L2211">		this.serviceCategoryNames = serviceCategoryNames;</span>
+<span class="nc" id="L2212">	}</span>
+
+	public Map&lt;String, Map&lt;String, String&gt;&gt; getServiceTypeMap() {
+<span class="nc" id="L2215">		return serviceTypeMap;</span>
+	}
+
+	public void setServiceTypeMap(Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap) {
+<span class="nc" id="L2219">		this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L2220">	}</span>
+
+	private String getDateQuery(final Date dateFrom, final Date dateTo) {
+<span class="nc" id="L2223">		final StringBuffer numDateQuery = new StringBuffer();</span>
+		try {
+
+<span class="nc bnc" id="L2226" title="All 2 branches missed.">			if (null != dateFrom)</span>
+<span class="nc" id="L2227">				numDateQuery.append(&quot; date(mrd.receipt_date) &gt;='&quot;).append(DDMMYYYYFORMAT1.format(dateFrom)).append(&quot;'&quot;);</span>
+<span class="nc bnc" id="L2228" title="All 2 branches missed.">			if (null != dateTo)</span>
+<span class="nc" id="L2229">				numDateQuery.append(&quot; and date(mrd.receipt_date)  &lt;='&quot;).append(DDMMYYYYFORMAT1.format(dateTo))</span>
+<span class="nc" id="L2230">						.append(&quot;'&quot;);</span>
+
+<span class="nc" id="L2232">		} catch (final Exception e) {</span>
+<span class="nc" id="L2233">			e.printStackTrace();</span>
+<span class="nc" id="L2234">		}</span>
+<span class="nc" id="L2235">		return numDateQuery.toString();</span>
+	}
+
+	private String getDateQuery1(final Date dateFrom, final Date dateTo) {
+<span class="nc" id="L2239">		final StringBuffer numDateQuery = new StringBuffer();</span>
+		try {
+
+<span class="nc bnc" id="L2242" title="All 2 branches missed.">			if (null != dateFrom)</span>
+<span class="nc" id="L2243">				numDateQuery.append(&quot; date(mrd.voucher_date) &gt;='&quot;).append(DDMMYYYYFORMAT1.format(dateFrom)).append(&quot;'&quot;);</span>
+<span class="nc bnc" id="L2244" title="All 2 branches missed.">			if (null != dateTo)</span>
+<span class="nc" id="L2245">				numDateQuery.append(&quot; and date(mrd.voucher_date)  &lt;='&quot;).append(DDMMYYYYFORMAT1.format(dateTo))</span>
+<span class="nc" id="L2246">						.append(&quot;'&quot;);</span>
+
+<span class="nc" id="L2248">		} catch (final Exception e) {</span>
+<span class="nc" id="L2249">			e.printStackTrace();</span>
+<span class="nc" id="L2250">		}</span>
+<span class="nc" id="L2251">		return numDateQuery.toString();</span>
+	}
+
+	@Override
+	public SearchQuery prepareQuery(final String sortField, final String sortDir) {
+<span class="nc" id="L2256">		final ArrayList&lt;Object&gt; params = new ArrayList&lt;Object&gt;(0);</span>
+<span class="nc" id="L2257">		final StringBuilder searchQueryString = new StringBuilder(&quot;select distinct receipt &quot;);</span>
+<span class="nc" id="L2258">		final StringBuilder countQueryString = new StringBuilder(&quot;select count(distinct receipt) &quot;);</span>
+<span class="nc" id="L2259">		final StringBuilder fromString = new StringBuilder(&quot; from org.egov.collection.entity.ReceiptHeader receipt &quot;);</span>
+<span class="nc" id="L2260">		final String orderByString = &quot; group by receipt.receiptdate,receipt.id  order by receipt.receiptdate desc&quot;;</span>
+
+		// Get only those receipts whose status is NOT PENDING
+<span class="nc" id="L2263">		final StringBuilder criteriaString = new StringBuilder(&quot; where receipt.status.code != ? &quot;);</span>
+<span class="nc" id="L2264">		params.add(CollectionConstants.RECEIPT_STATUS_CODE_PENDING);</span>
+
+<span class="nc bnc" id="L2266" title="All 2 branches missed.">		if (StringUtils.isNotBlank(getInstrumentType())) {</span>
+<span class="nc" id="L2267">			fromString.append(&quot; inner join receipt.receiptInstrument as instruments &quot;);</span>
+<span class="nc" id="L2268">			criteriaString.append(&quot; and instruments.instrumentType.type = ? &quot;);</span>
+<span class="nc" id="L2269">			params.add(getInstrumentType());</span>
+		}
+
+<span class="nc bnc" id="L2272" title="All 2 branches missed.">		if (StringUtils.isNotBlank(getReceiptNumber())) {</span>
+<span class="nc" id="L2273">			criteriaString.append(&quot; and upper(receiptNumber) like ? &quot;);</span>
+<span class="nc" id="L2274">			params.add(&quot;%&quot; + getReceiptNumber().toUpperCase() + &quot;%&quot;);</span>
+		}
+<span class="nc bnc" id="L2276" title="All 2 branches missed.">		if (StringUtils.isNotBlank(getManualReceiptNumber())) {</span>
+<span class="nc" id="L2277">			criteriaString.append(&quot; and upper(receipt.manualreceiptnumber) like ? &quot;);</span>
+<span class="nc" id="L2278">			params.add(&quot;%&quot; + getManualReceiptNumber().toUpperCase() + &quot;%&quot;);</span>
+		}
+<span class="nc bnc" id="L2280" title="All 2 branches missed.">		if (getSearchStatus() != -1) {</span>
+<span class="nc" id="L2281">			criteriaString.append(&quot; and receipt.status.id = ? &quot;);</span>
+<span class="nc" id="L2282">			params.add(getSearchStatus());</span>
+		}
+<span class="nc bnc" id="L2284" title="All 2 branches missed.">		if (getFromDate() != null) {</span>
+<span class="nc" id="L2285">			criteriaString.append(&quot; and receipt.receiptdate &gt;= ? &quot;);</span>
+<span class="nc" id="L2286">			params.add(fromDate);</span>
+		}
+		/*
+		 * if (getToDate() != null) {
+		 * criteriaString.append(&quot; and receipt.receiptdate &lt; ? &quot;);
+		 * params.add(DateUtils.add(toDate, Calendar.DATE, 1)); }
+		 */
+<span class="nc bnc" id="L2293" title="All 2 branches missed.">		if (getToDate() != null) {</span>
+<span class="nc" id="L2294">			criteriaString.append(&quot; and receipt.receiptdate &lt; ? &quot;);</span>
+<span class="nc" id="L2295">			params.add(toDate);</span>
+		}
+<span class="nc bnc" id="L2297" title="All 2 branches missed.">		if (getServiceTypeId() != null) {</span>
+<span class="nc" id="L2298">			criteriaString.append(&quot; and receipt.service.id = ? &quot;);</span>
+<span class="nc" id="L2299">			params.add(Long.valueOf(getServiceTypeId()));</span>
+		}
+
+<span class="nc bnc" id="L2302" title="All 2 branches missed.">		if (!getServiceClass().equals(&quot;-1&quot;)) {</span>
+<span class="nc" id="L2303">			criteriaString.append(&quot; and receipt.service.serviceType = ? &quot;);</span>
+<span class="nc" id="L2304">			params.add(getServiceClass());</span>
+		}
+
+<span class="nc bnc" id="L2307" title="All 2 branches missed.">		if (getUserId() != -1) {</span>
+<span class="nc" id="L2308">			criteriaString.append(&quot; and receipt.createdBy.id = ? &quot;);</span>
+<span class="nc" id="L2309">			params.add(userId);</span>
+		}
+<span class="nc bnc" id="L2311" title="All 2 branches missed.">		if (getBranchId() != -1) {</span>
+<span class="nc" id="L2312">			criteriaString.append(&quot; and receipt.receiptMisc.depositedBranch.id = ? &quot;);</span>
+<span class="nc" id="L2313">			params.add(getBranchId());</span>
+		}
+
+<span class="nc" id="L2316">		final String searchQuery = searchQueryString.append(fromString).append(criteriaString).append(orderByString)</span>
+<span class="nc" id="L2317">				.toString();</span>
+<span class="nc" id="L2318">		final String countQuery = countQueryString.append(fromString).append(criteriaString).toString();</span>
+
+<span class="nc" id="L2320">		return new SearchQueryHQL(searchQuery, countQuery, params);</span>
+	}
+
+	public Integer getSearchStatus() {
+<span class="nc" id="L2324">		return searchStatus;</span>
+	}
+
+	public void setSearchStatus(final Integer searchStatus) {
+<span class="nc" id="L2328">		this.searchStatus = searchStatus;</span>
+<span class="nc" id="L2329">	}</span>
+
+	public SearchQuery prepareQuery() {
+
+<span class="nc" id="L2333">		return null;</span>
+	}
+
+	public String getManualReceiptNumber() {
+<span class="nc" id="L2337">		return manualReceiptNumber;</span>
+	}
+
+	public void setManualReceiptNumber(final String manualReceiptNumber) {
+<span class="nc" id="L2341">		this.manualReceiptNumber = manualReceiptNumber;</span>
+<span class="nc" id="L2342">	}</span>
+
+	public List getResultList() {
+<span class="nc" id="L2345">		return resultList;</span>
+	}
+
+	public void setResultList(List resultList) {
+<span class="nc" id="L2349">		this.resultList = resultList;</span>
+<span class="nc" id="L2350">	}</span>
+
+	public String getServiceClass() {
+<span class="nc" id="L2353">		return serviceClass;</span>
+	}
+
+	public void setServiceClass(String serviceClass) {
+<span class="nc" id="L2357">		this.serviceClass = serviceClass;</span>
+<span class="nc" id="L2358">	}</span>
+
+	public TreeMap&lt;String, String&gt; getServiceClassMap() {
+<span class="nc" id="L2361">		return serviceClassMap;</span>
+	}
+
+	public void setServiceClassMap(TreeMap&lt;String, String&gt; serviceClassMap) {
+<span class="nc" id="L2365">		this.serviceClassMap = serviceClassMap;</span>
+<span class="nc" id="L2366">	}</span>
+
+	/**
+	 * @param collectionsUtil the collectionsUtil to set
+	 */
+	public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L2372">		this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L2373">	}</span>
+
+	public Integer getBranchId() {
+<span class="nc" id="L2376">		return branchId;</span>
+	}
+
+	public void setBranchId(Integer branchId) {
+<span class="nc" id="L2380">		this.branchId = branchId;</span>
+<span class="nc" id="L2381">	}</span>
+
+	public String getCollectionVersion() {
+<span class="nc" id="L2384">		return collectionVersion;</span>
+	}
+
+	public void setCollectionVersion(String collectionVersion) {
+<span class="nc" id="L2388">		this.collectionVersion = collectionVersion;</span>
+<span class="nc" id="L2389">	}</span>
+
+	public String getDeptId() {
+<span class="nc" id="L2392">		return deptId;</span>
+	}
+
+	public void setDeptId(String deptId) {
+<span class="nc" id="L2396">		this.deptId = deptId;</span>
+<span class="nc" id="L2397">	}</span>
+
+	public String getReportId() {
+<span class="nc" id="L2400">		return reportId;</span>
+	}
+
+	public void setReportId(String reportId) {
+<span class="nc" id="L2404">		this.reportId = reportId;</span>
+<span class="nc" id="L2405">	}</span>
+
+	private static JRBeanCollectionDataSource getDataSource(List&lt;ReceiptReportBean&gt; reportList) {
+<span class="nc" id="L2408">		return new JRBeanCollectionDataSource(reportList);</span>
+	}
+
+	public InputStream getInputStream() {
+<span class="nc" id="L2412">		return inputStream;</span>
+	}
+
+	public void setInputStream(InputStream inputStream) {
+<span class="nc" id="L2416">		this.inputStream = inputStream;</span>
+<span class="nc" id="L2417">	}</span>
+
+	public String getServiceTypeIdforExcel() {
+<span class="nc" id="L2420">		return serviceTypeIdforExcel;</span>
+	}
+
+	public void setServiceTypeIdforExcel(String serviceTypeIdforExcel) {
+<span class="nc" id="L2424">		this.serviceTypeIdforExcel = serviceTypeIdforExcel;</span>
+<span class="nc" id="L2425">	}</span>
+
+	public void setReportService(ReportService reportService) {
+<span class="nc" id="L2428">		this.reportService = reportService;</span>
+<span class="nc" id="L2429">	}</span>
+
+	private String getDateString(Date date) {
+<span class="nc" id="L2432">		Date d = new Date();</span>
+<span class="nc" id="L2433">		String dateString = null;</span>
+<span class="nc" id="L2434">		SimpleDateFormat sdfr = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+
+		try {
+<span class="nc" id="L2437">			dateString = sdfr.format(date);</span>
+<span class="nc" id="L2438">		} catch (Exception ex) {</span>
+<span class="nc" id="L2439">			ex.printStackTrace();</span>
+<span class="nc" id="L2440">		}</span>
+<span class="nc" id="L2441">		return dateString;</span>
+	}
+
+	public String getCollectedBy() {
+<span class="nc" id="L2445">		return collectedBy;</span>
+	}
+
+	public void setCollectedBy(String collectedBy) {
+<span class="nc" id="L2449">		this.collectedBy = collectedBy;</span>
+<span class="nc" id="L2450">	}</span>
+
+	public String getSearchAmount() {
+<span class="nc" id="L2453">		return searchAmount;</span>
+	}
+
+	public void setSearchAmount(String searchAmount) {
+<span class="nc" id="L2457">		this.searchAmount = searchAmount;</span>
+<span class="nc" id="L2458">	}</span>
+
+	public String getModeOfPayment() {
+<span class="nc" id="L2461">		return modeOfPayment;</span>
+	}
+
+	public void setModeOfPayment(String modeOfPayment) {
+<span class="nc" id="L2465">		this.modeOfPayment = modeOfPayment;</span>
+<span class="nc" id="L2466">	}</span>
+
+	public String getSubdivison() {
+<span class="nc" id="L2469">		return subdivison;</span>
+	}
+
+	public void setSubdivison(String subdivison) {
+<span class="nc" id="L2473">		this.subdivison = subdivison;</span>
+<span class="nc" id="L2474">	}</span>
+
+	public String getReceiptType() {
+<span class="nc" id="L2477">		return receiptType;</span>
+	}
+
+	public void setReceiptType(String receiptType) {
+<span class="nc" id="L2481">		this.receiptType = receiptType;</span>
+<span class="nc" id="L2482">	}</span>
+
+	public String getServiceId() {
+<span class="nc" id="L2485">		return serviceId;</span>
+	}
+
+	public void setServiceId(String serviceId) {
+<span class="nc" id="L2489">		this.serviceId = serviceId;</span>
+<span class="nc" id="L2490">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

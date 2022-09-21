@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillV2.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">BillV2.java</span></div><h1>BillV2.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.microservice.models;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.Valid;
+
+import org.apache.commons.collections.CollectionUtils;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+@Getter
+<span class="nc" id="L73">@Setter</span>
+<span class="nc" id="L74">@ToString</span>
+<span class="nc" id="L75">@Builder</span>
+<span class="nc" id="L76">@NoArgsConstructor</span>
+<span class="nc" id="L77">@AllArgsConstructor</span>
+<span class="nc bnc" id="L78" title="All 198 branches missed.">@EqualsAndHashCode</span>
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class BillV2 {
+    // TODO some of the fields are mandatory in yml, lets discuss billdetail and billaccountdetail also for more clarity
+
+<span class="nc" id="L83">          @JsonProperty(&quot;id&quot;)</span>
+<span class="nc" id="L84">          private String id = null;</span>
+
+<span class="nc" id="L86">          @JsonProperty(&quot;mobileNumber&quot;)</span>
+<span class="nc" id="L87">          private String mobileNumber = null;</span>
+
+<span class="nc" id="L89">          @JsonProperty(&quot;paidBy&quot;)</span>
+<span class="nc" id="L90">          private String paidBy = null;</span>
+
+<span class="nc" id="L92">          @JsonProperty(&quot;payerName&quot;)</span>
+<span class="nc" id="L93">          private String payerName = null;</span>
+
+<span class="nc" id="L95">          @JsonProperty(&quot;payerAddress&quot;)</span>
+<span class="nc" id="L96">          private String payerAddress = null;</span>
+
+<span class="nc" id="L98">          @JsonProperty(&quot;payerEmail&quot;)</span>
+<span class="nc" id="L99">          private String payerEmail = null;</span>
+
+<span class="nc" id="L101">          @JsonProperty(&quot;payerId&quot;)</span>
+<span class="nc" id="L102">          private String payerId = null;</span>
+
+<span class="nc" id="L104">          @JsonProperty(&quot;status&quot;)</span>
+<span class="nc" id="L105">          private StatusEnum status = null;</span>
+
+<span class="nc" id="L107">          @JsonProperty(&quot;reasonForCancellation&quot;)</span>
+<span class="nc" id="L108">          private String reasonForCancellation = null;</span>
+
+<span class="nc" id="L110">          @JsonProperty(&quot;isCancelled&quot;)</span>
+<span class="nc" id="L111">          private Boolean isCancelled = null;</span>
+
+<span class="nc" id="L113">          @JsonProperty(&quot;additionalDetails&quot;)</span>
+<span class="nc" id="L114">          private JsonNode additionalDetails = null;</span>
+
+<span class="nc" id="L116">          @JsonProperty(&quot;billDetails&quot;)</span>
+          @Valid
+<span class="nc" id="L118">          private List&lt;BillDetailV2&gt; billDetails = null;</span>
+
+<span class="nc" id="L120">          @JsonProperty(&quot;tenantId&quot;)</span>
+<span class="nc" id="L121">          private String tenantId = null;</span>
+
+<span class="nc" id="L123">          @JsonProperty(&quot;auditDetails&quot;)</span>
+<span class="nc" id="L124">          private AuditDetails auditDetails = null;</span>
+
+<span class="nc" id="L126">          @JsonProperty(&quot;collectionModesNotAllowed&quot;)</span>
+<span class="nc" id="L127">          private List&lt;String&gt; collectionModesNotAllowed = null;</span>
+
+<span class="nc" id="L129">          @JsonProperty(&quot;partPaymentAllowed&quot;)</span>
+<span class="nc" id="L130">          private Boolean partPaymentAllowed = null;</span>
+
+          @JsonProperty(&quot;isAdvanceAllowed&quot;)
+<span class="nc" id="L133">          private Boolean isAdvanceAllowed;</span>
+
+<span class="nc" id="L135">          @JsonProperty(&quot;minimumAmountToBePaid&quot;)</span>
+<span class="nc" id="L136">          private BigDecimal minimumAmountToBePaid = null;</span>
+
+<span class="nc" id="L138">          @JsonProperty(&quot;businessService&quot;)</span>
+<span class="nc" id="L139">          private String businessService = null;</span>
+
+<span class="nc" id="L141">          @JsonProperty(&quot;totalAmount&quot;)</span>
+<span class="nc" id="L142">          private BigDecimal totalAmount = null;</span>
+
+<span class="nc" id="L144">          @JsonProperty(&quot;consumerCode&quot;)</span>
+<span class="nc" id="L145">          private String consumerCode = null;</span>
+
+<span class="nc" id="L147">          @JsonProperty(&quot;billNumber&quot;)</span>
+<span class="nc" id="L148">          private String billNumber = null;</span>
+
+<span class="nc" id="L150">          @JsonProperty(&quot;billDate&quot;)</span>
+<span class="nc" id="L151">          private Long billDate = null;</span>
+
+          @JsonProperty(&quot;amountPaid&quot;)
+<span class="nc" id="L154">          private BigDecimal amountPaid;</span>
+
+
+
+<span class="nc" id="L158">        public enum StatusEnum {</span>
+<span class="nc" id="L159">          ACTIVE(&quot;ACTIVE&quot;),</span>
+
+<span class="nc" id="L161">          CANCELLED(&quot;CANCELLED&quot;),</span>
+
+<span class="nc" id="L163">          PAID(&quot;PAID&quot;),</span>
+
+<span class="nc" id="L165">          EXPIRED(&quot;EXPIRED&quot;);</span>
+
+          private String value;
+
+<span class="nc" id="L169">          StatusEnum(String value) {</span>
+<span class="nc" id="L170">          this.value = value;</span>
+<span class="nc" id="L171">        }</span>
+
+
+        @Override
+        @JsonValue
+        public String toString() {
+<span class="nc" id="L177">                return String.valueOf(value);</span>
+        }
+
+        public static boolean contains(String test) {
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                for (StatusEnum val : StatusEnum.values()) {</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                        if (val.name().equalsIgnoreCase(test)) {</span>
+<span class="nc" id="L183">                                return true;</span>
+                        }
+                }
+<span class="nc" id="L186">                return false;</span>
+        }
+
+        @JsonCreator
+        public static StatusEnum fromValue(String text) {
+<span class="nc bnc" id="L191" title="All 2 branches missed.">                for (StatusEnum b : StatusEnum.values()) {</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">                        if (String.valueOf(b.value).equals(text)) {</span>
+<span class="nc" id="L193">                                return b;</span>
+                        }
+                }
+<span class="nc" id="L196">                return null;</span>
+        }
+
+  }
+
+        public Boolean addBillDetail(BillDetailV2 billDetail) {
+
+<span class="nc bnc" id="L203" title="All 2 branches missed.">                if (CollectionUtils.isEmpty(billDetails)) {</span>
+
+<span class="nc" id="L205">                        billDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L206">                        return billDetails.add(billDetail);</span>
+                } else {
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">                        if (!billDetails.contains(billDetail))</span>
+<span class="nc" id="L210">                                return billDetails.add(billDetail);</span>
+                        else
+<span class="nc" id="L212">                                return false;</span>
+                }
+        }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

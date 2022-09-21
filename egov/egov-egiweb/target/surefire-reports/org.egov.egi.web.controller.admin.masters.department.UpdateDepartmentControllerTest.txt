@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.egov.egi.web.controller.admin.masters.department.UpdateDepartmentControllerTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.174 s - in org.egov.egi.web.controller.admin.masters.department.UpdateDepartmentControllerTest

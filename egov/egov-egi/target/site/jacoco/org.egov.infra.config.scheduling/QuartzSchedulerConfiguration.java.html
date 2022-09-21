@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuartzSchedulerConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.scheduling</a> &gt; <span class="el_source">QuartzSchedulerConfiguration.java</span></div><h1>QuartzSchedulerConfiguration.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.scheduling;
+
+import org.egov.infra.scheduler.quartz.QuartzJobAwareBeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
+import org.springframework.scheduling.quartz.SimpleThreadPoolTaskExecutor;
+import org.springframework.scheduling.quartz.SpringBeanJobFactory;
+
+import javax.sql.DataSource;
+import java.util.Properties;
+
+import static org.quartz.impl.StdSchedulerFactory.AUTO_GENERATE_INSTANCE_ID;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_BATCH_TIME_WINDOW;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_INSTANCE_ID;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_MAX_BATCH_SIZE;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_SCHEDULER_THREADS_INHERIT_CONTEXT_CLASS_LOADER_OF_INITIALIZING_THREAD;
+import static org.quartz.impl.StdSchedulerFactory.PROP_SCHED_WRAP_JOB_IN_USER_TX;
+
+<span class="nc" id="L73">public class QuartzSchedulerConfiguration {</span>
+
+    private static final String APP_SCHEDULER_NAME = &quot;ERP_APP_SCHEDULER&quot;;
+    private static final String FALSE = &quot;false&quot;;
+    private static final String TRUE = &quot;true&quot;;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private Environment env;
+
+    @Bean
+    public SpringBeanJobFactory springBeanJobFactory() {
+<span class="nc" id="L87">        QuartzJobAwareBeanFactory jobFactory = new QuartzJobAwareBeanFactory();</span>
+<span class="nc" id="L88">        jobFactory.setApplicationContext(applicationContext);</span>
+<span class="nc" id="L89">        return jobFactory;</span>
+    }
+
+    @Bean(destroyMethod = &quot;destroy&quot;)
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public SimpleThreadPoolTaskExecutor taskExecutor() {
+<span class="nc" id="L95">        SimpleThreadPoolTaskExecutor taskExecutor = new SimpleThreadPoolTaskExecutor();</span>
+<span class="nc" id="L96">        taskExecutor.setInstanceId(&quot;AUTO&quot;);</span>
+<span class="nc" id="L97">        taskExecutor.setInstanceName(APP_SCHEDULER_NAME);</span>
+<span class="nc" id="L98">        taskExecutor.setThreadCount(10);</span>
+<span class="nc" id="L99">        taskExecutor.setThreadNamePrefix(APP_SCHEDULER_NAME);</span>
+<span class="nc" id="L100">        taskExecutor.setThreadPriority(5);</span>
+<span class="nc" id="L101">        taskExecutor.setThreadsInheritContextClassLoaderOfInitializingThread(true);</span>
+<span class="nc" id="L102">        taskExecutor.setThreadsInheritGroupOfInitializingThread(true);</span>
+<span class="nc" id="L103">        taskExecutor.setWaitForJobsToCompleteOnShutdown(true);</span>
+<span class="nc" id="L104">        return taskExecutor;</span>
+    }
+
+    protected SchedulerFactoryBean createScheduler(DataSource dataSource) {
+<span class="nc" id="L108">        SchedulerFactoryBean schedulerFactory = new SchedulerFactoryBean();</span>
+<span class="nc" id="L109">        schedulerFactory.setOverwriteExistingJobs(true);</span>
+<span class="nc" id="L110">        schedulerFactory.setAutoStartup(false);</span>
+<span class="nc" id="L111">        schedulerFactory.setExposeSchedulerInRepository(true);</span>
+<span class="nc" id="L112">        schedulerFactory.setJobFactory(springBeanJobFactory());</span>
+<span class="nc" id="L113">        schedulerFactory.setTaskExecutor(taskExecutor());</span>
+<span class="nc" id="L114">        schedulerFactory.setWaitForJobsToCompleteOnShutdown(false);</span>
+<span class="nc" id="L115">        schedulerFactory.setQuartzProperties(quartzProperties());</span>
+<span class="nc" id="L116">        schedulerFactory.setDataSource(dataSource);</span>
+
+<span class="nc" id="L118">        return schedulerFactory;</span>
+    }
+
+    private Properties quartzProperties() {
+<span class="nc" id="L122">        Properties quartzProps = new Properties();</span>
+
+        //Scheduler config
+<span class="nc" id="L125">        quartzProps.put(PROP_SCHED_INSTANCE_ID, AUTO_GENERATE_INSTANCE_ID);</span>
+<span class="nc" id="L126">        quartzProps.put(PROP_SCHED_INSTANCE_NAME, APP_SCHEDULER_NAME);</span>
+<span class="nc" id="L127">        quartzProps.put(PROP_SCHED_WRAP_JOB_IN_USER_TX, FALSE);</span>
+<span class="nc" id="L128">        quartzProps.put(PROP_SCHED_MAX_BATCH_SIZE, 10);</span>
+<span class="nc" id="L129">        quartzProps.put(PROP_SCHED_BATCH_TIME_WINDOW, 1000);</span>
+<span class="nc" id="L130">        quartzProps.put(PROP_SCHED_SCHEDULER_THREADS_INHERIT_CONTEXT_CLASS_LOADER_OF_INITIALIZING_THREAD, TRUE);</span>
+
+        //Cluster job store config
+<span class="nc" id="L133">        quartzProps.put(&quot;org.quartz.jobStore.isClustered&quot;, env.getProperty(&quot;scheduler.clustered&quot;));</span>
+<span class="nc" id="L134">        quartzProps.put(&quot;org.quartz.jobStore.clusterCheckinInterval&quot;, &quot;60000&quot;);</span>
+<span class="nc" id="L135">        quartzProps.put(&quot;org.quartz.jobStore.acquireTriggersWithinLock&quot;, FALSE);</span>
+<span class="nc" id="L136">        quartzProps.put(&quot;org.quartz.jobStore.driverDelegateClass&quot;, &quot;org.quartz.impl.jdbcjobstore.PostgreSQLDelegate&quot;);</span>
+<span class="nc" id="L137">        quartzProps.put(&quot;org.quartz.jobStore.useProperties&quot;, TRUE);</span>
+<span class="nc" id="L138">        quartzProps.put(&quot;org.quartz.jobStore.dataSource&quot;, &quot;quartzDS&quot;);</span>
+<span class="nc" id="L139">        quartzProps.put(&quot;org.quartz.jobStore.nonManagedTXDataSource&quot;, &quot;quartzNoTXDS&quot;);</span>
+<span class="nc" id="L140">        quartzProps.put(&quot;org.quartz.jobStore.tablePrefix&quot;, env.getProperty(&quot;scheduler.default.table.prefix&quot;));</span>
+<span class="nc" id="L141">        quartzProps.put(&quot;org.quartz.jobStore.class&quot;, &quot;org.quartz.impl.jdbcjobstore.JobStoreCMT&quot;);</span>
+<span class="nc" id="L142">        quartzProps.put(&quot;org.quartz.jobStore.dontSetNonManagedTXConnectionAutoCommitFalse&quot;, FALSE);</span>
+<span class="nc" id="L143">        quartzProps.put(&quot;org.quartz.jobStore.dontSetAutoCommitFalse&quot;, TRUE);</span>
+
+        //Datasource config
+<span class="nc" id="L146">        quartzProps.put(&quot;org.quartz.dataSource.quartzDS.jndiURL&quot;, env.getProperty(&quot;default.jdbc.jndi.datasource&quot;));</span>
+<span class="nc" id="L147">        quartzProps.put(&quot;org.quartz.dataSource.quartzNoTXDS.jndiURL&quot;, env.getProperty(&quot;scheduler.datasource.jndi.url&quot;));</span>
+
+        //Logging plugin config
+<span class="nc" id="L150">        quartzProps.put(&quot;org.quartz.plugin.jobHistory.class&quot;, &quot;org.quartz.plugins.history.LoggingJobHistoryPlugin&quot;);</span>
+<span class="nc" id="L151">        quartzProps.put(&quot;org.quartz.plugin.jobHistory.jobToBeFiredMessage&quot;, &quot;Job [{1}.{0}] to be fired by trigger [{4}.{3}], re-fire: {7}&quot;);</span>
+<span class="nc" id="L152">        quartzProps.put(&quot;org.quartz.plugin.jobHistory.jobSuccessMessage&quot;, &quot;Job [{1}.{0}] execution complete and reports: {8}&quot;);</span>
+<span class="nc" id="L153">        quartzProps.put(&quot;org.quartz.plugin.jobHistory.jobFailedMessage&quot;, &quot;Job [{1}.{0}] execution failed with exception: {8}&quot;);</span>
+<span class="nc" id="L154">        quartzProps.put(&quot;org.quartz.plugin.jobHistory.jobWasVetoedMessage&quot;, &quot;Job [{1}.{0}] was vetoed. It was to be fired by trigger [{4}.{3}] at: {2, date, dd-MM-yyyy HH:mm:ss.SSS}&quot;);</span>
+<span class="nc" id="L155">        quartzProps.put(&quot;org.quartz.plugin.triggerHistory.class&quot;, &quot;org.quartz.plugins.history.LoggingTriggerHistoryPlugin&quot;);</span>
+<span class="nc" id="L156">        quartzProps.put(&quot;org.quartz.plugin.triggerHistory.triggerFiredMessage&quot;, &quot;Trigger [{1}.{0}] fired job [{6}.{5}] scheduled at: {2, date, dd-MM-yyyy HH:mm:ss.SSS}, next scheduled at: {3, date, dd-MM-yyyy HH:mm:ss.SSS}&quot;);</span>
+<span class="nc" id="L157">        quartzProps.put(&quot;org.quartz.plugin.triggerHistory.triggerCompleteMessage&quot;, &quot;Trigger [{1}.{0}] completed firing job [{6}.{5}] with resulting trigger instruction code: {9}. Next scheduled at: {3, date, dd-MM-yyyy HH:mm:ss.SSS}&quot;);</span>
+<span class="nc" id="L158">        quartzProps.put(&quot;org.quartz.plugin.triggerHistory.triggerMisfiredMessage&quot;, &quot;Trigger [{1}.{0}] misfired job [{6}.{5}]. Should have fired at: {3, date, dd-MM-yyyy HH:mm:ss.SSS}&quot;);</span>
+
+        //Shutdown plugin config
+<span class="nc" id="L161">        quartzProps.put(&quot;org.quartz.plugin.shutdownHook.class&quot;, &quot;org.quartz.plugins.management.ShutdownHookPlugin&quot;);</span>
+<span class="nc" id="L162">        quartzProps.put(&quot;org.quartz.plugin.shutdownHook.cleanShutdown&quot;, TRUE);</span>
+
+<span class="nc" id="L164">        return quartzProps;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

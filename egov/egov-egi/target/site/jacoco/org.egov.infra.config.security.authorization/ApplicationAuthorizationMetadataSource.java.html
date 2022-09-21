@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationAuthorizationMetadataSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.security.authorization</a> &gt; <span class="el_source">ApplicationAuthorizationMetadataSource.java</span></div><h1>ApplicationAuthorizationMetadataSource.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.security.authorization;
+
+import org.egov.infra.admin.master.entity.Action;
+import org.egov.infra.admin.master.service.ActionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.ConfigAttribute;
+import org.springframework.security.access.SecurityConfig;
+import org.springframework.security.web.FilterInvocation;
+import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.egov.infra.utils.ApplicationConstant.NO_ROLE_NAME;
+import static org.egov.infra.utils.ApplicationConstant.SLASH;
+
+<span class="nc" id="L68">public class ApplicationAuthorizationMetadataSource implements FilterInvocationSecurityMetadataSource {</span>
+
+<span class="nc" id="L70">    private List&lt;String&gt; excludePatterns = new ArrayList&lt;&gt;();</span>
+
+    @Autowired
+    private ActionService actionService;
+
+    public void setExcludePatterns(List&lt;String&gt; excludePatterns) {
+<span class="nc" id="L76">        this.excludePatterns = excludePatterns;</span>
+<span class="nc" id="L77">    }</span>
+
+    @Override
+    public Collection&lt;ConfigAttribute&gt; getAttributes(Object object) {
+<span class="nc" id="L81">        FilterInvocation invocation = (FilterInvocation) object;</span>
+<span class="nc" id="L82">        String contextRoot = invocation.getHttpRequest().getContextPath().replace(SLASH, EMPTY);</span>
+<span class="nc" id="L83">        return lookupAttributes(contextRoot, invocation.getRequestUrl());</span>
+    }
+
+    @Override
+    public Collection&lt;ConfigAttribute&gt; getAllConfigAttributes() {
+<span class="nc" id="L88">        return Collections.unmodifiableCollection(new ArrayList&lt;ConfigAttribute&gt;());</span>
+    }
+
+    @Override
+    public boolean supports(Class&lt;?&gt; clazz) {
+<span class="nc" id="L93">        return FilterInvocation.class.isAssignableFrom(clazz);</span>
+    }
+
+    private Collection&lt;ConfigAttribute&gt; lookupAttributes(String contextRoot, String url) {
+<span class="nc" id="L97">        List&lt;ConfigAttribute&gt; configAttributes = new ArrayList&lt;&gt;();</span>
+//        if (!urlExcluded(url)) {
+//            Action action = actionService.getActionByUrlAndContextRoot(url, contextRoot);
+//            if (action != null) {
+//                action.getRoles().forEach((role) -&gt;{ configAttributes.add(new SecurityConfig(role.getName()));
+//                	System.out.println(&quot;****************&quot;+url+&quot; : role &quot;+role.getName());
+//                });
+//            }
+//        }
+//        if (configAttributes.isEmpty())
+<span class="nc" id="L107">            configAttributes.add(new SecurityConfig(NO_ROLE_NAME));</span>
+<span class="nc" id="L108">        return configAttributes;</span>
+    }
+
+    private Boolean urlExcluded(String url) {
+<span class="nc" id="L112">        return excludePatterns</span>
+<span class="nc" id="L113">                .stream()</span>
+<span class="nc" id="L114">                .anyMatch(url::startsWith);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

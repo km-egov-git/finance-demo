@@ -1,0 +1,770 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionIntegrationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.services</a> &gt; <span class="el_source">CollectionIntegrationServiceImpl.java</span></div><h1>CollectionIntegrationServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.services;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.egov.collection.config.properties.CollectionApplicationProperties;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.entity.ReceiptVoucher;
+import org.egov.collection.integration.models.BillInfo;
+import org.egov.collection.integration.models.BillInfoImpl;
+import org.egov.collection.integration.models.BillReceiptInfo;
+import org.egov.collection.integration.models.BillReceiptInfoImpl;
+import org.egov.collection.integration.models.PaymentInfo;
+import org.egov.collection.integration.models.PaymentInfoBank;
+import org.egov.collection.integration.models.PaymentInfoCash;
+import org.egov.collection.integration.models.PaymentInfoChequeDD;
+import org.egov.collection.integration.models.PaymentInfoRequest;
+import org.egov.collection.integration.models.PaymentInfoSearchRequest;
+import org.egov.collection.integration.models.RestAggregatePaymentInfo;
+import org.egov.collection.integration.models.RestReceiptInfo;
+import org.egov.collection.integration.pgi.PaymentRequest;
+import org.egov.collection.service.ReceiptHeaderService;
+import org.egov.collection.utils.CollectionCommon;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.Fund;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FundHibernateDAO;
+import org.egov.commons.entity.Source;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.config.core.EnvironmentSettings;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infstr.models.ServiceDetails;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.instrument.InstrumentHeader;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Collections integration service implementation - exposes APIs that can be
+ * used by other applications (typically billing systems) to interact with the
+ * collections module.
+ */
+@Transactional(readOnly = true)
+public class CollectionIntegrationServiceImpl extends PersistenceService&lt;ReceiptHeader, Long&gt; implements
+        CollectionIntegrationService {
+
+<span class="nc" id="L112">    private static final Logger LOGGER = Logger.getLogger(CollectionIntegrationServiceImpl.class);</span>
+
+    @Autowired
+    private FundHibernateDAO fundHibernateDAO;
+    private PersistenceService persistenceService;
+
+    private CollectionsUtil collectionsUtil;
+
+    private ReceiptHeaderService receiptHeaderService;
+
+    @Autowired
+    private EgwStatusHibernateDAO statusDAO;
+
+<span class="nc" id="L125">    private final List&lt;ValidationError&gt; errors = new ArrayList&lt;&gt;(0);</span>
+
+    private CollectionCommon collectionCommon;
+
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
+
+    @Autowired
+    private FundHibernateDAO fundDAO;
+
+    @Autowired
+    private ApplicationContext beanProvider;
+    
+    @Autowired
+    private EnvironmentSettings environmentSettings;
+    
+    @Autowired
+    private CollectionApplicationProperties collectionApplicationProperties;
+
+    public CollectionIntegrationServiceImpl() {
+<span class="nc" id="L145">        super(ReceiptHeader.class);</span>
+<span class="nc" id="L146">    }</span>
+
+    public void setReceiptHeaderService(final ReceiptHeaderService receiptHeaderService) {
+<span class="nc" id="L149">        this.receiptHeaderService = receiptHeaderService;</span>
+<span class="nc" id="L150">    }</span>
+
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L153">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L154">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @seeorg.egov.infstr.collections.integration.ICollectionInterface#
+     * getBillReceiptInfo(java.lang.String, java.lang.String)
+     */
+    @Override
+    public List&lt;BillReceiptInfo&gt; getBillReceiptInfo(final String serviceCode, final String refNum) {
+<span class="nc" id="L163">        final ArrayList&lt;BillReceiptInfo&gt; receipts = new ArrayList&lt;&gt;(0);</span>
+
+        // Get all receipt headers for given reference number
+<span class="nc" id="L166">        final List&lt;ReceiptHeader&gt; receiptHeaders = findAllByNamedQuery(</span>
+                CollectionConstants.QUERY_RECEIPTS_BY_REFNUM_AND_SERVICECODE, refNum, serviceCode);
+<span class="nc bnc" id="L168" title="All 4 branches missed.">        if (receiptHeaders == null || receiptHeaders.isEmpty())</span>
+<span class="nc" id="L169">            return Collections.emptyList();</span>
+
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (final ReceiptHeader receiptHeader : receiptHeaders)</span>
+<span class="nc" id="L172">            receipts.add(new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService, null));</span>
+<span class="nc" id="L173">        return receipts;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @seeorg.egov.infstr.collections.integration.ICollectionInterface#
+     * getBillReceiptInfo(java.lang.String, java.util.Set)
+     */
+    @Override
+    public Map&lt;String, List&lt;BillReceiptInfo&gt;&gt; getBillReceiptInfo(final String serviceCode, final Set&lt;String&gt; refNums) {
+<span class="nc" id="L183">        final HashMap&lt;String, List&lt;BillReceiptInfo&gt;&gt; receipts = new HashMap&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        for (final String refNum : refNums)</span>
+<span class="nc" id="L186">            receipts.put(refNum, getBillReceiptInfo(serviceCode, refNum));</span>
+
+<span class="nc" id="L188">        return receipts;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @seeorg.egov.infstr.collections.integration.ICollectionInterface#
+     * getInstrumentReceiptInfo(java.lang.String, java.lang.String)
+     */
+    @Override
+    public List&lt;BillReceiptInfo&gt; getInstrumentReceiptInfo(final String serviceCode, final String instrumentNum) {
+<span class="nc" id="L198">        final ArrayList&lt;BillReceiptInfo&gt; receipts = new ArrayList&lt;&gt;(0);</span>
+
+<span class="nc" id="L200">        final List&lt;ReceiptHeader&gt; receiptHeaders = findAllByNamedQuery(</span>
+                CollectionConstants.QUERY_RECEIPTS_BY_INSTRUMENTNO_AND_SERVICECODE, instrumentNum, serviceCode);
+<span class="nc bnc" id="L202" title="All 4 branches missed.">        if (receiptHeaders == null || receiptHeaders.isEmpty())</span>
+<span class="nc" id="L203">            return Collections.emptyList();</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        for (final ReceiptHeader receiptHeader : receiptHeaders)</span>
+<span class="nc" id="L206">            receipts.add(new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService, null));</span>
+<span class="nc" id="L207">        return receipts;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @seeorg.egov.infstr.collections.integration.ICollectionInterface#
+     * getInstrumentReceiptInfo(java.lang.String, java.util.Set)
+     */
+    @Override
+    public Map&lt;String, List&lt;BillReceiptInfo&gt;&gt; getInstrumentReceiptInfo(final String serviceCode,
+            final Set&lt;String&gt; instrumentNums) {
+<span class="nc" id="L218">        final HashMap&lt;String, List&lt;BillReceiptInfo&gt;&gt; receipts = new HashMap&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L220" title="All 2 branches missed.">        for (final String instrumentNum : instrumentNums)</span>
+<span class="nc" id="L221">            receipts.put(instrumentNum, getInstrumentReceiptInfo(serviceCode, instrumentNum));</span>
+
+<span class="nc" id="L223">        return receipts;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * getReceiptInfo (java.lang.String, java.lang.String)
+     */
+    @Override
+    public BillReceiptInfo getReceiptInfo(final String serviceCode, final String receiptNum) {
+<span class="nc" id="L234">        final ReceiptHeader receiptHeader = findByNamedQuery(</span>
+                CollectionConstants.QUERY_RECEIPT_BY_RECEIPTNUM_AND_SERVICECODE, serviceCode, receiptNum, receiptNum);
+<span class="nc bnc" id="L236" title="All 2 branches missed.">        if (receiptHeader == null)</span>
+<span class="nc" id="L237">            return null;</span>
+        else
+            // Create bill receipt info
+<span class="nc" id="L240">            return new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService, null);</span>
+    }
+
+    @Override
+    public RestReceiptInfo getDetailsByTransactionId(final PaymentInfoSearchRequest paymentInfoSearchRequest) {
+<span class="nc" id="L245">        LOGGER.info(paymentInfoSearchRequest.getSource());</span>
+<span class="nc" id="L246">        final ReceiptHeader header = find(&quot;from ReceiptHeader r where r.manualreceiptnumber=? and r.source=? &quot;,</span>
+<span class="nc" id="L247">                paymentInfoSearchRequest.getTransactionId(), paymentInfoSearchRequest.getSource());</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (header == null)</span>
+<span class="nc" id="L249">            throw new ApplicationRuntimeException(&quot;No data found&quot;);</span>
+<span class="nc" id="L250">        final RestReceiptInfo restReceiptInfo = new RestReceiptInfo(header);</span>
+<span class="nc" id="L251">        final PaymentInfoService paymentInfoService = (PaymentInfoService) beanProvider.getBean(&quot;paymentInfoService&quot;);</span>
+<span class="nc" id="L252">        paymentInfoService.setPaymentInfo(restReceiptInfo, header);</span>
+<span class="nc" id="L253">        return restReceiptInfo;</span>
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * getReceiptInfo (java.lang.String, java.util.Set)
+     */
+    @Override
+    public Map&lt;String, BillReceiptInfo&gt; getReceiptInfo(final String serviceCode, final Set&lt;String&gt; receiptNums) {
+<span class="nc" id="L265">        final HashMap&lt;String, BillReceiptInfo&gt; receipts = new HashMap&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        for (final String receiptNum : receiptNums)</span>
+<span class="nc" id="L268">            receipts.put(receiptNum, getReceiptInfo(serviceCode, receiptNum));</span>
+
+<span class="nc" id="L270">        return receipts;</span>
+    }
+
+    /*
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * createReceipt (BillInfo bill, List&lt;PaymentInfo&gt; paymentInfoList)
+     */
+    @Override
+    public BillReceiptInfo createReceipt(final BillInfo bill, final List&lt;PaymentInfo&gt; paymentInfoList) {
+<span class="nc" id="L280">        LOGGER.info(&quot;Logs for CreateReceipt : Receipt Creation Started....&quot;);</span>
+<span class="nc" id="L281">        final Fund fund = fundHibernateDAO.fundByCode(bill.getFundCode());</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        if (fund == null)</span>
+<span class="nc" id="L283">            throw new ApplicationRuntimeException(&quot;Fund not present for the fund code [&quot; + bill.getFundCode() + &quot;].&quot;);</span>
+
+<span class="nc" id="L285">        final Department dept = (Department) persistenceService.findByNamedQuery(</span>
+<span class="nc" id="L286">                CollectionConstants.QUERY_DEPARTMENT_BY_CODE, bill.getDepartmentCode());</span>
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (dept == null)</span>
+<span class="nc" id="L289">            throw new ApplicationRuntimeException(&quot;Department not present for the department code [&quot;</span>
+<span class="nc" id="L290">                    + bill.getDepartmentCode() + &quot;].&quot;);</span>
+<span class="nc" id="L291">        final ReceiptHeader receiptHeader = collectionCommon.initialiseReceiptModelWithBillInfo(bill, fund, dept);</span>
+
+<span class="nc" id="L293">        receiptHeader.setCreatedDate(new Date());</span>
+<span class="nc" id="L294">        receiptHeader.setReceiptdate(new Date());</span>
+<span class="nc" id="L295">        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_BILL);</span>
+<span class="nc" id="L296">        receiptHeader.setIsModifiable(Boolean.TRUE);</span>
+<span class="nc" id="L297">        receiptHeader.setIsReconciled(Boolean.FALSE);</span>
+<span class="nc" id="L298">        receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_FIELDCOLLECTION);</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        receiptHeader.setSource(bill.getSource() != null ? bill.getSource() : &quot;&quot;);</span>
+
+<span class="nc" id="L301">        receiptHeader.setStatus(collectionsUtil.getStatusForModuleAndCode(</span>
+                CollectionConstants.MODULE_NAME_RECEIPTHEADER, CollectionConstants.RECEIPT_STATUS_CODE_APPROVED));
+
+<span class="nc" id="L304">        receiptHeader.setPaidBy(bill.getPaidBy());</span>
+
+<span class="nc bnc" id="L306" title="All 2 branches missed.">        if (ApplicationThreadLocals.getUserId() != null) {</span>
+<span class="nc" id="L307">            receiptHeader.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L308">            receiptHeader.setLastModifiedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L309">            receiptHeader.setLastModifiedDate(new Date());</span>
+        }
+
+<span class="nc" id="L312">        BigDecimal chequeDDInstrumenttotal = BigDecimal.ZERO;</span>
+<span class="nc" id="L313">        BigDecimal otherInstrumenttotal = BigDecimal.ZERO;</span>
+
+        // populate instrument details
+<span class="nc" id="L316">        final List&lt;InstrumentHeader&gt; instrumentHeaderList = new ArrayList&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        for (final PaymentInfo paytInfo : paymentInfoList) {</span>
+<span class="nc" id="L319">            final String instrType = paytInfo.getInstrumentType().toString();</span>
+
+<span class="nc bnc" id="L321" title="All 2 branches missed.">            if (CollectionConstants.INSTRUMENTTYPE_CASH.equals(instrType)) {</span>
+<span class="nc" id="L322">                final PaymentInfoCash paytInfoCash = (PaymentInfoCash) paytInfo;</span>
+
+<span class="nc" id="L324">                instrumentHeaderList.add(collectionCommon.validateAndConstructCashInstrument(paytInfoCash));</span>
+<span class="nc" id="L325">                otherInstrumenttotal = paytInfo.getInstrumentAmount();</span>
+            }
+
+<span class="nc bnc" id="L328" title="All 2 branches missed.">            if (CollectionConstants.INSTRUMENTTYPE_BANK.equals(instrType)) {</span>
+<span class="nc" id="L329">                final PaymentInfoBank paytInfoBank = (PaymentInfoBank) paytInfo;</span>
+
+<span class="nc" id="L331">                instrumentHeaderList.add(collectionCommon.validateAndConstructBankInstrument(paytInfoBank));</span>
+
+<span class="nc" id="L333">                otherInstrumenttotal = paytInfoBank.getInstrumentAmount();</span>
+            }
+
+<span class="nc bnc" id="L336" title="All 2 branches missed.">            if (CollectionConstants.INSTRUMENTTYPE_CHEQUE.equals(instrType)</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">                    || CollectionConstants.INSTRUMENTTYPE_DD.equals(instrType)) {</span>
+
+<span class="nc" id="L339">                final PaymentInfoChequeDD paytInfoChequeDD = (PaymentInfoChequeDD) paytInfo;</span>
+
+<span class="nc" id="L341">                instrumentHeaderList.add(collectionCommon.validateAndConstructChequeDDInstrument(paytInfoChequeDD));</span>
+
+<span class="nc" id="L343">                chequeDDInstrumenttotal = chequeDDInstrumenttotal.add(paytInfoChequeDD.getInstrumentAmount());</span>
+            }
+<span class="nc" id="L345">        }</span>
+<span class="nc" id="L346">        BigDecimal debitAmount = BigDecimal.ZERO;</span>
+
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails()) {</span>
+<span class="nc" id="L349">            debitAmount = debitAmount.add(receiptDetail.getCramount());</span>
+<span class="nc" id="L350">            debitAmount = debitAmount.subtract(receiptDetail.getDramount());</span>
+<span class="nc" id="L351">        }</span>
+<span class="nc" id="L352">        DebitAccountHeadDetailsService debitAccountHeadService = (DebitAccountHeadDetailsService) beanProvider</span>
+<span class="nc" id="L353">                .getBean(collectionsUtil.getBeanNameForDebitAccountHead());</span>
+<span class="nc" id="L354">        receiptHeader.addReceiptDetail(debitAccountHeadService.addDebitAccountHeadDetails(debitAmount, receiptHeader,</span>
+<span class="nc" id="L355">                chequeDDInstrumenttotal, otherInstrumenttotal, paymentInfoList.get(0).getInstrumentType().toString()));</span>
+
+<span class="nc" id="L357">        receiptHeaderService.persistFieldReceipt(receiptHeader, instrumentHeaderList);</span>
+<span class="nc" id="L358">        LOGGER.info(&quot;Logs for CreateReceipt : Receipt Creation Finished....&quot;);</span>
+<span class="nc" id="L359">        return new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService, null);</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @seeorg.egov.infstr.collections.integration.ICollectionInterface#
+     * getPendingReceiptsInfo(java.lang.String, java.lang.String)
+     */
+    @Override
+    public List&lt;BillReceiptInfo&gt; getOnlinePendingReceipts(final String serviceCode, final String consumerCode) {
+<span class="nc" id="L369">        final ArrayList&lt;BillReceiptInfo&gt; receipts = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L370">        final List&lt;ReceiptHeader&gt; receiptHeaders = findAllByNamedQuery(</span>
+                CollectionConstants.QUERY_ONLINE_PENDING_RECEIPTS_BY_CONSUMERCODE_AND_SERVICECODE, serviceCode,
+                consumerCode, CollectionConstants.ONLINEPAYMENT_STATUS_CODE_PENDING);
+<span class="nc bnc" id="L373" title="All 4 branches missed.">        if (receiptHeaders == null || receiptHeaders.isEmpty())</span>
+<span class="nc" id="L374">            return Collections.emptyList();</span>
+        else {
+<span class="nc bnc" id="L376" title="All 2 branches missed.">            for (final ReceiptHeader receiptHeader : receiptHeaders)</span>
+<span class="nc" id="L377">                receipts.add(new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService,</span>
+                        null));
+<span class="nc" id="L379">            return receipts;</span>
+        }
+
+    }
+
+    /*
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * createMiscellaneousReceipt (BillInfo bill, List&lt;PaymentInfo&gt;
+     * paymentInfoList)
+     */
+    @Override
+    public BillReceiptInfo createMiscellaneousReceipt(final BillInfo bill, final List&lt;PaymentInfo&gt; paymentInfoList) {
+<span class="nc" id="L392">        LOGGER.info(&quot;Logs For Miscellaneous Receipt : Receipt Creation Started....&quot;);</span>
+<span class="nc" id="L393">        final Fund fund = fundHibernateDAO.fundByCode(bill.getFundCode());</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (fund == null)</span>
+<span class="nc" id="L395">            throw new ApplicationRuntimeException(&quot;Fund not present for the fund code [&quot; + bill.getFundCode() + &quot;].&quot;);</span>
+
+<span class="nc" id="L397">        final Department dept = (Department) persistenceService.findByNamedQuery(</span>
+<span class="nc" id="L398">                CollectionConstants.QUERY_DEPARTMENT_BY_CODE, bill.getDepartmentCode());</span>
+
+<span class="nc bnc" id="L400" title="All 2 branches missed.">        if (dept == null)</span>
+<span class="nc" id="L401">            throw new ApplicationRuntimeException(&quot;Department not present for the department code [&quot;</span>
+<span class="nc" id="L402">                    + bill.getDepartmentCode() + &quot;].&quot;);</span>
+
+<span class="nc" id="L404">        final ReceiptHeader receiptHeader = collectionCommon.initialiseReceiptModelWithBillInfo(bill, fund, dept);</span>
+
+<span class="nc" id="L406">        receiptHeader.setCreatedDate(new Date());</span>
+<span class="nc" id="L407">        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_ADHOC);</span>
+<span class="nc" id="L408">        receiptHeader.setIsModifiable(Boolean.TRUE);</span>
+<span class="nc" id="L409">        receiptHeader.setIsReconciled(Boolean.TRUE);</span>
+<span class="nc" id="L410">        receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_COUNTER);</span>
+
+<span class="nc" id="L412">        receiptHeader.setStatus(collectionsUtil.getStatusForModuleAndCode(</span>
+                CollectionConstants.MODULE_NAME_RECEIPTHEADER, CollectionConstants.RECEIPT_STATUS_CODE_APPROVED));
+
+<span class="nc" id="L415">        receiptHeader.setPaidBy(bill.getPaidBy());</span>
+
+<span class="nc bnc" id="L417" title="All 2 branches missed.">        if (ApplicationThreadLocals.getUserId() != null)</span>
+<span class="nc" id="L418">            receiptHeader.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+
+<span class="nc" id="L420">        final BigDecimal chequeDDInstrumenttotal = BigDecimal.ZERO;</span>
+<span class="nc" id="L421">        final BigDecimal otherInstrumenttotal = BigDecimal.ZERO;</span>
+
+        /*
+         * // populate instrument details List&lt;InstrumentHeader&gt;
+         * instrumentHeaderList = new ArrayList&lt;InstrumentHeader&gt;(); for
+         * (PaymentInfo paytInfo : paymentInfoList) { String instrType =
+         * paytInfo.getInstrumentType().toString(); if
+         * (CollectionConstants.INSTRUMENTTYPE_CASH.equals(instrType)) {
+         * PaymentInfoCash paytInfoCash = (PaymentInfoCash) paytInfo;
+         * instrumentHeaderList
+         * .add(collectionCommon.validateAndConstructCashInstrument
+         * (paytInfoCash)); otherInstrumenttotal =
+         * paytInfo.getInstrumentAmount(); } if
+         * (CollectionConstants.INSTRUMENTTYPE_BANK.equals(instrType)) {
+         * PaymentInfoBank paytInfoBank = (PaymentInfoBank) paytInfo;
+         * instrumentHeaderList
+         * .add(collectionCommon.validateAndConstructBankInstrument
+         * (paytInfoBank)); otherInstrumenttotal =
+         * paytInfoBank.getInstrumentAmount(); } if
+         * (CollectionConstants.INSTRUMENTTYPE_CHEQUE.equals(instrType) ||
+         * CollectionConstants.INSTRUMENTTYPE_DD.equals(instrType)) {
+         * PaymentInfoChequeDD paytInfoChequeDD = (PaymentInfoChequeDD)
+         * paytInfo; instrumentHeaderList.add(collectionCommon.
+         * validateAndConstructChequeDDInstrument(paytInfoChequeDD));
+         * chequeDDInstrumenttotal =
+         * chequeDDInstrumenttotal.add(paytInfoChequeDD.getInstrumentAmount());
+         * } } instrumentHeaderList =
+         * receiptHeaderService.createInstrument(instrumentHeaderList);
+         * LOGGER.info(&quot;        Instrument List created &quot;);
+         * receiptHeader.setReceiptInstrument(new
+         * HashSet(instrumentHeaderList));
+         */
+
+<span class="nc" id="L454">        BigDecimal debitAmount = BigDecimal.ZERO;</span>
+
+<span class="nc bnc" id="L456" title="All 2 branches missed.">        for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails()) {</span>
+<span class="nc" id="L457">            debitAmount = debitAmount.add(receiptDetail.getCramount());</span>
+<span class="nc" id="L458">            debitAmount = debitAmount.subtract(receiptDetail.getDramount());</span>
+<span class="nc" id="L459">        }</span>
+<span class="nc" id="L460">        DebitAccountHeadDetailsService debitAccountHeadService = (DebitAccountHeadDetailsService) beanProvider</span>
+<span class="nc" id="L461">                .getBean(collectionsUtil.getBeanNameForDebitAccountHead());</span>
+<span class="nc" id="L462">        receiptHeader.addReceiptDetail(debitAccountHeadService.addDebitAccountHeadDetails(debitAmount, receiptHeader,</span>
+<span class="nc" id="L463">                chequeDDInstrumenttotal, otherInstrumenttotal, paymentInfoList.get(0).getInstrumentType().toString()));</span>
+
+<span class="nc" id="L465">        receiptHeaderService.persist(receiptHeader);</span>
+<span class="nc" id="L466">        receiptHeaderService.getSession().flush();</span>
+<span class="nc" id="L467">        LOGGER.info(&quot;Miscellaneous Receipt Created with receipt number: &quot; + receiptHeader.getReceiptnumber());</span>
+
+        try {
+<span class="nc" id="L470">            receiptHeaderService.createVoucherForReceipt(receiptHeader);</span>
+<span class="nc" id="L471">            LOGGER.debug(&quot;Updated financial systems and created voucher.&quot;);</span>
+<span class="nc" id="L472">        } catch (final ApplicationRuntimeException ex) {</span>
+<span class="nc" id="L473">            errors.add(new ValidationError(</span>
+                    &quot;Miscellaneous Receipt creation transaction rolled back as update to financial system failed.&quot;,
+                    &quot;Miscellaneous Receipt creation transaction rolled back as update to financial system failed.&quot;));
+<span class="nc" id="L476">            LOGGER.error(&quot;Update to financial systems failed&quot; + ex);</span>
+<span class="nc" id="L477">        }</span>
+
+        // Create Vouchers
+<span class="nc" id="L480">        final List&lt;CVoucherHeader&gt; voucherHeaderList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L482">        LOGGER.info(&quot;Receipt Voucher created with vouchernumber:        &quot; + receiptHeader.getVoucherNum());</span>
+
+<span class="nc bnc" id="L484" title="All 2 branches missed.">        for (final ReceiptVoucher receiptVoucher : receiptHeader.getReceiptVoucher())</span>
+<span class="nc" id="L485">            voucherHeaderList.add(receiptVoucher.getVoucherheader());</span>
+
+        /*
+         * if (voucherHeaderList != null &amp;&amp; !instrumentHeaderList.isEmpty()) {
+         * receiptHeaderService.updateInstrument(voucherHeaderList,
+         * instrumentHeaderList); }
+         */
+<span class="nc" id="L492">        LOGGER.info(&quot;Logs For Miscellaneous Receipt : Receipt Creation Finished....&quot;);</span>
+<span class="nc" id="L493">        return new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO, persistenceService, null);</span>
+    }
+
+    /*
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * getAggregateReceiptTotal (Date fromDate, Date toDate)
+     */
+    @Override
+    public List&lt;RestAggregatePaymentInfo&gt; getAggregateReceiptTotal(final PaymentInfoSearchRequest aggrReq) {
+
+<span class="nc" id="L504">        final List&lt;RestAggregatePaymentInfo&gt; listAggregatePaymentInfo = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L505">        final StringBuilder queryBuilder = new StringBuilder(</span>
+<span class="nc" id="L506">                &quot;select  sum(recordcount) as records,ulb, sum(total) as total,service  from &quot;).append(environmentSettings.statewideSchemaName())</span>
+<span class="nc" id="L507">                .append(&quot;.receipt_aggr_view &quot;</span>
+                        + &quot; where receipt_date&gt;=:fromDate and receipt_date&lt;=:toDate and service=:serviceCode &quot;
+                        + &quot; and source=:source and ulb=:ulbCode  group by ulb,service  &quot;);
+
+<span class="nc" id="L511">        final Query query = getSession().createSQLQuery(queryBuilder.toString());</span>
+<span class="nc" id="L512">        query.setDate(&quot;fromDate&quot;, aggrReq.getFromdate());</span>
+<span class="nc" id="L513">        query.setDate(&quot;toDate&quot;, aggrReq.getTodate());</span>
+<span class="nc" id="L514">        query.setString(&quot;serviceCode&quot;, aggrReq.getServicecode());</span>
+<span class="nc" id="L515">        query.setString(&quot;source&quot;, aggrReq.getSource());</span>
+<span class="nc" id="L516">        query.setString(&quot;ulbCode&quot;, aggrReq.getUlbCode());</span>
+
+<span class="nc" id="L518">        LOGGER.debug(aggrReq.getSource());</span>
+
+<span class="nc" id="L520">        final List&lt;Object[]&gt; queryResults = query.list();</span>
+
+<span class="nc bnc" id="L522" title="All 2 branches missed.">        for (final Object[] objectArray : queryResults) {</span>
+<span class="nc" id="L523">            final RestAggregatePaymentInfo aggregatePaymentInfo = new RestAggregatePaymentInfo();</span>
+<span class="nc" id="L524">            aggregatePaymentInfo.setTxncount(Integer.parseInt(objectArray[0].toString()));</span>
+<span class="nc" id="L525">            aggregatePaymentInfo.setUlbcode(objectArray[1].toString());</span>
+<span class="nc" id="L526">            aggregatePaymentInfo.setTxnamount(new BigDecimal(objectArray[2].toString()));</span>
+<span class="nc" id="L527">            aggregatePaymentInfo.setServiceCode(objectArray[3].toString());</span>
+<span class="nc" id="L528">            listAggregatePaymentInfo.add(aggregatePaymentInfo);</span>
+<span class="nc" id="L529">        }</span>
+<span class="nc bnc" id="L530" title="All 2 branches missed.">        if (listAggregatePaymentInfo.isEmpty())</span>
+<span class="nc" id="L531">            listAggregatePaymentInfo.add(new RestAggregatePaymentInfo());</span>
+<span class="nc" id="L532">        return listAggregatePaymentInfo;</span>
+    }
+
+    /*
+     * @see
+     * org.egov.infstr.collections.integration.CollectionIntegrationService#
+     * getReceiptDetailsByDateAndService(final Date fromDate, final Date toDate,
+     * final String serviceCode)
+     */
+    @Override
+    public List&lt;RestReceiptInfo&gt; getReceiptDetailsByDateAndService(final PaymentInfoSearchRequest aggrReq) {
+<span class="nc" id="L543">        final ArrayList&lt;RestReceiptInfo&gt; receipts = new ArrayList&lt;&gt;(0);</span>
+        RestReceiptInfo restReceiptInfo;
+<span class="nc" id="L545">        final PaymentInfoService paymentInfoService = (PaymentInfoService) beanProvider.getBean(&quot;paymentInfoService&quot;);</span>
+<span class="nc" id="L546">        final List&lt;ReceiptHeader&gt; receiptHeaders = findAllByNamedQuery(</span>
+<span class="nc" id="L547">                CollectionConstants.QUERY_RECEIPTS_BY_DATE_AND_SERVICECODE, aggrReq.getFromdate(), aggrReq.getTodate(),</span>
+<span class="nc" id="L548">                aggrReq.getServicecode(), aggrReq.getSource());</span>
+<span class="nc bnc" id="L549" title="All 4 branches missed.">        if (receiptHeaders == null || receiptHeaders.isEmpty()) {</span>
+<span class="nc" id="L550">            receipts.add(new RestReceiptInfo());</span>
+<span class="nc" id="L551">            return receipts;</span>
+        } else {
+<span class="nc bnc" id="L553" title="All 2 branches missed.">            for (final ReceiptHeader receiptHeader : receiptHeaders) {</span>
+<span class="nc" id="L554">                restReceiptInfo = new RestReceiptInfo(receiptHeader);</span>
+<span class="nc" id="L555">                paymentInfoService.setPaymentInfo(restReceiptInfo, receiptHeader);</span>
+<span class="nc" id="L556">                receipts.add(restReceiptInfo);</span>
+<span class="nc" id="L557">            }</span>
+<span class="nc" id="L558">            return receipts;</span>
+        }
+    }
+
+    @Override
+    public String cancelReceipt(final PaymentInfoSearchRequest cancelReq) {
+        String statusMessage;
+<span class="nc" id="L565">        boolean isInstrumentDeposited = false;</span>
+<span class="nc" id="L566">        final ReceiptHeader receiptHeaderToBeCancelled = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+<span class="nc" id="L567">                CollectionConstants.QUERY_RECEIPTS_BY_RECEIPTNUM, cancelReq.getReceiptNo());</span>
+<span class="nc bnc" id="L568" title="All 2 branches missed.">        if (receiptHeaderToBeCancelled == null)</span>
+<span class="nc" id="L569">            throw new ApplicationRuntimeException(&quot;Invalid receiptNumber:&quot; + cancelReq.getReceiptNo());</span>
+<span class="nc bnc" id="L570" title="All 2 branches missed.">        else if (!cancelReq.getTransactionId().equals(receiptHeaderToBeCancelled.getManualreceiptnumber()))</span>
+<span class="nc" id="L571">            throw new ApplicationRuntimeException(&quot;transactionId doesnot match with receiptNo  &quot;</span>
+<span class="nc" id="L572">                    + cancelReq.getReceiptNo());</span>
+<span class="nc bnc" id="L573" title="All 2 branches missed.">        else if (CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED.equalsIgnoreCase(receiptHeaderToBeCancelled</span>
+<span class="nc" id="L574">                .getStatus().getCode()))</span>
+<span class="nc" id="L575">            throw new ApplicationRuntimeException(&quot;Receipt is already Cancelled  &quot; + cancelReq.getReceiptNo());</span>
+
+<span class="nc" id="L577">        LOGGER.info(&quot;Receipt Header to be Cancelled : &quot; + receiptHeaderToBeCancelled.getReceiptnumber());</span>
+
+<span class="nc bnc" id="L579" title="All 2 branches missed.">        for (final InstrumentHeader instrumentHeader : receiptHeaderToBeCancelled.getReceiptInstrument())</span>
+<span class="nc bnc" id="L580" title="All 2 branches missed.">            if (instrumentHeader.getInstrumentType().getType().equals(CollectionConstants.INSTRUMENTTYPE_CASH)) {</span>
+<span class="nc" id="L581">                if (instrumentHeader.getStatusId().getDescription()</span>
+<span class="nc bnc" id="L582" title="All 2 branches missed.">                        .equals(CollectionConstants.INSTRUMENT_RECONCILED_STATUS)) {</span>
+<span class="nc" id="L583">                    isInstrumentDeposited = true;</span>
+<span class="nc" id="L584">                    break;</span>
+                }
+<span class="nc" id="L586">            } else if (instrumentHeader.getStatusId().getDescription()</span>
+<span class="nc bnc" id="L587" title="All 2 branches missed.">                    .equals(CollectionConstants.INSTRUMENT_DEPOSITED_STATUS)) {</span>
+<span class="nc" id="L588">                isInstrumentDeposited = true;</span>
+<span class="nc" id="L589">                break;</span>
+            }
+
+<span class="nc bnc" id="L592" title="All 2 branches missed.">        if (isInstrumentDeposited)</span>
+<span class="nc" id="L593">            statusMessage = CollectionConstants.RECEIPT_DEPOSITED_CANCELLED;</span>
+        else {
+            // if instrument has not been deposited, cancel the old instrument,
+            // reverse the
+            // voucher and persist
+<span class="nc" id="L598">            receiptHeaderToBeCancelled.setStatus(statusDAO.getStatusByModuleAndCode(</span>
+                    CollectionConstants.MODULE_NAME_RECEIPTHEADER, CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED));
+<span class="nc" id="L600">            receiptHeaderToBeCancelled.setIsReconciled(false);</span>
+<span class="nc" id="L601">            receiptHeaderToBeCancelled.setReasonForCancellation(CollectionConstants.RECEIPT_CANCELLED_REASON);</span>
+
+<span class="nc bnc" id="L603" title="All 2 branches missed.">            for (final InstrumentHeader instrumentHeader : receiptHeaderToBeCancelled.getReceiptInstrument()) {</span>
+<span class="nc" id="L604">                instrumentHeader.setStatusId(statusDAO.getStatusByModuleAndCode(</span>
+                        CollectionConstants.MODULE_NAME_INSTRUMENTHEADER,
+                        CollectionConstants.INSTRUMENTHEADER_STATUS_CANCELLED));
+
+<span class="nc" id="L608">            }</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">            for (final ReceiptVoucher receiptVoucher : receiptHeaderToBeCancelled.getReceiptVoucher())</span>
+<span class="nc" id="L610">                receiptHeaderService.createReversalVoucher(receiptVoucher);</span>
+
+<span class="nc" id="L612">            receiptHeaderService.persist(receiptHeaderToBeCancelled);</span>
+
+            // End work-flow for the cancelled receipt
+<span class="nc bnc" id="L615" title="All 2 branches missed.">            if (receiptHeaderToBeCancelled.getState() != null</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">                    &amp;&amp; !receiptHeaderToBeCancelled.getState().getValue().equals(CollectionConstants.WF_STATE_END))</span>
+<span class="nc" id="L617">                receiptHeaderService.endReceiptWorkFlowOnCancellation(receiptHeaderToBeCancelled);</span>
+
+<span class="nc" id="L619">            LOGGER.info(&quot;Receipt Cancelled with Receipt Number(saveOnCancel): &quot;</span>
+<span class="nc" id="L620">                    + receiptHeaderToBeCancelled.getReceiptnumber() + &quot;; Consumer Code: &quot;</span>
+<span class="nc" id="L621">                    + receiptHeaderToBeCancelled.getConsumerCode());</span>
+
+<span class="nc" id="L623">            statusMessage = CollectionConstants.RECEIPT_CANCELLED_SUCCESS;</span>
+
+        }
+
+<span class="nc" id="L627">        return statusMessage;</span>
+    }
+
+    @Override
+    public List&lt;ReceiptDetail&gt; getReceiptDetailListByReceiptNumber(final String receiptNumber) {
+<span class="nc" id="L632">        final List&lt;ReceiptDetail&gt; receiptDetList = persistenceService.findAllByNamedQuery(</span>
+                CollectionConstants.QUERY_RECEIPTDETAIL_BY_RECEIPTNUMBER, receiptNumber);
+
+<span class="nc" id="L635">        return receiptDetList;</span>
+    }
+
+    @Override
+    @Transactional
+    public PaymentRequest processMobilePayments(final BillInfoImpl billInfo) {
+        ReceiptHeader receiptHeader;
+<span class="nc" id="L642">        BigDecimal totalAmountToBeCollected = BigDecimal.ZERO;</span>
+
+<span class="nc" id="L644">        final Fund fund = fundDAO.fundByCode(billInfo.getFundCode());</span>
+
+<span class="nc bnc" id="L646" title="All 2 branches missed.">        if (fund == null)</span>
+<span class="nc" id="L647">            throw new ValidationException(Arrays.asList(new ValidationError(&quot;billreceipt.improperbilldata.missingfund&quot;,</span>
+                    &quot;billreceipt.improperbilldata.missingfund&quot;)));
+
+<span class="nc" id="L650">        final Department dept = (Department) persistenceService.findByNamedQuery(</span>
+<span class="nc" id="L651">                CollectionConstants.QUERY_DEPARTMENT_BY_CODE, billInfo.getDepartmentCode());</span>
+
+<span class="nc bnc" id="L653" title="All 2 branches missed.">        if (dept == null)</span>
+<span class="nc" id="L654">            throw new ValidationException(</span>
+<span class="nc" id="L655">                    Arrays.asList(new ValidationError(&quot;billreceipt.improperbilldata.missingdepartment&quot;,</span>
+                            &quot;billreceipt.improperbilldata.missingdepartment&quot;)));
+
+<span class="nc" id="L658">        receiptHeader = collectionCommon.initialiseReceiptModelWithBillInfo(billInfo, fund, dept);</span>
+<span class="nc" id="L659">        totalAmountToBeCollected = totalAmountToBeCollected.add(receiptHeader.getTotalAmountToBeCollected());</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        for (final ReceiptDetail rDetails : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L661">            rDetails.getCramountToBePaid().setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP);</span>
+
+<span class="nc bnc" id="L663" title="All 2 branches missed.">        if (totalAmountToBeCollected.compareTo(BigDecimal.ZERO) == -1) {</span>
+<span class="nc" id="L664">            LOGGER.info(&quot;Amount to be collected is less than zero, hence cannot proceed.&quot;);</span>
+<span class="nc" id="L665">            throw new ValidationException(Arrays.asList(new ValidationError(</span>
+                    &quot;billreceipt.totalamountlessthanzero.error&quot;, &quot;billreceipt.totalamountlessthanzero.error&quot;)));
+        } else
+<span class="nc" id="L668">            receiptHeader.setTotalAmount(totalAmountToBeCollected.setScale(</span>
+                    CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP));
+
+<span class="nc" id="L671">        final ServiceDetails paymentService = (ServiceDetails) persistenceService.findByNamedQuery(</span>
+<span class="nc" id="L672">                CollectionConstants.QUERY_SERVICE_BY_CODE, collectionApplicationProperties.mobilePaymentServiceCode());</span>
+
+<span class="nc bnc" id="L674" title="All 2 branches missed.">        if (receiptHeader.getStatus() == null) {</span>
+<span class="nc" id="L675">            receiptHeader.setReceiptdate(new Date());</span>
+            // receiptHeader.setReferencenumber(billInfo.getTransactionReferenceNumber());
+<span class="nc" id="L677">            receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_BILL);</span>
+<span class="nc" id="L678">            receiptHeader.setIsModifiable(Boolean.FALSE);</span>
+            // recon flag should be set as false when the receipt is
+            // actually
+            // created on successful online transaction
+<span class="nc" id="L682">            receiptHeader.setIsReconciled(Boolean.TRUE);</span>
+<span class="nc" id="L683">            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_ONLINECOLLECTION);</span>
+<span class="nc" id="L684">            receiptHeader.setStatus(collectionsUtil</span>
+<span class="nc" id="L685">                    .getReceiptStatusForCode(CollectionConstants.RECEIPT_STATUS_CODE_PENDING));</span>
+<span class="nc" id="L686">            receiptHeader.setSource(Source.MOBILE.toString());</span>
+<span class="nc" id="L687">            BigDecimal debitAmount = BigDecimal.ZERO;</span>
+            // TODO: Clarification
+            // calculate sum of creditamounts as a debit value to
+            // create a
+            // debit account head and add to receipt details
+<span class="nc bnc" id="L692" title="All 2 branches missed.">            for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails()) {</span>
+<span class="nc" id="L693">                receiptDetail.setCramount(receiptDetail.getCramount());</span>
+<span class="nc" id="L694">                debitAmount = debitAmount.add(receiptDetail.getCramount());</span>
+<span class="nc" id="L695">                debitAmount = debitAmount.subtract(receiptDetail.getDramount());</span>
+<span class="nc" id="L696">            }</span>
+            // Add Online Payment Details
+<span class="nc" id="L698">            final OnlinePayment onlinePayment = new OnlinePayment();</span>
+
+<span class="nc" id="L700">            onlinePayment.setStatus(collectionsUtil.getStatusForModuleAndCode(</span>
+                    CollectionConstants.MODULE_NAME_ONLINEPAYMENT,
+                    CollectionConstants.ONLINEPAYMENT_STATUS_CODE_PENDING));
+<span class="nc" id="L703">            onlinePayment.setReceiptHeader(receiptHeader);</span>
+<span class="nc" id="L704">            onlinePayment.setService(paymentService);</span>
+
+<span class="nc" id="L706">            receiptHeader.setOnlinePayment(onlinePayment);</span>
+            // end of outer for loop
+<span class="nc" id="L708">            DebitAccountHeadDetailsService debitAccountHeadService = (DebitAccountHeadDetailsService) beanProvider</span>
+<span class="nc" id="L709">                    .getBean(collectionsUtil.getBeanNameForDebitAccountHead());</span>
+<span class="nc" id="L710">            receiptHeader.addReceiptDetail(debitAccountHeadService.addDebitAccountHeadDetails(debitAmount,</span>
+<span class="nc" id="L711">                    receiptHeader, BigDecimal.ZERO, receiptHeader.getTotalAmount(),</span>
+                    CollectionConstants.INSTRUMENTTYPE_ONLINE));
+
+        }
+<span class="nc" id="L715">        receiptHeaderService.persistReceiptObject(receiptHeader);</span>
+
+<span class="nc" id="L717">        return collectionCommon.createPaymentRequest(paymentService, receiptHeader);</span>
+    }// end of method
+
+    @Override
+    public List&lt;RestReceiptInfo&gt; getDetailsByUserServiceAndConsumerCode(final PaymentInfoRequest paymentInfoRequest) {
+<span class="nc" id="L722">        final ArrayList&lt;RestReceiptInfo&gt; receipts = new ArrayList&lt;&gt;(0);</span>
+        RestReceiptInfo restReceiptInfo;
+        final List&lt;ReceiptHeader&gt; receiptHeaders;
+
+<span class="nc" id="L726">        final StringBuilder queryString = new StringBuilder(&quot;from ReceiptHeader rh where 1=1 &quot;);</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">        if (!paymentInfoRequest.getUserName().isEmpty())</span>
+<span class="nc" id="L728">            queryString.append(&quot; and upper(rh.createdBy.username) = :userName&quot;);</span>
+<span class="nc bnc" id="L729" title="All 2 branches missed.">        if (!paymentInfoRequest.getServiceName().isEmpty())</span>
+<span class="nc" id="L730">            queryString.append(&quot; and rh.service.name = :serviceName&quot;);</span>
+<span class="nc bnc" id="L731" title="All 2 branches missed.">        if (!paymentInfoRequest.getConsumerCode().isEmpty())</span>
+<span class="nc" id="L732">            queryString.append(&quot; and rh.consumerCode = :consumerCode&quot;);</span>
+<span class="nc" id="L733">        final Query listQuery = getSession().createQuery(queryString.toString());</span>
+<span class="nc bnc" id="L734" title="All 2 branches missed.">        if (!paymentInfoRequest.getUserName().isEmpty())</span>
+<span class="nc" id="L735">            listQuery.setString(&quot;userName&quot;, paymentInfoRequest.getUserName().toUpperCase());</span>
+<span class="nc bnc" id="L736" title="All 2 branches missed.">        if (!paymentInfoRequest.getServiceName().isEmpty())</span>
+<span class="nc" id="L737">            listQuery.setString(&quot;serviceName&quot;, paymentInfoRequest.getServiceName());</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">        if (!paymentInfoRequest.getConsumerCode().isEmpty())</span>
+<span class="nc" id="L739">            listQuery.setString(&quot;consumerCode&quot;, paymentInfoRequest.getConsumerCode());</span>
+<span class="nc" id="L740">        receiptHeaders = listQuery.list();</span>
+<span class="nc bnc" id="L741" title="All 4 branches missed.">        if (receiptHeaders == null || receiptHeaders.isEmpty()) {</span>
+<span class="nc" id="L742">            receipts.add(new RestReceiptInfo());</span>
+<span class="nc" id="L743">            return receipts;</span>
+        } else {
+<span class="nc bnc" id="L745" title="All 2 branches missed.">            for (final ReceiptHeader receiptHeader : receiptHeaders) {</span>
+<span class="nc" id="L746">                restReceiptInfo = new RestReceiptInfo(receiptHeader);</span>
+<span class="nc" id="L747">                receipts.add(restReceiptInfo);</span>
+<span class="nc" id="L748">            }</span>
+<span class="nc" id="L749">            return receipts;</span>
+        }
+    }
+
+    @Override
+    public byte[] downloadReceiptByReceiptAndConsumerNo(final String receiptNumber, final String consumerCode) {
+<span class="nc" id="L755">        final ReceiptHeader receiptHeader = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+                CollectionConstants.QUERY_RECEIPT_BY_SERVICE_RECEIPTNUMBER_CONSUMERCODE, receiptNumber, receiptNumber,
+                consumerCode);
+<span class="nc" id="L758">        return collectionsUtil.createReport(receiptHeaderService.getReportRequest(receiptHeader)).getReportOutputData();</span>
+    }
+
+    public void setCollectionCommon(final CollectionCommon collectionCommon) {
+<span class="nc" id="L762">        this.collectionCommon = collectionCommon;</span>
+<span class="nc" id="L763">    }</span>
+
+    public void setPersistenceService(final PersistenceService persistenceService) {
+<span class="nc" id="L766">        this.persistenceService = persistenceService;</span>
+<span class="nc" id="L767">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

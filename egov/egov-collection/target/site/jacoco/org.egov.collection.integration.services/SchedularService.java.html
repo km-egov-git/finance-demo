@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SchedularService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.services</a> &gt; <span class="el_source">SchedularService.java</span></div><h1>SchedularService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.services;
+
+import org.apache.log4j.Logger;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.integration.pgi.AtomAdaptor;
+import org.egov.collection.integration.pgi.AxisAdaptor;
+import org.egov.collection.integration.pgi.PaymentResponse;
+import org.egov.collection.integration.pgi.SbimopsAdaptor;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+@Service
+<span class="nc" id="L79">public class SchedularService {</span>
+
+<span class="nc" id="L81">    public static final Integer QUARTZ_SBIMOPS_RECONCILE_BULK_JOBS = 5;</span>
+<span class="nc" id="L82">    private static final Logger LOGGER = Logger.getLogger(SchedularService.class);</span>
+    @Autowired
+    @Qualifier(&quot;persistenceService&quot;)
+    private PersistenceService persistenceService;
+
+    @Autowired
+    private ReconciliationService reconciliationService;
+
+    @Autowired
+    private AxisAdaptor axisAdaptor;
+
+    @Autowired
+    private AtomAdaptor atomAdaptor;
+
+    @Autowired
+    private SbimopsAdaptor sbimopsAdaptor;
+
+    @Transactional
+    public void reconcileAXIS() {
+
+<span class="nc" id="L102">        LOGGER.debug(&quot;Inside reconcileAXIS&quot;);</span>
+<span class="nc" id="L103">        final Calendar threeDaysBackCalender = Calendar.getInstance();</span>
+<span class="nc" id="L104">        threeDaysBackCalender.add(Calendar.DATE, -3);</span>
+<span class="nc" id="L105">        final Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L106">        cal.add(Calendar.MINUTE, -30);</span>
+<span class="nc" id="L107">        final Query qry = persistenceService</span>
+<span class="nc" id="L108">                .getSession()</span>
+<span class="nc" id="L109">                .createQuery(</span>
+                        &quot;select receipt from org.egov.collection.entity.OnlinePayment as receipt where receipt.status.code=:onlinestatuscode&quot;
+                                + &quot; and receipt.service.code=:paymentservicecode and receipt.createdDate&lt;:thirtyminslesssysdate&quot;)
+<span class="nc" id="L112">                .setMaxResults(50);</span>
+<span class="nc" id="L113">        qry.setString(&quot;onlinestatuscode&quot;, CollectionConstants.ONLINEPAYMENT_STATUS_CODE_PENDING);</span>
+<span class="nc" id="L114">        qry.setString(&quot;paymentservicecode&quot;, CollectionConstants.SERVICECODE_AXIS);</span>
+<span class="nc" id="L115">        qry.setParameter(&quot;thirtyminslesssysdate&quot;, new Date(cal.getTimeInMillis()));</span>
+<span class="nc" id="L116">        final List&lt;OnlinePayment&gt; reconcileList = qry.list();</span>
+
+<span class="nc" id="L118">        LOGGER.debug(&quot;Thread ID = &quot; + Thread.currentThread().getId() + &quot;: got &quot; + reconcileList.size() + &quot; results.&quot;);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (!reconcileList.isEmpty()) {</span>
+            try {
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                for (final OnlinePayment onlinePaymentObj : reconcileList) {</span>
+<span class="nc" id="L122">                    final long startTimeInMilis = System.currentTimeMillis();</span>
+<span class="nc" id="L123">                    LOGGER.info(&quot;AXIS Receiptid::::&quot; + onlinePaymentObj.getReceiptHeader().getId());</span>
+<span class="nc" id="L124">                    PaymentResponse paymentResponse = axisAdaptor.createOfflinePaymentRequest(onlinePaymentObj);</span>
+<span class="nc bnc" id="L125" title="All 4 branches missed.">                    if (paymentResponse != null &amp;&amp; isNotBlank(paymentResponse.getReceiptId())) {</span>
+<span class="nc" id="L126">                        LOGGER.info(&quot;paymentResponse.getReceiptId():&quot; + paymentResponse.getReceiptId());</span>
+<span class="nc" id="L127">                        LOGGER.info(&quot;paymentResponse.getAdditionalInfo6():&quot; + paymentResponse.getAdditionalInfo6());</span>
+<span class="nc" id="L128">                        LOGGER.info(&quot;paymentResponse.getAuthStatus():&quot; + paymentResponse.getAuthStatus());</span>
+<span class="nc" id="L129">                        ReceiptHeader onlinePaymentReceiptHeader = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+                                CollectionConstants.QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE,
+<span class="nc" id="L131">                                Long.valueOf(paymentResponse.getReceiptId()),</span>
+<span class="nc" id="L132">                                ApplicationThreadLocals.getCityCode());</span>
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">                        if (CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS.equals(paymentResponse.getAuthStatus()))</span>
+<span class="nc" id="L135">                            reconciliationService.processSuccessMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">                        else if ((DateUtils.compareDates(onlinePaymentReceiptHeader.getCreatedDate(),</span>
+<span class="nc" id="L137">                                threeDaysBackCalender.getTime()))</span>
+                                &amp;&amp;
+<span class="nc" id="L139">                                (onlinePaymentReceiptHeader.getOnlinePayment().getService().getCode()</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">                                        .equals(CollectionConstants.SERVICECODE_AXIS) &amp;&amp;</span>
+                                        CollectionConstants.AXIS_AUTHORISATION_CODES_WAITINGFOR_PAY_GATEWAY_RESPONSE
+<span class="nc bnc" id="L142" title="All 2 branches missed.">                                                .contains(paymentResponse.getAuthStatus()))) {</span>
+<span class="nc" id="L143">                            onlinePaymentReceiptHeader.getOnlinePayment().setAuthorisationStatusCode(</span>
+<span class="nc" id="L144">                                    paymentResponse.getAuthStatus());</span>
+<span class="nc" id="L145">                            onlinePaymentReceiptHeader.getOnlinePayment().setRemarks(paymentResponse.getErrorDescription());</span>
+                        } else
+<span class="nc" id="L147">                            reconciliationService.processFailureMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+
+<span class="nc" id="L149">                        final long elapsedTimeInMillis = System.currentTimeMillis() - startTimeInMilis;</span>
+<span class="nc" id="L150">                        LOGGER.info(&quot;$$$$$$ Online Receipt Persisted with Receipt Number: &quot;</span>
+<span class="nc" id="L151">                                + onlinePaymentReceiptHeader.getReceiptnumber()</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                                + (onlinePaymentReceiptHeader.getConsumerCode() != null ? &quot; and consumer code: &quot;</span>
+<span class="nc" id="L153">                                + onlinePaymentReceiptHeader.getConsumerCode() : &quot;&quot;)</span>
+                                + &quot;; Time taken(ms) = &quot;
+                                + elapsedTimeInMillis);
+                    }
+<span class="nc" id="L157">                }</span>
+<span class="nc" id="L158">            } catch (final ApplicationRuntimeException exp) {</span>
+<span class="nc" id="L159">                LOGGER.error(&quot;AXIS payment reconciliation failed&quot;, exp);</span>
+<span class="nc" id="L160">            }</span>
+        }
+<span class="nc" id="L162">    }</span>
+
+    @Transactional
+    public void reconcileATOM(Integer modulo) {
+<span class="nc" id="L166">        LOGGER.debug(&quot;Inside reconcileATOM&quot;);</span>
+<span class="nc" id="L167">        final Calendar fiveDaysBackCalender = Calendar.getInstance();</span>
+<span class="nc" id="L168">        fiveDaysBackCalender.add(Calendar.DATE, -5);</span>
+<span class="nc" id="L169">        final Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L170">        cal.add(Calendar.MINUTE, -30);</span>
+<span class="nc" id="L171">        StringBuilder queryString = new StringBuilder(200);</span>
+<span class="nc" id="L172">        queryString.append(</span>
+                &quot;select receipt from org.egov.collection.entity.OnlinePayment as receipt where receipt.status.code=:onlinestatuscode&quot;)
+<span class="nc" id="L174">                .append(&quot; and receipt.service.code=:paymentservicecode and receipt.createdDate&lt;:thirtyminslesssysdate  and MOD(receipt.id, &quot;)</span>
+<span class="nc" id="L175">                .append(CollectionConstants.QUARTZ_ATOM_RECONCILE_BULK_JOBS)</span>
+<span class="nc" id="L176">                .append(&quot;) = :modulo  order by receipt.id asc&quot;);</span>
+<span class="nc" id="L177">        final Query query = persistenceService</span>
+<span class="nc" id="L178">                .getSession()</span>
+<span class="nc" id="L179">                .createQuery(queryString.toString())</span>
+<span class="nc" id="L180">                .setMaxResults(50);</span>
+<span class="nc" id="L181">        query.setString(&quot;onlinestatuscode&quot;, CollectionConstants.ONLINEPAYMENT_STATUS_CODE_PENDING);</span>
+<span class="nc" id="L182">        query.setString(&quot;paymentservicecode&quot;, CollectionConstants.SERVICECODE_ATOM);</span>
+<span class="nc" id="L183">        query.setParameter(&quot;thirtyminslesssysdate&quot;, new Date(cal.getTimeInMillis()));</span>
+<span class="nc" id="L184">        query.setParameter(&quot;modulo&quot;, modulo);</span>
+<span class="nc" id="L185">        final List&lt;OnlinePayment&gt; reconcileList = query.list();</span>
+<span class="nc" id="L186">        LOGGER.debug(&quot;Thread ID = &quot; + Thread.currentThread().getId() + &quot;: got &quot; + reconcileList.size() + &quot; results.&quot;);</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (!reconcileList.isEmpty()) {</span>
+            try {
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                for (final OnlinePayment onlinePaymentObj : reconcileList) {</span>
+<span class="nc" id="L190">                    final long startTimeInMilis = System.currentTimeMillis();</span>
+<span class="nc" id="L191">                    LOGGER.info(&quot;ATOM Receiptid::::&quot; + onlinePaymentObj.getReceiptHeader().getId());</span>
+<span class="nc" id="L192">                    PaymentResponse paymentResponse = atomAdaptor.createOfflinePaymentRequest(onlinePaymentObj);</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">                    if (paymentResponse != null &amp;&amp; isNotBlank(paymentResponse.getReceiptId())) {</span>
+<span class="nc" id="L194">                        LOGGER.info(&quot;paymentResponse.getReceiptId():&quot; + paymentResponse.getReceiptId());</span>
+<span class="nc" id="L195">                        LOGGER.info(&quot;paymentResponse.getAdditionalInfo6():&quot; + paymentResponse.getAdditionalInfo6());</span>
+<span class="nc" id="L196">                        LOGGER.info(&quot;paymentResponse.getAuthStatus():&quot; + paymentResponse.getAuthStatus());</span>
+<span class="nc" id="L197">                        ReceiptHeader onlinePaymentReceiptHeader = null;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">                        if (isNotBlank(paymentResponse.getAdditionalInfo2())) {</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">                            if (paymentResponse.getAdditionalInfo2().equals(ApplicationThreadLocals.getCityCode()))</span>
+<span class="nc" id="L200">                                onlinePaymentReceiptHeader = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+                                        CollectionConstants.QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE,
+<span class="nc" id="L202">                                        Long.valueOf(paymentResponse.getReceiptId()),</span>
+<span class="nc" id="L203">                                        paymentResponse.getAdditionalInfo2());</span>
+                            else {
+<span class="nc" id="L205">                                LOGGER.error(&quot;City code is not match&quot;);</span>
+<span class="nc" id="L206">                                throw new ValidationException(Arrays.asList(new ValidationError(&quot;City code is not match&quot;,</span>
+                                        &quot;City code is not match&quot;)));
+                            }
+                        } else
+<span class="nc" id="L210">                            onlinePaymentReceiptHeader = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+                                    CollectionConstants.QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE,
+<span class="nc" id="L212">                                    Long.valueOf(paymentResponse.getReceiptId()),</span>
+<span class="nc" id="L213">                                    ApplicationThreadLocals.getCityCode());</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">                        if (CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS.equals(paymentResponse.getAuthStatus()))</span>
+<span class="nc" id="L215">                            reconciliationService.processSuccessMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">                        else if ((DateUtils.compareDates(onlinePaymentReceiptHeader.getCreatedDate(),</span>
+<span class="nc" id="L217">                                fiveDaysBackCalender.getTime()))</span>
+                                &amp;&amp;
+<span class="nc" id="L219">                                (onlinePaymentReceiptHeader.getOnlinePayment().getService().getCode()</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                                        .equals(CollectionConstants.SERVICECODE_ATOM) &amp;&amp;</span>
+                                        CollectionConstants.ATOM_AUTHORISATION_CODES_WAITINGFOR_PAY_GATEWAY_RESPONSE
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                                                .contains(paymentResponse.getAuthStatus()))) {</span>
+<span class="nc" id="L223">                            onlinePaymentReceiptHeader.getOnlinePayment().setAuthorisationStatusCode(</span>
+<span class="nc" id="L224">                                    paymentResponse.getAuthStatus());</span>
+<span class="nc" id="L225">                            onlinePaymentReceiptHeader.getOnlinePayment().setRemarks(paymentResponse.getErrorDescription());</span>
+                        } else
+<span class="nc" id="L227">                            reconciliationService.processFailureMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+
+<span class="nc" id="L229">                        final long elapsedTimeInMillis = System.currentTimeMillis() - startTimeInMilis;</span>
+<span class="nc" id="L230">                        LOGGER.info(&quot;$$$$$$ Online Receipt Persisted with Receipt Number: &quot;</span>
+<span class="nc" id="L231">                                + onlinePaymentReceiptHeader.getReceiptnumber()</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">                                + (onlinePaymentReceiptHeader.getConsumerCode() != null ? &quot; and consumer code: &quot;</span>
+<span class="nc" id="L233">                                + onlinePaymentReceiptHeader.getConsumerCode() : &quot;&quot;)</span>
+                                + &quot;; Time taken(ms) = &quot;
+                                + elapsedTimeInMillis);
+                    }
+<span class="nc" id="L237">                }</span>
+<span class="nc" id="L238">            } catch (final ApplicationRuntimeException exp) {</span>
+<span class="nc" id="L239">                LOGGER.error(&quot;ATOM payment reconciliation failed&quot;, exp);</span>
+<span class="nc" id="L240">            }</span>
+        }
+<span class="nc" id="L242">    }</span>
+
+    @Transactional
+    public void reconcileSBIMOPS(Integer modulo) {
+        try {
+<span class="nc" id="L247">            LOGGER.debug(&quot;Inside reconcileSBIMOPS&quot;);</span>
+<span class="nc" id="L248">            final List&lt;OnlinePayment&gt; reconcileList = getPendingOnlineTransaction(CollectionConstants.SERVICECODE_SBIMOPS,</span>
+                    modulo);
+
+<span class="nc" id="L251">            LOGGER.debug(&quot;Thread ID = &quot; + Thread.currentThread().getId() + &quot;: got &quot; + reconcileList.size() + &quot; results.&quot;);</span>
+<span class="nc bnc" id="L252" title="All 4 branches missed.">            if (reconcileList != null &amp;&amp; !reconcileList.isEmpty()) {</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                for (final OnlinePayment onlinePaymentObj : reconcileList) {</span>
+<span class="nc" id="L254">                    LOGGER.info(&quot;SBIMOPS Receiptid::::&quot; + onlinePaymentObj.getReceiptHeader().getId());</span>
+<span class="nc" id="L255">                    PaymentResponse paymentResponse = sbimopsAdaptor.createOfflinePaymentRequest(onlinePaymentObj);</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">                    if (paymentResponse == null)</span>
+<span class="nc" id="L257">                        LOGGER.debug(&quot;Online Receipt Persisted for the Receipt Id: &quot; + onlinePaymentObj.getReceiptHeader().getId()</span>
+                                + &quot; Response is null&quot;);
+<span class="nc bnc" id="L259" title="All 2 branches missed.">                    else if (isNotBlank(paymentResponse.getReceiptId())) {</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">                        if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L261">                            LOGGER.debug(&quot;paymentResponse.getReceiptId():&quot; + paymentResponse.getReceiptId());</span>
+<span class="nc" id="L262">                            LOGGER.debug(&quot;paymentResponse.getAdditionalInfo6():&quot; +</span>
+<span class="nc" id="L263">                                    defaultIfBlank(paymentResponse.getAdditionalInfo6(), &quot; consumer code is blank &quot;));</span>
+<span class="nc" id="L264">                            LOGGER.debug(&quot;paymentResponse.getAuthStatus():&quot; + paymentResponse.getAuthStatus());</span>
+                        }
+<span class="nc" id="L266">                        processOnlineTransaction(paymentResponse);</span>
+                    }
+<span class="nc" id="L268">                }</span>
+            }
+<span class="nc" id="L270">        } catch (final ApplicationRuntimeException exp) {</span>
+<span class="nc" id="L271">            LOGGER.error(&quot;SBIMOPS payment reconciliation failed&quot;, exp);</span>
+<span class="nc" id="L272">        }</span>
+<span class="nc" id="L273">    }</span>
+
+    public List&lt;OnlinePayment&gt; getPendingOnlineTransaction(String paymentServiceCode, Integer modulo) {
+<span class="nc" id="L276">        final Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L277">        cal.add(Calendar.MINUTE, -30);</span>
+<span class="nc" id="L278">        StringBuilder queryString = new StringBuilder(200);</span>
+<span class="nc" id="L279">        queryString.append(</span>
+                &quot;select receipt from org.egov.collection.entity.OnlinePayment as receipt where receipt.status.code=:onlinestatuscode&quot;)
+<span class="nc" id="L281">                .append(&quot; and receipt.service.code=:paymentservicecode and receipt.createdDate&lt;:thirtyminslesssysdate  and MOD(receipt.id, &quot;)</span>
+<span class="nc" id="L282">                .append(QUARTZ_SBIMOPS_RECONCILE_BULK_JOBS)</span>
+<span class="nc" id="L283">                .append(&quot;) = :modulo  order by receipt.id asc&quot;);</span>
+<span class="nc" id="L284">        final Query query = persistenceService</span>
+<span class="nc" id="L285">                .getSession()</span>
+<span class="nc" id="L286">                .createQuery(queryString.toString())</span>
+<span class="nc" id="L287">                .setMaxResults(50);</span>
+<span class="nc" id="L288">        query.setString(&quot;onlinestatuscode&quot;, CollectionConstants.ONLINEPAYMENT_STATUS_CODE_PENDING);</span>
+<span class="nc" id="L289">        query.setString(&quot;paymentservicecode&quot;, paymentServiceCode);</span>
+<span class="nc" id="L290">        query.setParameter(&quot;thirtyminslesssysdate&quot;, new Date(cal.getTimeInMillis()));</span>
+<span class="nc" id="L291">        query.setParameter(&quot;modulo&quot;, modulo);</span>
+<span class="nc" id="L292">        return query.list();</span>
+    }
+
+    private void processOnlineTransaction(PaymentResponse paymentResponse) {
+
+        // If the transaction status is Pending, Keeping the transaction in pending status for five days from transaction date.
+<span class="nc" id="L298">        final Calendar fiveDaysBackCalender = Calendar.getInstance();</span>
+<span class="nc" id="L299">        fiveDaysBackCalender.add(Calendar.DATE, -5);</span>
+
+<span class="nc" id="L301">        ReceiptHeader onlinePaymentReceiptHeader = (ReceiptHeader) persistenceService.findByNamedQuery(</span>
+                CollectionConstants.QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE,
+<span class="nc" id="L303">                Long.valueOf(paymentResponse.getReceiptId()),</span>
+<span class="nc" id="L304">                ApplicationThreadLocals.getCityCode());</span>
+
+<span class="nc bnc" id="L306" title="All 2 branches missed.">        if (CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS.equals(paymentResponse.getAuthStatus()))</span>
+<span class="nc" id="L307">            reconciliationService.processSuccessMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        else if (CollectionConstants.PGI_AUTHORISATION_CODE_PENDING.equals(paymentResponse.getAuthStatus()) &amp;&amp;</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">                DateUtils.compareDates(onlinePaymentReceiptHeader.getCreatedDate(), fiveDaysBackCalender.getTime())) {</span>
+<span class="nc" id="L310">            onlinePaymentReceiptHeader.getOnlinePayment().setAuthorisationStatusCode(</span>
+<span class="nc" id="L311">                    paymentResponse.getAuthStatus());</span>
+<span class="nc" id="L312">            onlinePaymentReceiptHeader.getOnlinePayment().setRemarks(paymentResponse.getErrorDescription());</span>
+        } else
+<span class="nc" id="L314">            reconciliationService.processFailureMsg(onlinePaymentReceiptHeader, paymentResponse);</span>
+<span class="nc" id="L315">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

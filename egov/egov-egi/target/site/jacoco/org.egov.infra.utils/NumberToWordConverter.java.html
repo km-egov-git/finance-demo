@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NumberToWordConverter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.utils</a> &gt; <span class="el_source">NumberToWordConverter.java</span></div><h1>NumberToWordConverter.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.utils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import static org.egov.infra.config.core.LocalizationSettings.currencyName;
+import static org.egov.infra.config.core.LocalizationSettings.currencyNamePlural;
+import static org.egov.infra.config.core.LocalizationSettings.currencyUnitName;
+import static org.egov.infra.config.core.LocalizationSettings.currencyUnitNamePlural;
+import static org.egov.infra.utils.ApplicationConstant.WHITESPACE;
+
+public final class NumberToWordConverter {
+
+    private static final String ZERO = &quot; Zero &quot;;
+    private static final String HUNDRED = &quot; Hundred &quot;;
+    private static final String THOUSAND = &quot; Thousand &quot;;
+    private static final String LAKH = &quot; Lakh &quot;;
+    private static final String CRORE = &quot; Crore &quot;;
+
+<span class="nc" id="L68">    private static final String[] WORDS_FOR_MULTIPLES_OF_TENS = {&quot;Ten&quot;, &quot;Twenty&quot;, &quot;Thirty&quot;, &quot;Forty&quot;, &quot;Fifty&quot;, &quot;Sixty&quot;,</span>
+            &quot;Seventy&quot;, &quot;Eighty&quot;, &quot;Ninety&quot;};
+<span class="nc" id="L70">    private static final String[] WORDS_FOR_TENS = {&quot;Eleven&quot;, &quot;Twelve&quot;, &quot;Thirteen&quot;, &quot;Fourteen&quot;, &quot;Fifteen&quot;, &quot;Sixteen&quot;,</span>
+            &quot;Seventeen&quot;, &quot;Eighteen&quot;, &quot;Nineteen&quot;};
+<span class="nc" id="L72">    private static final String[] WORDS_FOR_NUMBER = {&quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Four&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;,</span>
+            &quot;Eight&quot;, &quot;Nine&quot;};
+
+<span class="nc" id="L75">    private NumberToWordConverter() {</span>
+        //Only static API's
+<span class="nc" id="L77">    }</span>
+
+    public static String amountInWordsWithCircumfix(BigDecimal amount) {
+<span class="nc" id="L80">        return numberToWords(amount, true, true);</span>
+    }
+
+    public static String numberToWords(BigDecimal number, boolean prefix, boolean suffix) {
+<span class="nc" id="L84">        StringBuilder numberInWords = new StringBuilder();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (prefix) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if (number.intValue() &lt; 2) {</span>
+<span class="nc" id="L87">                numberInWords.append(currencyName()).append(WHITESPACE).append(convertToWords(number));</span>
+            } else {
+<span class="nc" id="L89">                numberInWords.append(currencyNamePlural()).append(WHITESPACE).append(convertToWords(number));</span>
+            }
+        } else {
+<span class="nc" id="L92">            numberInWords.append(convertToWords(number));</span>
+        }
+
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (suffix) {</span>
+<span class="nc" id="L96">            numberInWords.append(&quot; Only&quot;);</span>
+        }
+<span class="nc" id="L98">        return numberInWords.toString();</span>
+    }
+
+    private static String convertToWords(BigDecimal value) {
+<span class="nc" id="L102">        BigDecimal givenNumber = value;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        boolean negativeNumber = givenNumber.signum() == -1;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (negativeNumber) {</span>
+<span class="nc" id="L105">            givenNumber = givenNumber.abs();</span>
+        }
+
+<span class="nc" id="L108">        String numberString = givenNumber.setScale(2, RoundingMode.HALF_UP).toPlainString();</span>
+<span class="nc" id="L109">        StringBuilder numberInWord = convertIntegerPartToWord(Double.parseDouble(numberString));</span>
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (numberInWord.toString().trim().length() == 0) {</span>
+<span class="nc" id="L112">            numberInWord.append(ZERO);</span>
+        }
+
+<span class="nc" id="L115">        String result = numberInWord.toString().trim();</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (negativeNumber) {</span>
+<span class="nc" id="L117">            result = &quot;Minus &quot; + result;</span>
+        }
+
+<span class="nc" id="L120">        return result;</span>
+
+    }
+
+    private static StringBuilder convertIntegerPartToWord(double number) {
+<span class="nc" id="L125">        StringBuilder word = new StringBuilder();</span>
+<span class="nc" id="L126">        int quotient = (int) (number / 10000000);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (quotient &gt; 0) {</span>
+<span class="nc" id="L128">            word.append(convertToWords(new BigDecimal(quotient))).append(CRORE);</span>
+        }
+
+<span class="nc" id="L131">        number = number % 10000000;</span>
+<span class="nc" id="L132">        quotient = (int) (number / 100000);</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (quotient &gt; 0) {</span>
+<span class="nc" id="L134">            word.append(numberToWord(quotient)).append(LAKH);</span>
+        }
+
+<span class="nc" id="L137">        number = number % 100000;</span>
+<span class="nc" id="L138">        quotient = (int) (number / 1000);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (quotient &gt; 0) {</span>
+<span class="nc" id="L140">            word.append(numberToWord(quotient)).append(THOUSAND);</span>
+        }
+
+<span class="nc" id="L143">        number = number % 1000;</span>
+<span class="nc" id="L144">        quotient = (int) (number / 100);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (quotient &gt; 0) {</span>
+<span class="nc" id="L146">            word.append(numberToWord(quotient)).append(HUNDRED);</span>
+        }
+
+<span class="nc" id="L149">        number = number % 100;</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (number != 0) {</span>
+<span class="nc" id="L151">            word.append(numberToWord((int) number)).append(WHITESPACE);</span>
+        }
+
+<span class="nc" id="L154">        convertFractionalPartToWord(word, number);</span>
+
+<span class="nc" id="L156">        return word;</span>
+    }
+
+    private static void convertFractionalPartToWord(StringBuilder word, double number) {
+        int fractionalPart;
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (number % 1 != 0) {</span>
+<span class="nc" id="L162">            String fraction = Double.toString(number).split(&quot;\\.&quot;)[1];</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            if (fraction.length() &gt; 2) {</span>
+<span class="nc" id="L164">                fractionalPart = Integer.parseInt(fraction.substring(0, 2));</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">                if (Integer.parseInt(fraction.substring(2, 3)) &gt; 5) {</span>
+<span class="nc" id="L166">                    fractionalPart++;</span>
+                }
+            } else {
+<span class="nc" id="L169">                fractionalPart = Integer.parseInt(fraction);</span>
+            }
+<span class="nc bnc" id="L171" title="All 2 branches missed.">            if (fraction.length() == 1) {</span>
+<span class="nc" id="L172">                fractionalPart *= 10;</span>
+            }
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if (word.toString().trim().length() &gt; 0) {</span>
+<span class="nc" id="L175">                word.append((&quot;and &quot;));</span>
+            }
+
+<span class="nc" id="L178">            word.append(numberToWord(fractionalPart));</span>
+
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (fractionalPart &lt;= 1) {</span>
+<span class="nc" id="L181">                word.append(WHITESPACE).append(currencyUnitName());</span>
+            } else {
+<span class="nc" id="L183">                word.append(WHITESPACE).append(currencyUnitNamePlural());</span>
+            }
+        }
+<span class="nc" id="L186">    }</span>
+
+    private static String numberToWord(int number) {
+<span class="nc" id="L189">        int quotient = (number / 10);</span>
+<span class="nc" id="L190">        StringBuilder word = new StringBuilder();</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (quotient &gt; 0) {</span>
+<span class="nc bnc" id="L192" title="All 4 branches missed.">            if (quotient == 1 &amp;&amp; (number % 10) &gt; 0) {</span>
+<span class="nc" id="L193">                word.append(WORDS_FOR_TENS[(number % 10) - 1]);</span>
+<span class="nc" id="L194">                return word.toString();</span>
+            }
+<span class="nc" id="L196">            word.append(WORDS_FOR_MULTIPLES_OF_TENS[quotient - 1]);</span>
+        }
+<span class="nc" id="L198">        int remainder = number % 10;</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (remainder &gt; 0) {</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">            if (word.length() &gt; 0) {</span>
+<span class="nc" id="L201">                word.append(WHITESPACE);</span>
+            }
+<span class="nc" id="L203">            word.append(WORDS_FOR_NUMBER[remainder - 1]);</span>
+        }
+<span class="nc" id="L205">        return word.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserSearchResponseContent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.contract</a> &gt; <span class="el_source">UserSearchResponseContent.java</span></div><h1>UserSearchResponseContent.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.contract;
+
+import java.util.Date;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class UserSearchResponseContent {
+	
+	private Long id;
+    private String userName;
+    private String salutation;
+    private String name;
+    private String gender;
+    private String mobileNumber;
+    private String emailId;
+    private String altContactNumber;
+    private String pan;
+    private String aadhaarNumber;
+    private String permanentAddress;
+    private String permanentCity;
+    private String permanentPinCode;
+    private String correspondenceAddress;
+    private String correspondenceCity;
+    private String correspondencePinCode;
+    private Boolean active;
+    private String locale;
+    private String type;
+    private Boolean accountLocked;
+    private String fatherOrHusbandName;
+    private String signature;
+    private String bloodGroup;
+    private String photo;
+    private String identificationMark;
+    private Long createdBy;
+    private Long lastModifiedBy;
+    private String tenantId;
+    private List&lt;RoleRequest&gt; roles;
+    private String uuid;
+
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;)
+    private Date createdDate;
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;)
+    private Date lastModifiedDate;
+    @JsonFormat(pattern = &quot;dd-MM-yyyy&quot;)
+    private Date dob;
+    @JsonFormat(pattern = &quot;dd-MM-yyyy HH:mm:ss&quot;)
+    private Date pwdExpiryDate;
+    
+<span class="nc" id="L50">    public UserSearchResponseContent(){}</span>
+
+	public UserSearchResponseContent(Long id, String userName, String salutation, String name, String gender,
+			String mobileNumber, String emailId, String altContactNumber, String pan, String aadhaarNumber,
+			String permanentAddress, String permanentCity, String permanentPinCode, String correspondenceAddress,
+			String correspondenceCity, String correspondencePinCode, Boolean active, String locale, String type,
+			Boolean accountLocked, String fatherOrHusbandName, String signature, String bloodGroup, String photo,
+			String identificationMark, Long createdBy, Long lastModifiedBy, String tenantId, List&lt;RoleRequest&gt; roles,
+<span class="nc" id="L58">			String uuid, Date createdDate, Date lastModifiedDate, Date dob, Date pwdExpiryDate) {</span>
+<span class="nc" id="L59">		this.id = id;</span>
+<span class="nc" id="L60">		this.userName = userName;</span>
+<span class="nc" id="L61">		this.salutation = salutation;</span>
+<span class="nc" id="L62">		this.name = name;</span>
+<span class="nc" id="L63">		this.gender = gender;</span>
+<span class="nc" id="L64">		this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L65">		this.emailId = emailId;</span>
+<span class="nc" id="L66">		this.altContactNumber = altContactNumber;</span>
+<span class="nc" id="L67">		this.pan = pan;</span>
+<span class="nc" id="L68">		this.aadhaarNumber = aadhaarNumber;</span>
+<span class="nc" id="L69">		this.permanentAddress = permanentAddress;</span>
+<span class="nc" id="L70">		this.permanentCity = permanentCity;</span>
+<span class="nc" id="L71">		this.permanentPinCode = permanentPinCode;</span>
+<span class="nc" id="L72">		this.correspondenceAddress = correspondenceAddress;</span>
+<span class="nc" id="L73">		this.correspondenceCity = correspondenceCity;</span>
+<span class="nc" id="L74">		this.correspondencePinCode = correspondencePinCode;</span>
+<span class="nc" id="L75">		this.active = active;</span>
+<span class="nc" id="L76">		this.locale = locale;</span>
+<span class="nc" id="L77">		this.type = type;</span>
+<span class="nc" id="L78">		this.accountLocked = accountLocked;</span>
+<span class="nc" id="L79">		this.fatherOrHusbandName = fatherOrHusbandName;</span>
+<span class="nc" id="L80">		this.signature = signature;</span>
+<span class="nc" id="L81">		this.bloodGroup = bloodGroup;</span>
+<span class="nc" id="L82">		this.photo = photo;</span>
+<span class="nc" id="L83">		this.identificationMark = identificationMark;</span>
+<span class="nc" id="L84">		this.createdBy = createdBy;</span>
+<span class="nc" id="L85">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L86">		this.tenantId = tenantId;</span>
+<span class="nc" id="L87">		this.roles = roles;</span>
+<span class="nc" id="L88">		this.uuid = uuid;</span>
+<span class="nc" id="L89">		this.createdDate = createdDate;</span>
+<span class="nc" id="L90">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L91">		this.dob = dob;</span>
+<span class="nc" id="L92">		this.pwdExpiryDate = pwdExpiryDate;</span>
+<span class="nc" id="L93">	}</span>
+
+	public Long getId() {
+<span class="nc" id="L96">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L100">		this.id = id;</span>
+<span class="nc" id="L101">	}</span>
+
+	public String getUserName() {
+<span class="nc" id="L104">		return userName;</span>
+	}
+
+	public void setUserName(String userName) {
+<span class="nc" id="L108">		this.userName = userName;</span>
+<span class="nc" id="L109">	}</span>
+
+	public String getSalutation() {
+<span class="nc" id="L112">		return salutation;</span>
+	}
+
+	public void setSalutation(String salutation) {
+<span class="nc" id="L116">		this.salutation = salutation;</span>
+<span class="nc" id="L117">	}</span>
+
+	public String getName() {
+<span class="nc" id="L120">		return name;</span>
+	}
+
+	public void setName(String name) {
+<span class="nc" id="L124">		this.name = name;</span>
+<span class="nc" id="L125">	}</span>
+
+	public String getGender() {
+<span class="nc" id="L128">		return gender;</span>
+	}
+
+	public void setGender(String gender) {
+<span class="nc" id="L132">		this.gender = gender;</span>
+<span class="nc" id="L133">	}</span>
+
+	public String getMobileNumber() {
+<span class="nc" id="L136">		return mobileNumber;</span>
+	}
+
+	public void setMobileNumber(String mobileNumber) {
+<span class="nc" id="L140">		this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L141">	}</span>
+
+	public String getEmailId() {
+<span class="nc" id="L144">		return emailId;</span>
+	}
+
+	public void setEmailId(String emailId) {
+<span class="nc" id="L148">		this.emailId = emailId;</span>
+<span class="nc" id="L149">	}</span>
+
+	public String getAltContactNumber() {
+<span class="nc" id="L152">		return altContactNumber;</span>
+	}
+
+	public void setAltContactNumber(String altContactNumber) {
+<span class="nc" id="L156">		this.altContactNumber = altContactNumber;</span>
+<span class="nc" id="L157">	}</span>
+
+	public String getPan() {
+<span class="nc" id="L160">		return pan;</span>
+	}
+
+	public void setPan(String pan) {
+<span class="nc" id="L164">		this.pan = pan;</span>
+<span class="nc" id="L165">	}</span>
+
+	public String getAadhaarNumber() {
+<span class="nc" id="L168">		return aadhaarNumber;</span>
+	}
+
+	public void setAadhaarNumber(String aadhaarNumber) {
+<span class="nc" id="L172">		this.aadhaarNumber = aadhaarNumber;</span>
+<span class="nc" id="L173">	}</span>
+
+	public String getPermanentAddress() {
+<span class="nc" id="L176">		return permanentAddress;</span>
+	}
+
+	public void setPermanentAddress(String permanentAddress) {
+<span class="nc" id="L180">		this.permanentAddress = permanentAddress;</span>
+<span class="nc" id="L181">	}</span>
+
+	public String getPermanentCity() {
+<span class="nc" id="L184">		return permanentCity;</span>
+	}
+
+	public void setPermanentCity(String permanentCity) {
+<span class="nc" id="L188">		this.permanentCity = permanentCity;</span>
+<span class="nc" id="L189">	}</span>
+
+	public String getPermanentPinCode() {
+<span class="nc" id="L192">		return permanentPinCode;</span>
+	}
+
+	public void setPermanentPinCode(String permanentPinCode) {
+<span class="nc" id="L196">		this.permanentPinCode = permanentPinCode;</span>
+<span class="nc" id="L197">	}</span>
+
+	public String getCorrespondenceAddress() {
+<span class="nc" id="L200">		return correspondenceAddress;</span>
+	}
+
+	public void setCorrespondenceAddress(String correspondenceAddress) {
+<span class="nc" id="L204">		this.correspondenceAddress = correspondenceAddress;</span>
+<span class="nc" id="L205">	}</span>
+
+	public String getCorrespondenceCity() {
+<span class="nc" id="L208">		return correspondenceCity;</span>
+	}
+
+	public void setCorrespondenceCity(String correspondenceCity) {
+<span class="nc" id="L212">		this.correspondenceCity = correspondenceCity;</span>
+<span class="nc" id="L213">	}</span>
+
+	public String getCorrespondencePinCode() {
+<span class="nc" id="L216">		return correspondencePinCode;</span>
+	}
+
+	public void setCorrespondencePinCode(String correspondencePinCode) {
+<span class="nc" id="L220">		this.correspondencePinCode = correspondencePinCode;</span>
+<span class="nc" id="L221">	}</span>
+
+	public Boolean getActive() {
+<span class="nc" id="L224">		return active;</span>
+	}
+
+	public void setActive(Boolean active) {
+<span class="nc" id="L228">		this.active = active;</span>
+<span class="nc" id="L229">	}</span>
+
+	public String getLocale() {
+<span class="nc" id="L232">		return locale;</span>
+	}
+
+	public void setLocale(String locale) {
+<span class="nc" id="L236">		this.locale = locale;</span>
+<span class="nc" id="L237">	}</span>
+
+	public String getType() {
+<span class="nc" id="L240">		return type;</span>
+	}
+
+	public void setType(String type) {
+<span class="nc" id="L244">		this.type = type;</span>
+<span class="nc" id="L245">	}</span>
+
+	public Boolean getAccountLocked() {
+<span class="nc" id="L248">		return accountLocked;</span>
+	}
+
+	public void setAccountLocked(Boolean accountLocked) {
+<span class="nc" id="L252">		this.accountLocked = accountLocked;</span>
+<span class="nc" id="L253">	}</span>
+
+	public String getFatherOrHusbandName() {
+<span class="nc" id="L256">		return fatherOrHusbandName;</span>
+	}
+
+	public void setFatherOrHusbandName(String fatherOrHusbandName) {
+<span class="nc" id="L260">		this.fatherOrHusbandName = fatherOrHusbandName;</span>
+<span class="nc" id="L261">	}</span>
+
+	public String getSignature() {
+<span class="nc" id="L264">		return signature;</span>
+	}
+
+	public void setSignature(String signature) {
+<span class="nc" id="L268">		this.signature = signature;</span>
+<span class="nc" id="L269">	}</span>
+
+	public String getBloodGroup() {
+<span class="nc" id="L272">		return bloodGroup;</span>
+	}
+
+	public void setBloodGroup(String bloodGroup) {
+<span class="nc" id="L276">		this.bloodGroup = bloodGroup;</span>
+<span class="nc" id="L277">	}</span>
+
+	public String getPhoto() {
+<span class="nc" id="L280">		return photo;</span>
+	}
+
+	public void setPhoto(String photo) {
+<span class="nc" id="L284">		this.photo = photo;</span>
+<span class="nc" id="L285">	}</span>
+
+	public String getIdentificationMark() {
+<span class="nc" id="L288">		return identificationMark;</span>
+	}
+
+	public void setIdentificationMark(String identificationMark) {
+<span class="nc" id="L292">		this.identificationMark = identificationMark;</span>
+<span class="nc" id="L293">	}</span>
+
+	public Long getCreatedBy() {
+<span class="nc" id="L296">		return createdBy;</span>
+	}
+
+	public void setCreatedBy(Long createdBy) {
+<span class="nc" id="L300">		this.createdBy = createdBy;</span>
+<span class="nc" id="L301">	}</span>
+
+	public Long getLastModifiedBy() {
+<span class="nc" id="L304">		return lastModifiedBy;</span>
+	}
+
+	public void setLastModifiedBy(Long lastModifiedBy) {
+<span class="nc" id="L308">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L309">	}</span>
+
+	public String getTenantId() {
+<span class="nc" id="L312">		return tenantId;</span>
+	}
+
+	public void setTenantId(String tenantId) {
+<span class="nc" id="L316">		this.tenantId = tenantId;</span>
+<span class="nc" id="L317">	}</span>
+
+	public List&lt;RoleRequest&gt; getRoles() {
+<span class="nc" id="L320">		return roles;</span>
+	}
+
+	public void setRoles(List&lt;RoleRequest&gt; roles) {
+<span class="nc" id="L324">		this.roles = roles;</span>
+<span class="nc" id="L325">	}</span>
+
+	public String getUuid() {
+<span class="nc" id="L328">		return uuid;</span>
+	}
+
+	public void setUuid(String uuid) {
+<span class="nc" id="L332">		this.uuid = uuid;</span>
+<span class="nc" id="L333">	}</span>
+
+	public Date getCreatedDate() {
+<span class="nc" id="L336">		return createdDate;</span>
+	}
+
+	public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L340">		this.createdDate = createdDate;</span>
+<span class="nc" id="L341">	}</span>
+
+	public Date getLastModifiedDate() {
+<span class="nc" id="L344">		return lastModifiedDate;</span>
+	}
+
+	public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L348">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L349">	}</span>
+
+	public Date getDob() {
+<span class="nc" id="L352">		return dob;</span>
+	}
+
+	public void setDob(Date dob) {
+<span class="nc" id="L356">		this.dob = dob;</span>
+<span class="nc" id="L357">	}</span>
+
+	public Date getPwdExpiryDate() {
+<span class="nc" id="L360">		return pwdExpiryDate;</span>
+	}
+
+	public void setPwdExpiryDate(Date pwdExpiryDate) {
+<span class="nc" id="L364">		this.pwdExpiryDate = pwdExpiryDate;</span>
+<span class="nc" id="L365">	}</span>
+	
+    
+	
+    
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

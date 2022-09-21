@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WorkFlowMatrixDetails.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.matrix.entity</a> &gt; <span class="el_source">WorkFlowMatrixDetails.java</span></div><h1>WorkFlowMatrixDetails.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.matrix.entity;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.egov.infra.utils.DateUtils.toDefaultDateFormat;
+
+<span class="nc" id="L58">public class WorkFlowMatrixDetails {</span>
+
+    private Long approverNo;
+    private String[] designation;
+    private String state;
+    private String action;
+    private String status;
+    private String[] buttons;
+    private String department;
+    private String objectType;
+    private BigDecimal fromQty;
+    private BigDecimal toQty;
+    private Date fromDate;
+    private Date toDate;
+    private String additionalRule;
+    private String objectTypeAlias;
+    private BigDecimal fromQtyAlias;
+    private BigDecimal toQtyAlias;
+    private Date fromDateAlias;
+    private Date toDateAlias;
+    private String departmentAlias;
+    private String additionalRuleAlias;
+    private String objectTypeDisplay;
+    private Long rejectApproverNo;
+    private String[] rejectDesignation;
+    private String rejectState;
+    private String rejectAction;
+    private String rejectStatus;
+    private String[] rejectButtons;
+<span class="nc" id="L87">    private List&lt;WorkFlowMatrixDetails&gt; matrixdetails = new ArrayList&lt;&gt;();</span>
+
+    public Long getRejectApproverNo() {
+<span class="nc" id="L90">        return rejectApproverNo;</span>
+    }
+
+    public void setRejectApproverNo(final Long rejectApproverNo) {
+<span class="nc" id="L94">        this.rejectApproverNo = rejectApproverNo;</span>
+<span class="nc" id="L95">    }</span>
+
+    public String[] getRejectDesignation() {
+<span class="nc" id="L98">        return rejectDesignation;</span>
+    }
+
+    public void setRejectDesignation(final String[] rejectDesignation) {
+<span class="nc" id="L102">        this.rejectDesignation = rejectDesignation;</span>
+<span class="nc" id="L103">    }</span>
+
+    public String getRejectState() {
+<span class="nc" id="L106">        return rejectState;</span>
+    }
+
+    public void setRejectState(final String rejectState) {
+<span class="nc" id="L110">        this.rejectState = rejectState;</span>
+<span class="nc" id="L111">    }</span>
+
+    public String getRejectAction() {
+<span class="nc" id="L114">        return rejectAction;</span>
+    }
+
+    public void setRejectAction(final String rejectAction) {
+<span class="nc" id="L118">        this.rejectAction = rejectAction;</span>
+<span class="nc" id="L119">    }</span>
+
+    public String getRejectStatus() {
+<span class="nc" id="L122">        return rejectStatus;</span>
+    }
+
+    public void setRejectStatus(final String rejectStatus) {
+<span class="nc" id="L126">        this.rejectStatus = rejectStatus;</span>
+<span class="nc" id="L127">    }</span>
+
+    public String[] getRejectButtons() {
+<span class="nc" id="L130">        return rejectButtons;</span>
+    }
+
+    public void setRejectButtons(final String[] rejectButtons) {
+<span class="nc" id="L134">        this.rejectButtons = rejectButtons;</span>
+<span class="nc" id="L135">    }</span>
+
+    public String getObjectTypeDisplay() {
+<span class="nc" id="L138">        return objectTypeDisplay;</span>
+    }
+
+    public void setObjectTypeDisplay(final String objectTypeDisplay) {
+<span class="nc" id="L142">        this.objectTypeDisplay = objectTypeDisplay;</span>
+<span class="nc" id="L143">    }</span>
+
+    public String getDepartmentAlias() {
+<span class="nc" id="L146">        return departmentAlias;</span>
+    }
+
+    public void setDepartmentAlias(final String departmentAlias) {
+<span class="nc" id="L150">        this.departmentAlias = departmentAlias;</span>
+<span class="nc" id="L151">        department = departmentAlias;</span>
+<span class="nc" id="L152">    }</span>
+
+    public String getAdditionalRuleAlias() {
+<span class="nc" id="L155">        return additionalRuleAlias;</span>
+    }
+
+    public void setAdditionalRuleAlias(final String additionalRuleAlias) {
+<span class="nc" id="L159">        this.additionalRuleAlias = additionalRuleAlias;</span>
+<span class="nc" id="L160">        additionalRule = additionalRuleAlias;</span>
+<span class="nc" id="L161">    }</span>
+
+    public String getObjectTypeAlias() {
+<span class="nc" id="L164">        return objectTypeAlias;</span>
+    }
+
+    public void setObjectTypeAlias(final String objectTypeAlias) {
+<span class="nc" id="L168">        this.objectTypeAlias = objectTypeAlias;</span>
+<span class="nc" id="L169">        objectType = objectTypeAlias;</span>
+<span class="nc" id="L170">    }</span>
+
+    public BigDecimal getFromQtyAlias() {
+<span class="nc" id="L173">        return fromQtyAlias;</span>
+    }
+
+    public void setFromQtyAlias(final BigDecimal fromQtyAlias) {
+<span class="nc" id="L177">        this.fromQtyAlias = fromQtyAlias;</span>
+<span class="nc" id="L178">        fromQty = fromQtyAlias;</span>
+<span class="nc" id="L179">    }</span>
+
+    public BigDecimal getToQtyAlias() {
+<span class="nc" id="L182">        return toQtyAlias;</span>
+    }
+
+    public void setToQtyAlias(final BigDecimal toQtyAlias) {
+<span class="nc" id="L186">        this.toQtyAlias = toQtyAlias;</span>
+<span class="nc" id="L187">        toQty = toQtyAlias;</span>
+<span class="nc" id="L188">    }</span>
+
+    public Date getFromDateAlias() {
+<span class="nc" id="L191">        return fromDateAlias;</span>
+    }
+
+    public void setFromDateAlias(final Date fromDateAlias) {
+<span class="nc" id="L195">        this.fromDateAlias = fromDateAlias;</span>
+<span class="nc" id="L196">        fromDate = fromDateAlias;</span>
+<span class="nc" id="L197">    }</span>
+
+    public Date getToDateAlias() {
+<span class="nc" id="L200">        return toDateAlias;</span>
+    }
+
+    public void setToDateAlias(final Date toDateAlias) {
+<span class="nc" id="L204">        this.toDateAlias = toDateAlias;</span>
+<span class="nc" id="L205">        toDate = toDateAlias;</span>
+<span class="nc" id="L206">    }</span>
+
+    public String getAdditionalRule() {
+<span class="nc" id="L209">        return additionalRule;</span>
+    }
+
+    public void setAdditionalRule(final String additionalRule) {
+<span class="nc" id="L213">        this.additionalRule = additionalRule;</span>
+<span class="nc" id="L214">    }</span>
+
+    public List&lt;WorkFlowMatrixDetails&gt; getMatrixdetails() {
+<span class="nc" id="L217">        return matrixdetails;</span>
+    }
+
+    public void setMatrixdetails(final List&lt;WorkFlowMatrixDetails&gt; matrixdetails) {
+<span class="nc" id="L221">        this.matrixdetails = matrixdetails;</span>
+<span class="nc" id="L222">    }</span>
+
+    public String getDepartment() {
+<span class="nc" id="L225">        return department;</span>
+    }
+
+    public void setDepartment(final String department) {
+<span class="nc" id="L229">        this.department = department;</span>
+<span class="nc" id="L230">    }</span>
+
+    public String getObjectType() {
+<span class="nc" id="L233">        return objectType;</span>
+    }
+
+    public void setObjectType(final String objectType) {
+<span class="nc" id="L237">        this.objectType = objectType;</span>
+<span class="nc" id="L238">    }</span>
+
+    public BigDecimal getFromQty() {
+<span class="nc" id="L241">        return fromQty;</span>
+    }
+
+    public void setFromQty(final BigDecimal fromQty) {
+<span class="nc" id="L245">        this.fromQty = fromQty;</span>
+<span class="nc" id="L246">    }</span>
+
+    public BigDecimal getToQty() {
+<span class="nc" id="L249">        return toQty;</span>
+    }
+
+    public void setToQty(final BigDecimal toQty) {
+<span class="nc" id="L253">        this.toQty = toQty;</span>
+<span class="nc" id="L254">    }</span>
+
+    public Date getFromDate() {
+
+<span class="nc" id="L258">        return fromDate;</span>
+    }
+
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L262">        this.fromDate = fromDate;</span>
+<span class="nc" id="L263">    }</span>
+
+    public String getFromDateString() {
+
+<span class="nc" id="L267">        return toDefaultDateFormat(fromDate);</span>
+    }
+
+    public Date getToDate() {
+<span class="nc" id="L271">        return toDate;</span>
+    }
+
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L275">        this.toDate = toDate;</span>
+<span class="nc" id="L276">    }</span>
+
+    public String getToDateString() {
+<span class="nc" id="L279">        return toDefaultDateFormat(toDate);</span>
+    }
+
+    public String[] getButtons() {
+<span class="nc" id="L283">        return buttons;</span>
+    }
+
+    public void setButtons(final String[] buttons) {
+<span class="nc" id="L287">        this.buttons = buttons;</span>
+<span class="nc" id="L288">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L291">        return status;</span>
+    }
+
+    public void setStatus(final String status) {
+<span class="nc" id="L295">        this.status = status;</span>
+<span class="nc" id="L296">    }</span>
+
+    public String getAction() {
+<span class="nc" id="L299">        return action;</span>
+    }
+
+    public void setAction(final String action) {
+<span class="nc" id="L303">        this.action = action;</span>
+<span class="nc" id="L304">    }</span>
+
+    public Long getApproverNo() {
+<span class="nc" id="L307">        return approverNo;</span>
+    }
+
+    public void setApproverNo(final Long approverNo) {
+<span class="nc" id="L311">        this.approverNo = approverNo;</span>
+<span class="nc" id="L312">    }</span>
+
+    public String getState() {
+<span class="nc" id="L315">        return state;</span>
+    }
+
+    public void setState(final String state) {
+<span class="nc" id="L319">        this.state = state;</span>
+<span class="nc" id="L320">    }</span>
+
+    public String[] getDesignation() {
+<span class="nc" id="L323">        return designation;</span>
+    }
+
+    public void setDesignation(final String[] designation) {
+<span class="nc" id="L327">        this.designation = designation;</span>
+<span class="nc" id="L328">    }</span>
+
+    public String getDesignationString() {
+<span class="nc" id="L331">        final StringBuilder str = new StringBuilder();</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (getDesignation() != null) {</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">            for (final String designationname : getDesignation()) {</span>
+<span class="nc" id="L334">                str.append(designationname);</span>
+<span class="nc" id="L335">                str.append(&quot;,&quot;);</span>
+            }
+<span class="nc" id="L337">            final String designationString = str.toString();</span>
+<span class="nc" id="L338">            return designationString.substring(0, designationString.length() - 1);</span>
+        } else
+<span class="nc" id="L340">            return &quot;&quot;;</span>
+    }
+
+    public String getButtonString() {
+<span class="nc" id="L344">        final StringBuilder str = new StringBuilder();</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">        if (getButtons() != null) {</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">            for (final String buttonname : getButtons()) {</span>
+<span class="nc" id="L347">                str.append(buttonname);</span>
+<span class="nc" id="L348">                str.append(&quot;,&quot;);</span>
+            }
+<span class="nc" id="L350">            final String buttonsString = new String(str);</span>
+<span class="nc" id="L351">            return buttonsString.substring(0, buttonsString.length() - 1);</span>
+        } else
+<span class="nc" id="L353">            return &quot;&quot;;</span>
+    }
+
+    public String getRejectdesignationString() {
+<span class="nc" id="L357">        final StringBuilder str = new StringBuilder();</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">        if (getRejectDesignation() != null) {</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">            for (final String designationname : getRejectDesignation()) {</span>
+<span class="nc" id="L360">                str.append(designationname);</span>
+<span class="nc" id="L361">                str.append(&quot;,&quot;);</span>
+            }
+<span class="nc" id="L363">            final String designationString = new String(str);</span>
+<span class="nc" id="L364">            return designationString.substring(0, designationString.length() - 1);</span>
+        } else
+<span class="nc" id="L366">            return &quot;&quot;;</span>
+    }
+
+    public String getRejectbuttonString() {
+<span class="nc" id="L370">        final StringBuilder str = new StringBuilder();</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        if (getRejectButtons() != null) {</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            for (final String buttonname : getRejectButtons()) {</span>
+<span class="nc" id="L373">                str.append(buttonname);</span>
+<span class="nc" id="L374">                str.append(&quot;,&quot;);</span>
+            }
+<span class="nc" id="L376">            final String buttonsString = new String(str);</span>
+<span class="nc" id="L377">            return buttonsString.substring(0, buttonsString.length() - 1);</span>
+        } else
+<span class="nc" id="L379">            return &quot;&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

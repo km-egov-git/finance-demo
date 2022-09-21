@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoundryTag.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.taglib</a> &gt; <span class="el_source">BoundryTag.java</span></div><h1>BoundryTag.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.taglib;
+
+import org.apache.log4j.Logger;
+
+import javax.servlet.jsp.tagext.BodyTagSupport;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+<span class="nc" id="L62">public class BoundryTag extends BodyTagSupport {</span>
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+<span class="nc" id="L67">	private Object name = null;</span>
+<span class="nc" id="L68">	private String formName = &quot;&quot;;</span>
+<span class="nc" id="L69">	private String[] functionName = null;</span>
+	// private HashMap bndryCombo = new HashMap();
+<span class="nc" id="L71">	private static Logger logger = Logger.getLogger(BoundryTag.class);</span>
+
+	public Object getName() {
+<span class="nc" id="L74">		return this.name;</span>
+	}
+
+	public void setName(final Object name) {
+<span class="nc" id="L78">		this.name = name;</span>
+<span class="nc" id="L79">	}</span>
+
+	public String getFormName() {
+<span class="nc" id="L82">		return this.formName;</span>
+	}
+
+	public void setFormName(final String formName) {
+<span class="nc" id="L86">		this.formName = formName;</span>
+<span class="nc" id="L87">	}</span>
+
+	public static String removeSpaces(final String s) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		if (s == null) {</span>
+<span class="nc" id="L91">			return s;</span>
+		}
+
+<span class="nc" id="L94">		final StringBuffer methodName = new StringBuffer(15);</span>
+<span class="nc" id="L95">		final StringTokenizer st = new StringTokenizer(s);</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		while (st.hasMoreTokens()) {</span>
+<span class="nc" id="L97">			methodName.append(st.nextToken());</span>
+		}
+
+<span class="nc" id="L100">		return methodName.toString();</span>
+	}
+
+	public Map getExtractMap(final List al, final Map typeMap) {
+<span class="nc" id="L104">		final Set set = typeMap.keySet();</span>
+<span class="nc" id="L105">		final HashMap hm = new HashMap(typeMap);</span>
+<span class="nc" id="L106">		logger.debug(&quot;set.............&quot; + set);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		for (final Iterator itr = set.iterator(); itr.hasNext();) {</span>
+<span class="nc" id="L108">			logger.debug(&quot;1111111111&quot;);</span>
+<span class="nc" id="L109">			final Integer i = (Integer) itr.next();</span>
+<span class="nc" id="L110">			logger.debug(&quot;22222222222&quot;);</span>
+<span class="nc" id="L111">			final String s = (String) typeMap.get(i);</span>
+<span class="nc" id="L112">			logger.debug(&quot;3333333333&quot;);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			for (final Iterator itr1 = al.iterator(); itr1.hasNext();) {</span>
+<span class="nc" id="L114">				logger.debug(&quot;44444444&quot;);</span>
+<span class="nc" id="L115">				final String s1 = (String) itr1.next();</span>
+<span class="nc" id="L116">				logger.debug(&quot;s1.............&quot; + s1 + s);</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">				if (s.equals(s1)) {</span>
+<span class="nc" id="L118">					hm.remove(i);</span>
+
+				}
+<span class="nc" id="L121">				logger.debug(&quot;555555555555&quot;);</span>
+<span class="nc" id="L122">			}</span>
+<span class="nc" id="L123">			logger.debug(&quot;666666666666&quot;);</span>
+
+<span class="nc" id="L125">		}</span>
+<span class="nc" id="L126">		return hm;</span>
+	}
+
+	@Override
+	public int doStartTag() throws javax.servlet.jsp.JspTagException {
+<span class="nc" id="L131">		return SKIP_BODY;</span>
+	}
+
+	@Override
+	public int doEndTag() {
+
+<span class="nc" id="L137">		return EVAL_PAGE;</span>
+	}
+
+	private String createCombo(final Integer bndryid, final String formName, final String[] functionName) {
+
+		/*
+		 * final HeirarchyType htype = (HeirarchyType) this.getName(); // HeirarchyType htype = hmang.getHeirarchyTypeByID(1); final String bndryName = bmang.getBoundaryNameForID(bndryid); final
+		 * Boundary topLevelBoundary = (Boundary) bmang.getTopBoundary(bndryName, htype); logger.info(&quot;topLevelBoundary&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + topLevelBoundary.getName()); final int j = 1;
+		 * StringBuilder bndrySelect1 = new StringBuilder(&quot;&quot;); ; String bndrySelect2 = &quot;&quot;; final EgovInfrastrUtilInteface inteface = new EgovInfrastrUtil(); final ArrayList al = (ArrayList)
+		 * ExcludeBndryType.getExcludeType(); final Map typeMap = inteface.getMapOfBoundryTypes(); logger.debug(&quot;typeMap&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + typeMap.keySet()); final Map typeMapm1 =
+		 * this.getExtractMap(al, typeMap); logger.debug(&quot;typeMap&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + typeMapm1); final Set typeset = new TreeSet(typeMapm1.keySet()); final Iterator itr = typeset.iterator();
+		 * if (itr.hasNext()) { final Integer parentType = (Integer) itr.next(); final String typeName = (String) typeMapm1.get(parentType); logger.debug(&quot;typeName&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; +
+		 * typeName); final BoundaryType btype = (BoundaryType) btmang.getBoundaryType(typeName, htype); // List bondrySet = (List)bmang.getAllBoundaries(btype,topLevelBoundary.getId().intValue());
+		 * final List bondrySet = inteface.getBndryTypeBndryList(topLevelBoundary, btype); logger.debug(&quot;bondrySet&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + bondrySet); if (bondrySet != null &amp;&amp; !bondrySet.isEmpty())
+		 * { final Iterator bsetitr = bondrySet.iterator(); final List bndryidlist = new ArrayList(); while (bsetitr.hasNext()) { final Boundary bundary = (Boundary) bsetitr.next();
+		 * bndryidlist.add(bundary.getId()); } final Map bndrymap = inteface.getBoundaryMap(); logger.debug(&quot;bndryidlist&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + bndryidlist); final String admin = &quot;adminBndry&quot; + j;
+		 * String onchang = &quot;javascript:&quot; + removeSpaces(typeName) + &quot;Match&quot; + formName + &quot;('null');zoneDeptcheck();&quot;; if (functionName != null) { if (functionName.length != 0) { onchang =
+		 * &quot;javascript:&quot; + removeSpaces(typeName) + &quot;Match&quot; + formName + &quot;('null');zoneDeptcheck();&quot; + removeSpaces(functionName[0]); } } if (typeset.size() == 1) { bndrySelect1 = new
+		 * StringBuilder(&quot;&lt;TR  &gt;&lt;TD valign=\&quot;top\&quot; width=\&quot;50%\&quot; colspan = \&quot;4\&quot; align=\&quot;left\&quot; class=\&quot;eGovTblContent\&quot; &gt;&lt;font id=\&quot;normal_font\&quot; &gt;&quot; + typeName + &quot;&lt;/font&gt;&quot; + &quot;&lt;select name=\&quot;&quot; + admin
+		 * + &quot;\&quot; class=\&quot;controlText\&quot; onchange = \&quot;&quot; + onchang + &quot;\&quot; tabindex = \&quot;1\&quot;&gt;&quot; + &quot;&lt;option value=\&quot;\&quot;&gt;----Choose----&quot;); } else if (typeset.size() == 2) { bndrySelect1 = new
+		 * StringBuilder(&quot;&lt;TR  &gt;&lt;TD valign=\&quot;top\&quot; width=\&quot;50%\&quot; colspan = \&quot;2\&quot; align=\&quot;left\&quot; class=\&quot;eGovTblContent\&quot; &gt;&lt;font id=\&quot;normal_font\&quot; &gt;&quot; + typeName + &quot;&lt;/font&gt;&quot; + &quot;&lt;select name=\&quot;&quot; + admin
+		 * + &quot;\&quot; class=\&quot;controlText\&quot; onchange = \&quot;&quot; + onchang + &quot;\&quot; tabindex = \&quot;1\&quot;&gt;&quot; + &quot;&lt;option value=\&quot;\&quot;&gt;----Choose----&quot;); } else if (typeset.size() &gt;= 3) { bndrySelect1 = new
+		 * StringBuilder(&quot;&lt;TR width=\&quot;100%\&quot; &gt;&lt;TD valign=\&quot;top\&quot; width=&quot; + 100 / typeset.size() + &quot;%  align=\&quot;left\&quot; class=\&quot;eGovTblContent\&quot; &gt;&lt;font id=\&quot;normal_font\&quot; &gt;&quot; + typeName + &quot;&lt;/font&gt;&quot; +
+		 * &quot;&lt;select name=\&quot;&quot; + admin + &quot;\&quot; class=\&quot;controlText\&quot; onchange = \&quot;&quot; + onchang + &quot;\&quot; tabindex = \&quot;1\&quot;&gt;&quot; + &quot;&lt;option value=\&quot;\&quot;&gt;----Choose----&lt;/option&gt;&quot;); } String name = &quot;&quot;; for (final
+		 * Iterator iter = bndryidlist.iterator(); iter.hasNext();) { final Integer bndryId = (Integer) iter.next(); name = (String) bndrymap.get(bndryId); bndrySelect1.append(&quot;&lt;option value=\&quot;&quot; +
+		 * bndryId.toString() + &quot;\&quot;&gt;&quot; + name); } bndrySelect1.append(&quot;&lt;/select&gt; &quot;); // Commenting because the links are not working since Maps are not available bndrySelect1 += &quot;&lt;a name=\&quot;find&quot; +
+		 * typeName.toLowerCase() + &quot;id\&quot; href=\&quot;javascript:get&quot; + typeName + &quot;Value();\&quot; &gt; Find&quot; + typeName + &quot;&lt;/a&gt;&quot;; } } int count = 1; int x = 2; while (itr.hasNext()) { final Integer parentType =
+		 * (Integer) itr.next(); final String typeName = (String) typeMapm1.get(parentType); logger.debug(&quot;typeName&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot; + typeName); final BoundaryType btype = (BoundaryType)
+		 * btmang.getBoundaryType(typeName, htype); final Map bndrymap = inteface.getBoundaryMap(); final String admin = &quot;adminBndry&quot; + x; String onchang = &quot;&quot;; if (functionName != null) { if ((count &lt;
+		 * functionName.length) &amp;&amp; (functionName.length != 0)) { onchang = &quot;javascript:&quot; + removeSpaces(functionName[count]); } } if (btype.getChildBoundaryTypes() != null &amp;&amp;
+		 * !btype.getChildBoundaryTypes().isEmpty()) { onchang = &quot;javascript:&quot; + removeSpaces(typeName) + &quot;Match&quot; + formName + &quot;('null')&quot;; if (functionName != null) { if ((count &lt; functionName.length)
+		 * &amp;&amp; (functionName.length != 0)) { onchang = &quot;javascript:&quot; + removeSpaces(typeName) + &quot;Match&quot; + formName + &quot;('null');&quot; + removeSpaces(functionName[count]); } } } final String level =
+		 * EGovConfig.getProperty(&quot;LEVEL&quot;, &quot;&quot;, &quot;ADMBNDRY&quot;); if (typeset.size() &gt;= 3) { bndrySelect2 += &quot;&lt;TD valign=\&quot;top\&quot; width=&quot; + 100 / typeset.size() +
+		 * &quot;%   class=\&quot;eGovTblContent\&quot;  align=\&quot;left\&quot;&gt;&lt;font id=\&quot;normal_font\&quot;&gt;&quot; + typeName + &quot;&lt;/font&gt;&quot; + &quot;&lt;select name=\&quot;&quot; + admin + &quot;\&quot;  class=\&quot;controlText\&quot; onchange = \&quot;&quot; + onchang +
+		 * &quot;\&quot; tabindex = \&quot;1\&quot;&gt;&quot; + &quot;&lt;option value=\&quot;\&quot;&gt;----Choose----&lt;/option&gt;&quot; + &quot;&lt;/select&gt;&quot;; } else { bndrySelect2 +=
+		 * &quot;&lt;TD valign=\&quot;top\&quot; width=\&quot;50%\&quot;  colspan = \&quot;2\&quot; class=\&quot;eGovTblContent\&quot;  align=\&quot;left\&quot;&gt;&lt;font id=\&quot;normal_font\&quot;&gt;&quot; + typeName + &quot;&lt;/font&gt;&quot; + &quot;&lt;select name=\&quot;&quot; + admin +
+		 * &quot;\&quot;  class=\&quot;controlText\&quot; onchange = \&quot;&quot; + onchang + &quot;\&quot; tabindex = \&quot;1\&quot;&gt;&quot; + &quot;&lt;option value=\&quot;\&quot;&gt;----Choose----&quot; + &quot;&lt;/select&gt;&quot;; } // Commenting because the links are not working since
+		 * Maps are not available if(!typeName.equals(&quot;Nyay Panchayat&quot;)) { if(getFormName()==null||getFormName().equals(&quot;&quot;)||getFormName().equals(&quot;0&quot;)) bndrySelect2 +=
+		 * &quot;&lt;a name=\&quot;find&quot;+level+&quot;id\&quot; href=\&quot;javascript:get&quot;+removeSpaces(typeName)+&quot;Value(document.forms[0].adminBndry1.options[document.forms[0].adminBndry1.selectedIndex].value);\&quot; &gt;Find&quot; +
+		 * typeName + &quot;&lt;/a&gt;&lt;/TD&gt;&quot;; else bndrySelect2 +=
+		 * &quot;&lt;a name=\&quot;find&quot;+level+&quot;id\&quot; href=\&quot;javascript:get&quot;+removeSpaces(typeName)+&quot;Value(document.&quot;+getFormName()+&quot;.adminBndry1.options[document.&quot;+getFormName
+		 * ()+&quot;.adminBndry1.selectedIndex].value);\&quot; &gt;Find&quot; + typeName + &quot;&lt;/a&gt;&lt;/TD&gt;&quot;; } x++; count++; } bndrySelect2 += &quot;&lt;/tr&gt;&quot;; return bndrySelect1.toString() + bndrySelect2;
+		 */
+<span class="nc" id="L180">		return null;</span>
+
+	}
+
+	/**
+	 * methord added by deepak
+	 * 
+	 * @param:String toplevelBndryID,String formName
+	 * @return:String javaScriptString
+	 */
+	public String getFnString(final String toplevelBndryID, final String formName, final String[] functionName) {
+<span class="nc" id="L191">		final Map mainMap = new HashMap();</span>
+<span class="nc" id="L192">		String javaScriptString = &quot;&quot;;</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		if (mainMap.containsKey(toplevelBndryID)) {</span>
+<span class="nc" id="L194">			boolean formPresent = false;</span>
+<span class="nc" id="L195">			final Map form = new HashMap();</span>
+<span class="nc" id="L196">			final List listOfFormMaps = (List) mainMap.get(toplevelBndryID);</span>
+<span class="nc" id="L197">			final Iterator listIter = listOfFormMaps.iterator();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">			while (listIter.hasNext()) {</span>
+<span class="nc" id="L199">				final Map formMap = (Map) listIter.next();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">				if (formMap.containsKey(formName)) {</span>
+<span class="nc" id="L201">					javaScriptString = (String) formMap.get(formName);</span>
+<span class="nc" id="L202">					formPresent = true;</span>
+				}
+<span class="nc" id="L204">			}</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">			if (!formPresent) {</span>
+<span class="nc" id="L206">				form.put(formName, this.createCombo(new Integer(toplevelBndryID), formName, functionName));</span>
+<span class="nc" id="L207">				listOfFormMaps.add(form);</span>
+<span class="nc" id="L208">				javaScriptString = (String) form.get(formName);</span>
+			}
+
+<span class="nc" id="L211">		} else {</span>
+<span class="nc" id="L212">			final List listOfFormMaps = new ArrayList();</span>
+<span class="nc" id="L213">			final Map form = new HashMap();</span>
+<span class="nc" id="L214">			form.put(formName, this.createCombo(new Integer(toplevelBndryID), formName, functionName));</span>
+<span class="nc" id="L215">			listOfFormMaps.add(form);</span>
+<span class="nc" id="L216">			mainMap.put(toplevelBndryID, listOfFormMaps);</span>
+<span class="nc" id="L217">			javaScriptString = (String) form.get(formName);</span>
+
+		}
+<span class="nc" id="L220">		return javaScriptString;</span>
+	}
+
+	/**
+	 * @return Returns the functionName.
+	 */
+	public String[] getFunctionName() {
+<span class="nc" id="L227">		return this.functionName;</span>
+	}
+
+	/**
+	 * @param functionName The functionName to set.
+	 */
+	public void setFunctionName(final String[] functionName) {
+<span class="nc" id="L234">		this.functionName = functionName;</span>
+<span class="nc" id="L235">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentHibernateDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.dao</a> &gt; <span class="el_source">AssignmentHibernateDAO.java</span></div><h1>AssignmentHibernateDAO.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.pims.dao;
+
+import org.apache.log4j.Logger;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.Date;
+import java.util.List;
+
+
+<span class="nc" id="L66">public class AssignmentHibernateDAO implements AssignmentDAO</span>
+{
+<span class="nc" id="L68">    private final static Logger LOGGER = Logger.getLogger(AssignmentHibernateDAO.class.getClass());</span>
+    
+    @PersistenceContext
+	private EntityManager entityManager;
+    
+    public Session  getCurrentSession() {
+<span class="nc" id="L74">		return entityManager.unwrap(Session.class);</span>
+	}
+
+	public Assignment getAssignmentById(Integer id)
+	{
+<span class="nc" id="L79">		return (Assignment)getCurrentSession().get(Assignment.class, id);</span>
+	}
+	public List getListOfEmployeeWithoutAssignment(Date fromdate)
+	{
+<span class="nc" id="L83">		List employeeAssignList = null;</span>
+		try
+		{
+<span class="nc" id="L86">		StringBuffer query=new StringBuffer(&quot; select distinct ev.id from EmployeeView ev where ev.isActive=1 and  &quot; +</span>
+		&quot;(ev.fromDate &gt; :fromdate OR ev.toDate &lt; :fromdate) AND (ev.dateOfFirstAppointment &lt;= :fromdate) and &quot; + &quot;(ev.id not in (select ev.id from  ev where (ev.fromDate &lt;= :fromdate and ev.toDate &gt;=:fromdate)))&quot;);
+ 
+<span class="nc" id="L89">			Query qry = getCurrentSession().createQuery(query.toString());</span>
+			
+			// qry.setString(&quot;date&quot;, formatter.format(todate.getTime()));
+<span class="nc" id="L92">			qry.setDate(&quot;fromdate&quot;,fromdate);</span>
+<span class="nc" id="L93">			employeeAssignList = qry.list();</span>
+			
+<span class="nc" id="L95">	}catch (HibernateException he) {</span>
+<span class="nc" id="L96">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L97">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L98">	} catch (Exception he)</span>
+	{
+<span class="nc" id="L100">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L101">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L102">	}</span>
+<span class="nc" id="L103">			return employeeAssignList;</span>
+}
+	public Assignment getLatestAssignmentForEmployeeByToDate(Integer empId,Date todate) throws Exception
+	{
+<span class="nc" id="L107">		Assignment assignment = null;</span>
+		try
+		{
+<span class="nc" id="L110">			StringBuffer query=new StringBuffer(&quot; select  ev.assignment from EmployeeView ev where ev.assignment.isPrimary = 'Y' and &quot; +</span>
+											&quot;ev.id = :empid and ev.fromDate &lt;= :todate and rownum=1 order by ev.toDate desc &quot;);
+<span class="nc" id="L112">			Query qry = getCurrentSession().createQuery(query.toString());</span>
+			
+			// qry.setString(&quot;date&quot;, formatter.format(todate.getTime()));
+<span class="nc" id="L115">			qry.setDate(&quot;todate&quot;,todate );</span>
+<span class="nc" id="L116">			qry.setInteger(&quot;empid&quot;,empId );		</span>
+			
+<span class="nc" id="L118">			assignment = (Assignment)qry.uniqueResult();</span>
+			
+<span class="nc" id="L120">		}catch (HibernateException he)</span>
+		{
+<span class="nc" id="L122">			LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L123">			throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L124">		} catch (Exception he) </span>
+		{
+<span class="nc" id="L126">			LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L127">			throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L128">		}</span>
+<span class="nc" id="L129">		return assignment;</span>
+	}
+	
+	/**
+	 * Api to get Employee Report with Temporary Assignemt
+	 * @param Date
+	 * @param Position Id
+	 * @return employeeView
+	 */
+	
+	public  List&lt;EmployeeView&gt; getEmployeeWithTempAssignment(Date givenDate,Integer posId) 
+	{
+
+<span class="nc" id="L142">		List&lt;EmployeeView&gt; employeeAssignList = null;</span>
+		try
+		{
+<span class="nc" id="L145">			StringBuffer query = null;</span>
+		
+<span class="nc" id="L147">			query =new StringBuffer(&quot;from EmployeeView ev where ev.isActive=1 and ev.assignment.isPrimary='N'&quot;);</span>
+		
+		
+<span class="nc bnc" id="L150" title="All 2 branches missed.">		if(givenDate!=null)</span>
+		{
+<span class="nc" id="L152">			query.append(&quot; and ev.fromDate &lt;= :givenDate and ev.toDate &gt;=:givenDate&quot;);</span>
+		}
+<span class="nc bnc" id="L154" title="All 4 branches missed.">		if(posId!=null &amp;&amp; posId!=0)</span>
+		{
+<span class="nc" id="L156">			query.append(&quot; and ev.position.id =:posId &quot;);</span>
+		}
+ 
+<span class="nc" id="L159">			Query qry = getCurrentSession().createQuery(query.toString());</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">			if(givenDate!=null)</span>
+			{
+<span class="nc" id="L162">				qry.setDate(&quot;givenDate&quot;,givenDate);</span>
+			}
+<span class="nc bnc" id="L164" title="All 4 branches missed.">			if(posId!=null &amp;&amp; posId!=0)</span>
+			{
+<span class="nc" id="L166">				qry.setInteger(&quot;posId&quot;, posId);</span>
+			}
+			
+<span class="nc" id="L169">			employeeAssignList = (List)qry.list();</span>
+			
+			
+<span class="nc" id="L172">	}catch (HibernateException he) {</span>
+<span class="nc" id="L173">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L174">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L175">	} catch (Exception he)</span>
+	{
+<span class="nc" id="L177">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L178">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L179">	}</span>
+	
+<span class="nc" id="L181">	return employeeAssignList;</span>
+
+	}
+	
+	/**
+	 * Api to get Employee Report with Temporary Assignemt. New Api Added based on Story enhancement
+	 * @param Date
+	 * @param Position Id
+	 * @param employee code
+	 * @return employeeView
+	 */
+	public  List&lt;EmployeeView&gt; getEmployeeWithTempAssignment(String code,Date givenDate,Integer posId) 
+	{
+
+<span class="nc" id="L195">		List&lt;EmployeeView&gt; employeeAssignList = null;</span>
+		try
+		{
+<span class="nc" id="L198">			StringBuffer query = null;</span>
+		
+<span class="nc" id="L200">			query =new StringBuffer(&quot;from EmployeeView ev where ev.isActive=true and ev.assignment.isPrimary='N'&quot;);</span>
+		
+<span class="nc bnc" id="L202" title="All 4 branches missed.">			if(code!=null &amp;&amp; !code.equals(&quot;&quot;))</span>
+			{
+<span class="nc" id="L204">				query.append(&quot; and upper(trim(ev.employeeCode)) = :code&quot;);		</span>
+				
+				
+			}
+			
+<span class="nc bnc" id="L209" title="All 4 branches missed.">			if(givenDate==null &amp;&amp; posId==0 )</span>
+			{
+<span class="nc" id="L211">						query.append(&quot; and ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) &quot; +</span>
+						&quot;OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)OR &quot; +
+						&quot;(ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn WHERE evn.id = ev.id  and evn.assignment.isPrimary='N'))) &quot;);
+			}
+			else
+			{
+<span class="nc bnc" id="L217" title="All 2 branches missed.">				if(givenDate!=null)</span>
+				{
+<span class="nc" id="L219">					query.append(&quot; and ev.fromDate &lt;= :givenDate and ev.toDate &gt;=:givenDate&quot;);</span>
+				}
+				
+<span class="nc bnc" id="L222" title="All 4 branches missed.">				if(posId!=null &amp;&amp; posId!=0)</span>
+				{
+<span class="nc" id="L224">					query.append(&quot; and ev.position.id =:posId &quot;);</span>
+				}
+			}
+			
+		
+<span class="nc" id="L229">			Query qry = getCurrentSession().createQuery(query.toString());</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			if(givenDate!=null)</span>
+			{
+<span class="nc" id="L232">				qry.setDate(&quot;givenDate&quot;,givenDate);</span>
+			}
+<span class="nc bnc" id="L234" title="All 4 branches missed.">			if(posId!=null &amp;&amp; posId!=0)</span>
+			{
+<span class="nc" id="L236">				qry.setInteger(&quot;posId&quot;, posId);</span>
+			}
+<span class="nc bnc" id="L238" title="All 4 branches missed.">			if(code!=null &amp;&amp; !code.equals(&quot;&quot;))</span>
+			{
+<span class="nc" id="L240">				qry.setString(&quot;code&quot;, code);</span>
+			}
+<span class="nc" id="L242">			employeeAssignList = (List)qry.list();</span>
+			
+			
+<span class="nc" id="L245">	}catch (HibernateException he) {</span>
+<span class="nc" id="L246">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L247">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L248">	} catch (Exception he)</span>
+	{
+<span class="nc" id="L250">		LOGGER.error(he.getMessage());</span>
+<span class="nc" id="L251">		throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L252">	}</span>
+	
+<span class="nc" id="L254">	return employeeAssignList;</span>
+
+	}
+
+	@Override
+	@Transactional
+	public void create(final Assignment egEmpAssignment) {
+<span class="nc" id="L261">		getCurrentSession().save(egEmpAssignment);</span>
+<span class="nc" id="L262">	}</span>
+
+	@Override
+	@Transactional
+	public void update(final Assignment assignment) {
+<span class="nc" id="L267">		getCurrentSession().update(assignment);</span>
+<span class="nc" id="L268">	}</span>
+
+	private final static String STR_EXCEPTION=&quot;Exception:&quot;;
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

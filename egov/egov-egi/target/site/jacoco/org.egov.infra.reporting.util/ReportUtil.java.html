@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.reporting.util</a> &gt; <span class="el_source">ReportUtil.java</span></div><h1>ReportUtil.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.reporting.util;
+
+import com.google.common.collect.ImmutableMap;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.reporting.engine.ReportFormat;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.utils.NumberUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.Properties;
+
+import static java.lang.String.format;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getDomainURL;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getMunicipalityName;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getTenantID;
+import static org.egov.infra.reporting.engine.ReportConstants.CANCELLED_WATERMARK_IMAGE_PATH;
+import static org.egov.infra.reporting.engine.ReportConstants.DEFAULT_REPORT_FILE_PATH;
+import static org.egov.infra.reporting.engine.ReportConstants.IMAGES_BASE_PATH;
+import static org.egov.infra.reporting.engine.ReportConstants.REPORT_CONFIG_FILE;
+import static org.egov.infra.reporting.engine.ReportConstants.TENANT_COMMON_REPORT_FILE_LOCATION;
+import static org.egov.infra.reporting.engine.ReportConstants.TENANT_REPORT_FILE_PATH;
+import static org.egov.infra.utils.ApplicationConstant.CITY_LOGO_URL;
+import static org.egov.infra.utils.ApplicationConstant.CONTENT_DISPOSITION;
+
+public final class ReportUtil {
+
+<span class="nc" id="L89">    public static final ImmutableMap&lt;ReportFormat, String&gt; CONTENT_TYPES = ImmutableMap.&lt;ReportFormat, String&gt;builder()</span>
+<span class="nc" id="L90">            .put(ReportFormat.PDF, &quot;application/pdf&quot;)</span>
+<span class="nc" id="L91">            .put(ReportFormat.XLS, &quot;application/vnd.ms-excel&quot;)</span>
+<span class="nc" id="L92">            .put(ReportFormat.RTF, &quot;application/rtf&quot;)</span>
+<span class="nc" id="L93">            .put(ReportFormat.HTM, &quot;text/html&quot;)</span>
+<span class="nc" id="L94">            .put(ReportFormat.TXT, &quot;text/plain&quot;)</span>
+<span class="nc" id="L95">            .put(ReportFormat.CSV, &quot;text/plain&quot;).build();</span>
+<span class="nc" id="L96">    private static final Logger LOGGER = LoggerFactory.getLogger(ReportUtil.class);</span>
+
+<span class="nc" id="L98">    private ReportUtil() {</span>
+        // Only static api's
+<span class="nc" id="L100">    }</span>
+
+    public static String contentType(ReportFormat reportFormat) {
+<span class="nc" id="L103">        return CONTENT_TYPES.get(reportFormat);</span>
+    }
+
+    public static InputStream getImageAsStream(String imageName) {
+<span class="nc" id="L107">        return Thread.currentThread().getContextClassLoader().getResourceAsStream(IMAGES_BASE_PATH + imageName);</span>
+    }
+
+    public static String getCityName() {
+<span class="nc" id="L111">        return getMunicipalityName();</span>
+    }
+
+    public static InputStream getTemplateAsStream(String templateName) {
+<span class="nc" id="L115">        InputStream fileInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(</span>
+<span class="nc" id="L116">                format(TENANT_REPORT_FILE_PATH, getTenantID(), templateName));</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (fileInputStream == null)</span>
+<span class="nc" id="L118">            fileInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(</span>
+<span class="nc" id="L119">                    format(TENANT_REPORT_FILE_PATH, TENANT_COMMON_REPORT_FILE_LOCATION, templateName));</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (fileInputStream == null)</span>
+<span class="nc" id="L121">            fileInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(</span>
+<span class="nc" id="L122">                    format(DEFAULT_REPORT_FILE_PATH, templateName));</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (fileInputStream == null) {</span>
+<span class="nc" id="L124">            String errMsg = &quot;File [&quot; + templateName + &quot;] could not be loaded from CLASSPATH!&quot;;</span>
+<span class="nc" id="L125">            LOGGER.error(errMsg);</span>
+<span class="nc" id="L126">            throw new ApplicationRuntimeException(errMsg);</span>
+        }
+<span class="nc" id="L128">        return fileInputStream;</span>
+    }
+
+    public static Properties loadReportConfig() {
+<span class="nc" id="L132">        Properties reportProps = null;</span>
+        try {
+<span class="nc" id="L134">            InputStream configStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(REPORT_CONFIG_FILE);</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">            if (configStream != null) {</span>
+<span class="nc" id="L136">                reportProps = new Properties();</span>
+<span class="nc" id="L137">                reportProps.load(configStream);</span>
+            }
+<span class="nc" id="L139">            return reportProps;</span>
+<span class="nc" id="L140">        } catch (IOException e) {</span>
+<span class="nc" id="L141">            LOGGER.warn(&quot;Exception while loading report configuration file [{}]&quot;, REPORT_CONFIG_FILE, e);</span>
+<span class="nc" id="L142">            return null;</span>
+        }
+    }
+
+    public static Object fetchFromDBSql(Connection connection, String sqlQuery) throws SQLException {
+<span class="nc" id="L147">        try (PreparedStatement statement = connection.prepareStatement(sqlQuery);</span>
+<span class="nc" id="L148">             ResultSet resultSet = statement.executeQuery()) {</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            return resultSet.next() ? resultSet.getString(1) : null;</span>
+<span class="nc bnc" id="L150" title="All 16 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L151">            String errMsg = &quot;Exception while executing query [&quot; + sqlQuery + &quot;]&quot;;</span>
+<span class="nc" id="L152">            LOGGER.error(errMsg, e);</span>
+<span class="nc" id="L153">            throw new ApplicationRuntimeException(errMsg, e);</span>
+        }
+    }
+
+    public static Date getDate(int year, int month, int date) {
+<span class="nc" id="L158">        return DateUtils.getDate(year, month, date);</span>
+    }
+
+    public static Date today() {
+<span class="nc" id="L162">        return DateUtils.today();</span>
+    }
+
+    public static Date now() {
+<span class="nc" id="L166">        return DateUtils.now();</span>
+    }
+
+    public static Date tomorrow() {
+<span class="nc" id="L170">        return DateUtils.tomorrow();</span>
+    }
+
+    public static Date add(Date inputDate, int addType, int addAmount) {
+<span class="nc" id="L174">        return DateUtils.add(inputDate, addType, addAmount);</span>
+    }
+
+    public static String amountInWords(BigDecimal amount) {
+<span class="nc" id="L178">        System.out.println(&quot;************* Report amout********&quot;+amount);</span>
+<span class="nc" id="L179">        return NumberUtil.amountInWords(amount);</span>
+    }
+
+    public static String formatNumber(BigDecimal number, int fractionDigits, boolean useGrouping) {
+<span class="nc" id="L183">        return NumberUtil.formatNumber(number, fractionDigits, useGrouping);</span>
+    }
+
+    public static String logoBasePath() {
+<span class="nc" id="L187">        return format(CITY_LOGO_URL, getDomainURL());</span>
+    }
+
+    public static String cancelledWatermarkAbsolutePath() {
+<span class="nc" id="L191">        return format(CANCELLED_WATERMARK_IMAGE_PATH, getDomainURL());</span>
+    }
+
+    public static ResponseEntity&lt;InputStreamResource&gt; reportAsResponseEntity(ReportOutput reportOutput) {
+<span class="nc" id="L195">        return ResponseEntity</span>
+<span class="nc" id="L196">                .ok()</span>
+<span class="nc" id="L197">                .contentType(MediaType.valueOf(contentType(reportOutput.getReportFormat())))</span>
+<span class="nc" id="L198">                .cacheControl(CacheControl.noCache())</span>
+<span class="nc" id="L199">                .contentLength(reportOutput.getReportOutputData().length)</span>
+<span class="nc" id="L200">                .header(CONTENT_DISPOSITION, reportOutput.reportDisposition())</span>
+<span class="nc" id="L201">                .body(new InputStreamResource(reportOutput.asInputStream()));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

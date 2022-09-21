@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service</a> &gt; <span class="el_source">AssignmentService.java</span></div><h1>AssignmentService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.service;
+
+import org.apache.commons.lang3.StringUtils;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.Employee;
+import org.egov.eis.entity.HeadOfDepartments;
+import org.egov.eis.reports.entity.EmployeeAssignmentSearch;
+import org.egov.eis.reports.entity.EmployeePositionSearch;
+import org.egov.eis.repository.AssignmentRepository;
+import org.egov.eis.repository.HeadOfDepartmentsRepository;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * This service class is used to query all employee related assignments
+ *
+ * @author Vaibhav.K
+ */
+@Service
+@Transactional(readOnly = true)
+public class AssignmentService {
+
+    private final AssignmentRepository assignmentRepository;
+    private final HeadOfDepartmentsRepository employeeDepartmentRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private BoundaryService boundaryService;
+
+    @Autowired
+    public AssignmentService(final AssignmentRepository assignmentRepository,
+<span class="nc" id="L98">                             final HeadOfDepartmentsRepository employeeDepartmentRepository) {</span>
+<span class="nc" id="L99">        this.assignmentRepository = assignmentRepository;</span>
+<span class="nc" id="L100">        this.employeeDepartmentRepository = employeeDepartmentRepository;</span>
+<span class="nc" id="L101">    }</span>
+
+    public Assignment getAssignmentById(final Long id) {
+<span class="nc" id="L104">        return assignmentRepository.findOne(id);</span>
+    }
+
+    public List&lt;Assignment&gt; getAllAssignmentsByEmpId(final Long empId) {
+<span class="nc" id="L108">        return assignmentRepository.getAllAssignmentsByEmpId(empId);</span>
+    }
+
+    public List&lt;Assignment&gt; getAllActiveEmployeeAssignmentsByEmpId(final Long empId) {
+<span class="nc" id="L112">        return assignmentRepository.getAllActiveAssignmentsByEmpId(empId);</span>
+    }
+
+    public List&lt;Assignment&gt; getAssignmentsForPosition(final Long posId, final Date givenDate) {
+<span class="nc" id="L116">        return assignmentRepository.getAssignmentsForPosition(posId, givenDate);</span>
+    }
+
+    public Assignment getPrimaryAssignmentForPositon(final Long posId) {
+<span class="nc" id="L120">        return assignmentRepository.getPrimaryAssignmentForPosition(posId);</span>
+    }
+
+    @Transactional
+    public void createAssignment(final Assignment assignment) {
+<span class="nc" id="L125">        assignmentRepository.save(assignment);</span>
+<span class="nc" id="L126">    }</span>
+
+    @Transactional
+    public void updateAssignment(final Assignment assignment) {
+<span class="nc" id="L130">        assignmentRepository.save(assignment);</span>
+<span class="nc" id="L131">    }</span>
+
+    public Assignment getPrimaryAssignmentForUser(final Long userId) {
+<span class="nc" id="L134">        return assignmentRepository.getPrimaryAssignmentForUser(userId);</span>
+    }
+
+    public Assignment getPrimaryAssignmentForEmployee(final Long empId) {
+<span class="nc" id="L138">        return assignmentRepository.getPrimaryAssignmentForEmployee(empId);</span>
+    }
+
+    public Assignment getPrimaryAssignmentForEmployeeByToDate(final Long empId, final Date toDate) {
+<span class="nc" id="L142">        return assignmentRepository.getAssignmentByEmpAndDate(empId, toDate);</span>
+    }
+
+    public List&lt;Assignment&gt; getAssignmentsForPosition(final Long posId) {
+<span class="nc" id="L146">        return assignmentRepository.getAssignmentsForPosition(posId);</span>
+    }
+
+    public Boolean isHod(final Long assignId) {
+<span class="nc" id="L150">        final List&lt;HeadOfDepartments&gt; hodList = employeeDepartmentRepository.getAllHodDepartments(assignId);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        return !hodList.isEmpty();</span>
+    }
+
+    public Assignment getPrimaryAssignmentForPositionAndDate(final Long posId, final Date givenDate) {
+<span class="nc" id="L155">        return assignmentRepository.getPrimaryAssignmentForPositionAndDate(posId, givenDate);</span>
+    }
+
+    public Assignment getPrimaryAssignmentForGivenRange(final Long empId, final Date fromDate, final Date toDate) {
+<span class="nc" id="L159">        return assignmentRepository.getPrimaryAssignmentForGivenRange(empId, fromDate, toDate);</span>
+    }
+
+    public List&lt;Assignment&gt; getPositionsByDepartmentAndDesignationForGivenRange(final Long departmentId,
+                                                                                final Long designationId, final Date givenDate) {
+
+<span class="nc bnc" id="L165" title="All 4 branches missed.">        if (departmentId != null &amp;&amp; designationId != null)</span>
+<span class="nc" id="L166">            return assignmentRepository.getPrimaryAssignmentForDepartmentAndDesignation(departmentId, designationId,</span>
+                    givenDate);
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        else if (designationId != null)</span>
+<span class="nc" id="L169">            return assignmentRepository.getPrimaryAssignmentForDesignation(designationId, givenDate);</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        else if (departmentId != null)</span>
+<span class="nc" id="L171">            return assignmentRepository.getPrimaryAssignmentForDepartment(departmentId, givenDate);</span>
+<span class="nc" id="L172">        return new ArrayList&lt;&gt;();</span>
+
+    }
+
+    public List&lt;Assignment&gt; getAllPositionsByDepartmentAndDesignationForGivenRange(final Long departmentId,
+                                                                                   final Long designationId, final Date givenDate) {
+
+<span class="nc bnc" id="L179" title="All 4 branches missed.">        if (departmentId != null &amp;&amp; designationId != null)</span>
+<span class="nc" id="L180">            return assignmentRepository.getAllAssignmentForDepartmentAndDesignation(departmentId, designationId,</span>
+                    givenDate);
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        else if (designationId != null)</span>
+<span class="nc" id="L183">            return assignmentRepository.getAllAssignmentForDesignation(designationId, givenDate);</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        else if (departmentId != null)</span>
+<span class="nc" id="L185">            return assignmentRepository.getAllAssignmentForDepartment(departmentId, givenDate);</span>
+<span class="nc" id="L186">        return new ArrayList&lt;&gt;();</span>
+
+    }
+
+    public List&lt;Assignment&gt; getAllPositionsByDepartmentAndPositionNameForGivenRange(final Long departmentId,
+                                                                                    final String positionName) {
+<span class="nc" id="L192">        return assignmentRepository.getAllAssignmentForDepartmentAndPositionNameLike(departmentId, new Date(),</span>
+                positionName);
+    }
+
+    public List&lt;Assignment&gt; getAssignmentsByDeptDesigAndDates(final Long deptId, final Long desigId,
+                                                              final Date fromDate, final Date toDate) {
+<span class="nc" id="L198">        return assignmentRepository.findByDeptDesigAndDates(deptId, desigId, fromDate, toDate);</span>
+    }
+
+    public List&lt;Assignment&gt; findAllAssignmentsByDeptDesigAndDates(final Long deptId, final Long desigId,
+                                                                  final Date givenDate) {
+<span class="nc" id="L203">        return assignmentRepository.findAllAssignmentsByDeptDesigAndGivenDate(deptId, desigId, givenDate);</span>
+    }
+
+    public List&lt;Assignment&gt; findByEmployeeAndGivenDate(final Long empId, final Date givenDate) {
+<span class="nc" id="L207">        return assignmentRepository.findByEmployeeAndGivenDate(empId, givenDate);</span>
+    }
+
+    public List&lt;Assignment&gt; findPrimaryAssignmentForDesignationName(final String name) {
+<span class="nc" id="L211">        return assignmentRepository.findPrimaryAssignmentForDesignationName(name);</span>
+    }
+
+    public List&lt;Assignment&gt; findByDesignationAndBoundary(final Long desigId, final Long boundaryId) {
+<span class="nc" id="L215">        return assignmentRepository.findByDesignationAndBoundary(desigId, getBoundaries(boundaryId));</span>
+    }
+
+    public List&lt;Assignment&gt; findByDepartmentDesignationAndBoundary(final Long deptId, final Long desigId,
+                                                                   final Long boundaryId) {
+
+<span class="nc" id="L221">        List&lt;Assignment&gt; assignments = null;</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (null == deptId)</span>
+<span class="nc" id="L223">            assignments = assignmentRepository.findByDesignationAndBoundary(desigId, getRequiredBoundaries(boundaryId));</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        else if (null == desigId)</span>
+<span class="nc" id="L225">            assignments = assignmentRepository.findByDepartmentAndBoundary(deptId, getRequiredBoundaries(boundaryId));</span>
+        else
+<span class="nc" id="L227">            assignments = assignmentRepository.findByDepartmentDesignationAndBoundary(deptId, desigId,</span>
+<span class="nc" id="L228">                    getRequiredBoundaries(boundaryId));</span>
+<span class="nc" id="L229">        return assignments;</span>
+    }
+
+    public List&lt;Assignment&gt; findByDeptDesgnAndParentAndActiveChildBoundaries(final Long deptId, final Long desigId,
+                                                                             final Long boundaryId) {
+<span class="nc" id="L234">        return assignmentRepository.findByDepartmentDesignationAndBoundary(deptId, desigId,</span>
+<span class="nc" id="L235">                getBoundaries(boundaryId));</span>
+    }
+
+    public List&lt;Assignment&gt; findAssignmentByDepartmentDesignationAndBoundary(final Long deptId, final Long desigId,
+                                                                             final Long boundaryId) {
+
+        List&lt;Assignment&gt; assignments;
+<span class="nc" id="L242">        Set&lt;Long&gt; boundaries = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L243">        boundaries.add(boundaryId);</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (null == deptId)</span>
+<span class="nc" id="L245">            assignments = assignmentRepository.findByDesignationAndBoundary(desigId, boundaries);</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        else if (null == desigId)</span>
+<span class="nc" id="L247">            assignments = assignmentRepository.findByDepartmentAndBoundary(deptId, boundaries);</span>
+        else
+<span class="nc" id="L249">            assignments = assignmentRepository.findByDepartmentDesignationAndBoundary(deptId, desigId,</span>
+                    boundaries);
+<span class="nc" id="L251">        return assignments;</span>
+    }
+
+    private Set&lt;Long&gt; getBoundaries(final Long boundaryId) {
+<span class="nc" id="L255">        final Set&lt;Long&gt; bndIds = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L256">        final List&lt;Boundary&gt; boundaries = boundaryService.findActiveChildrenWithParent(boundaryId);</span>
+<span class="nc" id="L257">        boundaries.forEach(bndry -&gt; bndIds.add(bndry.getId()));</span>
+<span class="nc" id="L258">        return bndIds;</span>
+    }
+
+    public Set&lt;Long&gt; getRequiredBoundaries(final Long boundaryId) {
+<span class="nc" id="L262">        final Set&lt;Long&gt; bndIds = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L263">        final Boundary childBndry = boundaryService.getBoundaryById(boundaryId);</span>
+<span class="nc" id="L264">        String childmpath = childBndry.getMaterializedPath();</span>
+<span class="nc" id="L265">        final Set&lt;String&gt; mpathStr = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L266">        mpathStr.add(childBndry.getMaterializedPath());</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        for (int i = 0; i &lt; childmpath.length(); i++) {</span>
+<span class="nc" id="L268">            childmpath = childmpath.substring(0, childmpath.lastIndexOf('.'));</span>
+<span class="nc" id="L269">            mpathStr.add(childmpath);</span>
+        }
+
+<span class="nc" id="L272">        final List&lt;Boundary&gt; boundaries = boundaryService.findActiveBoundariesForMpath(mpathStr);</span>
+<span class="nc" id="L273">        boundaries.forEach(bndry -&gt; bndIds.add(bndry.getId()));</span>
+<span class="nc" id="L274">        return bndIds;</span>
+    }
+
+    public List&lt;Assignment&gt; getAllActiveAssignments(final Long designationId) {
+<span class="nc" id="L278">        return assignmentRepository.getAllActiveAssignments(designationId);</span>
+    }
+
+    @Transactional
+    public Employee removeDeletedAssignments(final Employee employee, final String removedAssignIds) {
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        if (null != removedAssignIds)</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">            for (final String id : removedAssignIds.split(&quot;,&quot;))</span>
+<span class="nc" id="L285">                employee.getAssignments().remove(assignmentRepository.findOne(Long.valueOf(id)));</span>
+<span class="nc" id="L286">        return employee;</span>
+    }
+
+    public Set&lt;User&gt; getUsersByDesignations(final String[] designationNames) {
+<span class="nc" id="L290">        return assignmentRepository.getUsersByDesignations(designationNames);</span>
+    }
+
+    public Set&lt;Role&gt; getRolesForExpiredAssignmentsByEmpId(final Long empId) {
+<span class="nc" id="L294">        return assignmentRepository.getRolesForExpiredAssignmentsByEmpId(empId);</span>
+    }
+
+    public Set&lt;Role&gt; getRolesForActiveAssignmentsByEmpId(final Long empId) {
+<span class="nc" id="L298">        return assignmentRepository.getRolesForActiveAssignmentsByEmpId(empId);</span>
+    }
+
+    public List&lt;Assignment&gt; findByDepartmentDesignationsAndGivenDate(final Long deptId, final List&lt;Long&gt; desigIds,
+                                                                     final Date givenDate) {
+<span class="nc" id="L303">        return assignmentRepository.findByDepartmentDesignationsAndGivenDate(deptId, desigIds, givenDate);</span>
+    }
+
+    public List&lt;Assignment&gt; getAllAssignmentsByPositionNameForGivenRange(final String positionName) {
+<span class="nc" id="L307">        return assignmentRepository.getAllAssignmentForPositionNameLike(new Date(), positionName);</span>
+    }
+
+    public List&lt;Position&gt; findPositionsForEmployees(final String name) {
+<span class="nc" id="L311">        return assignmentRepository.findEmployeePositions(&quot;%&quot; + name + &quot;%&quot;);</span>
+    }
+
+    public List&lt;Employee&gt; searchEmployeeAssignments(final EmployeeAssignmentSearch employeeAssignmentSearch) {
+<span class="nc" id="L315">        final StringBuilder queryString = new StringBuilder();</span>
+<span class="nc" id="L316">        queryString.append(&quot;select distinct(assign.employee) from Assignment assign where assign.id is not null &quot;);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        if (StringUtils.isNotBlank(employeeAssignmentSearch.getEmployeeCode()))</span>
+<span class="nc" id="L318">            queryString.append(&quot; AND assign.employee.code =:code &quot;);</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if (StringUtils.isNotBlank(employeeAssignmentSearch.getEmployeeName()))</span>
+<span class="nc" id="L320">            queryString.append(&quot; AND upper(assign.employee.name) like :name &quot;);</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">        if (employeeAssignmentSearch.getDepartment() != null)</span>
+<span class="nc" id="L322">            queryString.append(&quot; AND assign.department.id =:department &quot;);</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">        if (employeeAssignmentSearch.getDesignation() != null)</span>
+<span class="nc" id="L324">            queryString.append(&quot; AND assign.designation.id =:designation &quot;);</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (employeeAssignmentSearch.getPosition() != null)</span>
+<span class="nc" id="L326">            queryString.append(&quot; AND assign.position.id =:position &quot;);</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">        if (employeeAssignmentSearch.getAssignmentDate() != null)</span>
+<span class="nc" id="L328">            queryString.append(&quot; AND assign.fromDate &lt;=:assignDate AND assign.toDate &gt;= :assignDate &quot;);</span>
+<span class="nc" id="L329">        queryString.append(&quot; Order by assign.employee.code, assign.employee.name &quot;);</span>
+<span class="nc" id="L330">        final Query query = entityManager.unwrap(Session.class).createQuery(queryString.toString());</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (StringUtils.isNotBlank(employeeAssignmentSearch.getEmployeeCode()))</span>
+<span class="nc" id="L332">            query.setParameter(&quot;code&quot;, employeeAssignmentSearch.getEmployeeCode());</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">        if (StringUtils.isNotBlank(employeeAssignmentSearch.getEmployeeName()))</span>
+<span class="nc" id="L334">            query.setParameter(&quot;name&quot;, &quot;%&quot; + employeeAssignmentSearch.getEmployeeName().toUpperCase() + &quot;%&quot;);</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">        if (employeeAssignmentSearch.getDepartment() != null)</span>
+<span class="nc" id="L336">            query.setParameter(&quot;department&quot;, employeeAssignmentSearch.getDepartment());</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        if (employeeAssignmentSearch.getDesignation() != null)</span>
+<span class="nc" id="L338">            query.setParameter(&quot;designation&quot;, employeeAssignmentSearch.getDesignation());</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        if (employeeAssignmentSearch.getPosition() != null)</span>
+<span class="nc" id="L340">            query.setParameter(&quot;position&quot;, employeeAssignmentSearch.getPosition());</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">        if (employeeAssignmentSearch.getAssignmentDate() != null)</span>
+<span class="nc" id="L342">            query.setParameter(&quot;assignDate&quot;, employeeAssignmentSearch.getAssignmentDate());</span>
+<span class="nc" id="L343">        return query.list();</span>
+    }
+
+    public List&lt;Assignment&gt; getAssignmentList(final EmployeePositionSearch employeePositionSearch) {
+<span class="nc" id="L347">        final StringBuilder queryString = new StringBuilder();</span>
+<span class="nc" id="L348">        queryString.append(&quot;select distinct(assignment) from Assignment assignment where assignment.id is not null &quot;);</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">        if (employeePositionSearch.getPosition() != null)</span>
+<span class="nc" id="L350">            queryString.append(&quot; AND assignment.position.id =:pos &quot;);</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">        if (employeePositionSearch.getIsPrimary() != null)</span>
+<span class="nc" id="L352">            queryString.append(&quot; AND assignment.primary =:primary &quot;);</span>
+<span class="nc" id="L353">        Query queryResult = entityManager.unwrap(Session.class).createQuery(queryString.toString());</span>
+<span class="nc" id="L354">        queryResult = setParametersToQuery(employeePositionSearch, queryResult);</span>
+
+<span class="nc" id="L356">        return queryResult.list();</span>
+    }
+
+    public List&lt;Assignment&gt; findAllAssignmentsByHODDeptAndDates(final Long deptId, final Date givenDate) {
+<span class="nc" id="L360">        return assignmentRepository.findAllAssignmentsByHODDeptAndGivenDate(deptId, givenDate);</span>
+    }
+
+    private Query setParametersToQuery(final EmployeePositionSearch employeePositionSearch, final Query queryResult) {
+<span class="nc bnc" id="L364" title="All 2 branches missed.">        if (employeePositionSearch.getPosition() != null)</span>
+<span class="nc" id="L365">            queryResult.setParameter(&quot;pos&quot;, Long.valueOf(employeePositionSearch.getPosition()));</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">        if (employeePositionSearch.getIsPrimary() != null)</span>
+<span class="nc" id="L367">            queryResult.setParameter(&quot;primary&quot;, Boolean.valueOf(employeePositionSearch.getIsPrimary()));</span>
+<span class="nc" id="L368">        return queryResult;</span>
+    }
+
+    public List&lt;Assignment&gt; getAllAssignmentForEmployeeNameLike(final String empName) {
+<span class="nc" id="L372">        return assignmentRepository.getAllAssignmentForEmployeeNameLike(new Date(), empName);</span>
+    }
+
+    public List&lt;Assignment&gt; findAssignmentForDepartmentId(final Long deptId) {
+<span class="nc" id="L376">        return assignmentRepository.findByDepartmentId(deptId);</span>
+    }
+
+    public List&lt;Assignment&gt; findAssignmentForDesignationId(final Long desigId) {
+<span class="nc" id="L380">        return assignmentRepository.findByDesignationId(desigId);</span>
+    }
+
+    public List&lt;Assignment&gt; findByDepartmentAndDesignation(final Long deptId, final Long desigId) {
+<span class="nc" id="L384">        return assignmentRepository.findByDepartmentIdAndDesignationId(deptId, desigId);</span>
+    }
+
+    public List&lt;Assignment&gt; getPrimaryAssignmentForPositionAndDateRange(final Long posId, final Date fromDate,
+                                                                        final Date toDate) {
+<span class="nc" id="L389">        return assignmentRepository.getPrimaryAssignmentForPositionAndDateRange(posId, fromDate, toDate);</span>
+    }
+
+    public List&lt;Assignment&gt; getAssignmentByPositionAndUserAsOnDate(final Long posId, final Long userId, final Date currDate) {
+<span class="nc" id="L393">        return assignmentRepository.findByPositionAndEmployee(posId, userId, currDate);</span>
+    }
+
+    public List&lt;Assignment&gt; findByDepartmentCodeAndDesignationCode(String departmentCode, List&lt;String&gt; desigCode) {
+<span class="nc" id="L397">        return assignmentRepository.findByDepartmentCodeAndDesignationCode(departmentCode, desigCode, new Date());</span>
+    }
+
+    public List&lt;Designation&gt; getDesignationsByActiveAssignmentAndDesignationNames(List&lt;String&gt; designationNames) {
+<span class="nc" id="L401">        return assignmentRepository.findAllDesignationByActiveAssignmentAndDesignationNames(designationNames);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

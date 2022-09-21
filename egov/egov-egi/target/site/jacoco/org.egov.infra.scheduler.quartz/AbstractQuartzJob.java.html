@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractQuartzJob.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.scheduler.quartz</a> &gt; <span class="el_source">AbstractQuartzJob.java</span></div><h1>AbstractQuartzJob.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.scheduler.quartz;
+
+import org.egov.infra.admin.master.entity.City;
+import org.egov.infra.admin.master.entity.CityPreferences;
+import org.egov.infra.admin.master.service.CityService;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.scheduler.GenericJob;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.quartz.QuartzJobBean;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+
+/**
+ * An abstract base class wrapper for {@link QuartzJobBean} and implements {@link GenericJob}. A class which extends this will be
+ * eligible for doing Quartz Jobs. Those classes required Statefulness (Threadsafety) so need to annotate class
+ * with @DisallowConcurrentExecution. This class also wrap up wiring of some of the common settings and beans.
+ **/
+<span class="nc" id="L75">public abstract class AbstractQuartzJob extends QuartzJobBean implements GenericJob {</span>
+
+    private static final long serialVersionUID = 1L;
+<span class="nc" id="L78">    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractQuartzJob.class);</span>
+
+    @Resource(name = &quot;cities&quot;)
+    private transient List&lt;String&gt; cities;
+
+    @Autowired
+    private transient CityService cityService;
+
+    @Autowired
+    private transient UserService userService;
+
+    private String userName;
+
+    private String moduleName;
+
+    private boolean cityDataRequired;
+
+    @Override
+    protected void executeInternal(JobExecutionContext jobCtx) throws JobExecutionException {
+        try {
+<span class="nc" id="L98">            MDC.put(&quot;appname&quot;, String.format(&quot;%s-%s&quot;, moduleName, jobCtx.getJobDetail().getKey().getName()));</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            for (String tenant : this.cities) {</span>
+<span class="nc" id="L100">                MDC.put(&quot;ulbcode&quot;, tenant);</span>
+
+<span class="nc" id="L102">                this.prepareThreadLocal(tenant);</span>
+<span class="nc" id="L103">                this.executeJob();</span>
+<span class="nc" id="L104">            }</span>
+<span class="nc" id="L105">        } catch (Exception ex) {</span>
+<span class="nc" id="L106">            LOGGER.error(&quot;Unable to complete execution Scheduler &quot;, ex);</span>
+<span class="nc" id="L107">            throw new JobExecutionException(&quot;Unable to execute batch job Scheduler&quot;, ex, false);</span>
+        } finally {
+<span class="nc" id="L109">            ApplicationThreadLocals.clearValues();</span>
+<span class="nc" id="L110">            MDC.clear();</span>
+<span class="nc" id="L111">        }</span>
+<span class="nc" id="L112">    }</span>
+
+    public void setModuleName(final String moduleName) {
+<span class="nc" id="L115">        this.moduleName = moduleName;</span>
+<span class="nc" id="L116">    }</span>
+
+    public void setUserName(String userName) {
+<span class="nc" id="L119">        this.userName = defaultIfBlank(userName, &quot;system&quot;);</span>
+<span class="nc" id="L120">    }</span>
+
+    public void setCityDataRequired(boolean cityDataRequired) {
+<span class="nc" id="L123">        this.cityDataRequired = cityDataRequired;</span>
+<span class="nc" id="L124">    }</span>
+
+    private void prepareThreadLocal(String tenant) {
+<span class="nc" id="L127">        ApplicationThreadLocals.setTenantID(tenant);</span>
+<span class="nc" id="L128">        ApplicationThreadLocals.setUserId(this.userService.getUserByUsername(this.userName).getId());</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (cityDataRequired) {</span>
+<span class="nc" id="L130">            City city = this.cityService.findAll().get(0);</span>
+<span class="nc" id="L131">            ApplicationThreadLocals.setCityCode(city.getCode());</span>
+<span class="nc" id="L132">            ApplicationThreadLocals.setCityName(city.getName());</span>
+<span class="nc" id="L133">            CityPreferences cityPreferences = city.getPreferences();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            if (cityPreferences != null)</span>
+<span class="nc" id="L135">                ApplicationThreadLocals.setMunicipalityName(cityPreferences.getMunicipalityName());</span>
+            else
+<span class="nc" id="L137">                LOGGER.warn(&quot;City preferences not set for {}&quot;, city.getName());</span>
+<span class="nc" id="L138">            ApplicationThreadLocals.setDomainName(city.getDomainURL());</span>
+        }
+<span class="nc" id="L140">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

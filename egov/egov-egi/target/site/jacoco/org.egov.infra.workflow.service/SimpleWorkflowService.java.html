@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SimpleWorkflowService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.service</a> &gt; <span class="el_source">SimpleWorkflowService.java</span></div><h1>SimpleWorkflowService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.service;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.script.entity.Script;
+import org.egov.infra.script.service.ScriptService;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.entity.WorkflowAction;
+import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+/**
+ * This is a generic bean so do not use this to do transition of your own StateAware objects&lt;br/&gt;
+ * For your own StateAware object transition declare a separate bean definition like&lt;br/&gt;
+ * &lt;p&gt;
+ * &lt;pre&gt;
+ *
+ *       &amp;lt;bean id=&quot;myStateAwareWorkflowService&quot; parent=&quot;workflowService&quot;&amp;gt;
+ *               &amp;lt;constructor-arg index=&quot;0&quot; ref=&quot;myStateAwarePersistenceService&quot;/&amp;gt;
+ *       &amp;lt;/bean&amp;gt;
+ * &lt;/pre&gt;
+ **/
+public class SimpleWorkflowService&lt;T extends StateAware&gt; implements WorkflowService&lt;T&gt; {
+
+    private static final String WF_ACTION_ARG = &quot;action&quot;;
+    private static final String WF_ITEM_ARG = &quot;wfItem&quot;;
+    private static final String PERSISTENCE_SERVICE_ARG = &quot;persistenceService&quot;;
+    private static final String CURRENT_DESIGNATION = &quot;currentDesignation&quot;;
+    private static final String DEPARTMENT = &quot;department&quot;;
+    private static final String FROM_QTY = &quot;fromQty&quot;;
+    private static final String TO_QTY = &quot;toQty&quot;;
+    private static final String ANY = &quot;ANY&quot;;
+    private final PersistenceService&lt;T, Long&gt; stateAwarePersistenceService;
+
+    @Autowired
+    private WorkflowActionService workflowActionService;
+
+    @Autowired
+    private ScriptService scriptService;
+
+<span class="nc" id="L101">    public SimpleWorkflowService(PersistenceService&lt;T, Long&gt; stateAwarePersistenceService) {</span>
+<span class="nc" id="L102">        this.stateAwarePersistenceService = stateAwarePersistenceService;</span>
+<span class="nc" id="L103">    }</span>
+
+    @Override
+    public T transition(WorkflowAction workflowAction, T stateAware, String comments) {
+<span class="nc" id="L107">        scriptService.executeScript(getScript(stateAware, workflowAction.getName()), ScriptService.createContext(WF_ACTION_ARG, this,</span>
+                WF_ITEM_ARG, stateAware, PERSISTENCE_SERVICE_ARG, this.stateAwarePersistenceService, &quot;workflowService&quot;, this,
+                &quot;comments&quot;, comments));
+<span class="nc" id="L110">        return this.stateAwarePersistenceService.persist(stateAware);</span>
+    }
+
+    @Override
+    public T transition(String actionName, T stateAware, String comment) {
+<span class="nc" id="L115">        WorkflowAction workflowAction = workflowActionService.getWorkflowActionByNameAndType(actionName,</span>
+<span class="nc" id="L116">                stateAware.getStateType());</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (workflowAction == null)</span>
+<span class="nc" id="L118">            workflowAction = new WorkflowAction(actionName, stateAware.getStateType(), actionName);</span>
+<span class="nc" id="L119">        return transition(workflowAction, stateAware, comment);</span>
+    }
+
+    @Override
+    public List&lt;WorkflowAction&gt; getValidActions(T stateAware) {
+<span class="nc" id="L124">        String scriptName = stateAware.getStateType() + &quot;.workflow.validactions&quot;;</span>
+<span class="nc" id="L125">        Script transitionScript = this.scriptService.getByName(scriptName);</span>
+<span class="nc" id="L126">        List&lt;String&gt; actionNames = (List&lt;String&gt;) scriptService.executeScript(transitionScript,</span>
+<span class="nc" id="L127">                ScriptService.createContext(WF_ITEM_ARG, stateAware, &quot;workflowService&quot;, this, PERSISTENCE_SERVICE_ARG,</span>
+                        this.stateAwarePersistenceService));
+<span class="nc" id="L129">        List&lt;WorkflowAction&gt; savedWorkflowActions = workflowActionService</span>
+<span class="nc" id="L130">                .getAllWorkflowActionByTypeAndActionNames(stateAware.getStateType(), actionNames);</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        return savedWorkflowActions.isEmpty() ? createActions(stateAware, actionNames) : savedWorkflowActions;</span>
+    }
+
+    public Object execute(T stateAware) {
+<span class="nc" id="L135">        return scriptService</span>
+<span class="nc" id="L136">                .executeScript(getScript(stateAware, EMPTY), ScriptService.createContext(WF_ACTION_ARG, this, WF_ITEM_ARG,</span>
+                        stateAware, PERSISTENCE_SERVICE_ARG, this.stateAwarePersistenceService));
+    }
+
+    public Object execute(T stateAware, String comments) {
+<span class="nc" id="L141">        return scriptService</span>
+<span class="nc" id="L142">                .executeScript(getScript(stateAware, EMPTY), ScriptService.createContext(WF_ACTION_ARG, this, WF_ITEM_ARG,</span>
+                        stateAware, PERSISTENCE_SERVICE_ARG, this.stateAwarePersistenceService, &quot;comments&quot;, comments));
+    }
+
+    private Script getScript(T stateAware, String actionName) {
+<span class="nc" id="L147">        Script script = null;</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (isNotBlank(actionName))</span>
+<span class="nc" id="L149">            script = this.scriptService.getByName(new StringBuilder(10).append(stateAware.getStateType())</span>
+<span class="nc" id="L150">                    .append(&quot;.workflow.&quot;).append(actionName).toString());</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (script == null)</span>
+<span class="nc" id="L152">            script = scriptService.getByName(stateAware.getStateType() + &quot;.workflow&quot;);</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (script == null)</span>
+<span class="nc" id="L154">            throw new ApplicationRuntimeException(&quot;workflow.script.notfound&quot;);</span>
+<span class="nc" id="L155">        return script;</span>
+    }
+
+    private List&lt;WorkflowAction&gt; createActions(T stateAware, List&lt;String&gt; actionNames) {
+<span class="nc" id="L159">        List&lt;WorkflowAction&gt; workflowActions = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        for (String action : actionNames)</span>
+<span class="nc" id="L161">            workflowActions.add(new WorkflowAction(action, stateAware.getStateType(), action));</span>
+<span class="nc" id="L162">        return workflowActions;</span>
+    }
+
+    @Override
+    public WorkFlowMatrix getWfMatrix(String type, String department, BigDecimal amountRule,
+                                      String additionalRule, String currentState, String pendingActions) {
+<span class="nc" id="L168">        Criteria wfMatrixCriteria = createWfMatrixAdditionalCriteria(type, department, amountRule,</span>
+                additionalRule, currentState, pendingActions, null);
+<span class="nc" id="L170">        return getWorkflowMatrixObj(type, additionalRule, currentState, pendingActions, null, wfMatrixCriteria);</span>
+    }
+
+    @Override
+    public WorkFlowMatrix getWfMatrix(String type, String department, BigDecimal amountRule,
+                                      String additionalRule, String currentState, String pendingActions, Date date) {
+<span class="nc" id="L176">        Criteria wfMatrixCriteria = createWfMatrixAdditionalCriteria(type, department, amountRule,</span>
+                additionalRule, currentState, pendingActions, null);
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        Criterion fromDateCriteria = Restrictions.le(&quot;fromDate&quot;, date == null ? new Date() : date);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        Criterion toDateCriteria = Restrictions.ge(&quot;toDate&quot;, date == null ? new Date() : date);</span>
+<span class="nc" id="L180">        Criterion dateCriteria = Restrictions.conjunction().add(fromDateCriteria).add(toDateCriteria);</span>
+<span class="nc" id="L181">        wfMatrixCriteria.add(Restrictions.or(dateCriteria, fromDateCriteria));</span>
+<span class="nc" id="L182">        return getWorkflowMatrixObj(type, additionalRule, currentState, pendingActions, null, wfMatrixCriteria);</span>
+    }
+
+    @Override
+    public WorkFlowMatrix getWfMatrix(String type, String department, BigDecimal amountRule,
+                                      String additionalRule, String currentState, String pendingActions, Date date,
+                                      String designation) {
+<span class="nc" id="L189">        Criteria wfMatrixCriteria = createWfMatrixAdditionalCriteria(type, department, amountRule,</span>
+                additionalRule, currentState, pendingActions, designation);
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        Criterion fromDateCriteria = Restrictions.le(&quot;fromDate&quot;, date == null ? new Date() : date);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        Criterion toDateCriteria = Restrictions.ge(&quot;toDate&quot;, date == null ? new Date() : date);</span>
+<span class="nc" id="L193">        Criterion dateCriteria = Restrictions.conjunction().add(fromDateCriteria).add(toDateCriteria);</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        Criterion criteriaDesignation = Restrictions.ilike(CURRENT_DESIGNATION, isNotBlank(designation) ? designation : EMPTY);</span>
+<span class="nc" id="L195">        wfMatrixCriteria.add(criteriaDesignation);</span>
+<span class="nc" id="L196">        wfMatrixCriteria.add(Restrictions.or(dateCriteria, fromDateCriteria));</span>
+<span class="nc" id="L197">        return getWorkflowMatrixObj(type, additionalRule, currentState, pendingActions, designation, wfMatrixCriteria);</span>
+    }
+
+    private WorkFlowMatrix getWorkflowMatrixObj(String type, String additionalRule,
+                                                String currentState, String pendingActions,
+                                                String designation, Criteria wfMatrixCriteria) {
+<span class="nc" id="L203">        List&lt;WorkFlowMatrix&gt; workflowMatrix = wfMatrixCriteria.list();</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        if (workflowMatrix.isEmpty()) {</span>
+<span class="nc" id="L205">            Criteria defaultCriteria = commonWorkFlowMatrixCriteria(type, additionalRule, currentState, pendingActions);</span>
+<span class="nc" id="L206">            defaultCriteria.add(Restrictions.eq(DEPARTMENT, ANY));</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            if (isNotBlank(designation))</span>
+<span class="nc" id="L208">                defaultCriteria.add(Restrictions.ilike(CURRENT_DESIGNATION, designation));</span>
+<span class="nc" id="L209">            List&lt;WorkFlowMatrix&gt; defaultMatrix = defaultCriteria.list();</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            return defaultMatrix.isEmpty() ? null : defaultMatrix.get(0);</span>
+        } else {
+<span class="nc bnc" id="L212" title="All 2 branches missed.">            for (WorkFlowMatrix matrix : workflowMatrix)</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">                if (matrix.getToDate() == null)</span>
+<span class="nc" id="L214">                    return matrix;</span>
+<span class="nc" id="L215">            return workflowMatrix.get(0);</span>
+        }
+    }
+
+    private Criteria createWfMatrixAdditionalCriteria(String type, String department,
+                                                      BigDecimal amountRule, String additionalRule, String currentState,
+                                                      String pendingActions, String designation) {
+<span class="nc" id="L222">        Criteria wfMatrixCriteria = commonWorkFlowMatrixCriteria(type, additionalRule, currentState,</span>
+                pendingActions);
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        if (isNotBlank(department))</span>
+<span class="nc" id="L225">            wfMatrixCriteria.add(Restrictions.eq(DEPARTMENT, department));</span>
+
+        // Added restriction for amount rule
+<span class="nc bnc" id="L228" title="All 4 branches missed.">        if (amountRule != null &amp;&amp; BigDecimal.ZERO.compareTo(amountRule) != 0) {</span>
+<span class="nc" id="L229">            Criterion amount1st = Restrictions.conjunction().add(Restrictions.le(FROM_QTY, amountRule))</span>
+<span class="nc" id="L230">                    .add(Restrictions.ge(TO_QTY, amountRule));</span>
+
+<span class="nc" id="L232">            Criterion amount2nd = Restrictions.conjunction().add(Restrictions.le(FROM_QTY, amountRule))</span>
+<span class="nc" id="L233">                    .add(Restrictions.isNull(TO_QTY));</span>
+<span class="nc" id="L234">            wfMatrixCriteria.add(Restrictions.disjunction().add(amount1st).add(amount2nd));</span>
+
+        }
+
+<span class="nc bnc" id="L238" title="All 2 branches missed.">        if (isNotBlank(designation))</span>
+<span class="nc" id="L239">            wfMatrixCriteria.add(Restrictions.ilike(CURRENT_DESIGNATION, designation));</span>
+
+<span class="nc" id="L241">        return wfMatrixCriteria;</span>
+    }
+
+    public WorkFlowMatrix getPreviousStateFromWfMatrix(String type, String department, BigDecimal amountRule,
+                                                       String additionalRule, String currentState, String pendingActions) {
+
+<span class="nc" id="L247">        Criteria wfMatrixCriteria = previousWorkFlowMatrixCriteria(type, additionalRule, currentState, pendingActions);</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">        if (department != null &amp;&amp; !&quot;&quot;.equals(department))</span>
+<span class="nc" id="L249">            wfMatrixCriteria.add(Restrictions.eq(DEPARTMENT, department));</span>
+        else
+<span class="nc" id="L251">            wfMatrixCriteria.add(Restrictions.eq(DEPARTMENT, ANY));</span>
+
+        // Added restriction for amount rule
+<span class="nc bnc" id="L254" title="All 4 branches missed.">        if (amountRule != null &amp;&amp; BigDecimal.ZERO.compareTo(amountRule) != 0) {</span>
+<span class="nc" id="L255">            Criterion amount1st = Restrictions.conjunction()</span>
+<span class="nc" id="L256">                    .add(Restrictions.le(FROM_QTY, amountRule))</span>
+<span class="nc" id="L257">                    .add(Restrictions.ge(TO_QTY, amountRule));</span>
+<span class="nc" id="L258">            Criterion amount2nd = Restrictions.conjunction()</span>
+<span class="nc" id="L259">                    .add(Restrictions.le(FROM_QTY, amountRule))</span>
+<span class="nc" id="L260">                    .add(Restrictions.isNull(TO_QTY));</span>
+<span class="nc" id="L261">            wfMatrixCriteria.add(Restrictions.disjunction().add(amount1st)</span>
+<span class="nc" id="L262">                    .add(amount2nd));</span>
+
+        }
+
+<span class="nc" id="L266">        List&lt;WorkFlowMatrix&gt; workflowMatrix = wfMatrixCriteria.list();</span>
+
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        return workflowMatrix.isEmpty() ? null : workflowMatrix.get(0);</span>
+
+    }
+
+    private Criteria previousWorkFlowMatrixCriteria(String type, String additionalRule, String currentState,
+                                                    String pendingActions) {
+<span class="nc" id="L274">        Criteria commonWfMatrixCriteria = this.stateAwarePersistenceService.getSession()</span>
+<span class="nc" id="L275">                .createCriteria(WorkFlowMatrix.class);</span>
+<span class="nc" id="L276">        commonWfMatrixCriteria.add(Restrictions.eq(&quot;objectType&quot;, type));</span>
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if (isNotBlank(additionalRule))</span>
+<span class="nc" id="L279">            commonWfMatrixCriteria.add(Restrictions.eq(&quot;additionalRule&quot;, additionalRule));</span>
+
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (isNotBlank(pendingActions))</span>
+<span class="nc" id="L282">            commonWfMatrixCriteria.add(Restrictions.ilike(&quot;nextAction&quot;, pendingActions, MatchMode.EXACT));</span>
+
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (isNotBlank(currentState))</span>
+<span class="nc" id="L285">            commonWfMatrixCriteria.add(Restrictions.ilike(&quot;nextState&quot;, currentState, MatchMode.EXACT));</span>
+<span class="nc" id="L286">        return commonWfMatrixCriteria;</span>
+    }
+
+    private Criteria commonWorkFlowMatrixCriteria(String type, String additionalRule,
+                                                  String currentState, String pendingActions) {
+
+<span class="nc" id="L292">        Criteria commonWfMatrixCriteria = this.stateAwarePersistenceService.getSession().createCriteria(</span>
+                WorkFlowMatrix.class);
+
+<span class="nc" id="L295">        commonWfMatrixCriteria.add(Restrictions.eq(&quot;objectType&quot;, type));</span>
+
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        if (isNotBlank(additionalRule))</span>
+<span class="nc" id="L298">            commonWfMatrixCriteria.add(Restrictions.eq(&quot;additionalRule&quot;, additionalRule));</span>
+
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (isNotBlank(pendingActions))</span>
+<span class="nc" id="L301">            commonWfMatrixCriteria.add(Restrictions.ilike(&quot;pendingActions&quot;, pendingActions, MatchMode.ANYWHERE));</span>
+
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        if (isNotBlank(currentState))</span>
+<span class="nc" id="L304">            commonWfMatrixCriteria.add(Restrictions.ilike(&quot;currentState&quot;, currentState, MatchMode.EXACT));</span>
+        else
+<span class="nc" id="L306">            commonWfMatrixCriteria.add(Restrictions.ilike(&quot;currentState&quot;, &quot;NEW&quot;, MatchMode.EXACT));</span>
+
+<span class="nc" id="L308">        return commonWfMatrixCriteria;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

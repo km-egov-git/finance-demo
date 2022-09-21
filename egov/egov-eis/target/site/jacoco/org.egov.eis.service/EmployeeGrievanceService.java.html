@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeGrievanceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service</a> &gt; <span class="el_source">EmployeeGrievanceService.java</span></div><h1>EmployeeGrievanceService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.eis.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.EmployeeGrievance;
+import org.egov.eis.entity.enums.EmployeeGrievanceStatus;
+import org.egov.eis.repository.EmployeeGrievanceRepository;
+import org.egov.eis.utils.constants.EisConstants;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.service.SimpleWorkflowService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class EmployeeGrievanceService {
+
+    private final EmployeeGrievanceRepository employeeGrievanceRepository;
+    @Autowired
+    @Qualifier(&quot;workflowService&quot;)
+    private SimpleWorkflowService&lt;EmployeeGrievance&gt; employeeGrievanceWorkflowService;
+    @Autowired
+    private DesignationService designationService;
+    @Autowired
+    protected AssignmentService assignmentService;
+    @Autowired
+    private SecurityUtils securityUtils;
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+<span class="nc" id="L96">    public EmployeeGrievanceService(final EmployeeGrievanceRepository employeeGrievanceRepository) {</span>
+<span class="nc" id="L97">        this.employeeGrievanceRepository = employeeGrievanceRepository;</span>
+<span class="nc" id="L98">    }</span>
+
+    public Session getCurrentSession() {
+<span class="nc" id="L101">        return entityManager.unwrap(Session.class);</span>
+    }
+
+    @Transactional
+    public EmployeeGrievance create(final EmployeeGrievance employeeGrievance) {
+<span class="nc" id="L106">        return employeeGrievanceRepository.save(employeeGrievance);</span>
+    }
+
+    @Transactional
+    public EmployeeGrievance update(final EmployeeGrievance employeeGrievance) {
+<span class="nc" id="L111">        return employeeGrievanceRepository.save(employeeGrievance);</span>
+    }
+
+    public List&lt;EmployeeGrievance&gt; findAll() {
+<span class="nc" id="L115">        return employeeGrievanceRepository.findAll(new Sort(Sort.Direction.ASC, &quot;grievanceNumber&quot;));</span>
+    }
+
+    public EmployeeGrievance findOne(Long id) {
+<span class="nc" id="L119">        return employeeGrievanceRepository.findOne(id);</span>
+    }
+
+    public List&lt;EmployeeGrievance&gt; search(EmployeeGrievance employeeGrievance) {
+<span class="nc" id="L123">        final Criteria criteria = getCurrentSession().createCriteria(</span>
+                EmployeeGrievance.class);
+<span class="nc" id="L125">        criteria.createAlias(&quot;employee&quot;, &quot;emp&quot;);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (employeeGrievance.getGrievanceNumber() != null) {</span>
+<span class="nc" id="L127">            String number = &quot;%&quot; + employeeGrievance.getGrievanceNumber() + &quot;%&quot;;</span>
+<span class="nc" id="L128">            criteria.add(Restrictions.ilike(&quot;grievanceNumber&quot;, number));</span>
+        }
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (employeeGrievance.getStatus() != null)</span>
+<span class="nc" id="L132">            criteria.add(Restrictions.eq(&quot;status&quot;, employeeGrievance.getStatus()));</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (employeeGrievance.getEmployeeGrievanceType() != null)</span>
+<span class="nc" id="L134">            criteria.add(Restrictions.eq(&quot;employeeGrievanceType&quot;, employeeGrievance.getEmployeeGrievanceType()));</span>
+<span class="nc bnc" id="L135" title="All 4 branches missed.">        if (employeeGrievance.getEmployee() != null &amp;&amp; employeeGrievance.getEmployee().getCode() != null) {</span>
+<span class="nc" id="L136">            String empCode = &quot;%&quot; + employeeGrievance.getEmployee().getCode() + &quot;%&quot;;</span>
+<span class="nc" id="L137">            criteria.add(Restrictions.ilike(&quot;emp.code&quot;, empCode));</span>
+        }
+<span class="nc bnc" id="L139" title="All 4 branches missed.">        if (employeeGrievance.getEmployee() != null &amp;&amp; employeeGrievance.getEmployee().getName() != null) {</span>
+<span class="nc" id="L140">            String empName = &quot;%&quot; + employeeGrievance.getEmployee().getName() + &quot;%&quot;;</span>
+<span class="nc" id="L141">            criteria.add(Restrictions.ilike(&quot;emp.name&quot;, empName));</span>
+        }
+<span class="nc" id="L143">        return criteria.list();</span>
+    }
+
+    public void prepareWorkFlowTransition(EmployeeGrievance employeeGrievance) {
+
+<span class="nc" id="L148">        final User user = securityUtils.getCurrentUser();</span>
+        String stateValue;
+        WorkFlowMatrix wfmatrix;
+<span class="nc" id="L151">        Designation des = designationService.getDesignationByName(&quot;Commissioner&quot;);</span>
+<span class="nc" id="L152">        List&lt;Assignment&gt; assignment = assignmentService.getAllActiveAssignments(des.getId());</span>
+<span class="nc" id="L153">        Position assigneePosition = assignment.get(0).getPosition();</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (employeeGrievance != null)</span>
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">            if (employeeGrievance.getStatus().equals(EmployeeGrievanceStatus.REGISTERED)) {</span>
+
+<span class="nc" id="L158">                wfmatrix = employeeGrievanceWorkflowService.getWfMatrix(employeeGrievance.getStateType(), null, null, null,</span>
+                        &quot;Registered&quot;, null);
+<span class="nc" id="L160">                employeeGrievance.transition()</span>
+<span class="nc" id="L161">                        .start()</span>
+<span class="nc" id="L162">                        .withStateValue(&quot;Registered&quot;)</span>
+<span class="nc" id="L163">                        .withOwner(assigneePosition).withNextAction(wfmatrix.getNextAction()).withDateInfo(DateUtils.now())</span>
+<span class="nc" id="L164">                        .withNatureOfTask(EisConstants.EMPLOYEE_GRIEVANCE).withInitiator(assigneePosition)</span>
+<span class="nc" id="L165">                        .withSenderName(user.getUsername() + &quot;:&quot; + user.getName());</span>
+            }
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            else if (employeeGrievance.getStatus().equals(EmployeeGrievanceStatus.INPROCESS)) {</span>
+<span class="nc" id="L169">                stateValue = EisConstants.WORKFLOW_STATE_INPROCESS;</span>
+
+<span class="nc" id="L171">                wfmatrix = employeeGrievanceWorkflowService.getWfMatrix(employeeGrievance.getStateType(), null,</span>
+<span class="nc" id="L172">                        null, null, employeeGrievance.getCurrentState().getValue(), null);</span>
+
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                if (stateValue.isEmpty())</span>
+<span class="nc" id="L175">                    stateValue = wfmatrix.getNextState();</span>
+
+<span class="nc" id="L177">                employeeGrievance.transition().progressWithStateCopy().withSenderName(user.getUsername() + &quot;::&quot; + user.getName())</span>
+<span class="nc" id="L178">                        .withComments(&quot;&quot;)</span>
+<span class="nc" id="L179">                        .withStateValue(stateValue).withDateInfo(DateUtils.now())</span>
+<span class="nc" id="L180">                        .withOwner(assigneePosition)</span>
+<span class="nc" id="L181">                        .withNextAction(wfmatrix.getNextAction())</span>
+<span class="nc" id="L182">                        .withNatureOfTask(EisConstants.EMPLOYEE_GRIEVANCE);</span>
+
+            }
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            else if (employeeGrievance.getStatus().equals(EmployeeGrievanceStatus.REDRESSED)) {</span>
+<span class="nc" id="L187">                wfmatrix = employeeGrievanceWorkflowService.getWfMatrix(employeeGrievance.getStateType(), null,</span>
+<span class="nc" id="L188">                        null, null, employeeGrievance.getCurrentState().getValue(), null);</span>
+<span class="nc" id="L189">                stateValue = EisConstants.WORKFLOW_STATE_REDRESSED;</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">                if (stateValue.isEmpty())</span>
+<span class="nc" id="L191">                    stateValue = wfmatrix.getNextState();</span>
+
+<span class="nc" id="L193">                employeeGrievance.transition().end().withSenderName(user.getUsername() + &quot;::&quot; + user.getName())</span>
+<span class="nc" id="L194">                        .withComments(&quot;&quot;)</span>
+<span class="nc" id="L195">                        .withStateValue(stateValue).withDateInfo(DateUtils.now())</span>
+<span class="nc" id="L196">                        .withNextAction(wfmatrix.getNextAction())</span>
+<span class="nc" id="L197">                        .withNatureOfTask(EisConstants.EMPLOYEE_GRIEVANCE);</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            } else if (employeeGrievance.getStatus().equals(EmployeeGrievanceStatus.REJECTED)) {</span>
+<span class="nc" id="L199">                stateValue = EisConstants.WORKFLOW_STATE_CANCELLED;</span>
+<span class="nc" id="L200">                employeeGrievance.transition().end().withSenderName(user.getUsername() + &quot;::&quot; + user.getName())</span>
+<span class="nc" id="L201">                        .withComments(&quot;&quot;)</span>
+<span class="nc" id="L202">                        .withStateValue(stateValue).withDateInfo(DateUtils.now())</span>
+<span class="nc" id="L203">                        .withNextAction(&quot;&quot;)</span>
+<span class="nc" id="L204">                        .withNatureOfTask(EisConstants.EMPLOYEE_GRIEVANCE);</span>
+            }
+<span class="nc" id="L206">    }</span>
+
+    public String getApproverName(final Long approvalPosition) {
+<span class="nc" id="L209">        Assignment assignment = null;</span>
+        List&lt;Assignment&gt; asignList;
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (approvalPosition != null)</span>
+<span class="nc" id="L212">            assignment = assignmentService.getPrimaryAssignmentForPositionAndDate(approvalPosition, DateUtils.now());</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (assignment != null) {</span>
+<span class="nc" id="L214">            asignList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L215">            asignList.add(assignment);</span>
+        } else
+<span class="nc" id="L217">            asignList = assignmentService.getAssignmentsForPosition(approvalPosition, DateUtils.now());</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        return !asignList.isEmpty() ? asignList.get(0).getEmployee().getName() : &quot;&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

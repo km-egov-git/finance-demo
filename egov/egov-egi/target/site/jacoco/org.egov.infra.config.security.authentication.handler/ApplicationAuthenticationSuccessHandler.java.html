@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationAuthenticationSuccessHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.security.authentication.handler</a> &gt; <span class="el_source">ApplicationAuthenticationSuccessHandler.java</span></div><h1>ApplicationAuthenticationSuccessHandler.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.security.authentication.handler;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.Date;
+import java.util.regex.Pattern;
+
+import static org.egov.infra.security.utils.SecurityConstants.LOGIN_TIME;
+import static org.springframework.util.StringUtils.hasText;
+
+<span class="nc" id="L68">public class ApplicationAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {</span>
+
+<span class="nc" id="L70">    private RequestCache requestCache = new HttpSessionRequestCache();</span>
+
+    private Pattern excludedUrls;
+
+    public void setRequestCache(RequestCache requestCache) {
+<span class="nc" id="L75">        this.requestCache = requestCache;</span>
+<span class="nc" id="L76">    }</span>
+
+    public void setExcludedUrlRegex(String excludedUrlRegex) {
+<span class="nc" id="L79">        this.excludedUrls = Pattern.compile(excludedUrlRegex);</span>
+<span class="nc" id="L80">    }</span>
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws ServletException, IOException {
+<span class="nc" id="L85">        HttpSession session = request.getSession(false);</span>
+<span class="nc" id="L86">        session.setAttribute(LOGIN_TIME, new Date());</span>
+<span class="nc" id="L87">        System.out.println(&quot;******************Authentication processed successfully********&quot;);</span>
+     //   redirectToSuccessPage(request, response, authentication);
+<span class="nc" id="L89">    }</span>
+
+    private void redirectToSuccessPage(HttpServletRequest request, HttpServletResponse response,
+                                       Authentication authentication) throws IOException, ServletException {
+<span class="nc" id="L93">        SavedRequest savedRequest = requestCache.getRequest(request, response);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (savedRequest == null) {</span>
+<span class="nc" id="L95">            super.onAuthenticationSuccess(request, response, authentication);</span>
+<span class="nc" id="L96">            return;</span>
+        }
+<span class="nc" id="L98">        String targetUrlParameter = getTargetUrlParameter();</span>
+<span class="nc bnc" id="L99" title="All 4 branches missed.">        if (isAlwaysUseDefaultTargetUrl()</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">                || (targetUrlParameter != null &amp;&amp; hasText(request.getParameter(targetUrlParameter)))) {</span>
+<span class="nc" id="L101">            requestCache.removeRequest(request, response);</span>
+<span class="nc" id="L102">            super.onAuthenticationSuccess(request, response, authentication);</span>
+<span class="nc" id="L103">            return;</span>
+        }
+
+<span class="nc" id="L106">        clearAuthenticationAttributes(request);</span>
+<span class="nc" id="L107">        String targetUrl = savedRequest.getRedirectUrl();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (excludedUrls.matcher(targetUrl).find())</span>
+<span class="nc" id="L109">            targetUrl = getDefaultTargetUrl();</span>
+<span class="nc" id="L110">        getRedirectStrategy().sendRedirect(request, response, targetUrl);</span>
+<span class="nc" id="L111">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationAuthenticationProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.security.authentication.provider</a> &gt; <span class="el_source">ApplicationAuthenticationProvider.java</span></div><h1>ApplicationAuthenticationProvider.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.security.authentication.provider;
+
+import org.egov.infra.security.audit.entity.LoginAttempt;
+import org.egov.infra.security.audit.service.LoginAttemptService;
+import org.egov.infra.security.utils.captcha.CaptchaUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Optional;
+
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.egov.infra.security.utils.SecurityConstants.LOGIN_PASS_FIELD;
+import static org.egov.infra.security.utils.SecurityConstants.MAX_LOGIN_ATTEMPT_ALLOWED;
+import static org.egov.infra.security.utils.captcha.CaptchaUtils.J_CAPTCHA_RESPONSE;
+import static org.egov.infra.security.utils.captcha.CaptchaUtils.RECAPTCHA_RESPONSE;
+
+<span class="nc" id="L76">public class ApplicationAuthenticationProvider extends DaoAuthenticationProvider {</span>
+
+    private static final String BAD_CRED_MSG_KEY = &quot;AbstractUserDetailsAuthenticationProvider.badCredentials&quot;;
+    private static final String BAD_CRED_DEFAULT_MSG = &quot;Bad credentials&quot;;
+    private static final String ACCOUNT_LOCKED_MSG_KEY = &quot;AbstractUserDetailsAuthenticationProvider.locked&quot;;
+    private static final String ACCOUNT_LOCKED_DEFAULT_MSG = &quot;User account is locked&quot;;
+    private static final String TOO_MANY_ATTEMPTS_MSG_FORMAT = &quot;Too many attempts [%d]&quot;;
+    private static final String INVALID_CAPTCHA_MSG_FORMAT = &quot;%s - Recaptcha Invalid&quot;;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
+    @Autowired
+    private CaptchaUtils recaptchaUtils;
+
+    @Override
+    public Authentication authenticate(Authentication authentication) {
+        try {
+<span class="nc" id="L98">            return super.authenticate(authentication);</span>
+<span class="nc" id="L99">        } catch (BadCredentialsException ex) {</span>
+<span class="nc" id="L100">            lockAccount(authentication);</span>
+<span class="nc" id="L101">            throw ex;</span>
+<span class="nc" id="L102">        } catch (LockedException le) {</span>
+<span class="nc" id="L103">            return unlockAccount(authentication, le);</span>
+        }
+    }
+
+    private Authentication unlockAccount(Authentication authentication, LockedException le) {
+<span class="nc" id="L108">        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();</span>
+<span class="nc" id="L109">        HttpServletRequest request = attributes.getRequest();</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">        if (isNotBlank(request.getParameter(RECAPTCHA_RESPONSE)) || isNotBlank(request.getParameter(J_CAPTCHA_RESPONSE))) {</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (recaptchaUtils.captchaIsValid(request)) {</span>
+<span class="nc" id="L112">                loginAttemptService.resetFailedAttempt(authentication.getName());</span>
+<span class="nc" id="L113">                return super.authenticate(authentication);</span>
+            } else {
+<span class="nc" id="L115">                throw new LockedException(format(INVALID_CAPTCHA_MSG_FORMAT, le.getMessage()));</span>
+            }
+        }
+<span class="nc" id="L118">        throw le;</span>
+    }
+
+    private void lockAccount(Authentication authentication) {
+<span class="nc" id="L122">        Optional&lt;LoginAttempt&gt; loginAttempt = loginAttemptService.updateFailedAttempt(authentication.getName());</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (loginAttempt.isPresent()) {</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            if (loginAttempt.get().getFailedAttempts() == MAX_LOGIN_ATTEMPT_ALLOWED) {</span>
+<span class="nc" id="L125">                throw new LockedException(messages.getMessage(ACCOUNT_LOCKED_MSG_KEY, ACCOUNT_LOCKED_DEFAULT_MSG));</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            } else if (loginAttempt.get().getFailedAttempts() &gt; 2) {</span>
+<span class="nc" id="L127">                throw new BadCredentialsException(format(TOO_MANY_ATTEMPTS_MSG_FORMAT,</span>
+<span class="nc" id="L128">                        MAX_LOGIN_ATTEMPT_ALLOWED - loginAttempt.get().getFailedAttempts()));</span>
+            }
+        }
+<span class="nc" id="L131">    }</span>
+
+    @Override
+    protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken authentication) {
+//    	HashMap&lt;String, String&gt; authenticationCredentials = (HashMap&lt;String, String&gt;) authentication.getCredentials();
+//        if (authenticationCredentials == null ||
+//                !passwordEncoder.matches(authenticationCredentials.get(LOGIN_PASS_FIELD), userDetails.getPassword())) {
+//            throw new BadCredentialsException(messages.getMessage(BAD_CRED_MSG_KEY, BAD_CRED_DEFAULT_MSG));
+//        }
+<span class="nc" id="L140">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

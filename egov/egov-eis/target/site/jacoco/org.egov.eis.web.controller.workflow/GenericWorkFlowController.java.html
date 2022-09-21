@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericWorkFlowController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.web.controller.workflow</a> &gt; <span class="el_source">GenericWorkFlowController.java</span></div><h1>GenericWorkFlowController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2018  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.web.controller.workflow;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.egov.eis.web.contract.WorkflowContainer;
+import org.egov.infra.admin.master.service.DepartmentService;
+import org.egov.infra.microservice.models.Assignment;
+import org.egov.infra.microservice.models.Department;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.workflow.entity.State;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.matrix.entity.WorkFlowDeptDesgMap;
+import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.matrix.service.CustomizedWorkFlowService;
+import org.egov.infra.workflow.matrix.service.WorkFlowDeptDesgMapService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+@Controller
+<span class="nc" id="L76">public abstract class GenericWorkFlowController {</span>
+	private static final String CURRENT_STATE = &quot;currentState&quot;;
+	private static final String ADDITIONALRULE = &quot;additionalRule&quot;;
+	
+    @Autowired
+    protected CustomizedWorkFlowService customizedWorkFlowService;
+
+    @Autowired
+    protected DepartmentService departmentService;
+    
+    @Autowired
+    protected WorkFlowDeptDesgMapService workFlowDeptDesgMapService;
+
+    @Autowired
+    HttpServletRequest serRequest;
+
+    @Autowired
+    MicroserviceUtils microserviceUtils;
+
+    @ModelAttribute(value = &quot;approvalDepartmentList&quot;)
+    public List&lt;Department&gt; addAllDepartments() {
+<span class="nc" id="L97">        List&lt;Department&gt; deptlist = getDepartmentsFromMs();</span>
+
+<span class="nc" id="L99">        return deptlist;</span>
+    }
+
+    @ModelAttribute(&quot;workflowcontainer&quot;)
+    public WorkflowContainer getWorkflowContainer() {
+<span class="nc" id="L104">        return new WorkflowContainer();</span>
+    }
+
+    /**
+     * @param prepareModel
+     * @param model
+     * @param container This method we are calling In GET Method..
+     */
+    public void prepareWorkflow(final Model prepareModel, final StateAware model,
+            final WorkflowContainer container) {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">    	if(null != model)</span>
+    	{
+<span class="nc" id="L116">    		System.out.println(&quot;Type  : &quot;+model.getStateType());</span>
+    	}
+<span class="nc" id="L118">    	prepareWorkflow(prepareModel, model, container, false);</span>
+<span class="nc" id="L119">    }</span>
+    
+    /**
+     * @param prepareModel
+     * @param model
+     * @param container
+     * @param isWfDeptFromMap
+     */
+    protected void prepareWorkflow(final Model prepareModel, final StateAware model,
+            final WorkflowContainer container, boolean isWfDeptFromMap) {
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">    	if(isWfDeptFromMap) {</span>
+<span class="nc" id="L131">    		List&lt;Department&gt; departments=null;</span>
+<span class="nc" id="L132">    		String currentState = &quot;&quot;;</span>
+<span class="nc" id="L133">    		String additionalRule = &quot;&quot;;</span>
+<span class="nc" id="L134">    		String objectType= model.getStateType();</span>
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">    		if(prepareModel.containsAttribute(CURRENT_STATE)) {</span>
+<span class="nc" id="L137">            	currentState = prepareModel.asMap().get(CURRENT_STATE).toString();</span>
+            }
+<span class="nc bnc" id="L139" title="All 2 branches missed.">    		if(prepareModel.containsAttribute(ADDITIONALRULE)) {</span>
+<span class="nc" id="L140">    			additionalRule = prepareModel.asMap().get(ADDITIONALRULE).toString();</span>
+            }
+    		
+<span class="nc" id="L143">    		List&lt;WorkFlowDeptDesgMap&gt; deptDesgMap = null;</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">    		if(!StringUtils.isBlank(additionalRule)) {</span>
+<span class="nc" id="L145">    			deptDesgMap = workFlowDeptDesgMapService.findByObjectTypeAndCurrentStateAndAddRule(objectType, currentState, additionalRule);</span>
+    		}else {
+<span class="nc" id="L147">    			deptDesgMap = workFlowDeptDesgMapService.findByObjectTypeAndCurrentState(objectType, currentState);</span>
+    		}
+<span class="nc bnc" id="L149" title="All 2 branches missed.">    		if(!CollectionUtils.isEmpty(deptDesgMap)) {</span>
+<span class="nc" id="L150">    			String deptCodes = deptDesgMap.stream().map(WorkFlowDeptDesgMap::getNextDepartment).collect(Collectors.joining(&quot;,&quot;));</span>
+<span class="nc" id="L151">    			departments = getDepartmentsFromMs(deptCodes);</span>
+    		}
+    		
+<span class="nc" id="L154">    		prepareModel.addAttribute(&quot;approverDepartmentList&quot;, departments);</span>
+<span class="nc" id="L155">    	}else {</span>
+<span class="nc" id="L156">    		prepareModel.addAttribute(&quot;approverDepartmentList&quot;, addAllDepartments());</span>
+    	}
+<span class="nc" id="L158">    	populateActions(prepareModel, model, container);</span>
+<span class="nc" id="L159">    }</span>
+    
+    private void populateActions(final Model prepareModel, final StateAware model,
+            final WorkflowContainer container) {
+
+<span class="nc" id="L164">        prepareModel.addAttribute(&quot;validActionList&quot;, getValidActions(model, container));</span>
+<span class="nc" id="L165">        prepareModel.addAttribute(&quot;nextAction&quot;, getNextAction(model, container));</span>
+
+<span class="nc" id="L167">    }</span>
+
+    /**
+     * @param model
+     * @param container
+     * @return NextAction From Matrix With Parameters Type,CurrentState,CreatedDate
+     */
+    public String getNextAction(final StateAware model, final WorkflowContainer container) {
+
+<span class="nc" id="L176">        WorkFlowMatrix wfMatrix = null;</span>
+<span class="nc bnc" id="L177" title="All 4 branches missed.">        if (model != null &amp;&amp; model.getId() != null)</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">            if (model.getCurrentState() == null)</span>
+<span class="nc" id="L179">                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getStateType(),</span>
+<span class="nc" id="L180">                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),</span>
+<span class="nc" id="L181">                        State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate(),</span>
+<span class="nc" id="L182">                        container.getCurrentDesignation());</span>
+            else
+<span class="nc" id="L184">                wfMatrix = customizedWorkFlowService.getWfMatrix(model.getStateType(),</span>
+<span class="nc" id="L185">                        container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),</span>
+<span class="nc" id="L186">                        model.getCurrentState().getValue(), container.getPendingActions(), model.getCreatedDate(),</span>
+<span class="nc" id="L187">                        container.getCurrentDesignation());</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">        if(null != wfMatrix)</span>
+        {
+<span class="nc" id="L190">        	System.out.println(&quot;NextAction : &quot;+wfMatrix.getNextAction());</span>
+        }
+        
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        return wfMatrix == null ? &quot;&quot; : wfMatrix.getNextAction();</span>
+    }
+
+    /**
+     * @param model
+     * @param container
+     * @return List of WorkFlow Buttons From Matrix By Passing parametres Type,CurrentState,CreatedDate
+     */
+    public List&lt;String&gt; getValidActions(final StateAware model, final WorkflowContainer container) {
+<span class="nc" id="L202">        List&lt;String&gt; validActions = null;</span>
+<span class="nc bnc" id="L203" title="All 6 branches missed.">        if (model == null || model.getId() == null || model.getCurrentState() == null</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">                || model.getCurrentState().getValue().equals(&quot;Closed&quot;)</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                || model.getCurrentState().getValue().equals(&quot;END&quot;))</span>
+<span class="nc" id="L206">            validActions = Arrays.asList(&quot;Forward&quot;);</span>
+        	 
+<span class="nc bnc" id="L208" title="All 2 branches missed.">         if (model.getCurrentState() != null)</span>
+        	 
+        	
+<span class="nc" id="L211">            validActions = customizedWorkFlowService.getNextValidActions(model.getStateType(),</span>
+<span class="nc" id="L212">                    container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),</span>
+<span class="nc" id="L213">                    model.getCurrentState().getValue(), container.getPendingActions(), model.getCreatedDate(),</span>
+<span class="nc" id="L214">                    container.getCurrentDesignation());</span>
+        
+        		
+        	
+        else
+<span class="nc" id="L219">            validActions = customizedWorkFlowService.getNextValidActions(model.getStateType(),</span>
+<span class="nc" id="L220">                    container.getWorkFlowDepartment(), container.getAmountRule(), container.getAdditionalRule(),</span>
+<span class="nc" id="L221">                    State.DEFAULT_STATE_VALUE_CREATED, container.getPendingActions(), model.getCreatedDate(),</span>
+<span class="nc" id="L222">                    container.getCurrentDesignation());</span>
+<span class="nc" id="L223">        System.out.println(&quot;Valid Actions : &quot;+validActions);</span>
+<span class="nc" id="L224">        return validActions;</span>
+    }
+
+    public List&lt;Department&gt; getDepartmentsFromMs() {
+
+<span class="nc" id="L229">        List&lt;Department&gt; departments = microserviceUtils.getDepartments();</span>
+
+<span class="nc" id="L231">        return departments;</span>
+
+    }
+
+    public List&lt;Department&gt; getDepartmentsFromMs(String codes) {
+
+<span class="nc" id="L237">        List&lt;Department&gt; departments = microserviceUtils.getDepartments(codes);</span>
+
+<span class="nc" id="L239">        return departments;</span>
+
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

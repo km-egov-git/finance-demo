@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BndryTag.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.taglib</a> &gt; <span class="el_source">BndryTag.java</span></div><h1>BndryTag.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.taglib;
+
+import org.apache.log4j.Logger;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.BoundaryType;
+import org.egov.infra.utils.StringUtils;
+
+import javax.servlet.jsp.tagext.BodyTagSupport;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * @author Administrator 
+ */
+<span class="nc" id="L66">public class BndryTag extends BodyTagSupport {</span>
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+<span class="nc" id="L72">	private static final Logger logger = Logger.getLogger(BndryTag.class);</span>
+
+	public void appendFunctionCalls(final StringBuffer function, final Set childBndryTypes) {
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		if (childBndryTypes != null) {</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">			for (final Iterator itr3 = childBndryTypes.iterator(); itr3.hasNext();) {</span>
+<span class="nc" id="L77">				final BoundaryType chBndryType = (BoundaryType) itr3.next();</span>
+<span class="nc" id="L78">				BoundaryType ptBndryType = null;</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">				if (chBndryType != null) {</span>
+<span class="nc" id="L80">					ptBndryType = chBndryType.getParent();</span>
+				}
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">				if (ptBndryType != null) {</span>
+<span class="nc" id="L84">					function.append(ptBndryType.getName() + &quot;Match();\n&quot;);</span>
+				}
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">				if (chBndryType != null) {</span>
+<span class="nc" id="L88">					this.appendFunctionCalls(function, chBndryType.getChildBoundaryTypes());</span>
+				}
+<span class="nc" id="L90">			}</span>
+		}
+
+<span class="nc" id="L93">	}</span>
+
+	public String generateAllJSForBoundaries(final BoundaryType parentBndryType, final BoundaryType childBndryType, final Set parentBndrySet, final int i) {
+<span class="nc" id="L96">		final String parentBndryTypeName = parentBndryType.getName();</span>
+
+<span class="nc" id="L98">		childBndryType.getName();</span>
+
+		// Integer childBndryID = childBndryType.getId();
+		// Integer parentBndryID = parentBndryType.getId();
+
+<span class="nc" id="L103">		final int childBndryID = i + 1;</span>
+<span class="nc" id="L104">		final int parentBndryID = i;</span>
+
+<span class="nc" id="L106">		final StringBuffer function = new StringBuffer(1000);</span>
+
+<span class="nc" id="L108">		function.append(&quot;\nfunction &quot; + parentBndryTypeName + &quot;Match(){\n&quot;);</span>
+
+<span class="nc" id="L110">		function.append(&quot;var len = document.forms[0].adminBndry&quot; + childBndryID + &quot;.options.length;\n&quot;);</span>
+
+		// function.append(&quot;var len1 = document.forms[0].adminBndry3.options.length;\n&quot;);
+
+<span class="nc" id="L114">		function.append(&quot;for(var i=0;i&lt;=len;i++)\n&quot;);</span>
+<span class="nc" id="L115">		function.append(&quot;{\n&quot;);</span>
+<span class="nc" id="L116">		function.append(&quot;\tdocument.forms[0].adminBndry&quot; + childBndryID + &quot;.options[0] = null;\n&quot;);</span>
+<span class="nc" id="L117">		function.append(&quot;}\n&quot;);</span>
+		// function.append(&quot;for(var i=0;i&lt;=len1;i++)\n&quot;);
+		// function.append(&quot;{\n&quot;);
+		// function.append(&quot;	document.forms[0].adminBndry3.options[0] = null;\n&quot;);
+		// function.append(&quot;}\n&quot;);
+<span class="nc" id="L122">		function.append(&quot;if(document.forms[0].adminBndry&quot; + parentBndryID + &quot;.options[document.forms[0].adminBndry&quot; + parentBndryID + &quot;.selectedIndex].text == \&quot;Choose\&quot;)\n&quot;);</span>
+<span class="nc" id="L123">		function.append(&quot;{\n&quot;);</span>
+<span class="nc" id="L124">		function.append(&quot;\tdocument.forms[0].adminBndry&quot; + childBndryID + &quot;.options[0] = new Option(\&quot;Choose\&quot;,0,true,true);\n&quot;);</span>
+		// function.append(&quot;\tdocument.forms[0].adminBndry3.options[0] = new Option(&quot;Choose&quot;,0,true,true);\n&quot;);
+<span class="nc" id="L126">		function.append(&quot;}\n&quot;);</span>
+
+<span class="nc" id="L128">		final Set childBndryTypes = childBndryType.getChildBoundaryTypes();</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		for (final Iterator itr = parentBndrySet.iterator(); itr.hasNext();) {</span>
+<span class="nc" id="L131">			final Boundary bndry = (Boundary) itr.next();</span>
+<span class="nc" id="L132">			final Set children = bndry.getChildren();</span>
+<span class="nc" id="L133">			function.append(&quot;if(document.forms[0].adminBndry&quot; + parentBndryID + &quot;.options[document.forms[0].adminBndry&quot; + parentBndryID + &quot;.selectedIndex].text == \&quot;&quot;</span>
+<span class="nc" id="L134">					+ StringUtils.encodeString(bndry.getName().trim()) + &quot;\&quot;)\n&quot;);</span>
+<span class="nc" id="L135">			function.append(&quot;{\n&quot;);</span>
+<span class="nc" id="L136">			function.append(&quot;\tdocument.forms[0].adminBndry&quot; + childBndryID + &quot;.options[0] = new Option(\&quot;&quot; + &quot;Choose&quot; + &quot;\&quot;,0,true,true);\n&quot;);</span>
+<span class="nc" id="L137">			int j = 0;</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">			for (final Iterator itr2 = children.iterator(); itr2.hasNext();) {</span>
+<span class="nc" id="L139">				j++;</span>
+<span class="nc" id="L140">				final Boundary bndryChild = (Boundary) itr2.next();</span>
+<span class="nc" id="L141">				function.append(&quot;\tdocument.forms[0].adminBndry&quot; + childBndryID + &quot;.options[&quot; + j + &quot;] = new Option(\&quot;&quot; + bndryChild.getName() + &quot;\&quot;,&quot; + bndryChild.getId() + &quot;,false,false);\n&quot;);</span>
+				// function.append(&quot;\tdocument.forms[0].adminBndry3.options[0] = new Option(&quot;Choose&quot;,0,true,true);\n&quot;);
+
+<span class="nc" id="L144">			}</span>
+<span class="nc" id="L145">			function.append(&quot;}\n&quot;);</span>
+
+<span class="nc" id="L147">		}</span>
+
+<span class="nc" id="L149">		this.appendFunctionCalls(function, childBndryTypes);</span>
+
+<span class="nc" id="L151">		function.append(&quot;}&quot;);</span>
+
+<span class="nc" id="L153">		return function.toString();</span>
+
+	}
+
+	public Map getExtractMap(final List al, final Map typeMap) {
+<span class="nc" id="L158">		final Set set = typeMap.keySet();</span>
+<span class="nc" id="L159">		final HashMap hm = new HashMap(typeMap);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		for (final Iterator itr = set.iterator(); itr.hasNext();) {</span>
+<span class="nc" id="L161">			final Integer i = (Integer) itr.next();</span>
+<span class="nc" id="L162">			final String s = (String) typeMap.get(i);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">			for (final Iterator itr1 = al.iterator(); itr1.hasNext();) {</span>
+<span class="nc" id="L164">				final String s1 = (String) itr1.next();</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">				if (s.equals(s1)) {</span>
+<span class="nc" id="L166">					hm.remove(i);</span>
+
+				}
+<span class="nc" id="L169">			}</span>
+
+<span class="nc" id="L171">		}</span>
+<span class="nc" id="L172">		return hm;</span>
+	}
+
+	@Override
+	public int doStartTag() throws javax.servlet.jsp.JspTagException {
+<span class="nc" id="L177">		return SKIP_BODY;</span>
+	}
+
+	@Override
+	public int doEndTag() {
+<span class="nc" id="L182">		return EVAL_PAGE;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

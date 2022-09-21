@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdateBoundaryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi web</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.controller.admin.masters.boundary</a> &gt; <span class="el_source">UpdateBoundaryController.java</span></div><h1>UpdateBoundaryController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.controller.admin.masters.boundary;
+
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.HierarchyType;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.infra.admin.master.service.HierarchyTypeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+
+@Controller
+@RequestMapping(&quot;boundary/update&quot;)
+<span class="nc" id="L72">public class UpdateBoundaryController {</span>
+
+    private static final String BOUNDARY_UPDATE_VIEW = &quot;boundary-update&quot;;
+    @Autowired
+    private BoundaryService boundaryService;
+
+    @Autowired
+    private HierarchyTypeService hierarchyTypeService;
+
+    @ModelAttribute
+    public Boundary boundary(@PathVariable Optional&lt;Long&gt; id) {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        return id.isPresent() ? boundaryService.getBoundaryById(id.get()) : new Boundary();</span>
+    }
+
+    @ModelAttribute(&quot;hierarchyTypes&quot;)
+    public List&lt;HierarchyType&gt; hierarchyTypes() {
+<span class="nc" id="L88">        return hierarchyTypeService.getAllHierarchyTypes();</span>
+    }
+
+    @GetMapping(&quot;/&quot;)
+    public String showUpdateBoundarySearchForm(Model model) {
+<span class="nc" id="L93">        model.addAttribute(&quot;search&quot;, true);</span>
+<span class="nc" id="L94">        return BOUNDARY_UPDATE_VIEW;</span>
+    }
+
+    @GetMapping(&quot;{id}&quot;)
+    public String showUpdateBoundaryForm(Model model) {
+<span class="nc" id="L99">        model.addAttribute(&quot;search&quot;, false);</span>
+<span class="nc" id="L100">        return BOUNDARY_UPDATE_VIEW;</span>
+    }
+
+    @PostMapping(&quot;{id}&quot;)
+    public String updateBoundary(@Valid @ModelAttribute Boundary boundary, BindingResult bindingResult,
+                                 RedirectAttributes redirectAttributes, Model model) {
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (bindingResult.hasErrors()) {</span>
+<span class="nc" id="L107">            model.addAttribute(&quot;boundaryType&quot;, boundary.getBoundaryType());</span>
+<span class="nc" id="L108">            model.addAttribute(&quot;parentBoundary&quot;, boundaryService</span>
+<span class="nc" id="L109">                    .getActiveBoundariesByBoundaryTypeId(boundary.getBoundaryType().getParent().getId()));</span>
+<span class="nc" id="L110">            return BOUNDARY_UPDATE_VIEW;</span>
+        }
+<span class="nc" id="L112">        boundaryService.updateBoundary(boundary);</span>
+<span class="nc" id="L113">        redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;msg.bndry.update.success&quot;);</span>
+<span class="nc" id="L114">        redirectAttributes.addFlashAttribute(&quot;edit&quot;, true);</span>
+<span class="nc" id="L115">        return &quot;redirect:/boundary/view/&quot; + boundary.getId();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

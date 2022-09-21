@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoginController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi web</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.controller</a> &gt; <span class="el_source">LoginController.java</span></div><h1>LoginController.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.controller;
+
+import org.apache.http.HttpStatus;
+import org.egov.infra.admin.common.service.IdentityRecoveryService;
+import org.egov.infra.admin.master.entity.Location;
+import org.egov.infra.admin.master.service.LocationService;
+import org.egov.infra.validation.ValidatorUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
+@Controller
+@RequestMapping(value = &quot;/login&quot;)
+<span class="nc" id="L71">public class LoginController {</span>
+
+    @Autowired
+    private IdentityRecoveryService identityRecoveryService;
+
+    @Autowired
+    private LocationService locationService;
+
+    @Autowired
+    private ValidatorUtils validatorUtils;
+
+    @Value(&quot;${user.pwd.strength}&quot;)
+    private String passwordStrength;
+
+    @PostMapping(&quot;password/recover&quot;)
+    public String sendPasswordRecoveryURL(@RequestParam String identity,
+                                          @RequestParam String originURL,
+                                          @RequestParam boolean byOTP,
+                                          final RedirectAttributes redirectAttrib) {
+<span class="nc" id="L90">        redirectAttrib.addAttribute(&quot;recovered&quot;, identityRecoveryService.generateAndSendUserPasswordRecovery(identity,</span>
+                originURL + &quot;/egi/login/password/reset?token=&quot;, byOTP));
+<span class="nc" id="L92">        redirectAttrib.addAttribute(&quot;byOTP&quot;, byOTP);</span>
+<span class="nc" id="L93">        return &quot;redirect:/login/secure&quot;;</span>
+    }
+
+    @GetMapping(value = &quot;password/reset&quot;, params = &quot;token&quot;)
+    public String viewPasswordReset(@RequestParam final String token, Model model) {
+<span class="nc" id="L98">        model.addAttribute(&quot;valid&quot;, identityRecoveryService.tokenValid(token));</span>
+<span class="nc" id="L99">        return &quot;password/reset&quot;;</span>
+    }
+
+    @PostMapping(value = &quot;password/reset&quot;)
+    public String validateAndSendNewPassword(@RequestParam final String token, @RequestParam final String newPassword,
+                                             @RequestParam final String confirmPwd, final RedirectAttributes redirectAttrib) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (!newPassword.equals(confirmPwd)) {</span>
+<span class="nc" id="L106">            redirectAttrib.addAttribute(&quot;error&quot;, &quot;err.login.pwd.mismatch&quot;);</span>
+<span class="nc" id="L107">            return &quot;redirect:/login/password/reset?token=&quot; + token;</span>
+        }
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (!validatorUtils.isValidPassword(newPassword)) {</span>
+<span class="nc" id="L111">            redirectAttrib.addAttribute(&quot;error&quot;, &quot;usr.pwd.strength.msg.&quot; + passwordStrength);</span>
+<span class="nc" id="L112">            return &quot;redirect:/login/password/reset?token=&quot; + token;</span>
+        }
+
+<span class="nc" id="L115">        return &quot;redirect:/login/secure?reset=&quot; + identityRecoveryService.validateAndResetPassword(token, newPassword);</span>
+    }
+
+    @GetMapping(&quot;requiredlocations&quot;)
+    @ResponseBody
+    public List&lt;Location&gt; requiredLocations(@RequestParam final String username) {
+<span class="nc" id="L121">        return locationService.getLocationRequiredByUserName(username);</span>
+    }
+    @PostMapping
+    public String login() {
+    
+<span class="nc" id="L126">    	System.out.println(&quot;***********EGI WEB LOGIN PROCESSING**************&quot;);</span>
+<span class="nc" id="L127">    	return &quot;home&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

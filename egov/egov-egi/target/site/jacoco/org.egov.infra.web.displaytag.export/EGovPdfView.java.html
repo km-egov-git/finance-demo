@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EGovPdfView.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.displaytag.export</a> &gt; <span class="el_source">EGovPdfView.java</span></div><h1>EGovPdfView.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.displaytag.export;
+
+import com.lowagie.text.BadElementException;
+import com.lowagie.text.Cell;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.HeaderFooter;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.Table;
+import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfTemplate;
+import com.lowagie.text.pdf.PdfWriter;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.displaytag.Messages;
+import org.displaytag.exception.BaseNestableJspTagException;
+import org.displaytag.exception.SeverityEnum;
+import org.displaytag.export.BinaryExportView;
+import org.displaytag.export.PdfView;
+import org.displaytag.model.Column;
+import org.displaytag.model.ColumnIterator;
+import org.displaytag.model.HeaderCell;
+import org.displaytag.model.Row;
+import org.displaytag.model.RowIterator;
+import org.displaytag.model.TableModel;
+import org.displaytag.util.TagConstants;
+import org.egov.infra.exception.ApplicationRuntimeException;
+
+import javax.servlet.jsp.JspException;
+import java.awt.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.math.BigDecimal;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Pattern;
+
+<span class="nc" id="L98">public class EGovPdfView implements BinaryExportView {</span>
+	// private PdfView pdfView ;
+
+	/**
+	 * include header in export?
+	 */
+	private boolean header;
+	/**
+	 * TableModel to render.
+	 */
+	private TableModel model;
+
+	/**
+	 * export full list?
+	 */
+	private boolean exportFull;
+
+	/**
+	 * The default font used in the document.
+	 */
+	private Font smallFont;
+
+	/**
+	 * decorate export?
+	 */
+	private boolean decorated;
+
+	/**
+	 * This is the table, added as an Element to the PDF document. It contains all the data, needed to represent the visible table into the PDF
+	 */
+	private Table tablePDF;
+
+	private Paragraph tableCaption;
+
+	@Override
+	public void setParameters(final TableModel tableModel, final boolean exportFullList, final boolean includeHeader, final boolean decorateValues) {
+<span class="nc" id="L134">		this.model = tableModel;</span>
+<span class="nc" id="L135">		this.exportFull = exportFullList;</span>
+<span class="nc" id="L136">		this.header = includeHeader;</span>
+<span class="nc" id="L137">		this.decorated = decorateValues;</span>
+
+<span class="nc" id="L139">	}</span>
+
+	@Override
+	public String getMimeType() {
+<span class="nc" id="L143">		return &quot;application/pdf&quot;; //$NON-NLS-1$</span>
+	}
+
+	/**
+	 * Initialize the main info holder table.
+	 * @throws BadElementException for errors during table initialization
+	 */
+	protected void initTable() throws BadElementException {
+<span class="nc" id="L151">		this.tablePDF = new Table(this.model.getNumberOfColumns());</span>
+<span class="nc" id="L152">		this.tablePDF.setCellsFitPage(true);</span>
+<span class="nc" id="L153">		this.tablePDF.setWidth(100);</span>
+
+<span class="nc" id="L155">		this.tablePDF.setPadding(2);</span>
+<span class="nc" id="L156">		this.tablePDF.setSpacing(0);</span>
+
+<span class="nc" id="L158">		this.smallFont = FontFactory.getFont(FontFactory.HELVETICA, 7, Font.NORMAL, new Color(0, 0, 0));</span>
+		/*
+		 * try { BaseFont btKannada = BaseFont.createFont(&quot;Tunga&quot;, &quot;Identity-H&quot;, BaseFont.NOT_EMBEDDED); } catch (DocumentException e) {   } catch (IOException e) {   }
+		 */
+
+<span class="nc" id="L163">	}</span>
+
+	protected void generatePDFTable() throws JspException, BadElementException {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (this.header) {</span>
+<span class="nc" id="L167">			generateCaption();</span>
+<span class="nc" id="L168">			generateHeaders();</span>
+		}
+<span class="nc" id="L170">		this.tablePDF.endHeaders();</span>
+<span class="nc" id="L171">		generateRows();</span>
+
+<span class="nc" id="L173">	}</span>
+
+	/**
+	 * Generates all the row cells.
+	 * @throws JspException for errors during value retrieving from the table model
+	 * @throws BadElementException errors while generating content
+	 */
+	protected void generateRows() throws JspException, BadElementException {
+		// get the correct iterator (full or partial list according to the exportFull field)
+<span class="nc" id="L182">		final RowIterator rowIterator = this.model.getRowIterator(this.exportFull);</span>
+		// iterator on rows
+<span class="nc bnc" id="L184" title="All 2 branches missed.">		while (rowIterator.hasNext()) {</span>
+<span class="nc" id="L185">			final Row row = rowIterator.next();</span>
+
+			// iterator on columns
+<span class="nc" id="L188">			final ColumnIterator columnIterator = row.getColumnIterator(this.model.getHeaderCellList());</span>
+
+<span class="nc bnc" id="L190" title="All 2 branches missed.">			while (columnIterator.hasNext()) {</span>
+<span class="nc" id="L191">				final Column column = columnIterator.nextColumn();</span>
+
+				// Get the value to be displayed for the column
+<span class="nc" id="L194">				final Object value = column.getValue(this.decorated);</span>
+<span class="nc" id="L195">				final Cell cell = getCell(ObjectUtils.toString(value));</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">				if (value instanceof BigDecimal) {</span>
+<span class="nc" id="L197">					cell.setHorizontalAlignment(Element.ALIGN_RIGHT);</span>
+				}
+<span class="nc" id="L199">				this.tablePDF.addCell(cell);</span>
+<span class="nc" id="L200">			}</span>
+<span class="nc" id="L201">		}</span>
+<span class="nc" id="L202">	}</span>
+
+	/**
+	 * Generates the header cells, which persist on every page of the PDF document.
+	 * @throws BadElementException IText exception
+	 */
+	protected void generateHeaders() throws BadElementException {
+<span class="nc" id="L209">		final Iterator iterator = this.model.getHeaderCellList().iterator();</span>
+
+<span class="nc bnc" id="L211" title="All 2 branches missed.">		while (iterator.hasNext()) {</span>
+<span class="nc" id="L212">			final HeaderCell headerCell = (HeaderCell) iterator.next();</span>
+
+<span class="nc" id="L214">			String columnHeader = headerCell.getTitle();</span>
+
+<span class="nc bnc" id="L216" title="All 2 branches missed.">			if (columnHeader == null) {</span>
+<span class="nc" id="L217">				columnHeader = StringUtils.capitalize(headerCell.getBeanPropertyName());</span>
+			}
+
+<span class="nc" id="L220">			final Cell hdrCell = getCell(columnHeader);</span>
+<span class="nc" id="L221">			hdrCell.setGrayFill(0.9f);</span>
+<span class="nc" id="L222">			hdrCell.setHeader(true);</span>
+<span class="nc" id="L223">			this.tablePDF.addCell(hdrCell);</span>
+
+<span class="nc" id="L225">		}</span>
+<span class="nc" id="L226">	}</span>
+
+	protected void generateCaption() throws BadElementException {
+<span class="nc" id="L229">		final Paragraph caption = new Paragraph(new Chunk(removeHtmlTagsAndSpaces(this.model.getCaption()), this.getCaptionFont()));</span>
+<span class="nc" id="L230">		caption.setAlignment(this.getCaptionHorizontalAlignment());</span>
+<span class="nc" id="L231">		this.tableCaption = caption;</span>
+
+<span class="nc" id="L233">	}</span>
+
+	@Override
+	public void doExport(final OutputStream out) throws JspException {
+
+		try {
+			// Initialize the table with the appropriate number of columns
+<span class="nc" id="L240">			initTable();</span>
+
+			// Initialize the Document and register it with PdfWriter listener and the OutputStream
+<span class="nc" id="L243">			final Document document = new Document(PageSize.A4.rotate(), 60, 60, 40, 40);</span>
+<span class="nc" id="L244">			document.addCreationDate();</span>
+<span class="nc" id="L245">			final HeaderFooter footer = new HeaderFooter(new Phrase(TagConstants.TAGNAME_CAPTION, this.smallFont), true);</span>
+<span class="nc" id="L246">			footer.setBorder(Rectangle.NO_BORDER);</span>
+<span class="nc" id="L247">			footer.setAlignment(Element.ALIGN_CENTER);</span>
+
+			// PdfWriter.getInstance(document, out);
+<span class="nc" id="L250">			PdfWriter.getInstance(document, out).setPageEvent(new PageNumber());</span>
+			// Fill the virtual PDF table with the necessary data
+<span class="nc" id="L252">			generatePDFTable();</span>
+<span class="nc" id="L253">			document.open();</span>
+
+			// Table table = new Table(this.model.getNumberOfColumns());
+			// ItextTableWriter writer = new ItextTableWriter(tablePDF, document);
+			// writer.writeTable(this.model, &quot;-1&quot;);
+			// document.setFooter(footer);
+			// document.setHeader(footer);
+<span class="nc" id="L260">			String str = tableCaption.get(0).toString();</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			if(str.contains(&quot;\\n&quot;)){</span>
+<span class="nc" id="L262">			    String[] strArr = str.split(Pattern.quote(&quot;\\n&quot;));</span>
+<span class="nc" id="L263">			    Paragraph titleElement = new Paragraph(new Chunk(strArr[0], this.getCaptionFont()));</span>
+<span class="nc" id="L264">			    titleElement.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L265">                            document.add(titleElement);</span>
+<span class="nc" id="L266">			    Paragraph headerElement = new Paragraph(new Chunk(strArr[1], this.getCaptionFont1()));</span>
+<span class="nc" id="L267">			    headerElement.setAlignment(headerElement.ALIGN_CENTER);</span>
+<span class="nc" id="L268">                            document.add(headerElement);</span>
+<span class="nc" id="L269">			}else{</span>
+<span class="nc" id="L270">	                    document.add(this.tableCaption);</span>
+	                }
+<span class="nc" id="L272">			document.add(this.tablePDF);</span>
+<span class="nc" id="L273">			document.close();</span>
+
+<span class="nc" id="L275">		} catch (final Exception e) {</span>
+
+<span class="nc" id="L277">			throw new PdfGenerationException(e);</span>
+<span class="nc" id="L278">		}</span>
+
+<span class="nc" id="L280">	}</span>
+
+	protected int getCaptionHorizontalAlignment() {
+<span class="nc" id="L283">		return Element.ALIGN_LEFT;</span>
+	}
+
+	/**
+	 * Returns a formatted cell for the given value.
+	 * @param value cell value
+	 * @return Cell
+	 * @throws BadElementException errors while generating content
+	 */
+	private Cell getCell(String value) throws BadElementException {
+
+<span class="nc" id="L294">		value = removeHtmlTagsAndSpaces(value);</span>
+<span class="nc" id="L295">		final Cell cell = new Cell(new Chunk(StringUtils.trimToEmpty(value), this.smallFont));</span>
+<span class="nc" id="L296">		cell.setVerticalAlignment(Element.ALIGN_TOP);</span>
+<span class="nc" id="L297">		cell.setLeading(8);</span>
+<span class="nc" id="L298">		return cell;</span>
+	}
+
+	/**
+	 * Custom-method. Checks for html tags and spaces and replaces with empty string
+	 */
+	private String removeHtmlTagsAndSpaces(final String strValue) {
+<span class="nc" id="L305">		String returnValue = null;</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">		if (strValue != null) {</span>
+			// if((strValue.trim().indexOf(&quot;&amp;nbsp;&quot;) &gt; -1) ||(strValue.trim().indexOf(&quot;&lt;hr&gt;&quot;) &gt; -1) || (strValue.trim().indexOf(&quot;&lt;B&gt;&quot;) &gt; -1) ||
+			// (strValue.trim().indexOf(&quot;&lt;/B&gt;&quot;) &gt; -1) || (strValue.trim().indexOf(&quot;Br&quot;) &gt; -1)) {
+<span class="nc" id="L309">			final Reader strReader = new StringReader(strValue);</span>
+<span class="nc" id="L310">			final MyHtmlParser parser = new MyHtmlParser();</span>
+<span class="nc" id="L311">			returnValue = parser.parseMyHtml(strReader, true);</span>
+			// returnValue = returnValue.trim().replaceAll(&quot;\\s&quot;,&quot;&quot;);
+
+		}
+<span class="nc" id="L315">		return returnValue;</span>
+	}
+
+	protected Font getCaptionFont() {
+<span class="nc" id="L319">		return FontFactory.getFont(FontFactory.HELVETICA, 17, Font.BOLD, new Color(0x00, 0x00, 0x00));</span>
+	}
+	
+	protected Font getCaptionFont1() {
+<span class="nc" id="L323">            return FontFactory.getFont(FontFactory.HELVETICA, 14, Font.BOLD, new Color(0x00, 0x00, 0x00));</span>
+        }
+
+	/**
+	 * Wraps IText-generated exceptions.
+	 * @author Fabrizio Giustina
+	 * @version $Revision: 1.7 $ ($Author: fgiust $)
+	 */
+	static class PdfGenerationException extends BaseNestableJspTagException {
+
+		/**
+		 * D1597A17A6.
+		 */
+		private static final long serialVersionUID = 899149338534L;
+
+		/**
+		 * Instantiate a new PdfGenerationException with a fixed message and the given cause.
+		 * @param cause Previous exception
+		 */
+		public PdfGenerationException(final Throwable cause) {
+<span class="nc" id="L343">			super(PdfView.class, Messages.getString(&quot;PdfView.errorexporting&quot;), cause); //$NON-NLS-1$</span>
+<span class="nc" id="L344">		}</span>
+
+		/**
+		 * @see org.displaytag.exception.BaseNestableJspTagException#getSeverity()
+		 */
+		@Override
+		public SeverityEnum getSeverity() {
+<span class="nc" id="L351">			return SeverityEnum.ERROR;</span>
+		}
+	}
+
+<span class="nc" id="L355">	private static class PageNumber extends PdfPageEventHelper {</span>
+
+		/**
+		 * @see com.lowagie.text.pdf.PdfPageEventHelper#onEndPage(com.lowagie.text.pdf.PdfWriter, com.lowagie.text.Document)
+		 */
+		@Override
+		public void onEndPage(final PdfWriter writer, final Document document) {
+			/** The headertable. */
+<span class="nc" id="L363">			final PdfPTable table = new PdfPTable(2);</span>
+			/** A template that will hold the total number of pages. */
+<span class="nc" id="L365">			final PdfTemplate tpl = writer.getDirectContent().createTemplate(100, 100);</span>
+			/** The font that will be used. */
+<span class="nc" id="L367">			BaseFont helv = null;</span>
+			try {
+<span class="nc" id="L369">				helv = BaseFont.createFont(&quot;Helvetica&quot;, BaseFont.WINANSI, false);</span>
+<span class="nc" id="L370">			} catch (final DocumentException e) {</span>
+
+<span class="nc" id="L372">				throw new ApplicationRuntimeException(&quot;Exception occured -----&gt; &quot; + e.getMessage());</span>
+<span class="nc" id="L373">			} catch (final IOException e) {</span>
+
+<span class="nc" id="L375">				throw new ApplicationRuntimeException(&quot;Exception occured -----&gt; &quot; + e.getMessage());</span>
+<span class="nc" id="L376">			}</span>
+<span class="nc" id="L377">			final PdfContentByte cb = writer.getDirectContent();</span>
+<span class="nc" id="L378">			cb.saveState();</span>
+<span class="nc" id="L379">			cb.restoreState();</span>
+			// write the headertable
+<span class="nc" id="L381">			table.setTotalWidth(document.right() - document.left());</span>
+			//table.writeSelectedRows(0, -1, document.left(), document.getPageSize().getHeight() - 50, cb);
+			// compose the footer
+<span class="nc" id="L384">			final String text = &quot;Page &quot; + writer.getPageNumber();</span>
+<span class="nc" id="L385">			final float textSize = helv.getWidthPoint(text, 12);</span>
+<span class="nc" id="L386">			final float textBase = document.bottom() - 20;</span>
+<span class="nc" id="L387">			cb.beginText();</span>
+<span class="nc" id="L388">			cb.setFontAndSize(helv, 12);</span>
+<span class="nc" id="L389">			final float adjust = helv.getWidthPoint(&quot;0&quot;, 12);</span>
+<span class="nc" id="L390">			cb.setTextMatrix(document.right() - textSize - adjust, textBase);</span>
+<span class="nc" id="L391">			cb.showText(text);</span>
+<span class="nc" id="L392">			cb.endText();</span>
+<span class="nc" id="L393">			cb.addTemplate(tpl, document.right() - adjust, textBase);</span>
+<span class="nc" id="L394">			cb.saveState();</span>
+<span class="nc" id="L395">			cb.restoreState();</span>
+<span class="nc" id="L396">		}</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

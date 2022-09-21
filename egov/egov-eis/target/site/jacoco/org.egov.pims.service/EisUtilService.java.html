@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EisUtilService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.service</a> &gt; <span class="el_source">EisUtilService.java</span></div><h1>EisUtilService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.service;
+
+import org.apache.log4j.Logger;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.workflow.service.OwnerGroupService;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.egov.pims.dao.PersonalInformationDAO;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.criterion.ProjectionList;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service(&quot;eisService&quot;)
+@Transactional(readOnly = true)
+<span class="nc" id="L81">public class EisUtilService implements OwnerGroupService&lt;Position&gt; {</span>
+<span class="nc" id="L82">    private static final Logger LOGGER = Logger.getLogger(EisUtilService.class);</span>
+
+    @Autowired
+    @Qualifier(&quot;persistenceService&quot;)
+    private PersistenceService persistenceService;
+
+    @Autowired
+    private BoundaryService boundaryService;
+
+    @Autowired
+    private PersonalInformationDAO personalInformationDAO;
+
+
+    public List&lt;Position&gt; getOwnerGroupsByUserId(Long userId) {
+<span class="nc" id="L96">        return this.getPositionsForUser(userId, new Date());</span>
+    }
+
+    public List&lt;Position&gt; getPositionsForUser(Long user, Date date) {
+
+        List&lt;Position&gt; positionList;
+        try {
+<span class="nc" id="L103">            String mainStr = &quot;select distinct(a.position) from Assignment a where a.employee.id =?&quot;;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            Date givenDate = date == null ? new Date() : date;</span>
+
+<span class="nc" id="L106">            mainStr += &quot; and ((a.toDate is null and a.fromDate&lt;= ?) or (a.fromDate &lt;= ? and a.toDate &gt;= ?))&quot;;</span>
+<span class="nc" id="L107">            positionList = (List) persistenceService.findAllBy(mainStr, user, givenDate, givenDate, givenDate);</span>
+
+<span class="nc" id="L109">        } catch (Exception e) {</span>
+<span class="nc" id="L110">            LOGGER.error(&quot;Exception while getting the getPositionsForUser=&quot; + e.getMessage());</span>
+<span class="nc" id="L111">            throw new ApplicationRuntimeException(e.getMessage(), e);</span>
+
+<span class="nc" id="L113">        }</span>
+<span class="nc" id="L114">        return positionList;</span>
+
+    }
+
+    public Position getPrimaryPositionForUser(Long userId, Date date) {
+
+        Position position;
+
+        try {
+<span class="nc" id="L123">            String mainStr = &quot;select a.position from Assignment a where a.primary=true&quot;;</span>
+
+<span class="nc bnc" id="L125" title="All 4 branches missed.">            if (userId != null &amp;&amp; userId != 0) {</span>
+<span class="nc" id="L126">                mainStr += &quot; and a.oldEmployee.userMaster.id =?&quot;;</span>
+
+            }
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            Date givenDate = date == null ? new Date() : date;</span>
+
+<span class="nc" id="L132">            mainStr += &quot; and ((a.toDate is null and a.fromDate&lt;= ?) or (a.fromDate &lt;= ? and a.toDate &gt;= ?))&quot;;</span>
+<span class="nc" id="L133">            position = (Position) persistenceService.find(mainStr, userId, givenDate, givenDate, givenDate);</span>
+
+<span class="nc" id="L135">        } catch (Exception e) {</span>
+<span class="nc" id="L136">            LOGGER.error(&quot;Exception while getting the getPrimaryPositionForUser=&quot; + e.getMessage());</span>
+<span class="nc" id="L137">            throw new ApplicationRuntimeException(e.getMessage(), e);</span>
+
+<span class="nc" id="L139">        }</span>
+<span class="nc" id="L140">        return position;</span>
+
+    }
+
+    public User getUserForPosition(Long positionId, Date date) {
+        User user;
+        try {
+<span class="nc" id="L147">            String mainStr = &quot;select emp.userMaster from EmployeeView emp where emp.position.id = ?&quot;;</span>
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            Date givenDate = date == null ? new Date() : date;</span>
+
+<span class="nc" id="L151">            mainStr += &quot; and ((emp.toDate is null and emp.fromDate&lt;= ?) or (emp.fromDate &lt;= ? and emp.toDate &gt;= ?))&quot;;</span>
+<span class="nc" id="L152">            user = (User) persistenceService.find(mainStr, positionId, givenDate, givenDate, givenDate);</span>
+<span class="nc" id="L153">        } catch (Exception e) {</span>
+<span class="nc" id="L154">            LOGGER.error(&quot;Exception while getting the getUserForPosition=&quot; + e.getMessage());</span>
+<span class="nc" id="L155">            throw new ApplicationRuntimeException(e.getMessage(), e);</span>
+
+<span class="nc" id="L157">        }</span>
+<span class="nc" id="L158">        return user;</span>
+
+    }
+
+    public List&lt;EmployeeView&gt; getEmployeeInfoList(Map paramMap) {
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        Integer departmentId = paramMap.get(&quot;departmentId&quot;) != null ? Integer.parseInt((String) paramMap</span>
+<span class="nc" id="L164">                .get(&quot;departmentId&quot;)) : null;</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        Integer designationId = paramMap.get(&quot;designationId&quot;) != null ? Integer.parseInt((String) paramMap</span>
+<span class="nc" id="L166">                .get(&quot;designationId&quot;)) : null;</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        Integer functionaryId = paramMap.get(&quot;functionaryId&quot;) != null ? Integer.parseInt((String) paramMap</span>
+<span class="nc" id="L168">                .get(&quot;functionaryId&quot;)) : null;</span>
+<span class="nc" id="L169">        String code = (String) paramMap.get(&quot;code&quot;);</span>
+<span class="nc" id="L170">        String name = (String) paramMap.get(&quot;name&quot;);</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        Integer status = paramMap.get(&quot;status&quot;) != null ? Integer.parseInt((String) paramMap.get(&quot;status&quot;)) : null;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        Integer empType = paramMap.get(&quot;empType&quot;) != null ? Integer.parseInt((String) paramMap.get(&quot;empType&quot;)) : null;</span>
+<span class="nc" id="L173">        String searchAll = (String) paramMap.get(&quot;searchAll&quot;);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        Long boundaryId = paramMap.get(&quot;boundaryId&quot;) != null ? Long.valueOf((String) paramMap.get(&quot;boundaryId&quot;)) : null;</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        Long userId = paramMap.get(&quot;userId&quot;) != null ? Long.valueOf((String) paramMap.get(&quot;userId&quot;)) : null;</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        List&lt;String&gt; roleList = paramMap.get(&quot;roleList&quot;) != null ? (List&lt;String&gt;) paramMap.get(&quot;roleList&quot;)</span>
+                : new ArrayList&lt;&gt;();
+<span class="nc" id="L178">        List&lt;User&gt; userList = new ArrayList&lt;&gt;();</span>
+        List&lt;EmployeeView&gt; empInfoList;
+<span class="nc bnc" id="L180" title="All 4 branches missed.">        if (boundaryId != null &amp;&amp; boundaryId != 0) {</span>
+<span class="nc" id="L181">            Boundary boundary = boundaryService.getBoundaryById(boundaryId);</span>
+            // Exclude get users list if boundary is city level
+<span class="nc bnc" id="L183" title="All 2 branches missed.">            if (boundary.getParent() != null)</span>
+                try {
+<span class="nc" id="L185">                    userList = getListOfUsersForGivenBoundaryId(boundaryId);</span>
+<span class="nc" id="L186">                } catch (NoSuchObjectException e) {</span>
+
+<span class="nc" id="L188">                    LOGGER.error(e);</span>
+<span class="nc" id="L189">                }</span>
+
+        }
+
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        if (&quot;Y&quot;.equalsIgnoreCase(searchAll)) {</span>
+<span class="nc" id="L194">            empInfoList = persistenceService.findAllBy(&quot;from EmployeeView&quot;);</span>
+        } else {
+<span class="nc" id="L196">            String mainStr = &quot;from EmployeeView ev where&quot;;</span>
+<span class="nc bnc" id="L197" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L198">                mainStr += &quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;;</span>
+            }
+<span class="nc bnc" id="L200" title="All 4 branches missed.">            if (departmentId != null &amp;&amp; departmentId.intValue() != 0) {</span>
+<span class="nc" id="L201">                mainStr += &quot; ev.department.id= :deptId and &quot;;</span>
+            }
+<span class="nc bnc" id="L203" title="All 4 branches missed.">            if (designationId != null &amp;&amp; designationId.intValue() != 0) {</span>
+<span class="nc" id="L204">                mainStr += &quot; ev.designation.id = :designationId and &quot;;</span>
+            }
+<span class="nc bnc" id="L206" title="All 4 branches missed.">            if (functionaryId != null &amp;&amp; functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L207">                mainStr += &quot; ev.functionary.id = :functionaryId and &quot;;</span>
+            }
+
+<span class="nc bnc" id="L210" title="All 4 branches missed.">            if (empType != null &amp;&amp; empType.intValue() != 0) {</span>
+<span class="nc" id="L211">                mainStr += &quot; ev.employeeType.id=:employeeType and&quot;;</span>
+            }
+
+<span class="nc bnc" id="L214" title="All 6 branches missed.">            if (boundaryId != null &amp;&amp; boundaryId.intValue() != 0 &amp;&amp; !userList.isEmpty()) {</span>
+<span class="nc" id="L215">                mainStr += &quot; ev.userMaster in(:userObjList) and &quot;;</span>
+            }
+<span class="nc bnc" id="L217" title="All 4 branches missed.">            if (userId != null &amp;&amp; userId.intValue() != 0) {</span>
+<span class="nc" id="L218">                mainStr += &quot; ev.userMaster.id =:userId and &quot;;</span>
+            }
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            if (!roleList.isEmpty()) {</span>
+<span class="nc" id="L221">                mainStr += &quot;ev.userMaster.id in(select userRole.user.id from UserRole userRole where &quot;</span>
+                        + &quot;((userRole.fromDate &lt;= current_date and userRole.toDate &gt;= current_date) or &quot;
+                        + &quot;(userRole.fromDate &lt;= current_date and userRole.toDate is null)) and &quot;
+                        + &quot;userRole.role.roleName in(:roleList) ) and&quot;;
+            }
+<span class="nc bnc" id="L226" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L227">                mainStr += &quot; trim(upper(ev.employeeName))  like '%&quot; + name.trim().toUpperCase() + &quot;%' and &quot;;</span>
+            }
+<span class="nc bnc" id="L229" title="All 4 branches missed.">            if (status != null &amp;&amp; status.intValue() != 0) {</span>
+<span class="nc" id="L230">                mainStr += &quot; ev.employeeStatus.id = :employeeStatus and &quot;;</span>
+            }
+<span class="nc bnc" id="L232" title="All 8 branches missed.">            if (status != null &amp;&amp; status.intValue() != 0 &amp;&amp; designationId != null &amp;&amp; designationId.intValue() == 0) {</span>
+<span class="nc" id="L233">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= current_date ) OR (ev.fromDate &lt;= current_date AND ev.toDate &gt; current_date)) and ev.employeeStatus.id = :employeeStatus &quot;;</span>
+<span class="nc bnc" id="L234" title="All 6 branches missed.">            } else if (status != null &amp;&amp; status.intValue() == 0 &amp;&amp; designationId != null</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">                    &amp;&amp; designationId.intValue() != 0) {</span>
+<span class="nc" id="L236">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= current_date ) OR (ev.fromDate &lt;= current_date AND ev.toDate &gt; current_date)) &quot;;</span>
+            }
+            // Inspite of SearchAll is true or false, if employee code is
+            // entered, search for all active and inactive employees
+<span class="nc bnc" id="L240" title="All 4 branches missed.">            else if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L241">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= current_date) OR (ev.fromDate &lt;= current_date AND ev.toDate &gt; current_date) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= current_date) OR (evn2.fromDate &lt;= current_date AND evn2.toDate &gt; current_date)) )))) &quot;;
+<span class="nc bnc" id="L245" title="All 6 branches missed.">            } else if ((status != null &amp;&amp; status.intValue() != 0)</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">                    || (designationId != null &amp;&amp; designationId.intValue() == 0)) {</span>
+<span class="nc" id="L247">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= current_date) OR (ev.fromDate &lt;= current_date AND ev.toDate &gt; current_date) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= current_date) OR (evn2.fromDate &lt;= current_date AND evn2.toDate &gt; current_date)) )))) &quot;;
+            } else {
+<span class="nc" id="L252">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= current_date ) OR (ev.fromDate &lt;= current_date AND ev.toDate &gt; current_date)) &quot;;</span>
+            }
+<span class="nc" id="L254">            mainStr += &quot; and ev.userActive='1' &quot;; // getting only active employees</span>
+            // for any kind of search
+<span class="nc" id="L256">            Query qry = null;</span>
+<span class="nc" id="L257">            qry = persistenceService.getSession().createQuery(mainStr);</span>
+<span class="nc" id="L258">            LOGGER.info(&quot;qryqryqryqry&quot; + qry.toString());</span>
+<span class="nc bnc" id="L259" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L260">                qry.setString(&quot;employeeCode&quot;, code);</span>
+            }
+<span class="nc bnc" id="L262" title="All 4 branches missed.">            if (departmentId != null &amp;&amp; departmentId.intValue() != 0) {</span>
+<span class="nc" id="L263">                qry.setInteger(&quot;deptId&quot;, departmentId);</span>
+            }
+<span class="nc bnc" id="L265" title="All 4 branches missed.">            if (designationId != null &amp;&amp; designationId.intValue() != 0) {</span>
+<span class="nc" id="L266">                qry.setInteger(&quot;designationId&quot;, designationId);</span>
+            }
+<span class="nc bnc" id="L268" title="All 4 branches missed.">            if (functionaryId != null &amp;&amp; functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L269">                qry.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+            }
+<span class="nc bnc" id="L271" title="All 4 branches missed.">            if (status != null &amp;&amp; status.intValue() != 0) {</span>
+<span class="nc" id="L272">                qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+            }
+<span class="nc bnc" id="L274" title="All 6 branches missed.">            if (boundaryId != null &amp;&amp; boundaryId.intValue() != 0 &amp;&amp; !userList.isEmpty()) {</span>
+<span class="nc" id="L275">                qry.setParameterList(&quot;userObjList&quot;, userList);</span>
+            }
+<span class="nc bnc" id="L277" title="All 4 branches missed.">            if (userId != null &amp;&amp; userId.intValue() != 0) {</span>
+<span class="nc" id="L278">                qry.setLong(&quot;userId&quot;, userId);</span>
+            }
+<span class="nc bnc" id="L280" title="All 2 branches missed.">            if (!roleList.isEmpty()) {</span>
+<span class="nc" id="L281">                qry.setParameterList(&quot;roleList&quot;, roleList);</span>
+            }
+<span class="nc bnc" id="L283" title="All 4 branches missed.">            if (empType != null &amp;&amp; empType.intValue() != 0) {</span>
+<span class="nc" id="L284">                qry.setInteger(&quot;employeeType&quot;, empType.intValue());</span>
+            }
+<span class="nc" id="L286">            empInfoList = (List) qry.list();</span>
+        }
+<span class="nc" id="L288">        return empInfoList;</span>
+    }
+
+    public List getListOfUsersForGivenBoundaryId(Long boundaryId) throws NoSuchObjectException {
+<span class="nc" id="L292">        return personalInformationDAO.getListOfUsersForGivenBoundaryId(boundaryId);</span>
+    }
+
+    /**
+     * Use the API getAllDesignationsByDepartment in DesignationService.java
+     * &lt;p&gt;
+     * return all distinct Designations to which employees are assigned in the
+     * given department for given date. This list includes primary as well as
+     * secondary assignments. If there is No Designation for the given
+     * department then returns the empty list
+     *
+     * @param departmentId
+     * @param givenDate
+     * @return DesignationMaster List
+     * @deprecated
+     */
+    @Deprecated
+    public List&lt;Designation&gt; getAllDesignationByDept(Integer departmentId, Date givenDate) {
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        Date userGivenDate = givenDate == null ? new Date() : givenDate;</span>
+<span class="nc" id="L311">        Long deptId = departmentId.longValue();</span>
+<span class="nc" id="L312">        Criteria criteria = persistenceService</span>
+<span class="nc" id="L313">                .getSession()</span>
+<span class="nc" id="L314">                .createCriteria(Assignment.class, &quot;assign&quot;)</span>
+<span class="nc" id="L315">                .createAlias(&quot;assign.department&quot;, &quot;department&quot;)</span>
+<span class="nc" id="L316">                .add(Restrictions.eq(&quot;department.id&quot;, deptId))</span>
+<span class="nc" id="L317">                .add(Restrictions.and(Restrictions.le(&quot;assign.fromDate&quot;, userGivenDate),</span>
+<span class="nc" id="L318">                        Restrictions.ge(&quot;assign.toDate&quot;, userGivenDate)));</span>
+
+<span class="nc" id="L320">        ProjectionList projections = Projections.projectionList().add(Projections.property(&quot;assign.designation&quot;));</span>
+<span class="nc" id="L321">        criteria.setProjection(projections);</span>
+<span class="nc" id="L322">        criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);</span>
+
+<span class="nc" id="L324">        return (List&lt;Designation&gt;) criteria.list();</span>
+
+    }
+
+    /*
+     * Gets all the DO users for the following params
+     *      (non-Javadoc)
+     * @see org.egov.infstr.services.EISServeable#getListOfDrawingOfficers(java.util.List, java.lang.String, java.lang.String)
+     */
+    public List&lt;HashMap&gt; getListOfDrawingOfficers(List&lt;Long&gt; desigList, Date assignDate, String codeOrName) {
+<span class="nc" id="L334">        ArrayList results = new ArrayList();</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">        Query query = getQueryForDrawingOfficer(desigList, null, assignDate == null ? new Date() : assignDate, codeOrName);</span>
+<span class="nc" id="L336">        List&lt;Object[]&gt; tmpList = (List&lt;Object[]&gt;) query.list();</span>
+<span class="nc" id="L337">        int i = 0;</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">        for (Object[] objArray : tmpList) {</span>
+<span class="nc" id="L339">            Map temp = new HashMap();</span>
+<span class="nc" id="L340">            temp.put(&quot;empid&quot;, objArray[0]);</span>
+<span class="nc" id="L341">            temp.put(&quot;empname&quot;, objArray[1]);</span>
+<span class="nc" id="L342">            temp.put(&quot;empcode&quot;, objArray[2]);</span>
+<span class="nc" id="L343">            temp.put(&quot;doid&quot;, objArray[3]);</span>
+<span class="nc" id="L344">            temp.put(&quot;doname&quot;, objArray[4]);</span>
+<span class="nc" id="L345">            temp.put(&quot;docode&quot;, objArray[5]);</span>
+<span class="nc" id="L346">            results.add(i, temp);</span>
+<span class="nc" id="L347">            i++;</span>
+<span class="nc" id="L348">        }</span>
+
+<span class="nc" id="L350">        return results;</span>
+    }
+
+    private Query getQueryForDrawingOfficer(List&lt;Long&gt; desigList, Integer doId, Date assignDate, String codeOrName) {
+<span class="nc" id="L354">        StringBuilder qry = new StringBuilder().append(&quot;select distinct eee.id as empid,eee.name as empname,eee.code as empcode,&quot;)</span>
+<span class="nc" id="L355">                .append(&quot; do.id as doid,do.name as doname,do.code as docode from eg_eis_employeeinfo eee&quot;)</span>
+<span class="nc" id="L356">                .append(&quot; inner join eg_position pos on pos.id = eee.pos_id&quot;)</span>
+<span class="nc" id="L357">                .append(&quot; inner join eg_drawingofficer do on do.id = pos.id_drawing_officer &quot;)</span>
+<span class="nc" id="L358">                .append(&quot; where eee.isactive=1 and pos.id_drawing_officer is not null &quot;)</span>
+<span class="nc" id="L359">                .append(&quot; and :enteredDate between eee.from_date and eee.to_date &quot;);</span>
+
+<span class="nc bnc" id="L361" title="All 4 branches missed.">        if ((null != desigList &amp;&amp; !desigList.isEmpty())) {</span>
+<span class="nc" id="L362">            qry.append(&quot; and eee.designationid in (:desList) &quot;);</span>
+        }
+<span class="nc bnc" id="L364" title="All 4 branches missed.">        if (null != codeOrName &amp;&amp; !codeOrName.isEmpty()) {</span>
+<span class="nc" id="L365">            qry.append(&quot; and (lower(do.name) like lower(:enteredString) or lower(do.code) like lower(:enteredString) &quot;)</span>
+<span class="nc" id="L366">                    .append(&quot; or lower(eee.name) like lower(:enteredString) or lower(eee.code) like lower(:enteredString)) &quot;);</span>
+        }
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        if (null != doId) {</span>
+<span class="nc" id="L369">            qry.append(&quot; and do.id=:doId &quot;);</span>
+        }
+<span class="nc" id="L371">        qry.append(&quot; order by eee.name &quot;);</span>
+<span class="nc" id="L372">        Query query = persistenceService.getSession().createSQLQuery(qry.toString());</span>
+<span class="nc" id="L373">        query.setDate(&quot;enteredDate&quot;, assignDate);</span>
+<span class="nc bnc" id="L374" title="All 4 branches missed.">        if (null != desigList &amp;&amp; !desigList.isEmpty()) {</span>
+<span class="nc" id="L375">            query.setParameterList(&quot;desList&quot;, desigList);</span>
+        }
+<span class="nc bnc" id="L377" title="All 2 branches missed.">        if (null != doId) {</span>
+<span class="nc" id="L378">            query.setInteger(&quot;doId&quot;, doId);</span>
+        }
+<span class="nc bnc" id="L380" title="All 4 branches missed.">        if (null != codeOrName &amp;&amp; !codeOrName.isEmpty()) {</span>
+<span class="nc" id="L381">            query.setString(&quot;enteredString&quot;, &quot;%&quot; + codeOrName + &quot;%&quot;);</span>
+        }
+
+<span class="nc" id="L384">        return query;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

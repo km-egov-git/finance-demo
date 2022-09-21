@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RemittanceStatementReportAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.reports</a> &gt; <span class="el_source">RemittanceStatementReportAction.java</span></div><h1>RemittanceStatementReportAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+/**
+ *
+ */
+package org.egov.collection.web.actions.reports;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.CollectionBankRemittanceReport;
+import org.egov.collection.entity.CollectionRemittanceReportResult;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.entity.Remittance;
+import org.egov.collection.entity.RemittanceDetail;
+import org.egov.collection.service.RemittanceServiceImpl;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.eis.entity.Employee;
+import org.egov.eis.entity.Jurisdiction;
+import org.egov.eis.service.OldEmployeeService;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.CityService;
+import org.egov.infra.reporting.engine.ReportDataSourceType;
+import org.egov.infra.reporting.engine.ReportFormat;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.reporting.engine.ReportRequest;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.reporting.viewer.ReportViewerUtil;
+import org.egov.infra.web.struts.actions.ReportFormAction;
+import org.egov.model.masters.AccountCodePurpose;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Results({ @Result(name = RemittanceStatementReportAction.INDEX, location = &quot;remittanceStatementReport-index.jsp&quot;),
+        @Result(name = RemittanceStatementReportAction.REPORT, location = &quot;remittanceStatementReport-report.jsp&quot;) })
+@ParentPackage(&quot;egov&quot;)
+<span class="nc" id="L93">public class RemittanceStatementReportAction extends ReportFormAction {</span>
+
+    private static final long serialVersionUID = 1L;
+    private CollectionsUtil collectionsUtil;
+    private static final String EGOV_FROM_DATE = &quot;EGOV_FROM_DATE&quot;;
+    private static final String EGOV_TO_DATE = &quot;EGOV_TO_DATE&quot;;
+    private static final String EGOV_SERVICE_ID = &quot;EGOV_SERVICE_ID&quot;;
+    private static final String EGOV_FUND_ID = &quot;EGOV_FUND_ID&quot;;
+    private static final String EGOV_BANKBRANCH_ID = &quot;EGOV_BANKBRANCH_ID&quot;;
+    private static final String EGOV_BANKACCOUNT_ID = &quot;EGOV_BANKACCOUNT_ID&quot;;
+    private static final String EGOV_PAYMENT_MODE = &quot;EGOV_PAYMENT_MODE&quot;;
+    private static final String SELECTED_DEPT_ID = &quot;SELECTED_DEPT_ID&quot;;
+    private static final String EGOV_DEPT_ID = &quot;EGOV_DEPT_ID&quot;;
+    private static final String EGOV_CASH_AMOUNT = &quot;EGOV_CASH_AMOUNT&quot;;
+    private static final String EGOV_CHEQUE_AMOUNT = &quot;EGOV_CHEQUE_AMOUNT&quot;;
+    private static final String EGOV_BANK = &quot;EGOV_BANK&quot;;
+    private static final String EGOV_BANK_ACCOUNT = &quot;EGOV_BANK_ACCOUNT&quot;;
+    private static final String EGOV_REMITTANCE_VOUCHER = &quot;EGOV_REMITTANCE_VOUCHER&quot;;
+    private static final String EGOV_REMITTANCE_DATE = &quot;EGOV_REMITTANCE_DATE&quot;;
+    private static final String PRINT_BANK_CHALLAN_TEMPLATE = &quot;collection_remittance_bankchallan_report&quot;;
+    private static final String PRINT_CHEQUE_BANK_CHALLAN_TEMPLATE = &quot;collection_cheque_remittance_bankchallan_report&quot;;
+    private static final String PRINT_CASH_BANK_CHALLAN_TEMPLATE = &quot;collection_cash_remittance_bankchallan_report&quot;;
+    private static final String EGOV_BANKCOLL_BANKBRANCH_ID = &quot;EGOV_BANKCOLL_BANKBRANCH_ID&quot;;
+<span class="nc" id="L116">    private final Map&lt;String, Object&gt; critParams = new HashMap&lt;String, Object&gt;(0);</span>
+    @Autowired
+    private OldEmployeeService employeeService;
+    @Autowired
+    private ReportService reportService;
+    @Autowired
+    private ReportViewerUtil reportViewerUtil;
+    private String reportId;
+
+<span class="nc" id="L125">    private final Map&lt;String, String&gt; paymentModes = createPaymentModeList();</span>
+    private List&lt;CollectionBankRemittanceReport&gt; bankRemittanceList;
+    private Double totalCashAmount;
+    private Double totalChequeAmount;
+    private String bank;
+    private String bankAccount;
+    private Date remittanceDate;
+    private String voucherNumber;
+    private RemittanceServiceImpl remittanceService;
+
+    @Autowired
+    private CityService cityService;
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L140">        setReportFormat(ReportFormat.PDF);</span>
+<span class="nc" id="L141">        setDataSourceType(ReportDataSourceType.SQL);</span>
+<span class="nc" id="L142">        addDropdownData(&quot;bankBranchList&quot;, collectionsUtil.getBankCollectionBankBranchList());</span>
+<span class="nc" id="L143">    }</span>
+
+    @Override
+    @Action(value = &quot;/reports/remittanceStatementReport-criteria&quot;)
+    public String criteria() {
+
+<span class="nc" id="L149">        addDropdownData(&quot;collectionServiceList&quot;,</span>
+<span class="nc" id="L150">                persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_COLLECTION_SERVICS));</span>
+<span class="nc" id="L151">        addDropdownData(&quot;collectionFundList&quot;,</span>
+<span class="nc" id="L152">                persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUND));</span>
+<span class="nc" id="L153">        critParams.put(EGOV_FROM_DATE, new Date());</span>
+<span class="nc" id="L154">        critParams.put(EGOV_TO_DATE, new Date());</span>
+<span class="nc" id="L155">        setReportParam(EGOV_FROM_DATE, new Date());</span>
+<span class="nc" id="L156">        setReportParam(EGOV_TO_DATE, new Date());</span>
+<span class="nc" id="L157">        addDropdownData(&quot;bankList&quot;, Collections.EMPTY_LIST);</span>
+<span class="nc" id="L158">        addDropdownData(&quot;bankAccountList&quot;, Collections.EMPTY_LIST);</span>
+<span class="nc" id="L159">        final User user = collectionsUtil.getLoggedInUser();</span>
+<span class="nc" id="L160">        final List&lt;Boundary&gt; boundaryList = new ArrayList&lt;Boundary&gt;();</span>
+<span class="nc" id="L161">        final Employee employee = employeeService.getEmployeeById(user.getId());</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (employee != null)</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            for (final Jurisdiction element : employee.getJurisdictions())</span>
+<span class="nc" id="L164">                boundaryList.add(element.getBoundary());</span>
+<span class="nc" id="L165">        addDropdownData(&quot;boundaryList&quot;, boundaryList);</span>
+<span class="nc" id="L166">        return INDEX;</span>
+    }
+
+    @Override
+    @Action(value = &quot;/reports/remittanceStatementReport-report&quot;)
+    public String report() {
+<span class="nc" id="L172">        final User user = collectionsUtil.getLoggedInUser();</span>
+
+<span class="nc" id="L174">        critParams.put(SELECTED_DEPT_ID, getDeptId());</span>
+<span class="nc" id="L175">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+
+<span class="nc" id="L177">        final Integer bounaryId = getDeptId();</span>
+
+<span class="nc" id="L179">        final StringBuilder jurValuesId = new StringBuilder();</span>
+
+<span class="nc" id="L181">        jurValuesId.append(bounaryId);</span>
+<span class="nc" id="L182">        new ArrayList&lt;Boundary&gt;();</span>
+<span class="nc" id="L183">        final Employee employee = employeeService.getEmployeeById(user.getId());</span>
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (employee != null)</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            for (final Jurisdiction element : employee.getJurisdictions()) {</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">                if (jurValuesId.length() &gt; 0)</span>
+<span class="nc" id="L188">                    jurValuesId.append(',');</span>
+<span class="nc" id="L189">                jurValuesId.append(element.getBoundary().getId());</span>
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">                for (final Boundary boundary : element.getBoundary().getChildren()) {</span>
+<span class="nc" id="L192">                    jurValuesId.append(',');</span>
+<span class="nc" id="L193">                    jurValuesId.append(boundary.getId());</span>
+<span class="nc" id="L194">                }</span>
+<span class="nc" id="L195">            }</span>
+<span class="nc bnc" id="L196" title="All 4 branches missed.">        if (null == jurValuesId.toString() || StringUtils.isEmpty(jurValuesId.toString())</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                || &quot;-1&quot;.equals(jurValuesId.toString()))</span>
+<span class="nc" id="L198">            critParams.put(EGOV_DEPT_ID, null);</span>
+        else
+<span class="nc" id="L200">            critParams.put(EGOV_DEPT_ID, jurValuesId.toString());</span>
+
+<span class="nc" id="L202">        final ReportRequest reportInput = new ReportRequest(getReportTemplateName(), critParams,</span>
+                ReportDataSourceType.SQL);
+<span class="nc" id="L204">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L205">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L206">        return REPORT;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/reports/remittanceStatementReport-printBankChallan&quot;)
+    public String printBankChallan() {
+<span class="nc" id="L212">        critParams.put(EGOV_CASH_AMOUNT, totalCashAmount);</span>
+<span class="nc" id="L213">        critParams.put(EGOV_CHEQUE_AMOUNT, totalChequeAmount);</span>
+<span class="nc" id="L214">        critParams.put(EGOV_BANK, bank);</span>
+<span class="nc" id="L215">        critParams.put(EGOV_BANK_ACCOUNT, bankAccount);</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        critParams.put(EGOV_REMITTANCE_DATE, remittanceDate == null ? new Date() : remittanceDate);</span>
+<span class="nc" id="L217">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L218">        final CollectionRemittanceReportResult collReportResult = new CollectionRemittanceReportResult();</span>
+<span class="nc" id="L219">        bankRemittanceList = (List&lt;CollectionBankRemittanceReport&gt;) getSession().get(&quot;REMITTANCE_LIST&quot;);</span>
+<span class="nc" id="L220">        critParams.put(EGOV_REMITTANCE_VOUCHER,</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">                bankRemittanceList.isEmpty() ? &quot;&quot; : bankRemittanceList.get(0).getVoucherNumber());</span>
+<span class="nc" id="L222">        collReportResult.setCollectionBankRemittanceReportList(bankRemittanceList);</span>
+<span class="nc" id="L223">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L224">        final ReportRequest reportInput = new ReportRequest(PRINT_BANK_CHALLAN_TEMPLATE, collReportResult, critParams);</span>
+<span class="nc" id="L225">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L226">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L227">        return REPORT;</span>
+    }
+    public void buildReportParams() {
+<span class="nc" id="L230">        critParams.put(EGOV_CASH_AMOUNT, totalCashAmount);</span>
+<span class="nc" id="L231">        critParams.put(EGOV_CHEQUE_AMOUNT, totalChequeAmount);</span>
+<span class="nc" id="L232">        critParams.put(EGOV_BANK, bank);</span>
+<span class="nc" id="L233">        critParams.put(EGOV_BANK_ACCOUNT, bankAccount);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        critParams.put(EGOV_REMITTANCE_DATE, remittanceDate == null ? new Date() : remittanceDate);</span>
+<span class="nc" id="L235">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L236">        bankRemittanceList = (List&lt;CollectionBankRemittanceReport&gt;) getSession().get(&quot;REMITTANCE_LIST&quot;);</span>
+<span class="nc" id="L237">        critParams.put(EGOV_REMITTANCE_VOUCHER,</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">                bankRemittanceList.isEmpty() ? &quot;&quot; : bankRemittanceList.get(0).getVoucherNumber());</span>
+<span class="nc" id="L239">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L240">    }</span>
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/reports/remittanceStatementReport-printChequeBankChallan&quot;)
+    public String printChequeBankChallan() {
+<span class="nc" id="L244">        buildReportParams();</span>
+<span class="nc" id="L245">        final CollectionRemittanceReportResult collReportResult = new CollectionRemittanceReportResult();</span>
+<span class="nc" id="L246">        bankRemittanceList = (List&lt;CollectionBankRemittanceReport&gt;) getSession().get(&quot;REMITTANCE_LIST&quot;);</span>
+<span class="nc" id="L247">        collReportResult.setCollectionBankRemittanceReportList(bankRemittanceList);</span>
+<span class="nc" id="L248">        final ReportRequest reportInput = new ReportRequest(PRINT_CHEQUE_BANK_CHALLAN_TEMPLATE, collReportResult, critParams);</span>
+<span class="nc" id="L249">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L250">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L251">        return REPORT;</span>
+    }
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/reports/remittanceStatementReport-printCashBankChallan&quot;)
+    public String printCashBankChallan() {
+<span class="nc" id="L256">        buildReportParams();</span>
+<span class="nc" id="L257">        final CollectionRemittanceReportResult collReportResult = new CollectionRemittanceReportResult();</span>
+<span class="nc" id="L258">        bankRemittanceList = (List&lt;CollectionBankRemittanceReport&gt;) getSession().get(&quot;REMITTANCE_LIST&quot;);</span>
+<span class="nc" id="L259">        collReportResult.setCollectionBankRemittanceReportList(bankRemittanceList);</span>
+<span class="nc" id="L260">        final ReportRequest reportInput = new ReportRequest(PRINT_CASH_BANK_CHALLAN_TEMPLATE, collReportResult, critParams);</span>
+<span class="nc" id="L261">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L262">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L263">        return REPORT;</span>
+    }
+
+ 
+    @Action(value = &quot;/reports/remittanceStatementReport-reportPrintBankChallan&quot;)
+    public String reportPrintBankChallan() {
+<span class="nc" id="L269">        final Remittance remittanceObj = (Remittance) persistenceService</span>
+<span class="nc" id="L270">                .findByNamedQuery(CollectionConstants.REMITTANCE_BY_VOUCHER_NUMBER, voucherNumber);</span>
+<span class="nc" id="L271">        final List&lt;ReceiptHeader&gt; remittanceList = new ArrayList&lt;ReceiptHeader&gt;(</span>
+<span class="nc" id="L272">                remittanceObj.getCollectionRemittance());</span>
+<span class="nc" id="L273">        double totalCashAmt = 0;</span>
+<span class="nc" id="L274">        double totalChequeAmt = 0;</span>
+<span class="nc" id="L275">        bankRemittanceList = remittanceService.prepareBankRemittanceReport(remittanceList);</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">        for (final RemittanceDetail rd : remittanceObj.getRemittanceDetails()) {</span>
+<span class="nc" id="L277">            if (rd.getChartOfAccount()</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                    .getPurposeId() == getAccountCodePurpose(CollectionConstants.PURPOSE_NAME_CASH_IN_HAND).getId())</span>
+<span class="nc" id="L279">                totalCashAmt = rd.getCreditAmount().doubleValue();</span>
+
+<span class="nc" id="L281">            if (rd.getChartOfAccount().getPurposeId()</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">                    .equals(getAccountCodePurpose(CollectionConstants.PURPOSE_NAME_CHEQUE_IN_HAND).getId()))</span>
+<span class="nc" id="L283">                totalChequeAmt = rd.getCreditAmount().doubleValue();</span>
+<span class="nc" id="L284">        }</span>
+<span class="nc" id="L285">        critParams.put(EGOV_CASH_AMOUNT, totalCashAmt);</span>
+<span class="nc" id="L286">        critParams.put(EGOV_CHEQUE_AMOUNT, totalChequeAmt);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        critParams.put(EGOV_REMITTANCE_VOUCHER, remittanceObj == null ? &quot;&quot; : remittanceObj.getReferenceNumber());</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        critParams.put(EGOV_REMITTANCE_DATE, remittanceObj == null ? new Date() : remittanceObj.getReferenceDate());</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">        critParams.put(EGOV_BANK, remittanceObj.getBankAccount() != null</span>
+<span class="nc" id="L290">                ? remittanceObj.getBankAccount().getBankbranch().getBank().getName() : &quot;&quot;);</span>
+<span class="nc" id="L291">        critParams.put(EGOV_BANK_ACCOUNT,</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">                remittanceObj.getBankAccount() != null ? remittanceObj.getBankAccount().getAccountnumber() : &quot;&quot;);</span>
+<span class="nc" id="L293">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L294">        final CollectionRemittanceReportResult collReportResult = new CollectionRemittanceReportResult();</span>
+<span class="nc" id="L295">        collReportResult.setCollectionBankRemittanceReportList(bankRemittanceList);</span>
+<span class="nc" id="L296">        final ReportRequest reportInput = new ReportRequest(PRINT_BANK_CHALLAN_TEMPLATE, collReportResult, critParams);</span>
+<span class="nc" id="L297">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L298">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L299">        return REPORT;</span>
+    }
+
+    public AccountCodePurpose getAccountCodePurpose(final String purposeName) {
+<span class="nc" id="L303">        final AccountCodePurpose acctCodePurposeObj = (AccountCodePurpose) getPersistenceService()</span>
+<span class="nc" id="L304">                .find(&quot; from AccountCodePurpose&quot; + &quot; where name = ? &quot;, purposeName);</span>
+<span class="nc" id="L305">        return acctCodePurposeObj;</span>
+    }
+
+    @Override
+    protected String getReportTemplateName() {
+<span class="nc" id="L310">        return CollectionConstants.REPORT_TEMPLATE_REMITTANCE_STATEMENT;</span>
+    }
+
+    public Date getFromDate() {
+<span class="nc" id="L314">        return (Date) getReportParam(EGOV_FROM_DATE);</span>
+    }
+
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L318">        critParams.put(EGOV_FROM_DATE, fromDate);</span>
+<span class="nc" id="L319">    }</span>
+
+    public Date getToDate() {
+<span class="nc" id="L322">        return (Date) getReportParam(EGOV_TO_DATE);</span>
+    }
+
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L326">        critParams.put(EGOV_TO_DATE, toDate);</span>
+<span class="nc" id="L327">    }</span>
+
+    public Long getServiceId() {
+<span class="nc" id="L330">        return (Long) getReportParam(EGOV_SERVICE_ID);</span>
+    }
+
+    public void setServiceId(final Long serviceId) {
+<span class="nc" id="L334">        critParams.put(EGOV_SERVICE_ID, serviceId);</span>
+<span class="nc" id="L335">    }</span>
+
+    public Integer getFundId() {
+<span class="nc" id="L338">        return (Integer) getReportParam(EGOV_FUND_ID);</span>
+    }
+
+    public void setFundId(final Integer fundId) {
+<span class="nc" id="L342">        critParams.put(EGOV_FUND_ID, fundId);</span>
+<span class="nc" id="L343">    }</span>
+
+    public Integer getBranchId() {
+<span class="nc" id="L346">        return (Integer) getReportParam(EGOV_BANKBRANCH_ID);</span>
+    }
+
+    public void setBranchId(final Integer branchId) {
+<span class="nc" id="L350">        critParams.put(EGOV_BANKBRANCH_ID, branchId);</span>
+<span class="nc" id="L351">    }</span>
+
+    public Integer getBankaccountId() {
+<span class="nc" id="L354">        return (Integer) getReportParam(EGOV_BANKACCOUNT_ID);</span>
+    }
+
+    public void setBankaccountId(final Integer bankAccountId) {
+<span class="nc" id="L358">        critParams.put(EGOV_BANKACCOUNT_ID, bankAccountId);</span>
+<span class="nc" id="L359">    }</span>
+
+    public Integer getBankCollBankBranchId() {
+<span class="nc" id="L362">        return (Integer) getReportParam(EGOV_BANKCOLL_BANKBRANCH_ID);</span>
+    }
+
+    public void setBankCollBankBranchId(final Integer bankCollBranchId) {
+<span class="nc" id="L366">        critParams.put(EGOV_BANKCOLL_BANKBRANCH_ID, bankCollBranchId);</span>
+<span class="nc" id="L367">    }</span>
+
+    public String getPaymentMode() {
+<span class="nc" id="L370">        final String modeOfPayment = (String) getReportParam(EGOV_PAYMENT_MODE);</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        return null == modeOfPayment ? &quot;-1&quot; : modeOfPayment;</span>
+    }
+
+    /**
+     * @param paymentMode the payment mode to set (cash/cheque)
+     */
+    public void setPaymentMode(final String paymentMode) {
+<span class="nc bnc" id="L378" title="All 4 branches missed.">        if (null != paymentMode &amp;&amp; !&quot;-1&quot;.equals(paymentMode))</span>
+<span class="nc" id="L379">            critParams.put(EGOV_PAYMENT_MODE, paymentMode);</span>
+        else
+<span class="nc" id="L381">            critParams.put(EGOV_PAYMENT_MODE, null);</span>
+
+<span class="nc" id="L383">    }</span>
+
+    public Integer getDeptId() {
+<span class="nc" id="L386">        return (Integer) getReportParam(EGOV_DEPT_ID);</span>
+    }
+
+    public void setDeptId(final Integer deptId) {
+<span class="nc" id="L390">        critParams.put(EGOV_DEPT_ID, deptId);</span>
+<span class="nc" id="L391">    }</span>
+
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L394">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L395">    }</span>
+
+    /**
+     * @return the payment modes
+     */
+    public Map&lt;String, String&gt; getPaymentModes() {
+<span class="nc" id="L401">        return paymentModes;</span>
+    }
+
+    private Map&lt;String, String&gt; createPaymentModeList() {
+<span class="nc" id="L405">        final Map&lt;String, String&gt; paymentModesMap = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L406">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CASH, CollectionConstants.INSTRUMENTTYPE_CASH);</span>
+<span class="nc" id="L407">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD,</span>
+                CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD);
+        // paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_BANK,
+        // CollectionConstants.INSTRUMENTTYPE_BANK);
+<span class="nc" id="L411">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_ONLINE, CollectionConstants.INSTRUMENTTYPE_ONLINE);</span>
+<span class="nc" id="L412">        paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_CARD, CollectionConstants.INSTRUMENTTYPE_CARD);</span>
+        // paymentModesMap.put(CollectionConstants.INSTRUMENTTYPE_ATM,
+        // CollectionConstants.INSTRUMENTTYPE_ATM);
+<span class="nc" id="L415">        return paymentModesMap;</span>
+    }
+
+    @Override
+    public String getReportId() {
+<span class="nc" id="L420">        return reportId;</span>
+    }
+
+    public Double getTotalCashAmount() {
+<span class="nc" id="L424">        return totalCashAmount;</span>
+    }
+
+    public void setTotalCashAmount(final Double totalCashAmount) {
+<span class="nc" id="L428">        this.totalCashAmount = totalCashAmount;</span>
+<span class="nc" id="L429">    }</span>
+
+    public Double getTotalChequeAmount() {
+<span class="nc" id="L432">        return totalChequeAmount;</span>
+    }
+
+    public void setTotalChequeAmount(final Double totalChequeAmount) {
+<span class="nc" id="L436">        this.totalChequeAmount = totalChequeAmount;</span>
+<span class="nc" id="L437">    }</span>
+
+    public List&lt;CollectionBankRemittanceReport&gt; getBankRemittanceList() {
+<span class="nc" id="L440">        return bankRemittanceList;</span>
+    }
+
+    public void setBankRemittanceList(final List&lt;CollectionBankRemittanceReport&gt; bankRemittanceList) {
+<span class="nc" id="L444">        this.bankRemittanceList = bankRemittanceList;</span>
+<span class="nc" id="L445">    }</span>
+
+    public String getBank() {
+<span class="nc" id="L448">        return bank;</span>
+    }
+
+    public void setBank(final String bank) {
+<span class="nc" id="L452">        this.bank = bank;</span>
+<span class="nc" id="L453">    }</span>
+
+    public String getBankAccount() {
+<span class="nc" id="L456">        return bankAccount;</span>
+    }
+
+    public void setBankAccount(final String bankAccount) {
+<span class="nc" id="L460">        this.bankAccount = bankAccount;</span>
+<span class="nc" id="L461">    }</span>
+
+    public Date getRemittanceDate() {
+<span class="nc" id="L464">        return remittanceDate;</span>
+    }
+
+    public void setRemittanceDate(final Date remittanceDate) {
+<span class="nc" id="L468">        this.remittanceDate = remittanceDate;</span>
+<span class="nc" id="L469">    }</span>
+
+    public String getVoucherNumber() {
+<span class="nc" id="L472">        return voucherNumber;</span>
+    }
+
+    public void setVoucherNumber(final String voucherNumber) {
+<span class="nc" id="L476">        this.voucherNumber = voucherNumber;</span>
+<span class="nc" id="L477">    }</span>
+
+    public void setRemittanceService(final RemittanceServiceImpl remittanceService) {
+<span class="nc" id="L480">        this.remittanceService = remittanceService;</span>
+<span class="nc" id="L481">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

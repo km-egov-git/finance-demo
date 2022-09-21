@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RemittanceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.service</a> &gt; <span class="el_source">RemittanceService.java</span></div><h1>RemittanceService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.service;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.persistence.Transient;
+
+import org.egov.collection.bean.ReceiptBean;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.CollectionBankRemittanceReport;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.common.contstants.CommonConstants;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.DocumentUploads;
+import org.egov.commons.repository.CommonDocumentUploadRepository;
+import org.egov.commons.utils.DocumentUtils;
+import org.egov.egf.expensebill.repository.DocumentUploadRepository;
+import org.egov.egf.utils.FinancialUtils;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.utils.DateUtils;
+import org.egov.model.bills.DocumentUpload;
+import org.egov.model.instrument.InstrumentHeader;
+import org.egov.utils.FinancialConstants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
+<span class="nc" id="L78">public abstract class RemittanceService implements Serializable {</span>
+    private static final long serialVersionUID = 1849734164810403255L;
+    @Autowired
+    private DocumentUtils docUtils; // added abhishek 24032021
+    @Autowired
+    private FinancialUtils financialUtils;
+	/*
+	 * @Autowired private static CommonDocumentUploadRepository
+	 * documentUploadRepository;// added abhishek 24032021
+	 */    @Transient
+	@Autowired
+	private DocumentUploadRepository documentUploadRepository;
+	 
+<span class="nc" id="L91">    private List&lt;DocumentUpload&gt; documentDetail = new ArrayList&lt;&gt;();</span>
+    
+    public abstract List&lt;Receipt&gt; createCashBankRemittance(List&lt;ReceiptBean&gt; receiptList, final String accountNumberId,
+            final Date remittanceDate);
+
+	/*
+	 * public abstract List&lt;ReceiptBean&gt;
+	 * findCashRemittanceDetailsForServiceAndFund(final String boundaryIdList, final
+	 * String serviceCodes, final String fundCodes, Date startDate, Date endDate,
+	 * String serviceTypeId);
+	 */
+    public abstract List&lt;ReceiptBean&gt; findCashRemittanceDetailsForServiceAndFund( String classification, Date fromDate, Date toDate, String businessCode,
+    	    String receiptNo,String type);
+    
+   
+
+    public List&lt;CollectionBankRemittanceReport&gt; prepareBankRemittanceReport(final List&lt;ReceiptHeader&gt; receiptHeaders) {
+<span class="nc" id="L108">        final List&lt;CollectionBankRemittanceReport&gt; reportList = new ArrayList&lt;CollectionBankRemittanceReport&gt;(0);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        for (final ReceiptHeader receiptHead : receiptHeaders) {</span>
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="nc" id="L111">            final Iterator itr = receiptHead.getReceiptInstrument().iterator();</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            while (itr.hasNext()) {</span>
+<span class="nc" id="L113">                final CollectionBankRemittanceReport collBankRemitReport = new CollectionBankRemittanceReport();</span>
+<span class="nc" id="L114">                final InstrumentHeader instHead = (InstrumentHeader) itr.next();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                if (!instHead.getInstrumentType().getType().equals(CollectionConstants.INSTRUMENTTYPE_CASH)) {</span>
+<span class="nc" id="L116">                    collBankRemitReport.setChequeNo(instHead.getInstrumentNumber());</span>
+<span class="nc" id="L117">                    collBankRemitReport.setBranchName(instHead.getBankBranchName());</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">                    collBankRemitReport.setBankName(instHead.getBankId() != null ? instHead.getBankId().getName() : &quot;&quot;);</span>
+<span class="nc" id="L119">                    collBankRemitReport.setChequeDate(instHead.getInstrumentDate());</span>
+<span class="nc" id="L120">                    collBankRemitReport.setPaymentMode(instHead.getInstrumentType().getType());</span>
+<span class="nc" id="L121">                    collBankRemitReport.setAmount(instHead.getInstrumentAmount().doubleValue());</span>
+<span class="nc" id="L122">                    collBankRemitReport.setReceiptNumber(receiptHead.getReceiptnumber());</span>
+<span class="nc" id="L123">                    collBankRemitReport.setReceiptDate(receiptHead.getReceiptDate());</span>
+<span class="nc" id="L124">                    collBankRemitReport.setVoucherNumber(receiptHead.getRemittanceVoucherNumber());</span>
+<span class="nc" id="L125">                    reportList.add(collBankRemitReport);</span>
+                } else {
+<span class="nc" id="L127">                    collBankRemitReport.setVoucherNumber(receiptHead.getRemittanceReferenceNumber());</span>
+<span class="nc" id="L128">                    reportList.add(collBankRemitReport);</span>
+                }
+<span class="nc" id="L130">            }</span>
+<span class="nc" id="L131">        }</span>
+<span class="nc" id="L132">        return reportList;</span>
+    }
+
+    public List&lt;CollectionBankRemittanceReport&gt; prepareChequeRemittanceReport(final ReceiptBean receiptHeaders) {
+<span class="nc" id="L136">    	final List&lt;CollectionBankRemittanceReport&gt; reportList = new ArrayList&lt;CollectionBankRemittanceReport&gt;(0);</span>
+       // for (final ReceiptBean receiptHead : receiptHeaders) {
+<span class="nc" id="L138">            final CollectionBankRemittanceReport collBankRemitReport = new CollectionBankRemittanceReport();</span>
+            //collBankRemitReport.setVoucherNumber(receiptHead.getReceiptNumber());
+            //collBankRemitReport.setReceiptNumber(receiptHead.getReceiptNumber());
+            //collBankRemitReport.setReceiptDate(new Date(receiptHead.getReceiptDate()));
+            //collBankRemitReport.setServiceType(receiptHead.getServiceName());
+<span class="nc" id="L143">            collBankRemitReport.setVoucherNumber(receiptHeaders.getRemittanceVouherNumber());</span>
+<span class="nc" id="L144">            collBankRemitReport.setVoucherId(receiptHeaders.getVoucherid());</span>
+<span class="nc" id="L145">            reportList.add(collBankRemitReport);</span>
+        //}
+<span class="nc" id="L147">        return reportList;</span>
+    }
+
+    public List&lt;CollectionBankRemittanceReport&gt; prepareCashRemittanceReport(final List&lt;Receipt&gt; receiptHeaders) {
+<span class="nc" id="L151">        final List&lt;CollectionBankRemittanceReport&gt; reportList = new ArrayList&lt;CollectionBankRemittanceReport&gt;(0);</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        for (final Receipt receiptHead : receiptHeaders) {</span>
+<span class="nc" id="L153">            final CollectionBankRemittanceReport collBankRemitReport = new CollectionBankRemittanceReport();</span>
+<span class="nc" id="L154">            collBankRemitReport.setVoucherNumber(receiptHead.getReceiptNumber());</span>
+<span class="nc" id="L155">            collBankRemitReport.setReceiptNumber(receiptHead.getBill().get(0).getBillDetails().get(0).getReceiptNumber());</span>
+<span class="nc" id="L156">            collBankRemitReport.setReceiptDate(new Date(receiptHead.getBill().get(0).getBillDetails().get(0).getReceiptDate()));</span>
+<span class="nc" id="L157">            collBankRemitReport.setServiceType(receiptHead.getBill().get(0).getBillDetails().get(0).getBusinessService());</span>
+<span class="nc" id="L158">            reportList.add(collBankRemitReport);</span>
+<span class="nc" id="L159">        }</span>
+<span class="nc" id="L160">        return reportList;</span>
+    }
+    
+    public List&lt;CollectionBankRemittanceReport&gt; prepareCashRemittanceReportNew(final ReceiptBean receiptHeaders) {
+<span class="nc" id="L164">        final List&lt;CollectionBankRemittanceReport&gt; reportList = new ArrayList&lt;CollectionBankRemittanceReport&gt;(0);</span>
+        //for (final ReceiptBean receiptHead : receiptHeaders) {
+<span class="nc" id="L166">            final CollectionBankRemittanceReport collBankRemitReport = new CollectionBankRemittanceReport();</span>
+            //collBankRemitReport.setVoucherNumber(receiptHead.getReceiptNumber());
+            //collBankRemitReport.setReceiptNumber(receiptHead.getReceiptNumber());
+            //collBankRemitReport.setReceiptDate(new Date(receiptHead.getReceiptDate()));
+            //collBankRemitReport.setServiceType(receiptHead.getServiceName());
+<span class="nc" id="L171">            collBankRemitReport.setVoucherNumber(receiptHeaders.getRemittanceVouherNumber());</span>
+<span class="nc" id="L172">            collBankRemitReport.setVoucherId(receiptHeaders.getVoucherid());</span>
+<span class="nc" id="L173">            reportList.add(collBankRemitReport);</span>
+       // }
+<span class="nc" id="L175">        return reportList;</span>
+    }
+    
+
+    //added by Abhishek on 24032021
+    @Transactional
+    public void saveDocuments(ReceiptHeader receiptHeader)
+    {
+<span class="nc bnc" id="L183" title="All 2 branches missed."> 	   List&lt;DocumentUpload&gt; files = receiptHeader.getDocumentDetail() == null ? null : receiptHeader.getDocumentDetail();</span>
+        final List&lt;DocumentUpload&gt; documentDetails;
+<span class="nc" id="L185">        documentDetails = financialUtils.getDocumentDetails(files, receiptHeader, CommonConstants.JOURNAL_VOUCHER_OBJECT);</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (!documentDetails.isEmpty()) {</span>
+<span class="nc" id="L187">        	receiptHeader.setDocumentDetail(documentDetails);</span>
+<span class="nc" id="L188">            persistDocuments(documentDetails);</span>
+        }
+<span class="nc" id="L190">    }</span>
+    
+    public void persistDocuments(final List&lt;DocumentUpload&gt; documentDetailsList) {
+<span class="nc bnc" id="L193" title="All 4 branches missed.">        if (documentDetailsList != null &amp;&amp; !documentDetailsList.isEmpty())</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">            for (final DocumentUpload doc : documentDetailsList)</span>
+<span class="nc" id="L195">                documentUploadRepository.save(doc);</span>
+<span class="nc" id="L196">    }</span>
+    
+	/*
+	 * public static void persistDocuments(final List&lt;DocumentUploads&gt;
+	 * documentDetailsList) { if (documentDetailsList != null &amp;&amp;
+	 * !documentDetailsList.isEmpty()) for (final DocumentUploads doc :
+	 * documentDetailsList) documentUploadRepository.save(doc); }
+	 */
+    //end
+    
+	public abstract List&lt;ReceiptBean&gt; findChequeRemittanceDetailsForServiceAndFund(String classification, Date fromDate, Date toDate, String businessCode,
+    	    String receiptNo,String type);
+	 
+	/*
+	 * public abstract List&lt;ReceiptBean&gt;
+	 * findChequeRemittanceDetailsForServiceAndFund(final String boundaryIdList,
+	 * final String serviceCodes, final String fundCodes, Date startDate, Date
+	 * endDate,String serviceTypeId);
+	 */
+
+    public abstract List&lt;Receipt&gt; createChequeBankRemittance(List&lt;ReceiptBean&gt; receiptList, String accountNumberId,
+            final Date remittanceDate, final String[] instrumentIdArray);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

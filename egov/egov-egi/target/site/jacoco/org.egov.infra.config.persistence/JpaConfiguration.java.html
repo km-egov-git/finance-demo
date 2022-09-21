@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JpaConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.persistence</a> &gt; <span class="el_source">JpaConfiguration.java</span></div><h1>JpaConfiguration.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.persistence;
+
+import org.egov.infra.config.persistence.multitenancy.DomainBasedSchemaTenantIdentifierResolver;
+import org.egov.infra.config.persistence.multitenancy.MultiTenantSchemaConnectionProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.support.ClasspathScanningPersistenceUnitPostProcessor;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.jta.JtaTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.SharedCacheMode;
+import javax.persistence.ValidationMode;
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.hibernate.cfg.AvailableSettings.*;
+
+@Configuration
+@EnableTransactionManagement(proxyTargetClass = true)
+@PropertySource(&quot;classpath:config/persistence-config.properties&quot;)
+<span class="nc" id="L84">public class JpaConfiguration {</span>
+
+    @Autowired
+    private Environment env;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Value(&quot;${jpa.showSql}&quot;)
+    private boolean showSQL;
+
+    @Value(&quot;${multitenancy.enabled}&quot;)
+    private boolean multiTenancyEnabled;
+
+    @Value(&quot;${hibernate.cache.use_query_cache}&quot;)
+    private String enableQueryCache;
+
+    @Value(&quot;${hibernate.cache.use_second_level_cache}&quot;)
+    private String enableSecondLevelCache;
+
+    @Value(&quot;${hibernate.generate_statistics}&quot;)
+    private String generateStatistics;
+
+    @Value(&quot;${hibernate.jdbc.batch_size}&quot;)
+    private Integer batchUpdateSize;
+
+    @Bean
+    public PlatformTransactionManager transactionManager() {
+<span class="nc" id="L112">        return new JtaTransactionManager();</span>
+    }
+
+    @Bean
+    @DependsOn(&quot;flyway&quot;)
+    public EntityManagerFactory entityManagerFactory() {
+<span class="nc" id="L118">        LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();</span>
+<span class="nc" id="L119">        entityManagerFactory.setJtaDataSource(dataSource);</span>
+<span class="nc" id="L120">        entityManagerFactory.setPersistenceUnitName(&quot;EgovPersistenceUnit&quot;);</span>
+<span class="nc" id="L121">        entityManagerFactory.setPackagesToScan(&quot;org.egov.**.entity&quot;);</span>
+<span class="nc" id="L122">        entityManagerFactory.setJpaVendorAdapter(jpaVendorAdapter());</span>
+<span class="nc" id="L123">        entityManagerFactory.setJpaPropertyMap(additionalProperties());</span>
+<span class="nc" id="L124">        entityManagerFactory.setValidationMode(ValidationMode.NONE);</span>
+<span class="nc" id="L125">        entityManagerFactory.setSharedCacheMode(SharedCacheMode.DISABLE_SELECTIVE);</span>
+<span class="nc" id="L126">        ClasspathScanningPersistenceUnitPostProcessor hbmScanner = new ClasspathScanningPersistenceUnitPostProcessor(&quot;org.egov&quot;);</span>
+<span class="nc" id="L127">        hbmScanner.setMappingFileNamePattern(&quot;**/*hbm.xml&quot;);</span>
+<span class="nc" id="L128">        entityManagerFactory.setPersistenceUnitPostProcessors(hbmScanner);</span>
+<span class="nc" id="L129">        entityManagerFactory.afterPropertiesSet();</span>
+<span class="nc" id="L130">        return entityManagerFactory.getObject();</span>
+    }
+
+    @Bean
+    public JpaVendorAdapter jpaVendorAdapter() {
+<span class="nc" id="L135">        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();</span>
+<span class="nc" id="L136">        vendorAdapter.setDatabase(env.getProperty(&quot;jpa.database&quot;, Database.class));</span>
+<span class="nc" id="L137">        vendorAdapter.setShowSql(showSQL);</span>
+<span class="nc" id="L138">        vendorAdapter.setGenerateDdl(env.getProperty(&quot;jpa.generateDdl&quot;, Boolean.class));</span>
+<span class="nc" id="L139">        return vendorAdapter;</span>
+    }
+
+    private Map&lt;String, Object&gt; additionalProperties() {
+<span class="nc" id="L143">        HashMap&lt;String, Object&gt; properties = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L144">        properties.put(&quot;hibernate.validator.apply_to_ddl&quot;, false);</span>
+<span class="nc" id="L145">        properties.put(&quot;hibernate.validator.autoregister_listeners&quot;, false);</span>
+<span class="nc" id="L146">        properties.put(&quot;hibernate.temp.use_jdbc_metadata_defaults&quot;, false);</span>
+<span class="nc" id="L147">        properties.put(DIALECT, env.getProperty(DIALECT));</span>
+<span class="nc" id="L148">        properties.put(GENERATE_STATISTICS, generateStatistics);</span>
+<span class="nc" id="L149">        properties.put(CACHE_REGION_FACTORY, env.getProperty(CACHE_REGION_FACTORY));</span>
+<span class="nc" id="L150">        properties.put(USE_SECOND_LEVEL_CACHE, enableSecondLevelCache);</span>
+<span class="nc" id="L151">        properties.put(USE_QUERY_CACHE, enableQueryCache);</span>
+<span class="nc" id="L152">        properties.put(USE_MINIMAL_PUTS, env.getProperty(USE_MINIMAL_PUTS));</span>
+<span class="nc" id="L153">        properties.put(&quot;hibernate.cache.infinispan.cachemanager&quot;, env.getProperty(&quot;hibernate.cache.infinispan.cachemanager&quot;));</span>
+<span class="nc" id="L154">        properties.put(JTA_PLATFORM, env.getProperty(JTA_PLATFORM));</span>
+<span class="nc" id="L155">        properties.put(AUTO_CLOSE_SESSION, env.getProperty(AUTO_CLOSE_SESSION));</span>
+<span class="nc" id="L156">        properties.put(USE_STREAMS_FOR_BINARY, env.getProperty(USE_STREAMS_FOR_BINARY));</span>
+<span class="nc" id="L157">        properties.put(DEFAULT_BATCH_FETCH_SIZE, batchUpdateSize);</span>
+<span class="nc" id="L158">        properties.put(BATCH_VERSIONED_DATA, true);</span>
+<span class="nc" id="L159">        properties.put(ORDER_INSERTS, true);</span>
+<span class="nc" id="L160">        properties.put(ORDER_UPDATES, true);</span>
+<span class="nc" id="L161">        properties.put(AUTOCOMMIT, false);</span>
+<span class="nc" id="L162">        properties.put(RELEASE_CONNECTIONS, &quot;after_statement&quot;);</span>
+<span class="nc" id="L163">        properties.put(&quot;jadira.usertype.autoRegisterUserTypes&quot;, true);</span>
+<span class="nc" id="L164">        properties.put(&quot;jadira.usertype.databaseZone&quot;, &quot;jvm&quot;);</span>
+<span class="nc" id="L165">        properties.put(&quot;org.hibernate.envers.store_data_at_delete&quot;, true);</span>
+
+        // Multitenancy Configuration
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        if (multiTenancyEnabled) {</span>
+<span class="nc" id="L169">            properties.put(MULTI_TENANT, env.getProperty(MULTI_TENANT));</span>
+<span class="nc" id="L170">            properties.put(&quot;hibernate.database.type&quot;, env.getProperty(&quot;jpa.database&quot;));</span>
+<span class="nc" id="L171">            properties.put(MULTI_TENANT_CONNECTION_PROVIDER, multiTenantSchemaConnectionProvider());</span>
+<span class="nc" id="L172">            properties.put(MULTI_TENANT_IDENTIFIER_RESOLVER, domainBasedSchemaTenantIdentifierResolver());</span>
+        }
+<span class="nc" id="L174">        return properties;</span>
+    }
+
+    @Bean
+    public TransactionTemplate transactionTemplate() {
+<span class="nc" id="L179">        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager());</span>
+<span class="nc" id="L180">        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);</span>
+<span class="nc" id="L181">        return transactionTemplate;</span>
+    }
+
+    @Bean
+    @Lazy
+    public MultiTenantSchemaConnectionProvider multiTenantSchemaConnectionProvider() {
+<span class="nc" id="L187">        return new MultiTenantSchemaConnectionProvider();</span>
+    }
+
+    @Bean
+    @Lazy
+    public DomainBasedSchemaTenantIdentifierResolver domainBasedSchemaTenantIdentifierResolver() {
+<span class="nc" id="L193">        return new DomainBasedSchemaTenantIdentifierResolver();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

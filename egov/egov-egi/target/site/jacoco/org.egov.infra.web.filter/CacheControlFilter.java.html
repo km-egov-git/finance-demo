@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CacheControlFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.filter</a> &gt; <span class="el_source">CacheControlFilter.java</span></div><h1>CacheControlFilter.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.filter;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * This Filter is used to improve ui performance by setting Cache-Control header to static resources like js,css,jpg,gif,etc.
+ */
+<span class="nc" id="L63">public class CacheControlFilter implements Filter {</span>
+
+    private static final String EXPIRE_HEADER = &quot;Expires&quot;;
+    private static final String ETAG_HEADER = &quot;ETag&quot;;
+    private static final String CACHE_CONTROL_HEADER = &quot;Cache-Control&quot;;
+    private static final String PRAGMA_HEADER = &quot;Pragma&quot;;
+    public static final long DEFAULT_EXPIRES_SECONDS = 30 * 24 * 60 * 60;
+
+<span class="nc" id="L71">    private long expireInSeconds = 0;</span>
+
+    @Override
+    public void init(final FilterConfig filterConfig) throws ServletException {
+<span class="nc" id="L75">    	System.out.println(&quot;********************** CacheControlFilter: init&quot;);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (filterConfig.getInitParameter(&quot;expireInSeconds&quot;) == null)</span>
+<span class="nc" id="L77">            expireInSeconds = DEFAULT_EXPIRES_SECONDS;</span>
+        else
+<span class="nc" id="L79">            expireInSeconds = Long.valueOf(filterConfig.getInitParameter(&quot;expireInSeconds&quot;));</span>
+<span class="nc" id="L80">    }</span>
+    
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
+       
+<span class="nc" id="L85">    	System.out.println(&quot;********************** CacheControlFilter: doFilter&quot;);</span>
+    	
+<span class="nc" id="L87">    	final HttpServletResponse httpServletResponse = (HttpServletResponse) response;</span>
+<span class="nc" id="L88">        httpServletResponse.setHeader(CACHE_CONTROL_HEADER, &quot;public,max-age=&quot; + expireInSeconds);</span>
+<span class="nc" id="L89">        httpServletResponse.setDateHeader(EXPIRE_HEADER, System.currentTimeMillis() + expireInSeconds * 1000L);</span>
+<span class="nc" id="L90">        httpServletResponse.setHeader(PRAGMA_HEADER, null);</span>
+<span class="nc" id="L91">        httpServletResponse.setHeader(ETAG_HEADER, null);</span>
+<span class="nc" id="L92">        chain.doFilter(request, httpServletResponse);</span>
+<span class="nc" id="L93">    }</span>
+
+    @Override
+    public void destroy() {
+<span class="nc" id="L97">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

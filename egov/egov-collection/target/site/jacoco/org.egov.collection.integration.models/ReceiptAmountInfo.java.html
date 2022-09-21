@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReceiptAmountInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">ReceiptAmountInfo.java</span></div><h1>ReceiptAmountInfo.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.models;
+
+import java.math.BigDecimal;
+
+<span class="nc" id="L52">public class ReceiptAmountInfo {</span>
+<span class="nc" id="L53">    private BigDecimal arrearsAmount = BigDecimal.ZERO;</span>
+    // In case of unauthorized construction, invalid usage etc.
+<span class="nc" id="L55">    private BigDecimal penaltyAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L56">    private BigDecimal currentInstallmentAmount = BigDecimal.ZERO;</span>
+<span class="nc" id="L57">    private BigDecimal advanceAmount = BigDecimal.ZERO;</span>
+    // To capture late payment charges levied in case of payment after due date.
+<span class="nc" id="L59">    private BigDecimal latePaymentCharges = BigDecimal.ZERO;</span>
+<span class="nc" id="L60">    private BigDecimal arrearCess = BigDecimal.ZERO;</span>
+<span class="nc" id="L61">    private BigDecimal currentCess = BigDecimal.ZERO;</span>
+    private String installmentFrom;
+    private String installmentTo;
+<span class="nc" id="L64">    private BigDecimal reductionAmount = BigDecimal.ZERO;</span>
+    private String revenueWard;
+    private Integer conflict;
+
+    public BigDecimal getArrearsAmount() {
+<span class="nc" id="L69">        return arrearsAmount;</span>
+    }
+
+    /**
+     * To set Arrears(If any).
+     *
+     * @param arrearsAmount
+     */
+    public void setArrearsAmount(final BigDecimal arrearsAmount) {
+<span class="nc" id="L78">        this.arrearsAmount = arrearsAmount;</span>
+<span class="nc" id="L79">    }</span>
+
+    public BigDecimal getPenaltyAmount() {
+<span class="nc" id="L82">        return penaltyAmount;</span>
+    }
+
+    /**
+     * To set unauthorized construction penalty, invalid usage etc.
+     *
+     * @param penaltyAmount
+     */
+    public void setPenaltyAmount(final BigDecimal penaltyAmount) {
+<span class="nc" id="L91">        this.penaltyAmount = penaltyAmount;</span>
+<span class="nc" id="L92">    }</span>
+
+    public BigDecimal getCurrentInstallmentAmount() {
+<span class="nc" id="L95">        return currentInstallmentAmount;</span>
+    }
+
+    /**
+     * To set current install amount
+     *
+     * @param currentInstallmentAmount
+     */
+    public void setCurrentInstallmentAmount(final BigDecimal currentInstallmentAmount) {
+<span class="nc" id="L104">        this.currentInstallmentAmount = currentInstallmentAmount;</span>
+<span class="nc" id="L105">    }</span>
+
+    public BigDecimal getAdvanceAmount() {
+<span class="nc" id="L108">        return advanceAmount;</span>
+    }
+
+    public void setAdvanceAmount(final BigDecimal advanceAmount) {
+<span class="nc" id="L112">        this.advanceAmount = advanceAmount;</span>
+<span class="nc" id="L113">    }</span>
+
+    public BigDecimal getLatePaymentCharges() {
+<span class="nc" id="L116">        return latePaymentCharges;</span>
+    }
+
+    /**
+     * To set late payment charges.
+     *
+     * @param latePaymentCharges
+     */
+    public void setLatePaymentCharges(final BigDecimal latePaymentCharges) {
+<span class="nc" id="L125">        this.latePaymentCharges = latePaymentCharges;</span>
+<span class="nc" id="L126">    }</span>
+
+    /**
+     * @return the arrearCess
+     */
+    public BigDecimal getArrearCess() {
+<span class="nc" id="L132">        return arrearCess;</span>
+    }
+
+    /**
+     * @param arrearCess the arrearCess to set
+     */
+    public void setArrearCess(final BigDecimal arrearCess) {
+<span class="nc" id="L139">        this.arrearCess = arrearCess;</span>
+<span class="nc" id="L140">    }</span>
+
+    /**
+     * @return the currentCess
+     */
+    public BigDecimal getCurrentCess() {
+<span class="nc" id="L146">        return currentCess;</span>
+    }
+
+    /**
+     * @param currentCess the currentCess to set
+     */
+    public void setCurrentCess(final BigDecimal currentCess) {
+<span class="nc" id="L153">        this.currentCess = currentCess;</span>
+<span class="nc" id="L154">    }</span>
+
+    /**
+     * @return the installmentFromDate
+     */
+    public String getInstallmentFrom() {
+<span class="nc" id="L160">        return installmentFrom;</span>
+    }
+
+    /**
+     * @param installmentFromDate the installmentFromDate to set
+     */
+    public void setInstallmentFrom(final String installmentFrom) {
+<span class="nc" id="L167">        this.installmentFrom = installmentFrom;</span>
+<span class="nc" id="L168">    }</span>
+
+    /**
+     * @return the installmentToDate
+     */
+    public String getInstallmentTo() {
+<span class="nc" id="L174">        return installmentTo;</span>
+    }
+
+    /**
+     * @param installmentToDate the installmentToDate to set
+     */
+    public void setInstallmentTo(final String installmentTo) {
+<span class="nc" id="L181">        this.installmentTo = installmentTo;</span>
+<span class="nc" id="L182">    }</span>
+
+    /**
+     * @return the reductionAmount
+     */
+    public BigDecimal getReductionAmount() {
+<span class="nc" id="L188">        return reductionAmount;</span>
+    }
+
+    /**
+     * To set the rebate/deduction/discount(if any)
+     * @param reductionAmount the reductionAmount to set
+     */
+    public void setReductionAmount(BigDecimal reductionAmount) {
+<span class="nc" id="L196">        this.reductionAmount = reductionAmount;</span>
+<span class="nc" id="L197">    }</span>
+
+    public String getRevenueWard() {
+<span class="nc" id="L200">        return revenueWard;</span>
+    }
+
+    public void setRevenueWard(String revenueWard) {
+<span class="nc" id="L204">        this.revenueWard = revenueWard;</span>
+<span class="nc" id="L205">    }</span>
+
+    public Integer getConflict() {
+<span class="nc" id="L208">        return conflict;</span>
+    }
+
+    public void setConflict(Integer conflict) {
+<span class="nc" id="L212">        this.conflict = conflict;</span>
+<span class="nc" id="L213">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

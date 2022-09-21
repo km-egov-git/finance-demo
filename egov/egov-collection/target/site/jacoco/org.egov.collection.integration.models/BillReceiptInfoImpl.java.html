@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillReceiptInfoImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">BillReceiptInfoImpl.java</span></div><h1>BillReceiptInfoImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.models;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.ChallanInfo;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.entity.ReceiptMisc;
+import org.egov.collection.integration.services.BillingIntegrationService;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.egf.commons.EgovCommon;
+import org.egov.infra.admin.master.entity.Location;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.instrument.InstrumentHeader;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.opensymphony.xwork2.util.reflection.ReflectionExceptionHandler;
+
+/**
+ * The bill receipt information class. Provides details of a bill receipt.
+ */
+
+public class BillReceiptInfoImpl implements BillReceiptInfo {
+	
+<span class="nc" id="L85">	Map&lt;String, String&gt; serviceCategoryNames = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L86">	Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap = new HashMap&lt;&gt;();</span>
+	@Autowired
+    public MicroserviceUtils microserviceUtils;
+    /**
+     * The private receipt header object. This is used by the getters to provide bill receipt information
+     */
+    private final ReceiptHeader receiptHeader;
+
+    /**
+     * Indicates the last event that has occurred on this receipt
+     */
+    private String event;
+
+<span class="nc" id="L99">    private final Set&lt;ReceiptAccountInfo&gt; accountDetails = new LinkedHashSet&lt;&gt;(0);</span>
+<span class="nc" id="L100">    private final Set&lt;ReceiptInstrumentInfo&gt; instrumentDetails = new HashSet&lt;&gt;(0);</span>
+
+    /**
+     * Set of bounced instruments of this receipt - Will be created only if event is InstrumentBounced
+     */
+<span class="nc" id="L105">    private final Set&lt;ReceiptInstrumentInfo&gt; bouncedInstruments = new LinkedHashSet&lt;&gt;(0);</span>
+<span class="nc" id="L106">    private final Set&lt;ChallanInfo&gt; challanDetails = new HashSet&lt;&gt;(0);</span>
+    private ChallanInfo challan;
+    /**
+     * Billing system invokes this URL to view the receipt
+     */
+    private final String receiptURL;
+
+    private final String additionalInfo;
+
+    /**
+     * Creates bill receipt information object for given receipt header and bounced instrument(if any)
+     *
+     * @param receiptHeader the receipt header object
+     * @param chartOfAccountsHibernateDAO
+     */
+    public BillReceiptInfoImpl(final ReceiptHeader receiptHeader,
+            final ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO, final PersistenceService persistenceService,
+<span class="nc" id="L123">            final InstrumentHeader bouncedInstrumentInfo) {</span>
+<span class="nc" id="L124">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L125">        receiptURL = CollectionConstants.RECEIPT_VIEW_SOURCEPATH + receiptHeader.getId();</span>
+<span class="nc" id="L126">        additionalInfo = null;</span>
+//        final String receiptStatus = receiptHeader.getStatus().getCode();
+<span class="nc" id="L128">        final String receiptStatus = receiptHeader.getCurretnStatus();</span>
+
+        // Populate set of account info objects using receipt details
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L132">            accountDetails</span>
+<span class="nc" id="L133">                    .add(new ReceiptAccountInfoImpl(receiptDetail, chartOfAccountsHibernateDAO, persistenceService));</span>
+
+        // Populate set of instrument headers that belong to this receipt
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (bouncedInstrumentInfo != null)</span>
+<span class="nc" id="L137">            instrumentDetails.add(new ReceiptInstrumentInfoImpl(bouncedInstrumentInfo));</span>
+        else
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            for (final InstrumentHeader instrumentHeader : receiptHeader.getReceiptInstrument())</span>
+<span class="nc" id="L140">                instrumentDetails.add(new ReceiptInstrumentInfoImpl(instrumentHeader));</span>
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (CollectionConstants.RECEIPT_STATUS_CODE_INSTRUMENT_BOUNCED.equals(receiptStatus)) {</span>
+<span class="nc" id="L143">            event = BillingIntegrationService.EVENT_INSTRUMENT_BOUNCED;</span>
+            // find bounced instruments of this receipt
+<span class="nc bnc" id="L145" title="All 2 branches missed.">            if (bouncedInstrumentInfo != null)</span>
+<span class="nc" id="L146">                findBouncedInstrument();</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        } else if (CollectionConstants.RECEIPT_STATUS_CODE_TO_BE_SUBMITTED.equals(receiptStatus)</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">                || CollectionConstants.RECEIPT_STATUS_CODE_APPROVED.equals(receiptStatus)</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                || CollectionConstants.RECEIPT_STATUS_CODE_SUBMITTED.equals(receiptStatus))</span>
+<span class="nc" id="L150">            event = BillingIntegrationService.EVENT_RECEIPT_CREATED;</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        else if (CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED.equals(receiptStatus))</span>
+<span class="nc" id="L152">            event = BillingIntegrationService.EVENT_RECEIPT_CANCELLED;</span>
+
+<span class="nc" id="L154">    }</span>
+
+    /**
+     * Creates bill receipt information object for given receipt header and additional message
+     *
+     * @param receiptHeader the receipt header object
+     * @param chartOfAccountsHibernateDAO
+     */
+    public BillReceiptInfoImpl(final ReceiptHeader receiptHeader, final String additionalInfo,
+            final ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO,
+<span class="nc" id="L164">            final PersistenceService persistenceService) {</span>
+<span class="nc" id="L165">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L166">        receiptURL = CollectionConstants.RECEIPT_VIEW_SOURCEPATH + receiptHeader.getId();</span>
+<span class="nc" id="L167">        this.additionalInfo = additionalInfo;</span>
+
+        // Populate set of account info objects using receipt details
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L171">            accountDetails</span>
+<span class="nc" id="L172">                    .add(new ReceiptAccountInfoImpl(receiptDetail, chartOfAccountsHibernateDAO, persistenceService));</span>
+
+        // Populate set of instrument headers that belong to this receipt
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        for (final InstrumentHeader instrumentHeader : receiptHeader.getReceiptInstrument())</span>
+<span class="nc" id="L176">            instrumentDetails.add(new ReceiptInstrumentInfoImpl(instrumentHeader));</span>
+<span class="nc" id="L177">        final String receiptStatus = receiptHeader.getStatus().getCode();</span>
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (CollectionConstants.RECEIPT_STATUS_CODE_INSTRUMENT_BOUNCED.equals(receiptStatus)) {</span>
+<span class="nc" id="L180">            event = BillingIntegrationService.EVENT_INSTRUMENT_BOUNCED;</span>
+            // find all bounced instruments of this receipt
+<span class="nc" id="L182">            findBouncedInstrument();</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        } else if (CollectionConstants.RECEIPT_STATUS_CODE_TO_BE_SUBMITTED.equals(receiptStatus)</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                || CollectionConstants.RECEIPT_STATUS_CODE_APPROVED.equals(receiptStatus)</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">                || CollectionConstants.RECEIPT_STATUS_CODE_SUBMITTED.equals(receiptStatus))</span>
+<span class="nc" id="L186">            event = BillingIntegrationService.EVENT_RECEIPT_CREATED;</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        else if (CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED.equals(receiptStatus))</span>
+<span class="nc" id="L188">            event = BillingIntegrationService.EVENT_RECEIPT_CANCELLED;</span>
+
+<span class="nc" id="L190">    }</span>
+
+    public BillReceiptInfoImpl(final ReceiptHeader receiptHeader, final EgovCommon egovCommon,
+            final ReceiptHeader receiptHeaderRefObj, final ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO,
+<span class="nc" id="L194">            final PersistenceService persistenceService) {</span>
+<span class="nc" id="L195">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L196">        receiptURL = CollectionConstants.RECEIPT_VIEW_SOURCEPATH + receiptHeader.getId();</span>
+<span class="nc" id="L197">        additionalInfo = null;</span>
+        // Populate set of account info objects using receipt details
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L200">            accountDetails</span>
+<span class="nc" id="L201">                    .add(new ReceiptAccountInfoImpl(receiptDetail, chartOfAccountsHibernateDAO, persistenceService));</span>
+
+        // Populate set of instrument headers that belong to this receipt
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        for (final InstrumentHeader instrumentHeader : receiptHeader.getReceiptInstrument())</span>
+<span class="nc" id="L205">            instrumentDetails.add(new ReceiptInstrumentInfoImpl(instrumentHeader));</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (receiptHeader.getReceipttype() == CollectionConstants.RECEIPT_TYPE_CHALLAN) {</span>
+<span class="nc" id="L207">            challan = new ChallanInfo(receiptHeader, egovCommon, receiptHeaderRefObj, chartOfAccountsHibernateDAO,</span>
+                    persistenceService);
+<span class="nc" id="L209">            challanDetails.add(challan);</span>
+        }
+<span class="nc" id="L211">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L215">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L216">        sb.append(getReceiptNum()).append(&quot; &quot;).append(getAccountDetails());</span>
+<span class="nc" id="L217">        return sb.toString();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getBillReferenceNum()
+     */
+    @Override
+    public String getBillReferenceNum() {
+<span class="nc" id="L226">        return receiptHeader.getReferencenumber();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo#getEvent ()
+     */
+    @Override
+    public String getEvent() {
+<span class="nc" id="L235">        return event;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptNum ()
+     */
+    @Override
+    public String getReceiptNum() {
+<span class="nc" id="L244">        return receiptHeader.getReceiptnumber();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptDate()
+     */
+    @Override
+    public Date getReceiptDate() {
+<span class="nc" id="L253">        return receiptHeader.getReceiptdate();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptLocation()
+     */
+    @Override
+    public Location getReceiptLocation() {
+<span class="nc" id="L262">        return receiptHeader.getLocation();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptStatus()
+     */
+    @Override
+    public EgwStatus getReceiptStatus() {
+<span class="nc" id="L271">        return receiptHeader.getStatus();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getPayeeName ()
+     */
+    @Override
+    public String getPayeeName() {
+<span class="nc" id="L280">        return StringEscapeUtils.unescapeJavaScript(receiptHeader.getPayeeName());</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getPayeeAddress()
+     */
+    @Override
+    public String getPayeeAddress() {
+<span class="nc" id="L289">        return receiptHeader.getPayeeAddress();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getAccountDetails()
+     */
+    @Override
+    public Set&lt;ReceiptAccountInfo&gt; getAccountDetails() {
+<span class="nc" id="L298">        return accountDetails;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getInstrumentDetails()
+     */
+    @Override
+    public Set&lt;ReceiptInstrumentInfo&gt; getInstrumentDetails() {
+<span class="nc" id="L307">        return instrumentDetails;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getBouncedInstruments()
+     */
+    @Override
+    public Set&lt;ReceiptInstrumentInfo&gt; getBouncedInstruments() {
+<span class="nc" id="L316">        return bouncedInstruments;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getServiceName()
+     */
+    @Override
+    public String getServiceName() {
+<span class="nc" id="L325">    	String serviceDetails=receiptHeader.getService();</span>
+<span class="nc" id="L326">    	String details[]=serviceDetails.split(&quot;\\.&quot;);</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">    	if(details.length == 1)</span>
+    	{
+    		
+    	}
+<span class="nc bnc" id="L331" title="All 2 branches missed.">    	else if (details.length == 2)</span>
+    	{
+    		
+    	}
+<span class="nc" id="L335">        return receiptHeader.getService();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo#getPaidBy ()
+     */
+    @Override
+    public String getPaidBy() {
+<span class="nc" id="L344">        return receiptHeader.getPaidBy();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getDescription()
+     */
+    @Override
+    public String getDescription() {
+<span class="nc" id="L353">        return receiptHeader.getReferenceDesc();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getTotalAmount()
+     */
+    @Override
+    public BigDecimal getTotalAmount() {
+<span class="nc" id="L362">        return receiptHeader.getTotalAmount();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getCreatedBy ()
+     */
+    @Override
+    public Long getCreatedBy() {
+<span class="nc" id="L371">        return receiptHeader.getCreatedBy();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getModifiedBy ()
+     */
+    @Override
+    public Long getModifiedBy() {
+<span class="nc" id="L380">        return receiptHeader.getLastModifiedBy();</span>
+    }
+
+    /**
+     * Finds all instruments of this receipt that are in bounced (dishonored) status and adds them to the set of bounced
+     * instruments.
+     */
+    private void findBouncedInstrument() {
+<span class="nc bnc" id="L388" title="All 2 branches missed.">        for (final ReceiptInstrumentInfo instrumentInfo : instrumentDetails)</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">            if (instrumentInfo.isBounced())</span>
+<span class="nc" id="L390">                bouncedInstruments.add(instrumentInfo);</span>
+<span class="nc" id="L391">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptMisc()
+     */
+    public ReceiptMisc getReceiptMisc() {
+<span class="nc" id="L398">        return receiptHeader.getReceiptMisc();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getChallanDetails()
+     */
+    public Set&lt;ChallanInfo&gt; getChallanDetails() {
+<span class="nc" id="L406">        return challanDetails;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getChallan ()
+     */
+    public ChallanInfo getChallan() {
+<span class="nc" id="L414">        return challan;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptURL ()
+     */
+    @Override
+    public String getReceiptURL() {
+<span class="nc" id="L423">        return receiptURL;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getCollectionType()
+     */
+    @Override
+    public String getCollectionType() {
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        return receiptHeader.getCollectiontype() != null ? receiptHeader.getCollectiontype().toString() : &quot;&quot;;</span>
+    }
+
+    public String getConsumerCode() {
+<span class="nc" id="L436">        return receiptHeader.getConsumerCode();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getManualReceiptNumber()
+     */
+    @Override
+    public String getManualReceiptNumber() {
+<span class="nc bnc" id="L445" title="All 2 branches missed.">        return receiptHeader.getManualreceiptnumber() == null ? &quot;&quot; : receiptHeader.getManualreceiptnumber();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getManualReceiptDate()
+     */
+    @Override
+    public Date getManualReceiptDate() {
+<span class="nc bnc" id="L454" title="All 2 branches missed.">        return receiptHeader.getManualreceiptdate() == null ? null : receiptHeader.getManualreceiptdate();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo#getLegacy ()
+     */
+    @Override
+    public Boolean getLegacy() {
+<span class="nc" id="L463">        Boolean legacy = Boolean.FALSE;</span>
+<span class="nc bnc" id="L464" title="All 2 branches missed.">        for (final ReceiptAccountInfo receiptAccountInfo : getAccountDetails())</span>
+<span class="nc bnc" id="L465" title="All 4 branches missed.">            if (receiptAccountInfo.getDescription() != null &amp;&amp; !&quot;&quot;.equals(receiptAccountInfo.getDescription())</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">                    &amp;&amp; (!receiptAccountInfo.getDescription().contains(&quot;#&quot;) || receiptAccountInfo.getDescription()</span>
+<span class="nc bnc" id="L467" title="All 2 branches missed.">                            .contains(CollectionConstants.ESTIMATION_CHARGES_WATERTAX_MODULE))) {</span>
+<span class="nc" id="L468">                legacy = Boolean.TRUE;</span>
+<span class="nc" id="L469">                break;</span>
+            }
+<span class="nc" id="L471">        return legacy;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getAdditionalInfo()
+     */
+    @Override
+    public String getAdditionalInfo() {
+<span class="nc" id="L480">        return additionalInfo;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo#getSource ()
+     */
+    @Override
+    public String getSource() {
+<span class="nc bnc" id="L489" title="All 2 branches missed.">        return receiptHeader.getSource() == null ? &quot;&quot; : receiptHeader.getSource();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.collections.integration.models.IBillReceiptInfo# getReceiptInstrumentType()
+     */
+    @Override
+    public String getReceiptInstrumentType() {
+<span class="nc" id="L498">        String instrumentType = &quot;&quot;;</span>
+<span class="nc bnc" id="L499" title="All 2 branches missed.">        for (final ReceiptInstrumentInfo instrumentInfo : instrumentDetails)</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">            if (instrumentInfo.getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_CHEQUE)</span>
+<span class="nc bnc" id="L501" title="All 2 branches missed.">                    || instrumentInfo.getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_DD)) {</span>
+<span class="nc" id="L502">                instrumentType = CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD;</span>
+<span class="nc" id="L503">                break;</span>
+            } else
+<span class="nc" id="L505">                instrumentType = instrumentInfo.getInstrumentType();</span>
+<span class="nc" id="L506">        return instrumentType;</span>
+    }
+    @Override
+    public  String getCreatedUser(){
+<span class="nc bnc" id="L510" title="All 2 branches missed.">        return receiptHeader.getCreatedUser() == null?&quot;&quot;:receiptHeader.getCreatedUser();</span>
+    }
+
+	public Map&lt;String, String&gt; getServiceCategoryNames() {
+<span class="nc" id="L514">		return serviceCategoryNames;</span>
+	}
+
+	public void setServiceCategoryNames(Map&lt;String, String&gt; serviceCategoryNames) {
+<span class="nc" id="L518">		this.serviceCategoryNames = serviceCategoryNames;</span>
+<span class="nc" id="L519">	}</span>
+
+	public Map&lt;String, Map&lt;String, String&gt;&gt; getServiceTypeMap() {
+<span class="nc" id="L522">		return serviceTypeMap;</span>
+	}
+
+	public void setServiceTypeMap(Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap) {
+<span class="nc" id="L526">		this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L527">	}</span>
+	
+	private void getServiceCategoryList() {
+<span class="nc" id="L530">		List&lt;BusinessService&gt; businessService = microserviceUtils.getBusinessService(null);</span>
+<span class="nc bnc" id="L531" title="All 2 branches missed.">		for (BusinessService bs : businessService) {</span>
+<span class="nc" id="L532">			String[] splitServName = bs.getBusinessService().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L533">			String[] splitSerCode = bs.getCode().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc bnc" id="L534" title="All 4 branches missed.">			if (splitServName.length == 2 &amp;&amp; splitSerCode.length == 2) {</span>
+<span class="nc bnc" id="L535" title="All 2 branches missed.">				if (!serviceCategoryNames.containsKey(splitSerCode[0])) {</span>
+<span class="nc" id="L536">					serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+				}
+<span class="nc bnc" id="L538" title="All 2 branches missed.">				if (serviceTypeMap.containsKey(splitSerCode[0])) {</span>
+<span class="nc" id="L539">					Map&lt;String, String&gt; map = serviceTypeMap.get(splitSerCode[0]);</span>
+<span class="nc" id="L540">					map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L541">					serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L542">				} else {</span>
+<span class="nc" id="L543">					Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L544">					map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L545">					serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L546">				}</span>
+			} else {
+<span class="nc" id="L548">				serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+			}
+<span class="nc" id="L550">		}</span>
+<span class="nc" id="L551">	}</span>
+
+	@Override
+	public String getSubdivison() {
+<span class="nc" id="L555">		System.out.println(&quot;during report :: &quot;+receiptHeader.getSubdivison());</span>
+<span class="nc" id="L556">		return receiptHeader.getSubdivison();</span>
+	}
+
+	@Override
+	public String getGstno() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L562">		return receiptHeader.getGstno();</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

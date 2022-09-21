@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EisUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.utils</a> &gt; <span class="el_source">EisUtils.java</span></div><h1>EisUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.utils;
+
+import ar.com.fdvs.dj.domain.Style;
+import ar.com.fdvs.dj.domain.constants.Border;
+import ar.com.fdvs.dj.domain.constants.Font;
+import ar.com.fdvs.dj.domain.constants.HorizontalAlign;
+import ar.com.fdvs.dj.domain.constants.Transparency;
+import ar.com.fdvs.dj.domain.constants.VerticalAlign;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.awt.*;
+
+@Service
+@Transactional(readOnly = true)
+<span class="nc" id="L63">public class EisUtils {</span>
+
+    public Style getTextStyleLeftBorder() {
+<span class="nc" id="L66">        final Style textStyle = getTextStyle();</span>
+<span class="nc" id="L67">        textStyle.setName(&quot;textStyleLeftBorder&quot;);</span>
+<span class="nc" id="L68">        textStyle.setBorderLeft(Border.THIN());</span>
+<span class="nc" id="L69">        return textStyle;</span>
+    }
+    
+    public Style getTextStyle() {
+<span class="nc" id="L73">        final Style textStyle = new Style(&quot;textStyle&quot;);</span>
+<span class="nc" id="L74">        textStyle.setTextColor(Color.BLACK);</span>
+<span class="nc" id="L75">        textStyle.setHorizontalAlign(HorizontalAlign.LEFT);</span>
+<span class="nc" id="L76">        textStyle.setFont(new Font(10, Font._FONT_VERDANA, false));</span>
+<span class="nc" id="L77">        textStyle.setPaddingLeft(5);</span>
+<span class="nc" id="L78">        textStyle.setTransparency(Transparency.OPAQUE);</span>
+<span class="nc" id="L79">        textStyle.setBorderRight(Border.THIN());</span>
+<span class="nc" id="L80">        textStyle.setBorderBottom(Border.THIN());</span>
+<span class="nc" id="L81">        textStyle.setVerticalAlign(VerticalAlign.MIDDLE);</span>
+<span class="nc" id="L82">        textStyle.setStretchWithOverflow(true);</span>
+<span class="nc" id="L83">        return textStyle;</span>
+    }
+
+    public Style getHeaderStyle() {
+<span class="nc" id="L87">        final Style headerStyle = new Style(&quot;header&quot;);</span>
+<span class="nc" id="L88">        headerStyle.setFont(new Font(10, Font._FONT_ARIAL, true, false, false));</span>
+<span class="nc" id="L89">        headerStyle.setBorder(Border.THIN());</span>
+<span class="nc" id="L90">        headerStyle.setTextColor(Color.BLACK);</span>
+<span class="nc" id="L91">        headerStyle.setHorizontalAlign(HorizontalAlign.CENTER);</span>
+<span class="nc" id="L92">        headerStyle.setVerticalAlign(VerticalAlign.MIDDLE);</span>
+<span class="nc" id="L93">        headerStyle.setTransparency(Transparency.OPAQUE);</span>
+<span class="nc" id="L94">        headerStyle.setStretchWithOverflow(true);</span>
+<span class="nc" id="L95">        headerStyle.setPaddingLeft(5);</span>
+<span class="nc" id="L96">        return headerStyle;</span>
+    }
+
+    public Style getSubTitleStyle() {
+<span class="nc" id="L100">        final Style subTitleStyle = new Style(&quot;subTitleStyle&quot;);</span>
+<span class="nc" id="L101">        subTitleStyle.setFont(new Font(12, Font._FONT_ARIAL, true, false, false));</span>
+<span class="nc" id="L102">        subTitleStyle.setTextColor(Color.BLACK);</span>
+<span class="nc" id="L103">        subTitleStyle.setHorizontalAlign(HorizontalAlign.CENTER);</span>
+<span class="nc" id="L104">        return subTitleStyle;</span>
+    }
+
+    public Style getTitleStyle() {
+<span class="nc" id="L108">        final Style titleStyle = new Style(&quot;titleStyle&quot;);</span>
+<span class="nc" id="L109">        titleStyle.setFont(Font.VERDANA_BIG_BOLD);</span>
+<span class="nc" id="L110">        titleStyle.setTextColor(Color.BLACK);</span>
+<span class="nc" id="L111">        titleStyle.setHorizontalAlign(HorizontalAlign.CENTER);</span>
+<span class="nc" id="L112">        titleStyle.setVerticalAlign(VerticalAlign.MIDDLE);</span>
+<span class="nc" id="L113">        return titleStyle;</span>
+    }
+    
+    public Style getHeaderStyleLeftAlign() {
+<span class="nc" id="L117">        final Style headerStyle = getHeaderStyle();</span>
+<span class="nc" id="L118">        headerStyle.setName(&quot;headerStyleLeftAlign&quot;);</span>
+<span class="nc" id="L119">        headerStyle.setHorizontalAlign(HorizontalAlign.LEFT);</span>
+<span class="nc" id="L120">        return headerStyle;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

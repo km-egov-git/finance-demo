@@ -1,0 +1,2239 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MicroserviceUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.utils</a> &gt; <span class="el_source">MicroserviceUtils.java</span></div><h1>MicroserviceUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.microservice.utils;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.egov.infra.utils.ApplicationConstant.CITIZEN_ROLE_NAME;
+import static org.egov.infra.utils.DateUtils.toDefaultDateTimeFormat;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.egov.infra.admin.master.entity.CustomUserDetails;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.RoleService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.microservice.contract.ActionRequest;
+import org.egov.infra.microservice.contract.ActionResponse;
+import org.egov.infra.microservice.contract.CreateUserRequest;
+import org.egov.infra.microservice.contract.Position;
+import org.egov.infra.microservice.contract.PositionRequest;
+import org.egov.infra.microservice.contract.PositionResponse;
+import org.egov.infra.microservice.contract.RequestInfoCancelWrapper;
+import org.egov.infra.microservice.contract.RequestInfoSearchWrapper;
+import org.egov.infra.microservice.contract.RequestInfoWrapper;
+import org.egov.infra.microservice.contract.Task;
+import org.egov.infra.microservice.contract.TaskResponse;
+import org.egov.infra.microservice.contract.UserDetailResponse;
+import org.egov.infra.microservice.contract.UserRequest;
+import org.egov.infra.microservice.contract.UserSearchRequest;
+import org.egov.infra.microservice.contract.UserSearchResponse;
+import org.egov.infra.microservice.models.Assignment;
+import org.egov.infra.microservice.models.BankAccount;
+import org.egov.infra.microservice.models.BankAccountServiceMapping;
+import org.egov.infra.microservice.models.BankAccountServiceMappingReq;
+import org.egov.infra.microservice.models.BankAccountServiceMappingResponse;
+import org.egov.infra.microservice.models.BusinessCategory;
+import org.egov.infra.microservice.models.BusinessCategoryResponse;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.models.BusinessDetailsResponse;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.microservice.models.BusinessServiceCriteria;
+import org.egov.infra.microservice.models.BusinessServiceMapping;
+import org.egov.infra.microservice.models.Department;
+import org.egov.infra.microservice.models.Designation;
+import org.egov.infra.microservice.models.EmployeeInfo;
+import org.egov.infra.microservice.models.EmployeeInfoResponse;
+import org.egov.infra.microservice.models.FinancialStatus;
+import org.egov.infra.microservice.models.FinancialStatusResponse;
+import org.egov.infra.microservice.models.GlCodeMaster;
+import org.egov.infra.microservice.models.GlCodeMasterResponse;
+import org.egov.infra.microservice.models.Instrument;
+import org.egov.infra.microservice.models.InstrumentAccountCode;
+import org.egov.infra.microservice.models.InstrumentRequest;
+import org.egov.infra.microservice.models.InstrumentResponse;
+import org.egov.infra.microservice.models.InstrumentSearchContract;
+import org.egov.infra.microservice.models.MasterDetail;
+import org.egov.infra.microservice.models.MdmsCriteria;
+import org.egov.infra.microservice.models.MdmsCriteriaReq;
+import org.egov.infra.microservice.models.MdmsResponse;
+import org.egov.infra.microservice.models.ModuleDetail;
+import org.egov.infra.microservice.models.Payment;
+import org.egov.infra.microservice.models.PaymentRequest;
+import org.egov.infra.microservice.models.PaymentResponse;
+import org.egov.infra.microservice.models.PaymentWorkflow;
+import org.egov.infra.microservice.models.PaymentWorkflow.PaymentAction;
+import org.egov.infra.microservice.models.PaymentWorkflowRequest;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.microservice.models.ReceiptRequest;
+import org.egov.infra.microservice.models.ReceiptResponse;
+import org.egov.infra.microservice.models.ReceiptSearchCriteria;
+import org.egov.infra.microservice.models.Remittance;
+import org.egov.infra.microservice.models.RemittanceRequest;
+import org.egov.infra.microservice.models.RemittanceResponse;
+import org.egov.infra.microservice.models.RemittanceResponseDepositWorkDetails;
+import org.egov.infra.microservice.models.RequestInfo;
+import org.egov.infra.microservice.models.ResponseInfo;
+import org.egov.infra.microservice.models.StorageResponse;
+import org.egov.infra.microservice.models.TaxHeadMaster;
+import org.egov.infra.microservice.models.TaxHeadMasterResponse;
+import org.egov.infra.microservice.models.TaxPeriod;
+import org.egov.infra.microservice.models.TaxPeriodResponse;
+import org.egov.infra.microservice.models.TransactionType;
+import org.egov.infra.microservice.models.UserInfo;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.utils.ApplicationConstant;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.web.support.ui.Inbox;
+import org.egov.infstr.utils.EgovMasterDataCaching;
+import org.jfree.util.Log;
+import org.json.simple.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+
+@Service
+public class MicroserviceUtils {
+
+<span class="nc" id="L193">    private static final Logger LOGGER = Logger.getLogger(MicroserviceUtils.class);</span>
+    private static final String CLIENT_ID = &quot;client.id&quot;;
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    protected EgovMasterDataCaching masterDataCache;
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    public RedisTemplate&lt;Object, Object&gt; redisTemplate;
+
+    @Value(&quot;${egov.services.user.create.url:}&quot;)
+    private String userServiceUrl;
+    
+    @Autowired
+    private RoleService roleService;
+
+    @Value(&quot;${egov.services.workflow.url:}&quot;)
+    private String workflowServiceUrl;
+
+    @Value(&quot;${egov.services.user.approvers.url}&quot;)
+    private String approverSrvcUrl;
+
+    @Value(&quot;${egov.services.user.authsrvc.url}&quot;)
+    private String authSrvcUrl;
+
+    @Value(&quot;${egov.services.master.poistion.url}&quot;)
+    private String positionSrvcUrl;
+
+    @Value(&quot;${egov.services.master.actions.url}&quot;)
+    private String actionSrvcUrl;
+
+    @Value(&quot;${egov.services.user.search.url}&quot;)
+    private String userSrcUrl;
+
+    @Value(&quot;${egov.services.user.token.url}&quot;)
+    private String tokenGenUrl;
+
+    @Value(&quot;${egov.services.common.masters.businesscategory.url}&quot;)
+    private String businessCategoryServiceUrl;
+
+    @Value(&quot;${egov.services.collection.service.remittance.depositworkurl}&quot;)
+    private String depositworkurl;
+    
+    @Value(&quot;${egov.services.common.masters.businessdetails.url}&quot;)
+    private String businessDetailsServiceUrl;
+
+    @Value(&quot;${egov.services.billing.service.taxheads.url}&quot;)
+    private String taxheadsSearchUrl;
+
+    @Value(&quot;${egov.services.billing.service.glcode.master.url}&quot;)
+    private String glcodeMasterSearchUrl;
+
+    @Value(&quot;${egov.services.egf.instrument.accountcode.search.url}&quot;)
+    private String accountCodesSearchUrl;
+
+    /*---- SI user details-----*/
+    @Value(&quot;${si.microservice.user}&quot;)
+    private String siUser;
+
+    @Value(&quot;${si.microservice.password}&quot;)
+    private String siPassword;
+
+    @Value(&quot;${si.microservice.usertype}&quot;)
+    private String siUserType;
+
+    @Value(&quot;${si.microservice.scope}&quot;)
+    private String siScope;
+
+    @Value(&quot;${si.microservice.granttype}&quot;)
+    private String siGrantType;
+
+    @Value(&quot;${egov.services.billing.service.taxperiods.search}&quot;)
+    private String taxperiodsSearchUrl;
+
+    @Value(&quot;${egov.services.collection.service.receipts.search}&quot;)
+    private String receiptSearchUrl;
+    
+    @Value(&quot;${egov.services.collection.service.payment.searchnew}&quot;)
+    private String receiptSearchUrlNew;
+
+    @Value(&quot;${egov.services.collection.service.basm.create}&quot;)
+    private String bankAccountServiceMappingCreateUrl;
+
+    @Value(&quot;${egov.services.collection.service.basm.search}&quot;)
+    private String bankAccountServiceMappingSearchUrl;
+
+    @Value(&quot;${egov.services.egf.master.financialstatuses.search}&quot;)
+    private String financialStatusesSearchUrl;
+
+    @Value(&quot;${egov.services.egf.instrument.search.url}&quot;)
+    private String instrumentSearchUrl;
+
+    @Value(&quot;${egov.services.egf.instrument.update.url}&quot;)
+    private String instrumentUpdateUrl;
+
+    @Value(&quot;${egov.services.collection.service.remittance.create}&quot;)
+    private String remittanceCreateUrl;
+
+    @Value(&quot;${egov.services.collection.service.receipt.update}&quot;)
+    private String receiptUpdateUrl;
+
+    @Value(&quot;${egov.services.master.mdms.search.url}&quot;)
+    private String mdmsSearchUrl;
+    
+    @Value(&quot;${egov.services.egov-indexer.url}&quot;)
+    private String egovIndexerUrl;
+    
+    private ObjectMapper mapper;
+<span class="nc" id="L308">    SimpleDateFormat ddMMMyyyyFormat = new SimpleDateFormat(&quot;dd-MMM-yyyy&quot;);</span>
+    
+    @Autowired
+    private PaymentUtils paymentUtils;
+    
+    @Autowired
+    ApplicationConfigManager appConfigManager;
+    
+    
+    
+    
+<span class="nc" id="L319">    public MicroserviceUtils() {</span>
+<span class="nc" id="L320">        mapper = new ObjectMapper();</span>
+<span class="nc" id="L321">        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);</span>
+<span class="nc" id="L322">    }</span>
+
+    public RequestInfo createRequestInfo() {
+<span class="nc" id="L325">        final RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L326">        requestInfo.setApiId(&quot;apiId&quot;);</span>
+<span class="nc" id="L327">        requestInfo.setVer(&quot;ver&quot;);</span>
+<span class="nc" id="L328">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L329">        return requestInfo;</span>
+    }
+
+    public RestTemplate createRestTemplate() {
+
+<span class="nc" id="L334">        return restTemplate;</span>
+    }
+
+    public UserInfo getUserInfo() {
+<span class="nc" id="L338">        final User user = securityUtils.getCurrentUser();</span>
+<span class="nc" id="L339">        final List&lt;org.egov.infra.microservice.models.RoleInfo&gt; roles = new ArrayList&lt;org.egov.infra.microservice.models.RoleInfo&gt;();</span>
+<span class="nc" id="L340">        user.getRoles()</span>
+<span class="nc" id="L341">                .forEach(authority -&gt; roles.add(new org.egov.infra.microservice.models.RoleInfo(authority.getName())));</span>
+
+<span class="nc" id="L343">        return new UserInfo(roles, user.getId(), user.getUuid(), user.getUsername(), user.getName(), user.getEmailId(),</span>
+<span class="nc" id="L344">                user.getMobileNumber(), user.getType().toString(), getTenentId());</span>
+    }
+
+    public String getTenentId() {
+<span class="nc" id="L348">        environment.getProperty(CLIENT_ID);</span>
+<span class="nc" id="L349">        String tenantId = ApplicationThreadLocals.getUserTenantId();</span>
+        // if (isNotBlank(clientId)) {
+        // final StringBuilder stringBuilder = new StringBuilder();
+        // stringBuilder.append(clientId).append('.').append(tenantId);
+        // tenantId = stringBuilder.toString();
+        // }
+<span class="nc" id="L355">        return tenantId;</span>
+    }
+
+    public String getUserToken() {
+<span class="nc" id="L359">        String userToken = ApplicationThreadLocals.getUserToken();</span>
+        // if (adminToken == null)
+        // adminToken = this.generateAdminToken(ApplicationThreadLocals.getUserTenantId());
+<span class="nc" id="L362">        return userToken;</span>
+    }
+
+    public void createUserMicroservice(final User user) {
+<span class="nc bnc" id="L366" title="All 2 branches missed.">        if (isNotBlank(userServiceUrl)) {</span>
+
+<span class="nc bnc" id="L368" title="All 4 branches missed.">            if (user.getRoles().isEmpty() &amp;&amp; user.getType().equals(UserType.CITIZEN))</span>
+<span class="nc" id="L369">                user.addRole(roleService.getRoleByName(CITIZEN_ROLE_NAME));</span>
+
+<span class="nc" id="L371">            final CreateUserRequest createUserRequest = new CreateUserRequest();</span>
+<span class="nc" id="L372">            final UserRequest userRequest = new UserRequest(user, getTenentId());</span>
+<span class="nc" id="L373">            createUserRequest.setUserRequest(userRequest);</span>
+<span class="nc" id="L374">            createUserRequest.setRequestInfo(createRequestInfo());</span>
+
+<span class="nc" id="L376">            final RestTemplate restTemplate = new RestTemplate();</span>
+            try {
+<span class="nc" id="L378">                restTemplate.postForObject(userServiceUrl, createUserRequest, UserDetailResponse.class);</span>
+<span class="nc" id="L379">            } catch (final Exception e) {</span>
+<span class="nc" id="L380">                final String errMsg = &quot;Exception while creating User in microservice &quot;;</span>
+                // throw new ApplicationRuntimeException(errMsg, e);
+<span class="nc" id="L382">                LOGGER.fatal(errMsg, e);</span>
+<span class="nc" id="L383">            }</span>
+        }
+<span class="nc" id="L385">    }</span>
+
+    private Object getFinanceDeptCodes() {
+
+<span class="nc" id="L389">        HashMap mdmsObj = this.getFinanceMdmsObj();</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">        if (mdmsObj != null)</span>
+<span class="nc" id="L391">            return mdmsObj.get(&quot;departments&quot;);</span>
+<span class="nc" id="L392">        return null;</span>
+    }
+
+    private Object getFinanceDesginCodes() {
+<span class="nc" id="L396">    	LOGGER.info(&quot;getFinanceDesginCodes-----&gt; &quot;);</span>
+<span class="nc" id="L397">        HashMap mdmsObj = this.getFinanceMdmsObj();</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">        if (mdmsObj != null)</span>
+<span class="nc" id="L399">            return mdmsObj.get(&quot;designation&quot;);</span>
+<span class="nc" id="L400">        return null;</span>
+    }
+
+    private HashMap getFinanceMdmsObj() {
+<span class="nc" id="L404">    	LOGGER.info(&quot;getFinanceMdmsObj-----&gt; &quot;);</span>
+<span class="nc" id="L405">        HashMap mdmObj = null;</span>
+<span class="nc" id="L406">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L407">        this.prepareModuleDetails(moduleDetailsList , &quot;common-masters&quot;, &quot;mapping&quot;, null, null, String.class);</span>
+<span class="nc" id="L408">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L410">            mdmObj = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.common-masters.mapping[0]&quot;),HashMap.class);</span>
+        }
+<span class="nc" id="L412">        return mdmObj;</span>
+    }
+    
+    private Object getAgendaDeptCodes() {
+
+<span class="nc" id="L417">        HashMap mdmsObj = this.getAgendaMdmsObj();</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">        if (mdmsObj != null)</span>
+<span class="nc" id="L419">            return mdmsObj.get(&quot;departments&quot;);</span>
+<span class="nc" id="L420">        return null;</span>
+    }
+
+    private Object getAgendaDesginCodes() {
+
+<span class="nc" id="L425">        HashMap mdmsObj = this.getAgendaMdmsObj();</span>
+<span class="nc bnc" id="L426" title="All 2 branches missed.">        if (mdmsObj != null)</span>
+<span class="nc" id="L427">            return mdmsObj.get(&quot;designation&quot;);</span>
+<span class="nc" id="L428">        return null;</span>
+    }
+    
+    private HashMap getAgendaMdmsObj() {
+<span class="nc" id="L432">        HashMap mdmObj = null;</span>
+<span class="nc" id="L433">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L434">        this.prepareModuleDetails(moduleDetailsList , &quot;common-masters&quot;, &quot;agenda-mapping&quot;, null, null, String.class);</span>
+<span class="nc" id="L435">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L437">            mdmObj = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.common-masters.agenda-mapping[0]&quot;),HashMap.class);</span>
+        }
+<span class="nc" id="L439">        return mdmObj;</span>
+    }
+    
+    public List&lt;Department&gt; getDepartments() {
+<span class="nc" id="L443">        return getDepartments(null);</span>
+    }
+
+    public List&lt;Department&gt; getDepartments(String codes) {
+<span class="nc" id="L447">        return getDepartments(codes, ApplicationConstant.MODULE_FINANCE);</span>
+    }
+    
+    public List&lt;Department&gt; getDepartments(String codes, String module) {
+<span class="nc" id="L451">        List&lt;Department&gt; deptList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L452">        FilterRequest filterReq = new FilterRequest();</span>
+<span class="nc" id="L453">        LOGGER.info(&quot;inside get departments-----&gt; &quot;);</span>
+<span class="nc" id="L454">        LOGGER.info(&quot;Code-----&gt; &quot;+codes);</span>
+<span class="nc" id="L455">        LOGGER.info(&quot;Module-----&gt; &quot;+module);</span>
+        try {
+<span class="nc bnc" id="L457" title="All 6 branches missed.">            if(!StringUtils.isEmpty(codes) &amp;&amp; codes != null &amp;&amp; StringUtils.contains(codes, &quot;,&quot;)){</span>
+<span class="nc" id="L458">                filterReq.setCodes(Arrays.asList(codes.split(&quot;,&quot;)));</span>
+<span class="nc bnc" id="L459" title="All 4 branches missed.">            }else if(!StringUtils.isEmpty(codes) &amp;&amp; codes != null){</span>
+<span class="nc" id="L460">                filterReq.setCode(codes);</span>
+            }else{
+<span class="nc" id="L462">                String deptCodes = null;</span>
+<span class="nc bnc" id="L463" title="All 2 branches missed.">                if(ApplicationConstant.MODULE_AGENDA.equalsIgnoreCase(module)) {</span>
+<span class="nc" id="L464">                	deptCodes = (String) getAgendaDeptCodes();</span>
+<span class="nc bnc" id="L465" title="All 2 branches missed.">                }else if(ApplicationConstant.MODULE_FINANCE.equalsIgnoreCase(module)) {</span>
+<span class="nc" id="L466">                	deptCodes = (String) getFinanceDeptCodes();</span>
+                }
+<span class="nc" id="L468">                LOGGER.info(&quot;deptCodes-----&gt; &quot;+deptCodes);</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">                if(!StringUtils.isBlank(deptCodes))</span>
+<span class="nc" id="L470">                	filterReq.setCodes(Arrays.asList(deptCodes.split(&quot;,&quot;)));</span>
+            }
+<span class="nc" id="L472">            JSONArray mdmObj = getFinanceMdmsByModuleNameAndMasterDetails(&quot;common-masters&quot;, &quot;Department&quot;, filterReq);</span>
+<span class="nc" id="L473">            mdmObj.stream().forEach(obj -&gt;{</span>
+<span class="nc" id="L474">                LinkedHashMap&lt;String, Object&gt; lhm = (LinkedHashMap)obj;</span>
+<span class="nc" id="L475">                Department dept = new Department();</span>
+<span class="nc" id="L476">                dept.setCode(lhm.get(&quot;code&quot;).toString());</span>
+<span class="nc" id="L477">                dept.setName(lhm.get(&quot;name&quot;).toString());</span>
+<span class="nc" id="L478">                dept.setActive((Boolean)lhm.get(&quot;active&quot;));</span>
+<span class="nc" id="L479">                deptList.add(dept);</span>
+<span class="nc" id="L480">            });</span>
+<span class="nc" id="L481">            LOGGER.info(&quot;deptList-----&gt; &quot;+deptList.toString());</span>
+<span class="nc" id="L482">            return deptList;</span>
+<span class="nc" id="L483">        } catch (Exception e) {</span>
+<span class="nc" id="L484">            e.printStackTrace();</span>
+        }
+<span class="nc" id="L486">        return null;</span>
+    }
+    
+    public String getTaxHeadCode(String code) {
+<span class="nc" id="L490">        FilterRequest filterReq = new FilterRequest();</span>
+<span class="nc" id="L491">        List&lt;String&gt; taxHeads=new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L492">        String taxHead=null;</span>
+        try {
+<span class="nc bnc" id="L494" title="All 4 branches missed.">            if(!StringUtils.isEmpty(code) &amp;&amp; code != null ){</span>
+<span class="nc" id="L495">                filterReq.setGlcode(code);</span>
+            }
+<span class="nc" id="L497">            JSONArray mdmObj = getFinanceMdmsByModuleNameAndMasterDetails(&quot;FinanceModule&quot;, &quot;TaxHeadMasterGlCodeMapping&quot;, filterReq);</span>
+<span class="nc" id="L498">            mdmObj.stream().forEach(obj -&gt;{</span>
+<span class="nc" id="L499">                LinkedHashMap&lt;String, Object&gt; lhm = (LinkedHashMap)obj;</span>
+<span class="nc" id="L500">                taxHeads.add(lhm.get(&quot;taxhead&quot;).toString());</span>
+<span class="nc" id="L501">            });</span>
+<span class="nc" id="L502">        } catch (Exception e) {</span>
+<span class="nc" id="L503">            e.printStackTrace();</span>
+<span class="nc" id="L504">        }</span>
+<span class="nc bnc" id="L505" title="All 4 branches missed.">        if(taxHeads != null &amp;&amp; !taxHeads.isEmpty())</span>
+        {
+<span class="nc" id="L507">        	taxHead=taxHeads.get(0);</span>
+        }
+        
+<span class="nc" id="L510">        return taxHead;</span>
+    }
+
+    public Department getDepartmentByCode(String departmentCode) {
+
+<span class="nc" id="L515">        List&lt;Department&gt; deptlist = this.masterDataCache.get(ApplicationConstant.DEPARTMENT_CACHE_NAME);</span>
+
+<span class="nc" id="L517">        Department sDepartment = null;</span>
+<span class="nc bnc" id="L518" title="All 4 branches missed.">        if (null != deptlist &amp;&amp; !deptlist.isEmpty()) {</span>
+
+<span class="nc" id="L520">            List&lt;org.egov.infra.microservice.models.Department&gt; dept = deptlist.stream()</span>
+<span class="nc" id="L521">                    .filter(department -&gt; departmentCode.equalsIgnoreCase(department.getCode()))</span>
+<span class="nc" id="L522">                    .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L523" title="All 4 branches missed.">            if (null != dept &amp;&amp; dept.size() &gt; 0)</span>
+<span class="nc" id="L524">                sDepartment = dept.get(0);</span>
+        }
+
+<span class="nc bnc" id="L527" title="All 2 branches missed.">        if (null == sDepartment) {</span>
+<span class="nc" id="L528">            sDepartment = this.fetchByDepartmentCode(departmentCode);</span>
+
+        }
+
+<span class="nc" id="L532">        return sDepartment;</span>
+
+    }
+
+    private Department fetchByDepartmentCode(String departmentCode) {
+<span class="nc" id="L537">        List&lt;Department&gt; departments = getDepartments(departmentCode);</span>
+        try {
+<span class="nc bnc" id="L539" title="All 2 branches missed.">            return !departments.isEmpty() ? departments.get(0) : null;</span>
+<span class="nc" id="L540">        } catch (Exception e) {</span>
+<span class="nc" id="L541">            e.printStackTrace();</span>
+        }
+<span class="nc" id="L543">        return null;</span>
+    }
+
+    public List&lt;Designation&gt; getDesignation(String code) {
+<span class="nc" id="L547">        return getDesignation(code, ApplicationConstant.MODULE_FINANCE);</span>
+    }
+    
+    public List&lt;Designation&gt; getDesignation(String code, String module) {
+<span class="nc" id="L551">        List&lt;Designation&gt; desgList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L552">        FilterRequest filterReq =new FilterRequest();</span>
+        try {
+<span class="nc bnc" id="L554" title="All 4 branches missed.">            if(!StringUtils.isEmpty(code) &amp;&amp; code != null){</span>
+<span class="nc" id="L555">                filterReq.setCode(code);</span>
+            }else{
+<span class="nc" id="L557">                String desginCodes =null;</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">                if(ApplicationConstant.MODULE_AGENDA.equalsIgnoreCase(module)) {</span>
+<span class="nc" id="L559">                	desginCodes = (String) getAgendaDesginCodes();</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">                }else if(ApplicationConstant.MODULE_FINANCE.equalsIgnoreCase(module)) {</span>
+<span class="nc" id="L561">                	desginCodes = (String) getFinanceDesginCodes();</span>
+                }
+                
+<span class="nc bnc" id="L564" title="All 2 branches missed.">                if(!StringUtils.isBlank(desginCodes))</span>
+<span class="nc" id="L565">                	filterReq.setCodes(Arrays.asList(desginCodes.split(&quot;,&quot;)));</span>
+            }
+<span class="nc" id="L567">            JSONArray mdmObj =  getFinanceMdmsByModuleNameAndMasterDetails(&quot;common-masters&quot;, &quot;Designation&quot;, filterReq);</span>
+<span class="nc" id="L568">            mdmObj.stream().forEach(obj -&gt;{</span>
+<span class="nc" id="L569">                LinkedHashMap&lt;String, Object&gt; lhm = (LinkedHashMap)obj;</span>
+<span class="nc" id="L570">                Designation designation = new Designation();</span>
+<span class="nc" id="L571">                designation.setCode(lhm.get(&quot;code&quot;).toString());</span>
+<span class="nc" id="L572">                designation.setName(lhm.get(&quot;name&quot;).toString());</span>
+<span class="nc" id="L573">                designation.setDescription(lhm.get(&quot;description&quot;).toString());</span>
+<span class="nc" id="L574">                designation.setActive((Boolean)lhm.get(&quot;active&quot;));</span>
+<span class="nc" id="L575">                desgList.add(designation);</span>
+<span class="nc" id="L576">            });</span>
+<span class="nc" id="L577">            return desgList;</span>
+<span class="nc" id="L578">        } catch (Exception e) {</span>
+<span class="nc" id="L579">            e.printStackTrace();</span>
+        }
+<span class="nc" id="L581">        return null;</span>
+    }
+    
+    public JSONArray getFinanceMdmsByModuleNameAndMasterDetails(String moduleName,String name, FilterRequest filter){
+<span class="nc" id="L585">        String mdmsUrl = appConfigManager.getEgovMdmsSerHost() + this.mdmsSearchUrl;</span>
+<span class="nc" id="L586">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L587">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L588">        MasterDetail masterDetail = new MasterDetail();</span>
+<span class="nc" id="L589">        masterDetail.setName(name);</span>
+        //Apply filter in the request
+<span class="nc bnc" id="L591" title="All 2 branches missed.">        if(null != filter){</span>
+<span class="nc bnc" id="L592" title="All 2 branches missed.">            if(!StringUtils.isEmpty(filter.getCode()))</span>
+<span class="nc" id="L593">                masterDetail.setFilter(&quot;[?(@.code=='&quot; + filter.getCode() + &quot;')]&quot;);</span>
+            
+<span class="nc bnc" id="L595" title="All 2 branches missed.">            if(!StringUtils.isEmpty(filter.getName()))</span>
+<span class="nc" id="L596">                masterDetail.setFilter(&quot;[?(@.name=='&quot; + filter.getName() + &quot;')]&quot;);</span>
+            
+<span class="nc bnc" id="L598" title="All 2 branches missed.">            if(null != filter.getActive())</span>
+<span class="nc" id="L599">                masterDetail.setFilter(&quot;[?(@.active=='&quot; + filter.getActive() + &quot;')]&quot;);</span>
+            
+<span class="nc bnc" id="L601" title="All 2 branches missed.">            if(null != filter.getNames()) {</span>
+<span class="nc" id="L602">                List&lt;String&gt; names = filter.getNames().parallelStream()</span>
+<span class="nc" id="L603">                        .map(obj -&gt; {</span>
+<span class="nc" id="L604">                            return &quot;'&quot;+obj+&quot;'&quot;;</span>
+<span class="nc" id="L605">                        }).collect(Collectors.toList());</span>
+<span class="nc" id="L606">                masterDetail.setFilter(&quot;[?(@.name IN &quot; + names + &quot;)]&quot;);</span>
+            }
+            
+<span class="nc bnc" id="L609" title="All 2 branches missed.">            if(null != filter.getCodes()) {</span>
+<span class="nc" id="L610">                List&lt;String&gt; codes = filter.getCodes().parallelStream()</span>
+<span class="nc" id="L611">                        .map(obj -&gt; {</span>
+<span class="nc" id="L612">                            return &quot;'&quot;+obj+&quot;'&quot;;</span>
+<span class="nc" id="L613">                        }).collect(Collectors.toList());</span>
+<span class="nc" id="L614">                masterDetail.setFilter(&quot;[?(@.code IN &quot; + codes + &quot;)]&quot;);</span>
+            }
+            
+<span class="nc bnc" id="L617" title="All 2 branches missed.">            if(null != filter.getGlcode())</span>
+<span class="nc" id="L618">                masterDetail.setFilter(&quot;[?(@.glcode=='&quot; + filter.getGlcode() + &quot;')]&quot;);</span>
+        }
+<span class="nc" id="L620">        ModuleDetail moduleDetail = new ModuleDetail();</span>
+<span class="nc" id="L621">        moduleDetail.setMasterDetails(Arrays.asList(masterDetail));</span>
+<span class="nc" id="L622">        moduleDetail.setModuleName(moduleName);</span>
+<span class="nc" id="L623">        MdmsCriteria mdmscriteria = new MdmsCriteria();</span>
+<span class="nc" id="L624">        mdmscriteria.setTenantId(getTenentId().split(Pattern.quote(&quot;.&quot;))[0]);</span>
+<span class="nc" id="L625">        mdmscriteria.setModuleDetails(Arrays.asList(moduleDetail));</span>
+<span class="nc" id="L626">        MdmsCriteriaReq mdmsrequest = new MdmsCriteriaReq();</span>
+<span class="nc" id="L627">        mdmsrequest.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L628">        mdmsrequest.setMdmsCriteria(mdmscriteria);</span>
+        try {
+<span class="nc" id="L630">            MdmsResponse response = restTemplate.postForObject(mdmsUrl, mdmsrequest, MdmsResponse.class);</span>
+<span class="nc" id="L631">            Map&lt;String, JSONArray&gt; mdmsmap = response.getMdmsRes().get(moduleName);</span>
+<span class="nc bnc" id="L632" title="All 4 branches missed.">            if (null != mdmsmap &amp;&amp; mdmsmap.size() &gt; 0) {</span>
+<span class="nc" id="L633">                return mdmsmap.get(name);</span>
+            }
+<span class="nc" id="L635">        } catch (Exception e) {</span>
+<span class="nc" id="L636">            e.printStackTrace();</span>
+<span class="nc" id="L637">        }</span>
+<span class="nc" id="L638">        return null;</span>
+    }
+
+    public List&lt;Designation&gt; getDesignations() {
+<span class="nc" id="L642">        return getDesignation(null);</span>
+    }
+
+    public List&lt;EmployeeInfo&gt; getApprovers(String departmentId, String designationId) {
+<span class="nc" id="L646">        final RestTemplate restTemplate = createRestTemplate();</span>
+<span class="nc" id="L647">        final String approver_url = appConfigManager.getEgovHrmsSerHost() + approverSrvcUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;departments=&quot;</span>
+                + departmentId + &quot;&amp;designations=&quot;+designationId;
+<span class="nc" id="L649">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L650">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L651">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L652">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L653">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L654">        EmployeeInfoResponse empResponse = restTemplate.postForObject(approver_url, reqWrapper, EmployeeInfoResponse.class);</span>
+<span class="nc" id="L655">         return empResponse.getEmployees();</span>
+    }
+
+    public EmployeeInfo getEmployeeByPositionId(Long positionId) {
+<span class="nc" id="L659">        final RestTemplate restTemplate = createRestTemplate();</span>
+<span class="nc" id="L660">        final String employee_by_position_url = appConfigManager.getEgovHrmsSerHost() +  approverSrvcUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;positionId=&quot;</span>
+                + positionId;
+<span class="nc" id="L662">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L663">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L664">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L665">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L666">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L667">        LOGGER.info(&quot;call:&quot; + employee_by_position_url);</span>
+<span class="nc" id="L668">        EmployeeInfoResponse empResponse = restTemplate.postForObject(employee_by_position_url, reqWrapper,</span>
+                EmployeeInfoResponse.class);
+<span class="nc bnc" id="L670" title="All 4 branches missed.">        if (empResponse.getEmployees() != null &amp;&amp; !empResponse.getEmployees().isEmpty())</span>
+<span class="nc" id="L671">            return empResponse.getEmployees().get(0);</span>
+        else
+<span class="nc" id="L673">            return null;</span>
+    }
+
+    public CustomUserDetails getUserDetails(String user_token, String admin_token) {
+<span class="nc" id="L677">        final RestTemplate restT = createRestTemplate();</span>
+<span class="nc" id="L678">        final String authurl = appConfigManager.getEgovUserSerHost() + authSrvcUrl + &quot;?access_token=&quot; + user_token;</span>
+<span class="nc" id="L679">        RequestInfo reqInfo = new RequestInfo();</span>
+<span class="nc" id="L680">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L681">        reqInfo.setAuthToken(admin_token);</span>
+<span class="nc" id="L682">        reqWrapper.setRequestInfo(reqInfo);</span>
+<span class="nc" id="L683">        LOGGER.info(&quot;call:&quot; + authurl);</span>
+<span class="nc" id="L684">        CustomUserDetails user = restT.postForObject(authurl, reqWrapper, CustomUserDetails.class);</span>
+<span class="nc bnc" id="L685" title="All 2 branches missed.">        if(user_token.equals(admin_token)){</span>
+<span class="nc" id="L686">            user.setUserName(this.siUser);</span>
+        }
+<span class="nc" id="L688">        return user;</span>
+    }
+
+    public String generateAdminToken(String tenantId) {
+<span class="nc" id="L692">        final RestTemplate restTemplate = createRestTemplate();</span>
+<span class="nc" id="L693">        HttpHeaders header = new HttpHeaders();</span>
+<span class="nc" id="L694">        header.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+<span class="nc" id="L695">        header.add(&quot;Authorization&quot;, &quot;Basic ZWdvdi11c2VyLWNsaWVudDplZ292LXVzZXItc2VjcmV0&quot;);</span>
+<span class="nc" id="L696">        MultiValueMap&lt;String, String&gt; map = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="nc" id="L697">        map.add(&quot;username&quot;, this.siUser);</span>
+<span class="nc" id="L698">        map.add(&quot;scope&quot;, this.siScope);</span>
+<span class="nc" id="L699">        map.add(&quot;password&quot;, this.siPassword);</span>
+<span class="nc" id="L700">        map.add(&quot;grant_type&quot;, this.siGrantType);</span>
+<span class="nc" id="L701">        map.add(&quot;tenantId&quot;, tenantId);</span>
+<span class="nc" id="L702">        map.add(&quot;userType&quot;, this.siUserType);</span>
+<span class="nc" id="L703">        HttpEntity&lt;MultiValueMap&lt;String, String&gt;&gt; request = new HttpEntity&lt;&gt;(map, header);</span>
+        try {
+<span class="nc" id="L705">            StringBuilder url = new StringBuilder(appConfigManager.getEgovUserSerHost()).append(tokenGenUrl);</span>
+<span class="nc" id="L706">            LOGGER.info(&quot;call:&quot; + url);</span>
+<span class="nc" id="L707">            Object response = restTemplate.postForObject(url.toString(), request, Object.class);</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">            if (response != null)</span>
+<span class="nc" id="L709">                return String.valueOf(((HashMap) response).get(&quot;access_token&quot;));</span>
+<span class="nc" id="L710">        } catch (RestClientException e) {</span>
+<span class="nc" id="L711">            LOGGER.info(&quot;Eror while getting admin authtoken&quot;, e);</span>
+<span class="nc" id="L712">            return null;</span>
+<span class="nc" id="L713">        }</span>
+<span class="nc" id="L714">        return null;</span>
+    }
+
+    public UserSearchResponse getUserInfo(String auth_token, String tenantId, String userName) {
+<span class="nc" id="L718">        final RestTemplate restT = createRestTemplate();</span>
+
+<span class="nc" id="L720">        RequestInfo req_header = new RequestInfo();</span>
+<span class="nc" id="L721">        UserSearchRequest request = new UserSearchRequest();</span>
+
+<span class="nc" id="L723">        req_header.setAuthToken(auth_token);</span>
+<span class="nc" id="L724">        request.setRequestInfo(req_header);</span>
+<span class="nc" id="L725">        request.setUserName(userName);</span>
+<span class="nc" id="L726">        request.setTenantId(tenantId);</span>
+<span class="nc" id="L727">        String url = appConfigManager.getEgovUserSerHost() + userSrcUrl;</span>
+<span class="nc" id="L728">        LOGGER.info(&quot;call:&quot; + url);</span>
+<span class="nc" id="L729">        UserSearchResponse response = restT.postForObject(url, request, UserSearchResponse.class);</span>
+<span class="nc" id="L730">        return response;</span>
+    }
+
+    public PositionResponse createPosition(String access_token, List&lt;Position&gt; positions) {
+
+<span class="nc" id="L735">        final RestTemplate restT = createRestTemplate();</span>
+
+<span class="nc" id="L737">        PositionRequest posrequest = new PositionRequest();</span>
+<span class="nc" id="L738">        RequestInfo req_header = new RequestInfo();</span>
+
+<span class="nc" id="L740">        req_header.setAuthToken(access_token);</span>
+<span class="nc" id="L741">        posrequest.setRequestInfo(req_header);</span>
+<span class="nc" id="L742">        posrequest.setPosition(positions);</span>
+<span class="nc" id="L743">        LOGGER.info(&quot;call:&quot; + positionSrvcUrl);</span>
+<span class="nc" id="L744">        StringBuilder uri = new StringBuilder(appConfigManager.getEgovHrMasterSerHost()).append(positionSrvcUrl);</span>
+<span class="nc" id="L745">        PositionResponse response = restT.postForObject(uri.toString(), posrequest, PositionResponse.class);</span>
+
+<span class="nc" id="L747">        return response;</span>
+
+    }
+
+    public ActionResponse getActions(String authtoken, List&lt;String&gt; roles) {
+
+<span class="nc" id="L753">        final RestTemplate restT = createRestTemplate();</span>
+<span class="nc" id="L754">        ActionRequest request = new ActionRequest();</span>
+<span class="nc" id="L755">        RequestInfo req_header = new RequestInfo();</span>
+
+<span class="nc" id="L757">        req_header.setAuthToken(authtoken);</span>
+<span class="nc" id="L758">        request.setRequestInfo(req_header);</span>
+<span class="nc" id="L759">        request.setTenantId(getTenentId());</span>
+<span class="nc" id="L760">        request.setRoleCodes(roles);</span>
+<span class="nc" id="L761">        request.setActionMaster(&quot;actions-test&quot;);</span>
+<span class="nc" id="L762">        request.setEnabled(true);</span>
+<span class="nc" id="L763">        LOGGER.info(&quot;call:&quot; + actionSrvcUrl);</span>
+<span class="nc" id="L764">        StringBuilder uri = new StringBuilder(appConfigManager.getEgovAccessControllSerHost()).append(actionSrvcUrl);</span>
+<span class="nc" id="L765">        ActionResponse response = restT.postForObject(uri.toString(), request, ActionResponse.class);</span>
+
+        // response.getActions()
+<span class="nc" id="L768">        return response;</span>
+    }
+
+    public List&lt;EmployeeInfo&gt; getEmployee(Long empId, Date toDay, String departmentId, String designationId) {
+
+<span class="nc" id="L773">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L775">        DateFormat dateFormat = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+<span class="nc" id="L776">        StringBuilder empUrl = new StringBuilder(appConfigManager.getEgovHrmsSerHost()).append(approverSrvcUrl);</span>
+<span class="nc" id="L777">        empUrl.append(&quot;?tenantId=&quot; + getTenentId());</span>
+<span class="nc" id="L778">        List&lt;EmployeeInfo&gt; resultList=new ArrayList&lt;EmployeeInfo&gt;();</span>
+<span class="nc bnc" id="L779" title="All 4 branches missed.">        if (empId != null &amp;&amp; empId != 0)</span>
+<span class="nc" id="L780">            empUrl.append(&quot;&amp;ids=&quot; + empId);</span>
+<span class="nc bnc" id="L781" title="All 2 branches missed.">        if (toDay != null)</span>
+<span class="nc" id="L782">            empUrl.append(&quot;&amp;asOnDate=&quot; + getEpochDate(toDay));</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">        if (departmentId != null)</span>
+<span class="nc" id="L784">            empUrl.append(&quot;&amp;departments=&quot; + departmentId);</span>
+<span class="nc bnc" id="L785" title="All 2 branches missed.">        if (designationId != null)</span>
+<span class="nc" id="L786">            empUrl.append(&quot;&amp;designations=&quot; + designationId);</span>
+
+<span class="nc" id="L788">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L789">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L791">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L792">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L793">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L795">        EmployeeInfoResponse empResponse = restTemplate.postForObject(empUrl.toString(), reqWrapper, EmployeeInfoResponse.class);</span>
+<span class="nc bnc" id="L796" title="All 6 branches missed.">        	if(empResponse != null &amp;&amp; empResponse.getEmployees() != null &amp;&amp; !empResponse.getEmployees().isEmpty())</span>
+            {
+<span class="nc" id="L798">        		resultList=empResponse.getEmployees();</span>
+            }
+<span class="nc" id="L800">        return resultList;</span>
+    }
+
+    public EmployeeInfo getEmployeeById(Long empId) {
+
+<span class="nc" id="L805">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L807">        StringBuilder empUrl = new StringBuilder(appConfigManager.getEgovHrmsSerHost()).append(approverSrvcUrl);</span>
+<span class="nc" id="L808">        empUrl.append(&quot;?tenantId=&quot; + getTenentId());</span>
+
+<span class="nc bnc" id="L810" title="All 2 branches missed.">        if (empId != 0)</span>
+<span class="nc" id="L811">        	empUrl.append(&quot;&amp;ids=&quot; + empId);</span>
+
+<span class="nc" id="L813">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L814">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L816">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L817">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L818">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L819">        EmployeeInfoResponse empResponse = restTemplate.postForObject(empUrl.toString(), reqWrapper, EmployeeInfoResponse.class);</span>
+<span class="nc bnc" id="L820" title="All 4 branches missed.">        if (empResponse.getEmployees() != null &amp;&amp; !empResponse.getEmployees().isEmpty())</span>
+<span class="nc" id="L821">            return empResponse.getEmployees().get(0);</span>
+        else
+<span class="nc" id="L823">            return null;</span>
+    }
+    
+    public List&lt;EmployeeInfo&gt; getEmployeesByRoles(List&lt;String&gt; roles) {
+
+<span class="nc" id="L828">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L830">        StringBuilder empUrl = new StringBuilder(appConfigManager.getEgovHrmsSerHost()).append(approverSrvcUrl);</span>
+<span class="nc" id="L831">        empUrl.append(&quot;?tenantId=&quot; + getTenentId());</span>
+
+<span class="nc bnc" id="L833" title="All 2 branches missed.">        if (!CollectionUtils.isEmpty(roles)){</span>
+<span class="nc" id="L834">        	empUrl.append(&quot;&amp;roles=&quot; + String.join(&quot;,&quot;, roles));</span>
+        }else {
+<span class="nc" id="L836">        	return null;</span>
+        }
+
+<span class="nc" id="L839">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L840">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L842">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L843">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L844">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L845">        EmployeeInfoResponse empResponse = restTemplate.postForObject(empUrl.toString(), reqWrapper, EmployeeInfoResponse.class);</span>
+<span class="nc bnc" id="L846" title="All 4 branches missed.">        if (empResponse.getEmployees() != null &amp;&amp; !empResponse.getEmployees().isEmpty())</span>
+<span class="nc" id="L847">            return empResponse.getEmployees();</span>
+        else
+<span class="nc" id="L849">            return null;</span>
+    }
+
+    public List&lt;Assignment&gt; getAssignments(String department, String designation) {
+<span class="nc" id="L853">        List&lt;Assignment&gt; assignmentList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L854">        List&lt;EmployeeInfo&gt; employeeInfos = getApprovers(department, designation);</span>
+<span class="nc bnc" id="L855" title="All 2 branches missed.">        for (EmployeeInfo ei : employeeInfos) {</span>
+<span class="nc bnc" id="L856" title="All 2 branches missed.">            for (Assignment a : ei.getAssignments()) {</span>
+<span class="nc" id="L857">                a.setEmployeeName(ei.getUser().getName());</span>
+<span class="nc" id="L858">                a.setEmpId(ei.getUser().getId());</span>
+<span class="nc bnc" id="L859" title="All 6 branches missed.">                if(a.getDepartment().equalsIgnoreCase(department) &amp;&amp; a.getDesignation().equalsIgnoreCase(designation) &amp;&amp; a.getToDate() ==  0.0f)</span>
+                {
+<span class="nc" id="L861">                	assignmentList.add(a);</span>
+                }
+<span class="nc" id="L863">            }</span>
+            //assignmentList.addAll(ei.getAssignments());
+<span class="nc" id="L865">        }</span>
+<span class="nc" id="L866">        return assignmentList;</span>
+    }
+
+    public List&lt;BusinessCategory&gt; getBusinessCategories() {
+
+<span class="nc" id="L871">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L873">        final String bc_url = appConfigManager.getEgovCommonMasterSerHost() + businessCategoryServiceUrl + &quot;?tenantId=&quot; + getTenentId();</span>
+
+<span class="nc" id="L875">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L876">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L878">        requestInfo.setAuthToken(getUserToken());</span>
+        
+<span class="nc" id="L880">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L881">        LOGGER.info(&quot;call:&quot; + bc_url);</span>
+<span class="nc" id="L882">        BusinessCategoryResponse bcResponse = restTemplate.postForObject(bc_url, reqWrapper, BusinessCategoryResponse.class);</span>
+<span class="nc" id="L883">        return bcResponse.getBusinessCategoryInfo();</span>
+    }
+
+    public List&lt;BusinessDetails&gt; getBusinessDetailsByCategoryCode(String categoryCode) {
+
+<span class="nc" id="L888">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L890">        final String bd_url = appConfigManager.getEgovCommonMasterSerHost() + businessDetailsServiceUrl + &quot;?tenantId=&quot; + getTenentId()</span>
+        + &quot;&amp;businessType=MISCELLANEOUS&amp;businessCategoryCode=&quot;
+        + categoryCode;
+
+<span class="nc" id="L894">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L895">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L897">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L898">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L899">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L901">        BusinessDetailsResponse bcResponse = restTemplate.postForObject(bd_url, reqWrapper, BusinessDetailsResponse.class);</span>
+<span class="nc" id="L902">        return bcResponse.getBusinessDetails();</span>
+    }
+
+    public List&lt;BusinessDetails&gt; getBusinessDetailsByType(String type) {
+
+<span class="nc" id="L907">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L909">        final String bd_url = appConfigManager.getEgovCommonMasterSerHost() + businessDetailsServiceUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;businessType=&quot; + type;</span>
+
+<span class="nc" id="L911">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L912">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L914">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L915">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L916">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L918">        BusinessDetailsResponse bcResponse = restTemplate.postForObject(bd_url, reqWrapper, BusinessDetailsResponse.class);</span>
+<span class="nc bnc" id="L919" title="All 4 branches missed.">        if (bcResponse.getBusinessDetails() != null &amp;&amp; !bcResponse.getBusinessDetails().isEmpty())</span>
+<span class="nc" id="L920">            return bcResponse.getBusinessDetails();</span>
+        else
+<span class="nc" id="L922">            return null;</span>
+    }
+
+    public List&lt;BusinessDetails&gt; getBusinessDetailsByCode(String code) {
+
+<span class="nc" id="L927">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L929">        final String bd_url = appConfigManager.getEgovCommonMasterSerHost() + businessDetailsServiceUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;businessDetailsCodes=&quot;</span>
+                + code;
+
+<span class="nc" id="L932">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L933">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L935">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L936">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L937">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L939">        BusinessDetailsResponse bcResponse = restTemplate.postForObject(bd_url, reqWrapper, BusinessDetailsResponse.class);</span>
+<span class="nc bnc" id="L940" title="All 4 branches missed.">        if (bcResponse.getBusinessDetails() != null &amp;&amp; !bcResponse.getBusinessDetails().isEmpty())</span>
+<span class="nc" id="L941">            return bcResponse.getBusinessDetails();</span>
+        else
+<span class="nc" id="L943">            return null;</span>
+    }
+
+    public BusinessDetails getBusinessDetailsById(Long id) {
+
+<span class="nc" id="L948">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L950">        final String bd_url = appConfigManager.getEgovCommonMasterSerHost() + businessDetailsServiceUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;id=&quot; + id;</span>
+
+<span class="nc" id="L952">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L953">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L955">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L956">        requestInfo.setTs(getEpochDate(new Date()));</span>
+<span class="nc" id="L957">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L959">        BusinessDetailsResponse bcResponse = restTemplate.postForObject(bd_url, reqWrapper, BusinessDetailsResponse.class);</span>
+<span class="nc bnc" id="L960" title="All 4 branches missed.">        if (bcResponse.getBusinessDetails() != null &amp;&amp; !bcResponse.getBusinessDetails().isEmpty())</span>
+<span class="nc" id="L961">            return bcResponse.getBusinessDetails().get(0);</span>
+        else
+<span class="nc" id="L963">            return null;</span>
+    }
+
+    public List&lt;TaxHeadMaster&gt; getTaxheadsByService(String service) {
+
+<span class="nc" id="L968">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L970">        final String url = appConfigManager.getEgovBillingSerHost() + taxheadsSearchUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;service=&quot; + service;</span>
+
+<span class="nc" id="L972">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L973">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L974">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L975">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L976">        TaxHeadMasterResponse response = restTemplate.postForObject(url, reqWrapper, TaxHeadMasterResponse.class);</span>
+<span class="nc" id="L977">        return response.getTaxHeadMasters();</span>
+    }
+
+    public List&lt;TaxHeadMaster&gt; getTaxheads() {
+
+<span class="nc" id="L982">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L984">        final String url = appConfigManager.getEgovBillingSerHost() + taxheadsSearchUrl + &quot;?tenantId=&quot; + getTenentId();</span>
+
+<span class="nc" id="L986">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L987">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L989">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L990">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L992">        TaxHeadMasterResponse response = restTemplate.postForObject(url, reqWrapper, TaxHeadMasterResponse.class);</span>
+<span class="nc" id="L993">        return response.getTaxHeadMasters();</span>
+    }
+
+    public List&lt;GlCodeMaster&gt; getGlcodeMastersByService(String service) {
+
+<span class="nc" id="L998">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L1000">        final String url = appConfigManager.getEgovBillingSerHost() + glcodeMasterSearchUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;service=&quot; + service;</span>
+
+<span class="nc" id="L1002">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L1003">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L1005">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1006">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L1008">        GlCodeMasterResponse response = restTemplate.postForObject(url, reqWrapper, GlCodeMasterResponse.class);</span>
+<span class="nc" id="L1009">        return response.getGlCodeMasters();</span>
+    }
+
+    public TaxPeriod getTaxPeriodsByService(String type) {
+
+<span class="nc" id="L1014">        final RestTemplate restTemplate = createRestTemplate();</span>
+
+<span class="nc" id="L1016">        final String url = appConfigManager.getEgovBillingSerHost() + taxperiodsSearchUrl + &quot;?tenantId=&quot; + getTenentId() + &quot;&amp;service=&quot; + type;</span>
+<span class="nc" id="L1017">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L1018">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L1020">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1021">        reqWrapper.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L1023">        TaxPeriodResponse response = restTemplate.postForObject(url, reqWrapper, TaxPeriodResponse.class);</span>
+<span class="nc bnc" id="L1024" title="All 6 branches missed.">        if (response != null &amp;&amp; response.getTaxPeriods() != null &amp;&amp; !response.getTaxPeriods().isEmpty())</span>
+<span class="nc" id="L1025">            return response.getTaxPeriods().get(0);</span>
+        else
+<span class="nc" id="L1027">            return null;</span>
+    }
+    
+    public List&lt;BankAccountServiceMapping&gt; getBankAcntServiceMappings() {
+<span class="nc" id="L1031">        return this.getBankAcntServiceMappings(null, null);</span>
+    }
+
+    public List&lt;BankAccountServiceMapping&gt; getBankAcntServiceMappings(String bankAccount, String businessDetails) {
+<span class="nc" id="L1035">        List&lt;BankAccountServiceMapping&gt; basm = Collections.EMPTY_LIST;</span>
+<span class="nc" id="L1036">        List&lt;ModuleDetail&gt; moduleDetailList = new ArrayList&lt;&gt;();</span>
+        try {
+<span class="nc bnc" id="L1038" title="All 4 branches missed.">            this.prepareModuleDetails(moduleDetailList, &quot;FinanceModule&quot;, &quot;BankAccountServiceMapping&quot;, bankAccount != null ?  &quot;bankAccount&quot; : null, bankAccount != null ?  bankAccount : null, String.class);</span>
+<span class="nc bnc" id="L1039" title="All 4 branches missed.">            this.prepareModuleDetails(moduleDetailList, &quot;FinanceModule&quot;, &quot;BankAccountServiceMapping&quot;, businessDetails != null ?  &quot;businessDetails&quot; : null, businessDetails != null ?  businessDetails : null, String.class);</span>
+<span class="nc" id="L1040">            Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailList, false, null, null), Map.class);</span>
+<span class="nc bnc" id="L1041" title="All 2 branches missed.">            if (postForObject != null) {</span>
+<span class="nc" id="L1042">                basm = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.FinanceModule.BankAccountServiceMapping&quot;),</span>
+<span class="nc" id="L1043">                        new TypeReference&lt;List&lt;BankAccountServiceMapping&gt;&gt;() {</span>
+                        });
+            }
+<span class="nc" id="L1046">        } catch (Exception e) {</span>
+<span class="nc" id="L1047">            LOGGER.error(&quot;ERROR occurred while fetching header name of tenant in getHeaderNameForTenant : &quot;, e);</span>
+<span class="nc" id="L1048">        }</span>
+<span class="nc" id="L1049">        return basm;</span>
+    }
+
+    public List&lt;BankAccountServiceMapping&gt; getBankAcntServiceMappingsByBankAcc(String bankAccount, String businessDetails) {
+<span class="nc" id="L1053">        return this.getBankAcntServiceMappings(bankAccount, businessDetails);</span>
+    }
+
+    public List&lt;BankAccountServiceMapping&gt; createBankAcntServiceMappings(BankAccountServiceMapping basm) {
+
+<span class="nc" id="L1058">        final RestTemplate restTemplate = createRestTemplate();</span>
+<span class="nc" id="L1059">        final String url = appConfigManager.getEgovCollSerHost() + bankAccountServiceMappingCreateUrl;</span>
+
+<span class="nc" id="L1061">        RequestInfo requestInfo = new RequestInfo();</span>
+
+<span class="nc" id="L1063">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1064">        requestInfo.setUserInfo(getUserInfo());</span>
+
+<span class="nc" id="L1066">        BankAccountServiceMappingReq request = new BankAccountServiceMappingReq();</span>
+<span class="nc" id="L1067">        request.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1068">        request.setBankAccountServiceMapping(Collections.singletonList(basm));</span>
+
+<span class="nc" id="L1070">        BankAccountServiceMappingResponse response = restTemplate.postForObject(url, request,</span>
+                BankAccountServiceMappingResponse.class);
+<span class="nc bnc" id="L1072" title="All 4 branches missed.">        if (response != null &amp;&amp; response.getBankAccountServiceMapping() != null)</span>
+<span class="nc" id="L1073">            return response.getBankAccountServiceMapping();</span>
+        else
+<span class="nc" id="L1075">            return null;</span>
+    }
+
+    public FinancialStatus getInstrumentStatusByCode(String code) {
+
+<span class="nc" id="L1080">        final String url = appConfigManager.getEgovEgfMasterSerHost() + financialStatusesSearchUrl + &quot;?tenantId=&quot;</span>
+<span class="nc" id="L1081">                + getTenentId() + &quot;&amp;moduleType=Instrument&amp;code=&quot; + code;</span>
+
+<span class="nc" id="L1083">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L1084">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+
+<span class="nc" id="L1086">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1087">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1088">        LOGGER.info(&quot;call:&quot; + url);</span>
+<span class="nc" id="L1089">        FinancialStatusResponse response = restTemplate.postForObject(url, reqWrapper, FinancialStatusResponse.class);</span>
+<span class="nc bnc" id="L1090" title="All 4 branches missed.">        if (response.getFinancialStatuses() != null &amp;&amp; !response.getFinancialStatuses().isEmpty())</span>
+<span class="nc" id="L1091">            return response.getFinancialStatuses().get(0);</span>
+        else
+<span class="nc" id="L1093">            return null;</span>
+    }
+
+    public List&lt;Instrument&gt; getInstruments(String instrumentType, TransactionType transactionType, String instrumentStatus) {
+<span class="nc" id="L1097">        InstrumentSearchContract contract = new InstrumentSearchContract();</span>
+<span class="nc" id="L1098">        contract.setInstrumentTypes(instrumentType);</span>
+<span class="nc" id="L1099">        contract.setTransactionType(transactionType);</span>
+<span class="nc" id="L1100">        contract.setFinancialStatuses(instrumentStatus);</span>
+<span class="nc" id="L1101">        return this.getInstrumentsBySearchCriteria(contract);</span>
+    }
+    
+    public List&lt;Instrument&gt; getInstrumentsBySearchCriteria(InstrumentSearchContract insSearchContra) {
+<span class="nc" id="L1105">        StringBuilder url = new StringBuilder().append(appConfigManager.getEgovEgfInstSerHost()).append(instrumentSearchUrl)</span>
+<span class="nc" id="L1106">                .append(&quot;?tenantId=&quot;).append(getTenentId());</span>
+<span class="nc bnc" id="L1107" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getIds())){</span>
+<span class="nc" id="L1108">           url.append(&quot;&amp;ids=&quot;).append(insSearchContra.getIds());</span>
+        }
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getBankAccountNumber())){</span>
+<span class="nc" id="L1111">            url.append(&quot;&amp;bankAccount.accountNumber=&quot;).append(insSearchContra.getBankAccountNumber());</span>
+        }
+<span class="nc bnc" id="L1113" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getInstrumentTypes())){</span>
+<span class="nc" id="L1114">            url.append(&quot;&amp;instrumentTypes=&quot;).append(insSearchContra.getInstrumentTypes());</span>
+        }
+<span class="nc bnc" id="L1116" title="All 2 branches missed.">        if(insSearchContra.getTransactionType() != null){</span>
+<span class="nc" id="L1117">            url.append(&quot;&amp;transactionType=&quot;).append(insSearchContra.getTransactionType().name());</span>
+        }
+<span class="nc bnc" id="L1119" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getFinancialStatuses())){</span>
+<span class="nc" id="L1120">            url.append(&quot;&amp;financialStatuses=&quot;).append(insSearchContra.getFinancialStatuses());</span>
+        }
+<span class="nc bnc" id="L1122" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getTransactionNumber())){</span>
+<span class="nc" id="L1123">            url.append(&quot;&amp;transactionNumber=&quot;).append(insSearchContra.getTransactionNumber());</span>
+        }
+<span class="nc bnc" id="L1125" title="All 2 branches missed.">        if(insSearchContra.getPageSize() != null){</span>
+<span class="nc" id="L1126">            url.append(&quot;&amp;pageSize=&quot;).append(insSearchContra.getPageSize());</span>
+        }
+<span class="nc bnc" id="L1128" title="All 2 branches missed.">        if(StringUtils.isNotBlank(insSearchContra.getReceiptIds())){</span>
+<span class="nc" id="L1129">            url.append(&quot;&amp;receiptIds=&quot;).append(insSearchContra.getReceiptIds());</span>
+        }
+<span class="nc bnc" id="L1131" title="All 2 branches missed.">        if(insSearchContra.getTransactionFromDate() != null){</span>
+<span class="nc" id="L1132">            Date fromDate = insSearchContra.getTransactionFromDate();</span>
+<span class="nc" id="L1133">            url.append(&quot;&amp;transactionFromDate=&quot;).append(ddMMMyyyyFormat.format(fromDate));</span>
+        }
+<span class="nc bnc" id="L1135" title="All 2 branches missed.">        if(insSearchContra.getTransactionToDate() != null){</span>
+<span class="nc" id="L1136">            Date toDate = insSearchContra.getTransactionToDate();</span>
+<span class="nc" id="L1137">            url.append(&quot;&amp;transactionToDate=&quot;).append(ddMMMyyyyFormat.format(toDate));</span>
+        }
+<span class="nc" id="L1139">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L1140">        RequestInfoWrapper reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L1141">        requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1142">        reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1143">        LOGGER.info(&quot;call:&quot; + url);</span>
+<span class="nc" id="L1144">        InstrumentResponse response = restTemplate.postForObject(url.toString(), reqWrapper, InstrumentResponse.class);</span>
+<span class="nc" id="L1145">        return response.getInstruments();</span>
+    }
+
+    public List&lt;Instrument&gt; getInstruments(String ids) {
+<span class="nc" id="L1149">        InstrumentSearchContract contract = new InstrumentSearchContract();</span>
+<span class="nc" id="L1150">        contract.setIds(ids);</span>
+<span class="nc" id="L1151">        return this.getInstrumentsBySearchCriteria(contract);</span>
+    }
+
+    public List&lt;Instrument&gt; getInstrumentsByReceiptIds(String instrumentType, String instrumentStatus, String receiptIds) {
+<span class="nc" id="L1155">        InstrumentSearchContract contract = new InstrumentSearchContract();</span>
+<span class="nc" id="L1156">        contract.setInstrumentTypes(instrumentType);</span>
+<span class="nc" id="L1157">        contract.setReceiptIds(receiptIds);</span>
+<span class="nc" id="L1158">        contract.setFinancialStatuses(instrumentStatus);</span>
+<span class="nc" id="L1159">        return this.getInstrumentsBySearchCriteria(contract);</span>
+    }
+
+    public List&lt;Receipt&gt; getReceipts(String ids, String status, String serviceCodes, Date fromDate, Date toDate) {
+<span class="nc" id="L1163">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1164">                .status(Arrays.stream(status.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1165">                .fromDate(fromDate)</span>
+<span class="nc" id="L1166">                .toDate(toDate)</span>
+<span class="nc" id="L1167">                .receiptNumbers(Arrays.stream(ids.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1168">                .businessCodes(Arrays.stream(serviceCodes.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1169">                .build();</span>
+<span class="nc" id="L1170">        return this.getReceipt(criteria);</span>
+    }
+
+	public List&lt;Receipt&gt; getReceipts(String ids, String status, String serviceCodes, Date fromDate, Date toDate,String serviceTypeId) {
+<span class="nc" id="L1174">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1175">                .status(Arrays.stream(status.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1176">                .fromDate(fromDate)</span>
+<span class="nc bnc" id="L1177" title="All 2 branches missed.">                .toDate(toDate)</span>
+<span class="nc" id="L1178">                .businessCodes(serviceTypeId != null ? Arrays.stream(serviceTypeId.split(&quot;,&quot;)).collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1179">                .receiptNumbers(Arrays.stream(ids.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1180">                .businessCodes(Arrays.stream(serviceCodes.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1181">                .build();</span>
+<span class="nc" id="L1182">        return this.getReceipt(criteria);</span>
+    }
+    
+	public List&lt;Receipt&gt; getReceiptNew(ReceiptSearchCriteria rSearchcriteria) {
+        // Checking for the collection version either older version or new version are getting used
+<span class="nc" id="L1187">        List&lt;Receipt&gt; receipts = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1188">        LOGGER.info(&quot;inside getReceiptNew Calling&quot;);</span>
+<span class="nc bnc" id="L1189" title="All 9 branches missed.">        switch (ApplicationThreadLocals.getCollectionVersion().toUpperCase()) {</span>
+        case &quot;V2&quot;:
+        case &quot;VERSION2&quot;:
+<span class="nc" id="L1192">        	System.out.println(&quot;DDDDD&quot;);</span>
+<span class="nc" id="L1193">            PaymentSearchCriteria paySearchCriteria=new PaymentSearchCriteria();</span>
+<span class="nc" id="L1194">            System.out.println(&quot;EEEE&quot;);</span>
+<span class="nc" id="L1195">            rSearchcriteria.toPayemntSerachCriteriaContract(paySearchCriteria);</span>
+<span class="nc" id="L1196">            System.out.println(&quot;FFFF&quot;);</span>
+<span class="nc" id="L1197">            List&lt;Payment&gt; payments = this.getPaymentsNew(paySearchCriteria);</span>
+<span class="nc" id="L1198">            System.out.println(&quot;GGGG&quot;);</span>
+<span class="nc" id="L1199">            paymentUtils.getReceiptsFromPayments(payments, receipts);</span>
+<span class="nc" id="L1200">            System.out.println(&quot;HHHH&quot;);</span>
+<span class="nc" id="L1201">            break;</span>
+
+        default:
+<span class="nc" id="L1204">            RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L1205">            RequestInfoSearchWrapper reqWrapper = new RequestInfoSearchWrapper();</span>
+<span class="nc" id="L1206">            requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1207">            requestInfo.setUserInfo(getUserInfo());</span>
+<span class="nc" id="L1208">            reqWrapper.setIds(rSearchcriteria.getIds());</span>
+<span class="nc" id="L1209">            reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1210">            StringBuilder url = new StringBuilder();</span>
+<span class="nc" id="L1211">            url.append(appConfigManager.getEgovCollSerHost()).append(receiptSearchUrlNew).append(&quot;?tenantId=&quot;).append(getTenentId());</span>
+            try {
+<span class="nc" id="L1213">            prepareReceiptSearchUrl(rSearchcriteria, url);</span>
+<span class="nc" id="L1214">            LOGGER.info(&quot;call:&quot; + url.toString());</span>
+<span class="nc" id="L1215">            ReceiptResponse response = restTemplate.postForObject(url.toString(), reqWrapper, ReceiptResponse.class);</span>
+<span class="nc" id="L1216">            receipts = response.getReceipts();</span>
+            }
+<span class="nc" id="L1218">            catch(Exception e) {</span>
+<span class="nc" id="L1219">            	e.printStackTrace();</span>
+<span class="nc" id="L1220">            }</span>
+        }
+<span class="nc" id="L1222">        return receipts;</span>
+    }
+	
+    public List&lt;Receipt&gt; getReceipt(ReceiptSearchCriteria rSearchcriteria) {
+        // Checking for the collection version either older version or new version are getting used
+<span class="nc" id="L1227">        List&lt;Receipt&gt; receipts = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1228" title="All 9 branches missed.">        switch (ApplicationThreadLocals.getCollectionVersion().toUpperCase()) {</span>
+        case &quot;V2&quot;:
+        case &quot;VERSION2&quot;:
+<span class="nc" id="L1231">        	System.out.println(&quot;DDDDD&quot;);</span>
+<span class="nc" id="L1232">            PaymentSearchCriteria paySearchCriteria=new PaymentSearchCriteria();</span>
+<span class="nc" id="L1233">            System.out.println(&quot;EEEE&quot;);</span>
+<span class="nc" id="L1234">            rSearchcriteria.toPayemntSerachCriteriaContract(paySearchCriteria);</span>
+<span class="nc" id="L1235">            System.out.println(&quot;FFFF&quot;);</span>
+<span class="nc" id="L1236">            List&lt;Payment&gt; payments = this.getPayments(paySearchCriteria);</span>
+<span class="nc" id="L1237">            System.out.println(&quot;GGGG&quot;);</span>
+<span class="nc" id="L1238">            paymentUtils.getReceiptsFromPayments(payments, receipts);</span>
+<span class="nc" id="L1239">            System.out.println(&quot;HHHH&quot;);</span>
+<span class="nc" id="L1240">            break;</span>
+
+        default:
+<span class="nc" id="L1243">            RequestInfo requestInfo = new RequestInfo();</span>
+            //:Bhushan
+            //change by Bhushan -added RequestInfoSearchWrapper
+<span class="nc" id="L1246">            RequestInfoSearchWrapper reqWrapper = new RequestInfoSearchWrapper();</span>
+<span class="nc" id="L1247">            requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1248">            requestInfo.setUserInfo(getUserInfo());</span>
+            //:Bhushan
+            //change by Bhushan -add setids
+<span class="nc" id="L1251">            reqWrapper.setIds(rSearchcriteria.getIds());</span>
+<span class="nc" id="L1252">            reqWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1253">            StringBuilder url = new StringBuilder();</span>
+<span class="nc" id="L1254">            url.append(appConfigManager.getEgovCollSerHost()).append(receiptSearchUrl).append(&quot;?tenantId=&quot;).append(getTenentId());</span>
+            try {
+<span class="nc" id="L1256">            prepareReceiptSearchUrl(rSearchcriteria, url);</span>
+<span class="nc" id="L1257">            LOGGER.info(&quot;call:&quot; + url.toString());</span>
+<span class="nc" id="L1258">            ReceiptResponse response = restTemplate.postForObject(url.toString(), reqWrapper, ReceiptResponse.class);</span>
+<span class="nc" id="L1259">            receipts = response.getReceipts();</span>
+            }
+<span class="nc" id="L1261">            catch(Exception e) {</span>
+<span class="nc" id="L1262">            	e.printStackTrace();</span>
+<span class="nc" id="L1263">            }</span>
+        }
+<span class="nc" id="L1265">        return receipts;</span>
+    }
+
+    private void prepareReceiptSearchUrl(ReceiptSearchCriteria criteria, StringBuilder url) {
+<span class="nc" id="L1269">    	LOGGER.info(&quot;=================inside prepareReceiptSearchUrl=====================&quot;);</span>
+<span class="nc" id="L1270">    	LOGGER.info(&quot;receipt-&gt; &quot;+criteria.getReceiptNumbers());</span>
+<span class="nc" id="L1271">    	LOGGER.info(&quot;depatment-&gt; &quot;+criteria.getDepartment());</span>
+<span class="nc" id="L1272">    	LOGGER.info(&quot;fund-&gt; &quot;+criteria.getFund());</span>
+<span class="nc" id="L1273">    	LOGGER.info(&quot;businessCode-&gt; &quot;+criteria.getBusinessCodes());</span>
+<span class="nc" id="L1274">    	LOGGER.info(&quot;fromDate-&gt; &quot;+criteria.getFromDate());</span>
+<span class="nc" id="L1275">    	LOGGER.info(&quot;todate-&gt; &quot;+criteria.getToDate());</span>
+<span class="nc" id="L1276">    	LOGGER.info(&quot;classification-&gt; &quot;+criteria.getClassification());</span>
+    	
+<span class="nc bnc" id="L1278" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(criteria.getReceiptNumbers())){</span>
+<span class="nc" id="L1279">            url.append(&quot;&amp;receiptNumbers=&quot;).append(StringUtils.join(criteria.getReceiptNumbers(), &quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L1281" title="All 2 branches missed.">        if(StringUtils.isNotBlank(criteria.getDepartment())){</span>
+<span class="nc" id="L1282">            url.append(&quot;&amp;department=&quot;).append(criteria.getDepartment());</span>
+        }
+<span class="nc bnc" id="L1284" title="All 2 branches missed.">        if(StringUtils.isNotBlank(criteria.getFund())){</span>
+<span class="nc" id="L1285">            url.append(&quot;&amp;fund=&quot;).append(criteria.getFund());</span>
+        }
+<span class="nc bnc" id="L1287" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(criteria.getBusinessCodes())){</span>
+<span class="nc" id="L1288">            url.append(&quot;&amp;businessCodes=&quot;).append(StringUtils.join(criteria.getBusinessCodes(),&quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L1290" title="All 2 branches missed.">        if(criteria.getFromDate() != null){</span>
+<span class="nc" id="L1291">            url.append(&quot;&amp;fromDate=&quot;).append(criteria.getFromDate().getTime());</span>
+        }
+<span class="nc bnc" id="L1293" title="All 2 branches missed.">        if(criteria.getToDate() != null){</span>
+<span class="nc" id="L1294">            url.append(&quot;&amp;toDate=&quot;).append(criteria.getToDate().getTime());</span>
+        }
+<span class="nc bnc" id="L1296" title="All 2 branches missed.">        if(StringUtils.isNotBlank(criteria.getClassification())){</span>
+<span class="nc" id="L1297">            url.append(&quot;&amp;classification=&quot;).append(criteria.getClassification());</span>
+        }
+<span class="nc" id="L1299">    }</span>
+
+    public List&lt;Receipt&gt; getReceipts(String receiptNumbers) {
+<span class="nc" id="L1302">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1303">                .receiptNumbers(Arrays.stream(receiptNumbers.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1304">                .build();</span>
+<span class="nc" id="L1305">        return this.getReceipt(criteria);</span>
+    }
+
+    public List&lt;Receipt&gt; getReceipts(String status, String serviceCode, String fund, String department, String receiptDate) {
+<span class="nc" id="L1309">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1310">                .status(Arrays.stream(status.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1311">                .businessCodes(Arrays.stream(serviceCode.split(&quot;,&quot;)).collect(Collectors.toSet()))</span>
+<span class="nc" id="L1312">                .fund(fund)</span>
+<span class="nc" id="L1313">                .department(department)</span>
+<span class="nc" id="L1314">                .fromDate(DateUtils.toDateUsingDefaultPattern(receiptDate))</span>
+<span class="nc" id="L1315">                .toDate(DateUtils.toDateUsingDefaultPattern(receiptDate))</span>
+<span class="nc" id="L1316">                .build();</span>
+<span class="nc" id="L1317">        return this.getReceipt(criteria);</span>
+    }
+
+    public List&lt;Receipt&gt; searchReciepts(String classification, Date fromDate, Date toDate, String businessCode,
+            String receiptNo) {
+
+<span class="nc" id="L1323">        return this.searchReciepts(classification, fromDate, toDate, businessCode, Arrays.asList(receiptNo));</span>
+
+    }
+    
+    public List&lt;Receipt&gt; searchReciepts(String classification, Date fromDate, Date toDate, String businessCode,String department,
+            String receiptNo) {
+<span class="nc" id="L1329">    	System.out.println(&quot;AAAAA&quot;);</span>
+<span class="nc" id="L1330">        return this.searchReciepts(classification, fromDate, toDate, businessCode,department, Arrays.asList(receiptNo));</span>
+
+    }
+    public List&lt;Receipt&gt; searchReciepts(String classification, Date fromDate, Date toDate, String businessCode,String department,
+            List&lt;String&gt; receiptNos) {
+<span class="nc" id="L1335">    	System.out.println(&quot;BBBB&quot;);</span>
+<span class="nc" id="L1336">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1337">                .fromDate(fromDate)</span>
+<span class="nc" id="L1338">                .toDate(toDate)</span>
+<span class="nc bnc" id="L1339" title="All 2 branches missed.">                .department(department)</span>
+<span class="nc" id="L1340">                .businessCodes(businessCode != null ? Arrays.stream(businessCode.split(&quot;,&quot;)).collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+               //.receiptNumbers(receiptNos != null ? receiptNos.stream().collect(Collectors.toSet()) : Collections.EMPTY_SET)
+                //.classification(classification)
+<span class="nc" id="L1343">                .build();</span>
+<span class="nc" id="L1344">        System.out.println(&quot;CCCCC&quot;);</span>
+<span class="nc" id="L1345">        return this.getReceipt(criteria);</span>
+    }
+    
+    public List&lt;Receipt&gt; searchRecieptsFinance(String classification, Date fromDate, Date toDate, String businessCode,
+            String receiptNo,String type) {
+    	
+<span class="nc bnc" id="L1351" title="All 4 branches missed.">    	if(receiptNo != null &amp;&amp; !receiptNo.isEmpty())</span>
+    	{
+<span class="nc" id="L1353">    		return this.searchRecieptsFin(classification, fromDate, toDate, businessCode, Arrays.asList(receiptNo.split(&quot;,&quot;)),type);</span>
+    	}
+    	else
+    	{
+<span class="nc" id="L1357">    		return this.searchRecieptsFin(classification, fromDate, toDate, businessCode, null,type);</span>
+    	}
+
+        
+
+    }
+
+    public List&lt;Receipt&gt; searchReciepts(String classification, Date fromDate, Date toDate, String businessCode,
+            List&lt;String&gt; receiptNos) {
+<span class="nc" id="L1366">    	LOGGER.info(&quot;receiptNos.size()     :::&quot;+receiptNos.size());</span>
+<span class="nc" id="L1367">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1368">                .fromDate(fromDate)</span>
+<span class="nc bnc" id="L1369" title="All 2 branches missed.">                .toDate(toDate)</span>
+<span class="nc bnc" id="L1370" title="All 2 branches missed.">                .businessCodes(businessCode != null ? Arrays.stream(businessCode.split(&quot;,&quot;)).collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1371">                .receiptNumbers(receiptNos != null ? receiptNos.stream().collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1372">                .classification(classification)</span>
+<span class="nc" id="L1373">                .build();</span>
+<span class="nc" id="L1374">        return this.getReceipt(criteria);</span>
+    }
+    
+    public List&lt;Receipt&gt; searchRecieptsFin(String classification, Date fromDate, Date toDate, String businessCode,
+            List&lt;String&gt; receiptNos,String type) {
+<span class="nc" id="L1379">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1380">                .fromDate(fromDate)</span>
+<span class="nc" id="L1381">                .toDate(toDate)</span>
+<span class="nc bnc" id="L1382" title="All 2 branches missed.">                .type(type)</span>
+<span class="nc bnc" id="L1383" title="All 2 branches missed.">                .businessCodes(businessCode != null ? Arrays.stream(businessCode.split(&quot;,&quot;)).collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1384">                .receiptNumbers(receiptNos != null ? receiptNos.stream().collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1385">                .classification(classification)</span>
+<span class="nc" id="L1386">                .build();</span>
+<span class="nc" id="L1387">        return this.getReceipt(criteria);</span>
+    }
+    
+    public List&lt;Receipt&gt; searchRecieptsFinNew(String classification, Date fromDate, Date toDate, String businessCode,
+            List&lt;String&gt; receiptNos,String type) {
+<span class="nc" id="L1392">    	LOGGER.info(&quot;searchRecieptsFinNew calling&quot;);</span>
+<span class="nc" id="L1393">    	System.out.println(&quot;searchRecieptsFinNew calling&quot;);</span>
+<span class="nc" id="L1394">        ReceiptSearchCriteria criteria = new ReceiptSearchCriteria().builder()</span>
+<span class="nc" id="L1395">                .fromDate(fromDate)</span>
+<span class="nc" id="L1396">                .toDate(toDate)</span>
+<span class="nc bnc" id="L1397" title="All 2 branches missed.">                .type(type)</span>
+<span class="nc bnc" id="L1398" title="All 2 branches missed.">                .businessCodes(businessCode != null ? Arrays.stream(businessCode.split(&quot;,&quot;)).collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1399">                .receiptNumbers(receiptNos != null ? receiptNos.stream().collect(Collectors.toSet()) : Collections.EMPTY_SET)</span>
+<span class="nc" id="L1400">                .classification(classification)</span>
+<span class="nc" id="L1401">                .build();</span>
+<span class="nc" id="L1402">        return this.getReceiptNew(criteria);</span>
+    }
+
+    public InstrumentResponse reconcileInstruments(List&lt;Instrument&gt; instruments, String depositedBankAccountNum) {
+<span class="nc" id="L1406">        FinancialStatus instrumentStatusReconciled = new FinancialStatus();</span>
+<span class="nc" id="L1407">        instrumentStatusReconciled.setCode(&quot;Reconciled&quot;);</span>
+<span class="nc" id="L1408">        instrumentStatusReconciled.setName(&quot;Reconciled&quot;);</span>
+<span class="nc" id="L1409">        return this.updateInstruments(instruments, depositedBankAccountNum, instrumentStatusReconciled);</span>
+    }
+
+    public InstrumentResponse depositeInstruments(List&lt;Instrument&gt; instruments, String depositedBankAccountNum) {
+<span class="nc" id="L1413">        FinancialStatus finStatus = new FinancialStatus();</span>
+<span class="nc" id="L1414">        finStatus.setCode(&quot;Deposited&quot;);</span>
+<span class="nc" id="L1415">        finStatus.setName(&quot;Deposited&quot;);</span>
+<span class="nc" id="L1416">        return this.updateInstruments(instruments, depositedBankAccountNum, finStatus);</span>
+    }
+
+    public InstrumentResponse reconcileInstrumentsWithPayinSlipId(List&lt;Instrument&gt; instruments, String depositedBankAccountNum,
+            String payinSlipId) {
+<span class="nc" id="L1421">        FinancialStatus instrumentStatusReconciled = new FinancialStatus();</span>
+<span class="nc" id="L1422">        instrumentStatusReconciled.setCode(&quot;Reconciled&quot;);</span>
+<span class="nc bnc" id="L1423" title="All 2 branches missed.">        for (Instrument i : instruments) {</span>
+<span class="nc" id="L1424">            i.setPayinSlipId(payinSlipId);</span>
+<span class="nc" id="L1425">        }</span>
+<span class="nc" id="L1426">        return this.updateInstruments(instruments, depositedBankAccountNum, instrumentStatusReconciled);</span>
+    }
+
+    public RemittanceResponse createRemittance(List&lt;Remittance&gt; remittanceList) {
+<span class="nc" id="L1430">        final StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost() + remittanceCreateUrl);</span>
+<span class="nc" id="L1431">        RemittanceRequest request = new RemittanceRequest();</span>
+<span class="nc" id="L1432">        request.setRemittances(remittanceList);</span>
+<span class="nc" id="L1433">        final RequestInfo requestInfo = new RequestInfo();</span>
+
+<span class="nc" id="L1435">        requestInfo.setAuthToken(generateAdminToken(getTenentId()));</span>
+<span class="nc" id="L1436">        requestInfo.setUserInfo(new UserInfo());</span>
+<span class="nc" id="L1437">        requestInfo.getUserInfo().setId(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L1438">        request.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L1440">        return restTemplate.postForObject(url.toString(), request, RemittanceResponse.class);</span>
+    }
+
+    
+    public RemittanceResponseDepositWorkDetails getDayWorkHistory(Set&lt;String&gt; reciptNumber) {
+<span class="nc" id="L1445">        final StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost() + depositworkurl);</span>
+<span class="nc" id="L1446">        RemittanceRequest request = new RemittanceRequest();</span>
+<span class="nc" id="L1447">        request.setReceiptNumbers(reciptNumber);</span>
+<span class="nc" id="L1448">        final RequestInfo requestInfo = new RequestInfo();</span>
+
+<span class="nc" id="L1450">        requestInfo.setAuthToken(generateAdminToken(getTenentId()));</span>
+<span class="nc" id="L1451">        requestInfo.setUserInfo(new UserInfo());</span>
+<span class="nc" id="L1452">        requestInfo.getUserInfo().setId(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L1453">        request.setRequestInfo(requestInfo);</span>
+
+<span class="nc" id="L1455">        return restTemplate.postForObject(url.toString(), request, RemittanceResponseDepositWorkDetails.class);</span>
+    }
+    
+    
+    public ReceiptResponse updateReceipts(List&lt;Receipt&gt; receiptList) {
+<span class="nc" id="L1460">        final StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost() + receiptUpdateUrl);</span>
+<span class="nc" id="L1461">        ReceiptRequest request = new ReceiptRequest();</span>
+<span class="nc" id="L1462">        receiptList.stream().forEach(rec -&gt; {</span>
+<span class="nc bnc" id="L1463" title="All 2 branches missed.">            if(rec.getInstrument().getBank() != null){</span>
+<span class="nc" id="L1464">                rec.getInstrument().getBank().setTenantId(getTenentId());</span>
+            }
+<span class="nc" id="L1466">        });</span>
+<span class="nc" id="L1467">        request.setReceipt(receiptList);</span>
+<span class="nc" id="L1468">        final RequestInfo requestinfo = getRequestInfo();</span>
+<span class="nc" id="L1469">        request.setRequestInfo(requestinfo);</span>
+
+<span class="nc" id="L1471">        return restTemplate.postForObject(url.toString(), request, ReceiptResponse.class);</span>
+    }
+
+    public List&lt;Task&gt; getTasks() {
+
+<span class="nc" id="L1476">        List&lt;Task&gt; tasks = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L1477" title="All 2 branches missed.">        if (isNotBlank(workflowServiceUrl)) {</span>
+<span class="nc" id="L1478">            final RestTemplate restTemplate = new RestTemplate();</span>
+            TaskResponse tresp;
+            try {
+<span class="nc" id="L1481">                RequestInfo createRequestInfo = createRequestInfo();</span>
+<span class="nc" id="L1482">                RequestInfoWrapper requestInfo = new RequestInfoWrapper();</span>
+<span class="nc" id="L1483">                requestInfo.setRequestInfo(createRequestInfo);</span>
+<span class="nc" id="L1484">                LOGGER.info(&quot;call:&quot; + workflowServiceUrl);</span>
+<span class="nc" id="L1485">                tresp = restTemplate.postForObject(workflowServiceUrl, requestInfo, TaskResponse.class);</span>
+<span class="nc" id="L1486">                tasks = tresp.getTasks();</span>
+<span class="nc" id="L1487">            } catch (final Exception e) {</span>
+<span class="nc" id="L1488">                final String errMsg = &quot;Exception while getting inbox items from microservice &quot;;</span>
+                // throw new ApplicationRuntimeException(errMsg, e);
+<span class="nc" id="L1490">                LOGGER.fatal(errMsg, e);</span>
+<span class="nc" id="L1491">            }</span>
+        }
+<span class="nc" id="L1493">        return tasks;</span>
+    }
+
+    public List&lt;Inbox&gt; getInboxItems() {
+<span class="nc" id="L1497">        List&lt;Inbox&gt; inboxItems = new LinkedList&lt;&gt;();</span>
+<span class="nc bnc" id="L1498" title="All 2 branches missed.">        if (hasWorkflowService())</span>
+<span class="nc bnc" id="L1499" title="All 2 branches missed.">            for (Task t : getTasks()) {</span>
+<span class="nc" id="L1500">                Inbox inboxItem = new Inbox();</span>
+<span class="nc" id="L1501">                inboxItem.setId(t.getId());</span>
+<span class="nc" id="L1502">                inboxItem.setCreatedDate(t.getCreatedDate());</span>
+<span class="nc" id="L1503">                inboxItem.setDate(toDefaultDateTimeFormat(t.getCreatedDate()));</span>
+<span class="nc" id="L1504">                inboxItem.setSender(t.getSenderName());</span>
+<span class="nc" id="L1505">                inboxItem.setTask(t.getNatureOfTask());</span>
+<span class="nc" id="L1506">                inboxItem.setStatus(t.getStatus());</span>
+<span class="nc" id="L1507">                inboxItem.setDetails(t.getDetails());</span>
+<span class="nc" id="L1508">                inboxItem.setLink(t.getUrl());</span>
+<span class="nc" id="L1509">                inboxItem.setSender(t.getSenderName());</span>
+<span class="nc" id="L1510">                inboxItems.add(inboxItem);</span>
+<span class="nc" id="L1511">            }</span>
+<span class="nc" id="L1512">        return inboxItems;</span>
+    }
+
+    public boolean hasWorkflowService() {
+<span class="nc" id="L1516">        return isNotBlank(workflowServiceUrl);</span>
+    }
+
+    public void saveAuthToken(String auth_token, String sessionId) {
+<span class="nc" id="L1520">        redisTemplate.opsForHash().putIfAbsent(auth_token, auth_token, sessionId);</span>
+<span class="nc" id="L1521">    }</span>
+
+    public String readSesionIdByAuthToken(String auth_token) {
+    	
+<span class="nc bnc" id="L1525" title="All 2 branches missed.">        if (redisTemplate.hasKey(auth_token)) {</span>
+<span class="nc" id="L1526">            return (String) redisTemplate.opsForValue().get(auth_token);</span>
+        }
+<span class="nc" id="L1528">        return null;</span>
+    }
+
+    public void SaveSessionToRedis(String access_token, String sessionId, Map&lt;String, String&gt; values) {
+
+<span class="nc bnc" id="L1533" title="All 6 branches missed.">        if (null != access_token &amp;&amp; null != values &amp;&amp; values.size() &gt; 0) {</span>
+<span class="nc" id="L1534">            values.keySet().forEach(key -&gt; {</span>
+<span class="nc" id="L1535">                redisTemplate.opsForHash().putIfAbsent(sessionId, key, values.get(key));</span>
+<span class="nc" id="L1536">            });</span>
+<span class="nc" id="L1537">            redisTemplate.opsForList().leftPush(access_token, sessionId);</span>
+        }
+
+<span class="nc" id="L1540">    }</span>
+
+    public void savetoRedis(String sessionId, String key, Object obj) {
+<span class="nc" id="L1543">        redisTemplate.opsForHash().putIfAbsent(sessionId, key, obj);</span>
+<span class="nc" id="L1544">    }</span>
+
+    public void setExpire(String key) {
+<span class="nc" id="L1547">        redisTemplate.expire(key, 90, TimeUnit.MINUTES);</span>
+<span class="nc" id="L1548">    }</span>
+
+    public Object readFromRedis(String sessionId, String key) {
+<span class="nc bnc" id="L1551" title="All 2 branches missed.">        if (redisTemplate.hasKey(sessionId))</span>
+<span class="nc" id="L1552">            return redisTemplate.opsForHash().get(sessionId, key);</span>
+        else
+<span class="nc" id="L1554">            return null;</span>
+    }
+    
+    public void removeSession(String access_token, String sessionId) {
+<span class="nc" id="L1558">        LOGGER.info(&quot;Logout for authtoken : &quot; + access_token +&quot; and session : &quot;+sessionId);        </span>
+<span class="nc bnc" id="L1559" title="All 4 branches missed.">        if (null != access_token &amp;&amp; redisTemplate.hasKey(access_token)){</span>
+<span class="nc" id="L1560">        	LOGGER.info(&quot;redisTemplate.hasKey(access_token))::: &quot; + redisTemplate.hasKey(access_token));            </span>
+<span class="nc bnc" id="L1561" title="All 2 branches missed.">            if (null != sessionId) {</span>
+<span class="nc" id="L1562">            	LOGGER.info(&quot;redisTemplate.hasKey(sessionId))::: &quot; + redisTemplate.hasKey(sessionId));</span>
+<span class="nc" id="L1563">            	redisTemplate.delete(sessionId);</span>
+<span class="nc" id="L1564">            	LOGGER.info(&quot;spring:session:sessions:&quot; + sessionId);</span>
+<span class="nc" id="L1565">            	LOGGER.info(&quot;spring:session:sessions:expires:&quot; + sessionId);</span>
+<span class="nc" id="L1566">                redisTemplate.delete(&quot;spring:session:sessions:&quot; + sessionId);</span>
+<span class="nc" id="L1567">                redisTemplate.delete(&quot;spring:session:sessions:expires:&quot; + sessionId);</span>
+<span class="nc" id="L1568">                redisTemplate.opsForHash().delete(access_token,sessionId);</span>
+<span class="nc" id="L1569">                redisTemplate.opsForHash().delete(sessionId, &quot;current_user&quot;);</span>
+            } else
+<span class="nc" id="L1571">                LOGGER.info(&quot;session not found in redis for : &quot; + access_token);</span>
+        }else{
+<span class="nc" id="L1573">            LOGGER.info(&quot;authtoken not found in redis : &quot; + access_token);</span>
+        }
+<span class="nc" id="L1575">    }</span>
+
+    public void removeSessionFromRedis(String access_token, String sessionId) {
+<span class="nc" id="L1578">        LOGGER.info(&quot;Logout for authtoken : &quot; + access_token +&quot; and session : &quot;+sessionId);</span>
+<span class="nc bnc" id="L1579" title="All 4 branches missed.">        if (null != access_token &amp;&amp; redisTemplate.hasKey(access_token)){</span>
+<span class="nc" id="L1580">            sessionId = (String)redisTemplate.opsForHash().get(sessionId, sessionId);</span>
+<span class="nc" id="L1581">            removeSession(access_token, sessionId);</span>
+        }else{
+<span class="nc" id="L1583">            LOGGER.info(&quot;authtoken not found in redis : &quot; + access_token);</span>
+        }
+<span class="nc" id="L1585">    }</span>
+
+    public void refreshToken(String oldToken, String newToken) {
+<span class="nc" id="L1588">        LOGGER.info(&quot;Refresh Token is called OLD::NEW&quot; + oldToken + &quot; :: &quot; + newToken);</span>
+<span class="nc bnc" id="L1589" title="All 2 branches missed.">        if (redisTemplate.hasKey(oldToken)) {</span>
+
+<span class="nc bnc" id="L1591" title="All 2 branches missed.">            while (redisTemplate.opsForList().size(oldToken) &gt; 0) {</span>
+
+<span class="nc" id="L1593">                Object sessionId = redisTemplate.opsForList().leftPop(oldToken);</span>
+<span class="nc bnc" id="L1594" title="All 2 branches missed.">                if (redisTemplate.hasKey(sessionId))</span>
+<span class="nc bnc" id="L1595" title="All 2 branches missed.">                    if (oldToken.equals(redisTemplate.opsForHash().get(sessionId, &quot;ACCESS_TOKEN&quot;))) {</span>
+<span class="nc" id="L1596">                        redisTemplate.opsForHash().delete(sessionId, &quot;ACCESS_TOKEN&quot;);</span>
+<span class="nc" id="L1597">                        redisTemplate.opsForHash().put(sessionId, &quot;ACCESS_TOKEN&quot;, newToken);</span>
+<span class="nc" id="L1598">                        redisTemplate.delete(oldToken);</span>
+<span class="nc" id="L1599">                        redisTemplate.opsForValue().set(newToken, sessionId);</span>
+                    }
+<span class="nc" id="L1601">                redisTemplate.opsForList().leftPush(newToken, sessionId);</span>
+<span class="nc" id="L1602">            }</span>
+<span class="nc" id="L1603">            redisTemplate.delete(oldToken);</span>
+
+        }
+<span class="nc" id="L1606">    }</span>
+
+    public static ResponseInfo getResponseInfo(RequestInfo requestInfo, Integer status, String apiId) {
+<span class="nc" id="L1609">        ResponseInfo info = new ResponseInfo();</span>
+
+<span class="nc bnc" id="L1611" title="All 2 branches missed.">        if (requestInfo != null) {</span>
+<span class="nc" id="L1612">            info.setVer(requestInfo.getVer());</span>
+<span class="nc" id="L1613">            info.setResMsgId(requestInfo.getMsgId());</span>
+<span class="nc" id="L1614">            info.setApiId(requestInfo.getApiId());</span>
+<span class="nc bnc" id="L1615" title="All 2 branches missed.">        } else if (apiId == null)</span>
+<span class="nc" id="L1616">            info.setApiId(apiId);</span>
+
+<span class="nc bnc" id="L1618" title="All 2 branches missed.">        if (status != null)</span>
+<span class="nc" id="L1619">            info.setStatus(status.toString());</span>
+        else
+<span class="nc" id="L1621">            Log.error(&quot;Code is sending null value for status&quot;);</span>
+<span class="nc" id="L1622">        info.setTs(new Date().toString());</span>
+<span class="nc" id="L1623">        return info;</span>
+    }
+    
+    public static Long getEpochDate(Date date){
+<span class="nc" id="L1627">        DateTimeFormatter fmt = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;)</span>
+<span class="nc" id="L1628">                .withZone(ZoneOffset.UTC);</span>
+//        Date date = new Date();  
+<span class="nc" id="L1630">        DateFormat dateFormat = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);  </span>
+<span class="nc" id="L1631">        String strDate = dateFormat.format(date);</span>
+<span class="nc" id="L1632">        long epoch = Instant.from(fmt.parse(strDate)).toEpochMilli();</span>
+<span class="nc" id="L1633">        return epoch;</span>
+    }
+    
+    public void pushDataToIndexer(Object data, String topicName){
+        try {
+<span class="nc" id="L1638">            StringBuilder uri = new StringBuilder(appConfigManager.getEgovIndexerSerHost()).append(egovIndexerUrl);</span>
+<span class="nc" id="L1639">            Object postForObject = restTemplate.postForObject(uri.toString(), data, Object.class, topicName);</span>
+<span class="nc" id="L1640">        } catch (Exception e) {</span>
+<span class="nc" id="L1641">            Log.error(&quot;ERROR occurred while trying to push the data to indexer : &quot;, e);</span>
+<span class="nc" id="L1642">        }</span>
+<span class="nc" id="L1643">    }</span>
+    
+    public Object getMdmsData(List&lt;ModuleDetail&gt; moduleDetails,boolean isStateLevel, String tenantId, String token){
+<span class="nc" id="L1646">        String mdmsUrl = appConfigManager.getEgovMdmsSerHost()+ this.mdmsSearchUrl;</span>
+<span class="nc" id="L1647">        LOGGER.info(&quot;getMdmsData-----&gt; &quot;);</span>
+<span class="nc" id="L1648">        LOGGER.info(&quot;moduleDetails-----&gt; &quot;+moduleDetails);</span>
+<span class="nc" id="L1649">        RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc bnc" id="L1650" title="All 4 branches missed.">        requestInfo.setAuthToken(token != null &amp;&amp; !token.isEmpty() ? token : getUserToken());</span>
+        
+<span class="nc" id="L1652">        MdmsCriteria mdmscriteria = new MdmsCriteria();</span>
+<span class="nc bnc" id="L1653" title="All 2 branches missed.">        if(tenantId == null){</span>
+<span class="nc bnc" id="L1654" title="All 2 branches missed.">            if(isStateLevel){</span>
+<span class="nc" id="L1655">                mdmscriteria.setTenantId(getTenentId().split(Pattern.quote(&quot;.&quot;))[0]);</span>
+            }else{
+<span class="nc" id="L1657">                mdmscriteria.setTenantId(getTenentId());</span>
+            }
+        }else{
+<span class="nc" id="L1660">            mdmscriteria.setTenantId(tenantId);</span>
+        }
+        
+<span class="nc" id="L1663">        mdmscriteria.setModuleDetails(moduleDetails);</span>
+        
+<span class="nc" id="L1665">        MdmsCriteriaReq mdmsrequest = new MdmsCriteriaReq();</span>
+<span class="nc" id="L1666">        mdmsrequest.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1667">        mdmsrequest.setMdmsCriteria(mdmscriteria);</span>
+<span class="nc" id="L1668">        return restTemplate.postForObject(mdmsUrl, mdmsrequest, Map.class);</span>
+    }
+    
+    public String getHeaderNameForTenant(){
+<span class="nc" id="L1672">        String ulbGrade = &quot;&quot;;</span>
+<span class="nc" id="L1673">        List&lt;ModuleDetail&gt; moduleDetailList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1674">        String tenentId = getTenentId();</span>
+        try {
+<span class="nc" id="L1676">            this.prepareModuleDetails(moduleDetailList, &quot;tenant&quot;, &quot;tenants&quot;, &quot;code&quot;, tenentId, String.class);</span>
+<span class="nc" id="L1677">            Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1678" title="All 2 branches missed.">            if(postForObject != null){</span>
+<span class="nc" id="L1679">                ulbGrade = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.tenant.tenants[0].city.ulbGrade&quot;),String.class);</span>
+            }
+<span class="nc bnc" id="L1681" title="All 4 branches missed.">            if(ulbGrade != null &amp;&amp; !ulbGrade.isEmpty())</span>
+<span class="nc" id="L1682">                ulbGrade = environment.getProperty(ulbGrade,ulbGrade);</span>
+<span class="nc" id="L1683">        } catch (Exception e) {</span>
+<span class="nc" id="L1684">            LOGGER.error(&quot;ERROR occurred while fetching header name of tenant in getHeaderNameForTenant : &quot;,e);</span>
+<span class="nc" id="L1685">        }</span>
+<span class="nc bnc" id="L1686" title="All 2 branches missed.">        return tenentId.split(Pattern.quote(&quot;.&quot;))[1]+&quot; &quot;+(ulbGrade != null ? ulbGrade : &quot;&quot;);</span>
+    }
+    
+    private void prepareModuleDetails(List&lt;ModuleDetail&gt; moduleDetailsList,String moduleNme,String masterName,String filterKey, String filterValue, Class filterType){
+<span class="nc" id="L1690">        List&lt;MasterDetail&gt; masterDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1691">        ListIterator&lt;ModuleDetail&gt; listIterator = moduleDetailsList.listIterator();</span>
+<span class="nc bnc" id="L1692" title="All 2 branches missed.">        while(listIterator.hasNext()){</span>
+<span class="nc" id="L1693">             ModuleDetail existModName = listIterator.next();</span>
+<span class="nc bnc" id="L1694" title="All 2 branches missed.">            if(existModName.getModuleName().equals(moduleNme)){</span>
+<span class="nc" id="L1695">                this.prepareMasterDetails(existModName.getMasterDetails(), masterName, filterKey, filterValue, filterType);</span>
+<span class="nc" id="L1696">                listIterator.remove();</span>
+<span class="nc" id="L1697">                listIterator.add(existModName);</span>
+<span class="nc" id="L1698">                return;</span>
+            }
+<span class="nc" id="L1700">        }</span>
+<span class="nc" id="L1701">        this.prepareMasterDetails(masterDetails , masterName, filterKey, filterValue, filterType);</span>
+<span class="nc" id="L1702">        moduleDetailsList.add(new ModuleDetail(moduleNme, masterDetails));</span>
+<span class="nc" id="L1703">    }</span>
+    
+    private void prepareMasterDetails(List&lt;MasterDetail&gt; masterDetailList,String masterName,String filterKey,String filterValue, Class filterType){
+<span class="nc" id="L1706">        String filter = null;</span>
+<span class="nc" id="L1707">        StringBuilder filterBuilder = new StringBuilder();</span>
+<span class="nc" id="L1708">        ListIterator&lt;MasterDetail&gt; listIterator = masterDetailList.listIterator();</span>
+<span class="nc bnc" id="L1709" title="All 2 branches missed.">        while(listIterator.hasNext()){</span>
+<span class="nc" id="L1710">            MasterDetail md = listIterator.next();</span>
+<span class="nc bnc" id="L1711" title="All 2 branches missed.">            if(md.getName().equals(masterName)){</span>
+<span class="nc bnc" id="L1712" title="All 4 branches missed.">                if(StringUtils.isNotBlank(filterKey) &amp;&amp; StringUtils.isNotBlank(filterValue)){</span>
+<span class="nc" id="L1713">                    String oldFilter = md.getFilter();</span>
+<span class="nc bnc" id="L1714" title="All 2 branches missed.">                    if(StringUtils.isNotBlank(oldFilter)){</span>
+<span class="nc" id="L1715">                        String newFilter = oldFilter.substring(0, oldFilter.length()-2);</span>
+<span class="nc" id="L1716">                        filterBuilder.append(newFilter).append(&quot; &amp;&amp; &quot;).append(&quot;@.&quot;).append(filterKey).append(&quot; in [&quot;).append(getSingleQuoteBasedOnType(filterType)).append(filterValue).append(getSingleQuoteBasedOnType(filterType)).append(&quot;])]&quot;);</span>
+<span class="nc" id="L1717">                    }else{</span>
+<span class="nc" id="L1718">                        filterBuilder.append(&quot;[?(@.&quot;).append(filterKey).append(&quot; in [&quot;).append(getSingleQuoteBasedOnType(filterType)).append(filterValue).append(getSingleQuoteBasedOnType(filterType)).append(&quot;])]&quot;);</span>
+                    }
+<span class="nc" id="L1720">                    listIterator.remove();</span>
+<span class="nc" id="L1721">                    filter = filterBuilder.toString();</span>
+<span class="nc" id="L1722">                    masterDetailList.add(new MasterDetail(masterName, filter));</span>
+                }
+<span class="nc" id="L1724">                return;</span>
+            }
+<span class="nc" id="L1726">        }</span>
+<span class="nc bnc" id="L1727" title="All 4 branches missed.">        if(filterKey != null &amp;&amp; filterValue != null){</span>
+<span class="nc" id="L1728">            filterBuilder.append(&quot;[?(@.&quot;).append(filterKey).append(&quot; in [&quot;).append(getSingleQuoteBasedOnType(filterType)).append(filterValue).append(getSingleQuoteBasedOnType(filterType)).append(&quot;])]&quot;);</span>
+<span class="nc" id="L1729">            filter = filterBuilder.toString();</span>
+        }
+<span class="nc" id="L1731">        masterDetailList.add(new MasterDetail(masterName, filter));</span>
+<span class="nc" id="L1732">    }</span>
+    
+    private String getSingleQuoteBasedOnType(Class filterType) {
+<span class="nc bnc" id="L1735" title="All 4 branches missed.">        String string = filterType.getSimpleName().equalsIgnoreCase(&quot;Boolean&quot;) ||  filterType.getSimpleName().equalsIgnoreCase(&quot;Long&quot;) ?  &quot;&quot; : &quot;&quot;;</span>
+<span class="nc" id="L1736">        return string;</span>
+    }
+
+    public String getBusinessServiceNameByCode(String code){
+<span class="nc" id="L1740">        String serviceName = &quot;&quot;;</span>
+        try {
+<span class="nc" id="L1742">            List&lt;BusinessService&gt; serviceByCodes = this.getBusinessServiceByCodes(code);</span>
+<span class="nc bnc" id="L1743" title="All 4 branches missed.">            if(serviceByCodes!=null &amp;&amp; !serviceByCodes.isEmpty()){</span>
+<span class="nc" id="L1744">                serviceName = serviceByCodes.get(0).getBusinessService();</span>
+            }
+<span class="nc" id="L1746">        } catch (Exception e) {</span>
+<span class="nc" id="L1747">            LOGGER.error(&quot;ERROR occurred while fetching business service details in getBusinessServiceNameByCode method: &quot;,e);</span>
+<span class="nc" id="L1748">        }</span>
+<span class="nc bnc" id="L1749" title="All 2 branches missed.">        return serviceName.isEmpty() ? code : serviceName;</span>
+    }
+    
+    public List&lt;BusinessService&gt; getBusinessServiceByCodes(String codes){
+<span class="nc" id="L1753">        List&lt;BusinessService&gt; list = null;</span>
+<span class="nc" id="L1754">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+        try {
+<span class="nc" id="L1756">            this.prepareModuleDetails(moduleDetailsList , &quot;BillingService&quot;, &quot;BusinessService&quot;, &quot;code&quot;, codes, String.class);</span>
+<span class="nc" id="L1757">            Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1758" title="All 2 branches missed.">            if(postForObject != null){</span>
+<span class="nc" id="L1759">                return list = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.BillingService.BusinessService&quot;),new TypeReference&lt;List&lt;BusinessService&gt;&gt;(){});</span>
+            }
+<span class="nc" id="L1761">        } catch (Exception e) {</span>
+<span class="nc" id="L1762">            LOGGER.error(&quot;ERROR occurred while fetching business service details in getBusinessServiceByCodes method: &quot;,e);</span>
+<span class="nc" id="L1763">        }</span>
+<span class="nc" id="L1764">        return null;</span>
+    }
+    
+    public List&lt;BusinessService&gt; getBusinessService(String type) {
+<span class="nc" id="L1768">        List&lt;BusinessService&gt; list = null;</span>
+<span class="nc" id="L1769">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1770">        this.prepareModuleDetails(moduleDetailsList, &quot;BillingService&quot;, &quot;BusinessService&quot;, &quot;type&quot;, type, String.class);</span>
+<span class="nc" id="L1771">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1772" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L1773">             list = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.BillingService.BusinessService&quot;),new TypeReference&lt;List&lt;BusinessService&gt;&gt;(){});</span>
+        }
+<span class="nc" id="L1775">        return list;</span>
+    }
+    
+    public List&lt;BusinessServiceMapping&gt; getBusinessServiceMappingBySearchCriteria(BusinessServiceCriteria criteria) {
+<span class="nc" id="L1779">        List&lt;BusinessServiceMapping&gt; list = null;</span>
+<span class="nc" id="L1780">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1781">        Field[] declaredFields = criteria.getClass().getDeclaredFields();</span>
+<span class="nc bnc" id="L1782" title="All 2 branches missed.">        for(Field field : declaredFields){</span>
+<span class="nc" id="L1783">            field.setAccessible(true);</span>
+<span class="nc" id="L1784">            String fieldName = field.getName();</span>
+<span class="nc" id="L1785">            String fieldValue = null;</span>
+<span class="nc" id="L1786">            Class&lt;?&gt; fieldType = String.class;</span>
+            try {
+<span class="nc bnc" id="L1788" title="All 2 branches missed.">                if(field.getType().equals(Boolean.TYPE)){</span>
+<span class="nc bnc" id="L1789" title="All 2 branches missed.">                    fieldValue = (Boolean)field.get(criteria) ? &quot;true&quot; : &quot;false&quot;;</span>
+<span class="nc" id="L1790">                     fieldType = Boolean.class;</span>
+<span class="nc bnc" id="L1791" title="All 2 branches missed.">                }else if(field.getType().equals(Long.TYPE)){</span>
+<span class="nc" id="L1792">                    fieldValue = (String)field.get(criteria);</span>
+<span class="nc" id="L1793">                    fieldType = Long.class;</span>
+                }else{
+<span class="nc" id="L1795">                    fieldValue = (String)field.get(criteria);</span>
+                }
+<span class="nc" id="L1797">            } catch (IllegalArgumentException | IllegalAccessException e) {</span>
+<span class="nc" id="L1798">                e.printStackTrace();</span>
+<span class="nc" id="L1799">            }</span>
+<span class="nc bnc" id="L1800" title="All 2 branches missed.">            if(StringUtils.isNotBlank(fieldValue)){</span>
+<span class="nc" id="L1801">                this.prepareModuleDetails(moduleDetailsList, &quot;FinanceModule&quot;, &quot;BusinessServiceMapping&quot;, fieldName, fieldValue, fieldType);</span>
+            }
+        }
+<span class="nc" id="L1804">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1805" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L1806">             list = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.FinanceModule.BusinessServiceMapping&quot;),new TypeReference&lt;List&lt;BusinessServiceMapping&gt;&gt;(){});</span>
+        }
+<span class="nc" id="L1808">        return list;</span>
+    }
+    
+    public List&lt;TaxHeadMaster&gt; getTaxheadsByServiceCode(String serviceCode) {
+<span class="nc" id="L1812">        List&lt;TaxHeadMaster&gt; list = null;</span>
+<span class="nc" id="L1813">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1814">        this.prepareModuleDetails(moduleDetailsList, &quot;BillingService&quot;, &quot;TaxHeadMaster&quot;, &quot;service&quot;, serviceCode, String.class);</span>
+<span class="nc" id="L1815">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1816" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L1817">             list = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.BillingService.TaxHeadMaster&quot;),new TypeReference&lt;List&lt;TaxHeadMaster&gt;&gt;(){});</span>
+        }
+<span class="nc" id="L1819">        return list;</span>
+    }
+    
+    public InstrumentResponse updateInstruments(List&lt;Instrument&gt; instruments, String depositedBankAccountNum, FinancialStatus finStatus) {
+<span class="nc" id="L1823">        final StringBuilder url = new StringBuilder(appConfigManager.getEgovEgfInstSerHost()).append(instrumentUpdateUrl);</span>
+<span class="nc bnc" id="L1824" title="All 2 branches missed.">        for (Instrument i : instruments) {</span>
+<span class="nc" id="L1825">            i.setFinancialStatus(finStatus);</span>
+<span class="nc bnc" id="L1826" title="All 2 branches missed.">            if (depositedBankAccountNum != null) {</span>
+<span class="nc" id="L1827">                i.setBankAccount(new BankAccount());</span>
+<span class="nc" id="L1828">                i.getBankAccount().setAccountNumber(depositedBankAccountNum);</span>
+            }
+<span class="nc" id="L1830">            i.getBank().setTenantId(getTenentId());</span>
+<span class="nc" id="L1831">        }</span>
+<span class="nc" id="L1832">        InstrumentRequest request = new InstrumentRequest();</span>
+<span class="nc" id="L1833">        request.setInstruments(instruments);</span>
+<span class="nc" id="L1834">        final RequestInfo requestinfo = new RequestInfo();</span>
+<span class="nc" id="L1835">        requestinfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L1836">        request.setRequestInfo(requestinfo);</span>
+<span class="nc" id="L1837">        return restTemplate.postForObject(url.toString(), request, InstrumentResponse.class);</span>
+    }
+    
+    public InstrumentAccountCode getInstrumentAccountGlCodeByType(String type) {
+<span class="nc" id="L1841">        List&lt;InstrumentAccountCode&gt; list = null;</span>
+<span class="nc" id="L1842">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1843">        this.prepareModuleDetails(moduleDetailsList, &quot;FinanceModule&quot;, &quot;InstrumentGLcodeMapping&quot;, &quot;instrumenttype&quot;, type, String.class);</span>
+<span class="nc" id="L1844">        Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, null, null), Map.class);</span>
+<span class="nc bnc" id="L1845" title="All 2 branches missed.">        if(postForObject != null){</span>
+<span class="nc" id="L1846">             list = mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.FinanceModule.InstrumentGLcodeMapping&quot;),new TypeReference&lt;List&lt;InstrumentAccountCode&gt;&gt;(){});</span>
+        }
+<span class="nc bnc" id="L1848" title="All 2 branches missed.">        return !list.isEmpty() ? list.get(0) : null;</span>
+    }
+    
+    public Department getDepartment(String code, String tenantId, String token){
+<span class="nc" id="L1852">        List&lt;ModuleDetail&gt; moduleDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1853">        this.prepareModuleDetails(moduleDetailsList , &quot;common-masters&quot;, &quot;Department&quot;, &quot;code&quot;, code, String.class);</span>
+        try {
+<span class="nc" id="L1855">            Map postForObject = mapper.convertValue(this.getMdmsData(moduleDetailsList, true, tenantId, token), Map.class);</span>
+<span class="nc bnc" id="L1856" title="All 2 branches missed.">            if(postForObject != null){</span>
+<span class="nc" id="L1857">                return mapper.convertValue(JsonPath.read(postForObject, &quot;$.MdmsRes.common-masters.Department[0]&quot;),Department.class);</span>
+            }
+<span class="nc" id="L1859">        } catch (Exception e) {</span>
+<span class="nc" id="L1860">            LOGGER.error(&quot;ERROR occurred while fetching the Department for code : &quot;+code,e);</span>
+<span class="nc" id="L1861">        }</span>
+<span class="nc" id="L1862">        return null;</span>
+    }
+    
+    public List&lt;Payment&gt; getPayments(PaymentSearchCriteria searchCriteria){
+<span class="nc" id="L1866">    	System.out.println(&quot;IIII&quot;);</span>
+<span class="nc" id="L1867">    	System.out.println(&quot;searchCriteria.getIds() ::: &quot;+searchCriteria.getIds());</span>
+<span class="nc" id="L1868">    	System.out.println(&quot;searchCriteria.getReceiptNumbers()   ::: &quot;+searchCriteria.getReceiptNumbers());</span>
+<span class="nc" id="L1869">        PaymentResponse response = null;</span>
+<span class="nc" id="L1870">         RequestInfo requestInfo = getRequestInfo();</span>
+<span class="nc" id="L1871">         RequestInfoWrapper reqWrapper = null;</span>
+<span class="nc" id="L1872">         RequestInfoCancelWrapper reqReceiptWrapper=new RequestInfoCancelWrapper();</span>
+<span class="nc" id="L1873">         RequestInfoSearchWrapper reqSearchWrapper = new RequestInfoSearchWrapper();</span>
+<span class="nc" id="L1874">        StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost()).append(appConfigManager.getCollSerPaymentSearch()).append(&quot;?&quot;);</span>
+<span class="nc bnc" id="L1875" title="All 4 branches missed.">        if(searchCriteria.getIds() != null &amp;&amp; !searchCriteria.getIds().isEmpty())</span>
+        {
+<span class="nc" id="L1877">        	reqSearchWrapper.setIds(searchCriteria.getIds());</span>
+<span class="nc" id="L1878">        	reqSearchWrapper.setRequestInfo(requestInfo);</span>
+        }
+<span class="nc bnc" id="L1880" title="All 4 branches missed.">        else if(searchCriteria.getReceiptNumbers() != null &amp;&amp; !searchCriteria.getReceiptNumbers().isEmpty())</span>
+        {
+<span class="nc" id="L1882">        	LOGGER.info(&quot;searchCriteria.getReceiptNumbers()     :::&quot;+searchCriteria.getReceiptNumbers().size());</span>
+<span class="nc" id="L1883">        	reqReceiptWrapper.setIds(searchCriteria.getReceiptNumbers());</span>
+<span class="nc" id="L1884">        	reqReceiptWrapper.setRequestInfo(requestInfo);</span>
+        }
+        else
+        {
+<span class="nc" id="L1888">            reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L1889">        reqWrapper.setRequestInfo(requestInfo);</span>
+        }
+        try {
+<span class="nc" id="L1892">            preparePaymentSearchQueryString(searchCriteria, url);</span>
+<span class="nc bnc" id="L1893" title="All 4 branches missed.">            if(searchCriteria.getIds() != null &amp;&amp; !searchCriteria.getIds().isEmpty())</span>
+            {
+<span class="nc" id="L1895">            	LOGGER.info(&quot;ids ; &quot;+url.toString());</span>
+<span class="nc" id="L1896">            	response = restTemplate.postForObject(url.toString(), reqSearchWrapper, PaymentResponse.class);</span>
+            }
+<span class="nc bnc" id="L1898" title="All 4 branches missed.">            else if(searchCriteria.getReceiptNumbers() != null &amp;&amp; !searchCriteria.getReceiptNumbers().isEmpty()) {</span>
+<span class="nc" id="L1899">            	LOGGER.info(&quot;reqReceiptWrapper.getIds().size()    :::&quot;+reqReceiptWrapper.getIds().size());</span>
+<span class="nc" id="L1900">            	response = restTemplate.postForObject(url.toString(), reqReceiptWrapper, PaymentResponse.class);</span>
+            }
+            else
+            {
+<span class="nc" id="L1904">            	LOGGER.info(&quot;non ids : &quot;+url.toString());</span>
+<span class="nc" id="L1905">            response = restTemplate.postForObject(url.toString(), reqWrapper, PaymentResponse.class);</span>
+            }
+            
+<span class="nc" id="L1908">            return response.getPayments();</span>
+<span class="nc" id="L1909">        } catch (Exception e) {</span>
+<span class="nc" id="L1910">            LOGGER.error(&quot;ERROR occurred while fetching the Payment list : &quot;,e);</span>
+        }
+<span class="nc" id="L1912">        return null;</span>
+    }
+    
+    public List&lt;Payment&gt; getPaymentsNew(PaymentSearchCriteria searchCriteria){
+<span class="nc" id="L1916">    	System.out.println(&quot;IIII&quot;);</span>
+<span class="nc" id="L1917">    	System.out.println(&quot;getPaymentsNew&quot;);</span>
+<span class="nc" id="L1918">    	System.out.println(&quot;searchCriteria.getIds() ::: &quot;+searchCriteria.getIds());</span>
+<span class="nc" id="L1919">    	System.out.println(&quot;searchCriteria.getReceiptNumbers()   ::: &quot;+searchCriteria.getReceiptNumbers());</span>
+<span class="nc" id="L1920">        PaymentResponse response = null;</span>
+<span class="nc" id="L1921">         RequestInfo requestInfo = getRequestInfo();</span>
+<span class="nc" id="L1922">         RequestInfoWrapper reqWrapper = null;</span>
+<span class="nc" id="L1923">         RequestInfoCancelWrapper reqReceiptWrapper=new RequestInfoCancelWrapper();</span>
+<span class="nc" id="L1924">         RequestInfoSearchWrapper reqSearchWrapper = new RequestInfoSearchWrapper();</span>
+<span class="nc" id="L1925">        StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost()).append(appConfigManager.getCollSerPaymentSearchNew()).append(&quot;?&quot;);</span>
+<span class="nc bnc" id="L1926" title="All 4 branches missed.">        if(searchCriteria.getIds() != null &amp;&amp; !searchCriteria.getIds().isEmpty())</span>
+        {
+<span class="nc" id="L1928">        	reqSearchWrapper.setIds(searchCriteria.getIds());</span>
+<span class="nc" id="L1929">        	reqSearchWrapper.setRequestInfo(requestInfo);</span>
+        }
+<span class="nc bnc" id="L1931" title="All 4 branches missed.">        else if(searchCriteria.getReceiptNumbers() != null &amp;&amp; !searchCriteria.getReceiptNumbers().isEmpty())</span>
+        {
+<span class="nc" id="L1933">        	LOGGER.info(&quot;searchCriteria.getReceiptNumbers()     :::&quot;+searchCriteria.getReceiptNumbers().size());</span>
+<span class="nc" id="L1934">        	reqReceiptWrapper.setIds(searchCriteria.getReceiptNumbers());</span>
+<span class="nc" id="L1935">        	reqReceiptWrapper.setRequestInfo(requestInfo);</span>
+        }
+        else
+        {
+<span class="nc" id="L1939">            reqWrapper = new RequestInfoWrapper();</span>
+<span class="nc" id="L1940">        reqWrapper.setRequestInfo(requestInfo);</span>
+        }
+        try {
+<span class="nc" id="L1943">            preparePaymentSearchQueryString(searchCriteria, url);</span>
+<span class="nc bnc" id="L1944" title="All 4 branches missed.">            if(searchCriteria.getIds() != null &amp;&amp; !searchCriteria.getIds().isEmpty())</span>
+            {
+<span class="nc" id="L1946">            	LOGGER.info(&quot;ids ; &quot;+url.toString());</span>
+<span class="nc" id="L1947">            	response = restTemplate.postForObject(url.toString(), reqSearchWrapper, PaymentResponse.class);</span>
+            }
+<span class="nc bnc" id="L1949" title="All 4 branches missed.">            else if(searchCriteria.getReceiptNumbers() != null &amp;&amp; !searchCriteria.getReceiptNumbers().isEmpty()) {</span>
+<span class="nc" id="L1950">            	LOGGER.info(&quot;reqReceiptWrapper.getIds().size()    :::&quot;+reqReceiptWrapper.getIds().size());</span>
+<span class="nc" id="L1951">            	response = restTemplate.postForObject(url.toString(), reqReceiptWrapper, PaymentResponse.class);</span>
+            }
+            else
+            {
+<span class="nc" id="L1955">            	LOGGER.info(&quot;non ids : &quot;+url.toString());</span>
+<span class="nc" id="L1956">            response = restTemplate.postForObject(url.toString(), reqWrapper, PaymentResponse.class);</span>
+            }
+            
+<span class="nc" id="L1959">            return response.getPayments();</span>
+<span class="nc" id="L1960">        } catch (Exception e) {</span>
+<span class="nc" id="L1961">            LOGGER.error(&quot;ERROR occurred while fetching the Payment list : &quot;,e);</span>
+        }
+<span class="nc" id="L1963">        return null;</span>
+    }
+    
+    public void cancelReceipts(Set&lt;String&gt; receiptNumbers)
+    {
+<span class="nc" id="L1968">    	RequestInfoCancelWrapper reqSearchWrapper = new RequestInfoCancelWrapper();</span>
+<span class="nc" id="L1969">    	StringBuilder url = new StringBuilder(appConfigManager.getEgovCollSerHost()).append(appConfigManager.getCollSerPaymentCancel());</span>
+<span class="nc" id="L1970">    	PaymentResponse response = null;</span>
+<span class="nc" id="L1971">        RequestInfo requestInfo = getRequestInfo();</span>
+<span class="nc" id="L1972">        reqSearchWrapper.setIds(receiptNumbers);</span>
+<span class="nc" id="L1973">    	reqSearchWrapper.setRequestInfo(requestInfo);</span>
+<span class="nc" id="L1974">    	LOGGER.info(&quot;ids ; &quot;+url.toString());</span>
+<span class="nc" id="L1975">    	response = restTemplate.postForObject(url.toString(), reqSearchWrapper, PaymentResponse.class);</span>
+<span class="nc" id="L1976">    }</span>
+
+    private void preparePaymentSearchQueryString(PaymentSearchCriteria searchCriteria, StringBuilder url) {
+<span class="nc bnc" id="L1979" title="All 2 branches missed.">        if(StringUtils.isNotBlank(searchCriteria.getTenantId())){</span>
+<span class="nc" id="L1980">            url.append(&quot;&amp;tenantId=&quot;).append(searchCriteria.getTenantId());</span>
+        }
+		/*
+		 * if(CollectionUtils.isNotEmpty(searchCriteria.getReceiptNumbers())){
+		 * url.append(&quot;&amp;receiptNumbers=&quot;).append(StringUtils.join(searchCriteria.
+		 * getReceiptNumbers(),&quot;,&quot;)); }
+		 */
+<span class="nc bnc" id="L1987" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(searchCriteria.getStatus())){</span>
+<span class="nc" id="L1988">            url.append(&quot;&amp;status=&quot;).append(StringUtils.join(searchCriteria.getStatus(),&quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L1990" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(searchCriteria.getInstrumentStatus())){</span>
+<span class="nc" id="L1991">            url.append(&quot;&amp;instrumentStatus=&quot;).append(StringUtils.join(searchCriteria.getInstrumentStatus(),&quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L1993" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(searchCriteria.getPaymentModes())){</span>
+<span class="nc" id="L1994">            url.append(&quot;&amp;paymentModes=&quot;).append(StringUtils.join(searchCriteria.getPaymentModes(),&quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L1996" title="All 2 branches missed.">        if(searchCriteria.getFromDate() != null){</span>
+<span class="nc" id="L1997">            url.append(&quot;&amp;fromDate=&quot;).append(searchCriteria.getFromDate());</span>
+        }
+<span class="nc bnc" id="L1999" title="All 2 branches missed.">        if(searchCriteria.getToDate() != null){</span>
+<span class="nc" id="L2000">            url.append(&quot;&amp;toDate=&quot;).append(searchCriteria.getToDate());</span>
+        }
+<span class="nc bnc" id="L2002" title="All 2 branches missed.">        if(StringUtils.isNotBlank(searchCriteria.getTransactionNumber())){</span>
+<span class="nc" id="L2003">            url.append(&quot;&amp;transactionNumber=&quot;).append(searchCriteria.getTransactionNumber());</span>
+        }
+<span class="nc bnc" id="L2005" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(searchCriteria.getBusinessServices())){</span>
+<span class="nc" id="L2006">            url.append(&quot;&amp;businessServices=&quot;).append(StringUtils.join(searchCriteria.getBusinessServices(),&quot;,&quot;));</span>
+        }
+<span class="nc bnc" id="L2008" title="All 2 branches missed.">        if(CollectionUtils.isNotEmpty(searchCriteria.getBillIds())){</span>
+<span class="nc" id="L2009">            url.append(&quot;&amp;billIds=&quot;).append(StringUtils.join(searchCriteria.getBillIds(),&quot;,&quot;));</span>
+        }
+        /*if(CollectionUtils.isNotEmpty(searchCriteria.getIds())){
+            url.append(&quot;&amp;ids=&quot;).append(StringUtils.join(searchCriteria.getIds(),&quot;,&quot;));
+        }*/
+<span class="nc" id="L2014">    }</span>
+
+    public PaymentResponse generatePayments(Payment payment) {
+<span class="nc" id="L2017">        PaymentResponse response = null;</span>
+<span class="nc" id="L2018">        StringBuilder uri = new StringBuilder(appConfigManager.getEgovCollSerHost()).append(appConfigManager.getCollSerPaymentCreate());</span>
+<span class="nc" id="L2019">        final RequestInfo requestInfo = getRequestInfo();</span>
+<span class="nc" id="L2020">        PaymentRequest request = PaymentRequest.builder().requestInfo(requestInfo).payment(payment).build();</span>
+<span class="nc" id="L2021">        System.out.println(&quot;==========In Generate Payments============&quot;);</span>
+<span class="nc" id="L2022">        System.out.println(&quot;Req InstrumentDate========= &quot;+request.getPayment().getInstrumentDate());</span>
+<span class="nc" id="L2023">        System.out.println(&quot;Req TransactionDate========= &quot;+request.getPayment().getTransactionDate());</span>
+<span class="nc" id="L2024">        response = restTemplate.postForObject(uri.toString(), request , PaymentResponse.class);  </span>
+<span class="nc" id="L2025">        System.out.println(&quot;After Req InstrumentDate========= &quot;+response.getPayments().get(0).getInstrumentDate());</span>
+<span class="nc" id="L2026">        System.out.println(&quot;After Req TransactionDate========= &quot;+response.getPayments().get(0).getTransactionDate());</span>
+<span class="nc" id="L2027">        return response;</span>
+    }
+    
+    public PaymentResponse updatePayments(Payment payment) {
+<span class="nc" id="L2031">      PaymentResponse response = null;</span>
+<span class="nc" id="L2032">      String uri = &quot;http://localhost:8095/collection-services/payments/_update&quot;;</span>
+<span class="nc" id="L2033">      final RequestInfo requestInfo = getRequestInfo();</span>
+<span class="nc" id="L2034">      PaymentRequest request = PaymentRequest.builder().requestInfo(requestInfo).payment(payment).build();</span>
+<span class="nc" id="L2035">      response = restTemplate.postForObject(uri, request , PaymentResponse.class);            </span>
+<span class="nc" id="L2036">      return response;</span>
+  }
+
+    private RequestInfo getRequestInfo() {
+<span class="nc" id="L2040">        final RequestInfo requestInfo = new RequestInfo();</span>
+<span class="nc" id="L2041">          requestInfo.setAuthToken(getUserToken());</span>
+<span class="nc" id="L2042">          requestInfo.setUserInfo(getUserInfo());</span>
+<span class="nc" id="L2043">        return requestInfo;</span>
+    }
+
+    public PaymentResponse performWorkflow(Set&lt;String&gt; paymentIdSet, PaymentAction action, String reason) {
+<span class="nc" id="L2047">        List&lt;PaymentWorkflow&gt; paymentWFList = paymentIdSet.stream().map(id -&gt; PaymentWorkflow.builder().paymentId(id).tenantId(getTenentId()).reason(reason).action(action).build()).collect(Collectors.toList());</span>
+<span class="nc" id="L2048">        PaymentWorkflowRequest request = PaymentWorkflowRequest.builder().paymentWorkflows(paymentWFList).requestInfo(getRequestInfo()).build();</span>
+<span class="nc" id="L2049">        PaymentResponse response = null;</span>
+<span class="nc" id="L2050">        StringBuilder uri = new StringBuilder(appConfigManager.getEgovCollSerHost()).append(appConfigManager.getCollSerPaymentWorkflow());</span>
+<span class="nc" id="L2051">        response = restTemplate.postForObject(uri.toString(), request , PaymentResponse.class);            </span>
+<span class="nc" id="L2052">        return response;</span>
+    }
+    
+////////added by abhishek compare with new microutils via mail
+public StorageResponse getFileStorageService(final List&lt;MultipartFile&gt; files, String modulename)
+        throws IOException {
+<span class="nc" id="L2058">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L2059">    headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_UTF8_VALUE);</span>
+<span class="nc" id="L2060">    headers.setContentType(MediaType.MULTIPART_FORM_DATA);</span>
+
+<span class="nc" id="L2062">    MultiValueMap&lt;String, Object&gt; map = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="nc" id="L2063">    map.add(&quot;module&quot;, modulename);</span>
+<span class="nc" id="L2064">    map.add(&quot;tenantId&quot;, getTenentId());</span>
+
+<span class="nc" id="L2066">    ByteArrayResource contentsAsResource = null;</span>
+<span class="nc bnc" id="L2067" title="All 2 branches missed.">    for (MultipartFile file : files) {</span>
+<span class="nc" id="L2068">        contentsAsResource = new ByteArrayResource(file.getBytes()) {</span>
+            @Override
+            public String getFilename() {
+<span class="nc" id="L2071">                return file.getOriginalFilename();</span>
+            }
+        };
+<span class="nc" id="L2074">    };</span>
+<span class="nc" id="L2075">    map.add(&quot;file&quot;, contentsAsResource);</span>
+    //map.add(&quot;file&quot;, contentsAsResource);
+   
+<span class="nc" id="L2078">    StringBuilder uri = new StringBuilder(appConfigManager.getEgovFileStoreSerHost())</span>
+<span class="nc" id="L2079">            .append(appConfigManager.getEgovFileStoreUploadFile());</span>
+
+<span class="nc" id="L2081">    HttpEntity&lt;MultiValueMap&lt;String, Object&gt;&gt; request = new HttpEntity&lt;&gt;(map, headers);</span>
+
+<span class="nc" id="L2083">    return restTemplate.postForObject(uri.toString(), request, StorageResponse.class);</span>
+}
+    
+
+public ResponseEntity&lt;byte[]&gt; fetchFilesFromDigitService(String fileStoreId) throws RuntimeException {
+<span class="nc" id="L2088">    Map&lt;String, String&gt; request = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L2089">    String tenantId=getTenentId();</span>
+<span class="nc" id="L2090">    request.put(&quot;tenantId&quot;, tenantId);</span>
+<span class="nc" id="L2091">    request.put(&quot;fileStoreId&quot;, fileStoreId);</span>
+    
+<span class="nc" id="L2093">    StringBuilder uri = new StringBuilder(appConfigManager.getEgovFileStoreSerHost())</span>
+<span class="nc" id="L2094">            .append(appConfigManager.getEgovFileStoreDownloadFile()).append(&quot;?&quot;);</span>
+
+<span class="nc bnc" id="L2096" title="All 2 branches missed.">    if (StringUtils.isNotBlank(tenantId)) {</span>
+<span class="nc" id="L2097">        uri.append(&quot;tenantId=&quot;).append(tenantId);</span>
+    }
+<span class="nc bnc" id="L2099" title="All 2 branches missed.">    if (StringUtils.isNotBlank(fileStoreId)) {</span>
+<span class="nc" id="L2100">        uri.append(&quot;&amp;fileStoreId=&quot;).append(fileStoreId);</span>
+    }
+  
+<span class="nc" id="L2103">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L2104">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM));</span>
+<span class="nc" id="L2105">    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;&gt;(headers);</span>
+<span class="nc" id="L2106">    ResponseEntity&lt;byte[]&gt; response = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, byte[].class);</span>
+<span class="nc" id="L2107">    return response;</span>
+}
+}
+
+
+
+<span class="nc" id="L2113">class FilterRequest {</span>
+    private List&lt;Long&gt; id;
+    
+    private String name;
+
+    private String code;
+
+    @Size(min=8, max=64)
+    @JsonProperty(&quot;names&quot;)
+    private List&lt;String&gt; names;
+
+    @Size(min=1, max=10)
+    @JsonProperty(&quot;codes&quot;)
+    private List&lt;String&gt; codes;
+
+    private Boolean active;
+
+    @NotNull
+    private String tenantId;
+
+    private String sortBy;
+
+    private String sortOrder;
+
+    @Min(1)
+    @Max(500)
+    private Short pageSize;
+
+    private Short pageNumber;
+    
+    private String glcode;
+
+    public List&lt;Long&gt; getId() {
+<span class="nc" id="L2146">        return id;</span>
+    }
+
+    public void setId(List&lt;Long&gt; id) {
+<span class="nc" id="L2150">        this.id = id;</span>
+<span class="nc" id="L2151">    }</span>
+
+    public String getName() {
+<span class="nc" id="L2154">        return name;</span>
+    }
+
+    public void setName(String name) {
+<span class="nc" id="L2158">        this.name = name;</span>
+<span class="nc" id="L2159">    }</span>
+
+    public String getCode() {
+<span class="nc" id="L2162">        return code;</span>
+    }
+
+    public void setCode(String code) {
+<span class="nc" id="L2166">        this.code = code;</span>
+<span class="nc" id="L2167">    }</span>
+
+    public List&lt;String&gt; getNames() {
+<span class="nc" id="L2170">        return names;</span>
+    }
+
+    public void setNames(List&lt;String&gt; names) {
+<span class="nc" id="L2174">        this.names = names;</span>
+<span class="nc" id="L2175">    }</span>
+
+    public List&lt;String&gt; getCodes() {
+<span class="nc" id="L2178">        return codes;</span>
+    }
+
+    public void setCodes(List&lt;String&gt; codes) {
+<span class="nc" id="L2182">        this.codes = codes;</span>
+<span class="nc" id="L2183">    }</span>
+
+    public Boolean getActive() {
+<span class="nc" id="L2186">        return active;</span>
+    }
+
+    public void setActive(Boolean active) {
+<span class="nc" id="L2190">        this.active = active;</span>
+<span class="nc" id="L2191">    }</span>
+
+    public String getSortBy() {
+<span class="nc" id="L2194">        return sortBy;</span>
+    }
+
+    public void setSortBy(String sortBy) {
+<span class="nc" id="L2198">        this.sortBy = sortBy;</span>
+<span class="nc" id="L2199">    }</span>
+
+    public String getSortOrder() {
+<span class="nc" id="L2202">        return sortOrder;</span>
+    }
+
+    public void setSortOrder(String sortOrder) {
+<span class="nc" id="L2206">        this.sortOrder = sortOrder;</span>
+<span class="nc" id="L2207">    }</span>
+
+    public Short getPageSize() {
+<span class="nc" id="L2210">        return pageSize;</span>
+    }
+
+    public void setPageSize(Short pageSize) {
+<span class="nc" id="L2214">        this.pageSize = pageSize;</span>
+<span class="nc" id="L2215">    }</span>
+
+    public Short getPageNumber() {
+<span class="nc" id="L2218">        return pageNumber;</span>
+    }
+
+    public void setPageNumber(Short pageNumber) {
+<span class="nc" id="L2222">        this.pageNumber = pageNumber;</span>
+<span class="nc" id="L2223">    }</span>
+
+	public String getGlcode() {
+<span class="nc" id="L2226">		return glcode;</span>
+	}
+
+	public void setGlcode(String glcode) {
+<span class="nc" id="L2230">		this.glcode = glcode;</span>
+<span class="nc" id="L2231">	}</span>
+    
+    
+    
+	
+    
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillReceiptReq.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.models</a> &gt; <span class="el_source">BillReceiptReq.java</span></div><h1>BillReceiptReq.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.integration.models;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
+
+public class BillReceiptReq {
+
+    @JsonProperty(&quot;billReferenceNum&quot;)
+    private String billReferenceNum;
+    private String event;
+    private String receiptNum;
+    private Date receiptDate;
+    private String payeeName;
+    private String payeeAddress;
+    private Set&lt;ReceiptAccountInfo&gt; accountDetails;
+    private String serviceName;
+    private String paidBy;
+    private String description;
+    private BigDecimal totalAmount;
+    private String receiptURL;
+    private String collectionType;
+    private Boolean legacy;
+    private String additionalInfo;
+    private String source;
+    private String receiptInstrumentType;
+<span class="nc" id="L77">    private String tenantId = null;</span>
+    private String receiptStatus;
+    private String subdivison;
+    private String gstno;
+    
+    
+
+    public BillReceiptReq(BillReceiptInfo billReceipt) {
+<span class="nc" id="L85">        super();</span>
+<span class="nc" id="L86">        this.billReferenceNum = billReceipt.getBillReferenceNum();</span>
+<span class="nc" id="L87">        this.event = billReceipt.getEvent();</span>
+<span class="nc" id="L88">        this.receiptNum = billReceipt.getReceiptNum();</span>
+<span class="nc" id="L89">        this.receiptDate = billReceipt.getReceiptDate();</span>
+<span class="nc" id="L90">        this.payeeName = billReceipt.getPayeeName();</span>
+<span class="nc" id="L91">        this.payeeAddress = billReceipt.getPayeeAddress();</span>
+<span class="nc" id="L92">        this.accountDetails = billReceipt.getAccountDetails();</span>
+<span class="nc" id="L93">        this.serviceName = billReceipt.getServiceName();</span>
+<span class="nc" id="L94">        this.paidBy = billReceipt.getPaidBy();</span>
+<span class="nc" id="L95">        this.subdivison=billReceipt.getSubdivison();</span>
+<span class="nc" id="L96">        this.gstno=billReceipt.getGstno();</span>
+<span class="nc" id="L97">        this.description = billReceipt.getDescription();</span>
+<span class="nc" id="L98">        this.totalAmount = billReceipt.getTotalAmount();</span>
+<span class="nc" id="L99">        this.receiptURL = billReceipt.getReceiptURL();</span>
+<span class="nc" id="L100">        this.collectionType = billReceipt.getCollectionType();</span>
+<span class="nc" id="L101">        this.legacy = billReceipt.getLegacy();</span>
+<span class="nc" id="L102">        this.additionalInfo = billReceipt.getAdditionalInfo();</span>
+<span class="nc" id="L103">        this.source = billReceipt.getSource();</span>
+<span class="nc" id="L104">        this.receiptInstrumentType = billReceipt.getReceiptInstrumentType();</span>
+<span class="nc" id="L105">        this.tenantId = tenantId;</span>
+<span class="nc" id="L106">        this.receiptStatus = billReceipt.getReceiptStatus().getCode();</span>
+<span class="nc" id="L107">    }</span>
+
+    public String getBillReferenceNum() {
+<span class="nc" id="L110">        return billReferenceNum;</span>
+    }
+
+    public void setBillReferenceNum(final String billReferenceNum) {
+<span class="nc" id="L114">        this.billReferenceNum = billReferenceNum;</span>
+<span class="nc" id="L115">    }</span>
+
+    public String getEvent() {
+<span class="nc" id="L118">        return event;</span>
+    }
+
+    public void setEvent(final String event) {
+<span class="nc" id="L122">        this.event = event;</span>
+<span class="nc" id="L123">    }</span>
+
+    public String getReceiptNum() {
+<span class="nc" id="L126">        return receiptNum;</span>
+    }
+
+    public void setReceiptNum(final String receiptNum) {
+<span class="nc" id="L130">        this.receiptNum = receiptNum;</span>
+<span class="nc" id="L131">    }</span>
+
+    public Date getReceiptDate() {
+<span class="nc" id="L134">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(final Date receiptDate) {
+<span class="nc" id="L138">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L139">    }</span>
+
+    public String getPayeeName() {
+<span class="nc" id="L142">        return payeeName;</span>
+    }
+
+    public void setPayeeName(final String payeeName) {
+<span class="nc" id="L146">        this.payeeName = payeeName;</span>
+<span class="nc" id="L147">    }</span>
+
+    public String getPayeeAddress() {
+<span class="nc" id="L150">        return payeeAddress;</span>
+    }
+
+    public void setPayeeAddress(final String payeeAddress) {
+<span class="nc" id="L154">        this.payeeAddress = payeeAddress;</span>
+<span class="nc" id="L155">    }</span>
+
+    public Set&lt;ReceiptAccountInfo&gt; getAccountDetails() {
+<span class="nc" id="L158">        return accountDetails;</span>
+    }
+
+    public void setAccountDetails(final Set&lt;ReceiptAccountInfo&gt; accountDetails) {
+<span class="nc" id="L162">        this.accountDetails = accountDetails;</span>
+<span class="nc" id="L163">    }</span>
+
+    public String getServiceName() {
+<span class="nc" id="L166">        return serviceName;</span>
+    }
+
+    public void setServiceName(final String serviceName) {
+<span class="nc" id="L170">        this.serviceName = serviceName;</span>
+<span class="nc" id="L171">    }</span>
+
+    public String getPaidBy() {
+<span class="nc" id="L174">        return paidBy;</span>
+    }
+
+    public void setPaidBy(final String paidBy) {
+<span class="nc" id="L178">        this.paidBy = paidBy;</span>
+<span class="nc" id="L179">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L182">        return description;</span>
+    }
+
+    public void setDescription(final String description) {
+<span class="nc" id="L186">        this.description = description;</span>
+<span class="nc" id="L187">    }</span>
+
+    public BigDecimal getTotalAmount() {
+<span class="nc" id="L190">        return totalAmount;</span>
+    }
+
+    public void setTotalAmount(final BigDecimal totalAmount) {
+<span class="nc" id="L194">        this.totalAmount = totalAmount;</span>
+<span class="nc" id="L195">    }</span>
+
+    public String getReceiptURL() {
+<span class="nc" id="L198">        return receiptURL;</span>
+    }
+
+    public void setReceiptURL(final String receiptURL) {
+<span class="nc" id="L202">        this.receiptURL = receiptURL;</span>
+<span class="nc" id="L203">    }</span>
+
+    public String getCollectionType() {
+<span class="nc" id="L206">        return collectionType;</span>
+    }
+
+    public void setCollectionType(final String collectionType) {
+<span class="nc" id="L210">        this.collectionType = collectionType;</span>
+<span class="nc" id="L211">    }</span>
+
+    public Boolean getLegacy() {
+<span class="nc" id="L214">        return legacy;</span>
+    }
+
+    public void setLegacy(final Boolean legacy) {
+<span class="nc" id="L218">        this.legacy = legacy;</span>
+<span class="nc" id="L219">    }</span>
+
+    public String getAdditionalInfo() {
+<span class="nc" id="L222">        return additionalInfo;</span>
+    }
+
+    public void setAdditionalInfo(final String additionalInfo) {
+<span class="nc" id="L226">        this.additionalInfo = additionalInfo;</span>
+<span class="nc" id="L227">    }</span>
+
+    public String getSource() {
+<span class="nc" id="L230">        return source;</span>
+    }
+
+    public void setSource(final String source) {
+<span class="nc" id="L234">        this.source = source;</span>
+<span class="nc" id="L235">    }</span>
+
+    public String getReceiptInstrumentType() {
+<span class="nc" id="L238">        return receiptInstrumentType;</span>
+    }
+
+    public void setReceiptInstrumentType(final String receiptInstrumentType) {
+<span class="nc" id="L242">        this.receiptInstrumentType = receiptInstrumentType;</span>
+<span class="nc" id="L243">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L246">        return tenantId;</span>
+    }
+
+    public void setTenantId(final String tenantId) {
+<span class="nc" id="L250">        this.tenantId = tenantId;</span>
+<span class="nc" id="L251">    }</span>
+
+    public String getReceiptStatus() {
+<span class="nc" id="L254">        return receiptStatus;</span>
+    }
+
+    public void setReceiptStatus(final String receiptStatus) {
+<span class="nc" id="L258">        this.receiptStatus = receiptStatus;</span>
+<span class="nc" id="L259">    }</span>
+
+	public String getSubdivison() {
+<span class="nc" id="L262">		return subdivison;</span>
+	}
+
+	public void setSubdivison(String subdivison) {
+<span class="nc" id="L266">		this.subdivison = subdivison;</span>
+<span class="nc" id="L267">	}</span>
+
+	public String getGstno() {
+<span class="nc" id="L270">		return gstno;</span>
+	}
+
+	public void setGstno(String gstno) {
+<span class="nc" id="L274">		this.gstno = gstno;</span>
+<span class="nc" id="L275">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeStatisticsDashboardService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service.es.dashboard</a> &gt; <span class="el_source">EmployeeStatisticsDashboardService.java</span></div><h1>EmployeeStatisticsDashboardService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.eis.service.es.dashboard;
+
+import org.egov.eis.es.dashboard.EmployeeCountResponse;
+import org.egov.eis.es.dashboard.EmployeeDetailRequest;
+import org.egov.eis.es.utils.EISDashBoardUtils;
+import org.egov.eis.utils.constants.EisConstants;
+import org.egov.infra.utils.StringUtils;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+<span class="nc" id="L73">public class EmployeeStatisticsDashboardService {</span>
+
+    private static final String AGGRFIELD = &quot;aggrField&quot;;
+    private static final String AGGRTYPE = &quot;_type&quot;;
+    private static final String TOTALEMPLOYEE = &quot;totalEmployee&quot;;
+    private static final String TOTALMALE = &quot;totalMale&quot;;
+    private static final String TOTALFEMALE = &quot;totalFemale&quot;;
+    private static final String TOTALPERMANENTEMPLOYEE = &quot;totalPermanentEmployee&quot;;
+    private static final String TOTALPERMANENTMALE = &quot;totalPermanentMale&quot;;
+    private static final String TOTALPERMANENTFEMALE = &quot;totalPermanentFemale&quot;;
+    private static final String TOTALDEPEMPLOYEE = &quot;totalDepEmployee&quot;;
+    private static final String TOTALDEPMALE = &quot;totalDepMale&quot;;
+    private static final String TOTALDEPFEMALE = &quot;totalDepFemale&quot;;
+    private static final String TOTALTEMPEMPLOYEE = &quot;totalTemporaryEmployee&quot;;
+    private static final String TOTALTEMPMALE = &quot;totalTemporaryMale&quot;;
+    private static final String TOTALTEMPFEMALE = &quot;totalTemporaryFemale&quot;;
+    private static final String TOTALOUTSOURCEDEMPLOYEE = &quot;totalOutsourcedEmployee&quot;;
+    private static final String TOTALOUTSOURCEDMALE = &quot;totalOutsourcedMale&quot;;
+    private static final String TOTALOUTSOURCEDFEMALE = &quot;totalOutsourcedFemale&quot;;
+    private static final String DEPUTATION = &quot;Deputation&quot;;
+    private static final String TEMPORARY = &quot;Temporary&quot;;
+    private static final String OUTSOURCED = &quot;Outsourced&quot;;
+    private static final String SANCTIONED = &quot;sanctioned&quot;;
+    private static final String WORKING = &quot;working&quot;;
+    private static final String VACANT = &quot;vacant&quot;;
+
+    private static final String EMPLOYEERECORDS = &quot;employeerecords&quot;;
+    private static final String MALE = &quot;Male&quot;;
+    private static final String FEMALE = &quot;Female&quot;;
+
+    @Autowired
+    private ElasticsearchTemplate elasticsearchTemplate;
+
+    public List&lt;EmployeeCountResponse&gt; getEmployeeCount(EmployeeDetailRequest employeesDetailRequest, BoolQueryBuilder boolQry, String aggrField) {
+<span class="nc" id="L107">        List&lt;EmployeeCountResponse&gt; employeeCountResponses = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L108">        Map&lt;String, SearchResponse&gt; empSearchResponse = getResponseFromIndex(employeesDetailRequest, boolQry, aggrField);</span>
+
+<span class="nc" id="L110">        Map&lt;String, EmployeeCountResponse&gt; empCountRes = new HashMap&lt;&gt;();</span>
+        Map&lt;String, EmployeeCountResponse&gt; employeeCountRes;
+
+<span class="nc" id="L113">        StringTerms aggrEmp = empSearchResponse.get(TOTALEMPLOYEE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L114">        StringTerms aggrMale = empSearchResponse.get(TOTALMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L115">        StringTerms aggrFemale = empSearchResponse.get(TOTALFEMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L116">        StringTerms aggrPermanentEmp = empSearchResponse.get(TOTALPERMANENTEMPLOYEE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L117">        StringTerms aggrPermanentMale = empSearchResponse.get(TOTALPERMANENTMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L118">        StringTerms aggrPermanentFemale = empSearchResponse.get(TOTALPERMANENTFEMALE).getAggregations().get(AGGRFIELD);</span>
+
+<span class="nc" id="L120">        StringTerms aggrDepEmp = empSearchResponse.get(TOTALDEPEMPLOYEE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L121">        StringTerms aggrDepMale = empSearchResponse.get(TOTALDEPMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L122">        StringTerms aggrDepFemale = empSearchResponse.get(TOTALDEPFEMALE).getAggregations().get(AGGRFIELD);</span>
+
+<span class="nc" id="L124">        StringTerms aggrTempEmp = empSearchResponse.get(TOTALTEMPEMPLOYEE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L125">        StringTerms aggrTempMale = empSearchResponse.get(TOTALTEMPMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L126">        StringTerms aggrTempFemale = empSearchResponse.get(TOTALTEMPFEMALE).getAggregations().get(AGGRFIELD);</span>
+
+<span class="nc" id="L128">        StringTerms aggrOutsourceEmp = empSearchResponse.get(TOTALOUTSOURCEDEMPLOYEE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L129">        StringTerms aggrOutsourceMale = empSearchResponse.get(TOTALOUTSOURCEDMALE).getAggregations().get(AGGRFIELD);</span>
+<span class="nc" id="L130">        StringTerms aggrOutsourceFemale = empSearchResponse.get(TOTALOUTSOURCEDFEMALE).getAggregations().get(AGGRFIELD);</span>
+
+<span class="nc" id="L132">        StringTerms aggrSanctionedPosts = empSearchResponse.get(SANCTIONED).getAggregations().get(AGGRFIELD);</span>
+
+<span class="nc" id="L134">        employeeCountRes = empCountRes;</span>
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        for (final Terms.Bucket entry : aggrEmp.getBuckets()) {</span>
+
+<span class="nc" id="L138">            String keyName = entry.getKeyAsString();</span>
+<span class="nc" id="L139">            final TopHits topHits = entry.getAggregations().get(&quot;employeerecords&quot;);</span>
+
+<span class="nc" id="L141">            EmployeeCountResponse empCountResponse = new EmployeeCountResponse();</span>
+
+<span class="nc" id="L143">            ValueCount aggregation = entry.getAggregations().get(EisConstants.EMPLOYEE_CODE);</span>
+<span class="nc" id="L144">            Long countEmp = aggregation.getValue();</span>
+<span class="nc" id="L145">            empCountResponse.setTotalEmployee(countEmp);</span>
+<span class="nc" id="L146">            empCountResponse.setTotalMale(getTotalCountForAggrField(aggrMale, keyName));</span>
+<span class="nc" id="L147">            empCountResponse.setTotalFemale(getTotalCountForAggrField(aggrFemale, keyName));</span>
+<span class="nc" id="L148">            empCountResponse.setTotalRegularEmployee(getTotalCountForAggrField(aggrPermanentEmp, keyName) + getTotalCountForAggrField(aggrDepEmp, keyName));</span>
+<span class="nc" id="L149">            empCountResponse.setTotalRegularMale(getTotalCountForAggrField(aggrPermanentMale, keyName) + getTotalCountForAggrField(aggrDepMale, keyName));</span>
+<span class="nc" id="L150">            empCountResponse.setTotalRegularFemale(getTotalCountForAggrField(aggrPermanentFemale, keyName) + getTotalCountForAggrField(aggrDepFemale, keyName));</span>
+<span class="nc" id="L151">            empCountResponse.setTotalContractEmployee(getTotalCountForAggrField(aggrTempEmp, keyName) + getTotalCountForAggrField(aggrOutsourceEmp, keyName));</span>
+<span class="nc" id="L152">            empCountResponse.setTotalContractMale(getTotalCountForAggrField(aggrTempMale, keyName) + getTotalCountForAggrField(aggrOutsourceMale, keyName));</span>
+<span class="nc" id="L153">            empCountResponse.setTotalContractFemale(getTotalCountForAggrField(aggrTempFemale, keyName) + getTotalCountForAggrField(aggrOutsourceFemale, keyName));</span>
+<span class="nc" id="L154">            setTotalSumForAggrField(empCountResponse, aggrSanctionedPosts, keyName);</span>
+
+<span class="nc" id="L156">            setValues(employeesDetailRequest, empCountResponse, topHits, aggrField, keyName);</span>
+<span class="nc" id="L157">            empCountRes.put(keyName, empCountResponse);</span>
+<span class="nc" id="L158">        }</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (!employeeCountRes.isEmpty())</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            for (EmployeeCountResponse response : employeeCountRes.values())</span>
+<span class="nc" id="L162">                employeeCountResponses.add(response);</span>
+<span class="nc" id="L163">        return employeeCountResponses;</span>
+    }
+
+    private Long getTotalCountForAggrField(StringTerms aggrEmployeeData, String keyName) {
+<span class="nc" id="L167">        Long count = 0L;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        for (final Terms.Bucket empEntry : aggrEmployeeData.getBuckets()) {</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (keyName.equalsIgnoreCase(empEntry.getKeyAsString())) {</span>
+<span class="nc" id="L170">                ValueCount aggrValue = empEntry.getAggregations().get(EisConstants.EMPLOYEE_CODE);</span>
+<span class="nc" id="L171">                count = aggrValue.getValue();</span>
+            }
+<span class="nc" id="L173">        }</span>
+<span class="nc" id="L174">        return count;</span>
+    }
+
+    private void setTotalSumForAggrField(EmployeeCountResponse empCountResponse, StringTerms aggrSanctionedPosts, String keyName) {
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        for (final Terms.Bucket entry : aggrSanctionedPosts.getBuckets()) {</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (keyName.equalsIgnoreCase(entry.getKeyAsString())) {</span>
+
+<span class="nc" id="L182">                final Sum aggrSanction = entry.getAggregations().get(SANCTIONED);</span>
+<span class="nc" id="L183">                final Sum aggrWorking = entry.getAggregations().get(WORKING);</span>
+<span class="nc" id="L184">                final Sum aggrVacant = entry.getAggregations().get(VACANT);</span>
+
+<span class="nc" id="L186">                empCountResponse.setTotalSanctioned(Double.valueOf(aggrSanction.getValue()).longValue());</span>
+<span class="nc" id="L187">                empCountResponse.setTotalWorking(Double.valueOf(aggrWorking.getValue()).longValue());</span>
+<span class="nc" id="L188">                empCountResponse.setTotalVacant(Double.valueOf(aggrVacant.getValue()).longValue());</span>
+
+            }
+<span class="nc" id="L191">        }</span>
+<span class="nc" id="L192">    }</span>
+
+
+    private Map&lt;String, SearchResponse&gt; getResponseFromIndex(EmployeeDetailRequest employeeDetailRequest, BoolQueryBuilder boolQuery, String aggrField) {
+
+<span class="nc" id="L197">        Map&lt;String, SearchResponse&gt; empSearchResponse = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (StringUtils.isBlank(aggrField)) {</span>
+<span class="nc" id="L199">            aggrField = AGGRTYPE;</span>
+        }
+
+<span class="nc" id="L202">        empSearchResponse.put(TOTALEMPLOYEE, getResponseFromIndexForTotalCount(boolQuery, aggrField));</span>
+
+<span class="nc" id="L204">        BoolQueryBuilder filterTypeQuery = boolQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, EisConstants.EMPLOYEE_TYPE_PERMANENT));</span>
+<span class="nc" id="L205">        empSearchResponse.put(TOTALPERMANENTEMPLOYEE, getResponseFromIndexForTotalCount(filterTypeQuery, aggrField));</span>
+
+<span class="nc" id="L207">        filterTypeQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, MALE));</span>
+<span class="nc" id="L208">        empSearchResponse.put(TOTALPERMANENTMALE, getResponseFromIndexForTotalCount(filterTypeQuery, aggrField));</span>
+
+<span class="nc" id="L210">        BoolQueryBuilder boolQueryBuilder = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L211">        boolQueryBuilder.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, EisConstants.EMPLOYEE_TYPE_PERMANENT))</span>
+<span class="nc" id="L212">                .must(QueryBuilders.matchQuery(EisConstants.GENDER, FEMALE));</span>
+<span class="nc" id="L213">        empSearchResponse.put(TOTALPERMANENTFEMALE, getResponseFromIndexForTotalCount(boolQueryBuilder, aggrField));</span>
+
+<span class="nc" id="L215">        BoolQueryBuilder filterMaleQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L216">        filterMaleQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, MALE));</span>
+<span class="nc" id="L217">        empSearchResponse.put(TOTALMALE, getResponseFromIndexForTotalCount(filterMaleQuery, aggrField));</span>
+
+<span class="nc" id="L219">        BoolQueryBuilder filterFemaleQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L220">        filterFemaleQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, FEMALE));</span>
+<span class="nc" id="L221">        empSearchResponse.put(TOTALFEMALE, getResponseFromIndexForTotalCount(filterFemaleQuery, aggrField));</span>
+
+<span class="nc" id="L223">        getDeputationTypeResonse(employeeDetailRequest, empSearchResponse, aggrField);</span>
+<span class="nc" id="L224">        getTemporaryTypeResonse(employeeDetailRequest, empSearchResponse, aggrField);</span>
+<span class="nc" id="L225">        getOutsourcedTypeResonse(employeeDetailRequest, empSearchResponse, aggrField);</span>
+<span class="nc" id="L226">        getSanctionedPostsResponse(employeeDetailRequest, empSearchResponse, aggrField);</span>
+
+<span class="nc" id="L228">        return empSearchResponse;</span>
+    }
+
+    private void getSanctionedPostsResponse(EmployeeDetailRequest employeeDetailRequest, Map&lt;String, SearchResponse&gt; empSearchResponse, String aggrField) {
+<span class="nc" id="L232">        BoolQueryBuilder filterPostsQuery = EISDashBoardUtils.prepareWhereClause(employeeDetailRequest, QueryBuilders.boolQuery());</span>
+<span class="nc" id="L233">        empSearchResponse.put(SANCTIONED, getResponseFromIndexForSanctionedPosts(filterPostsQuery, aggrField));</span>
+<span class="nc" id="L234">    }</span>
+
+    private void getDeputationTypeResonse(EmployeeDetailRequest employeeDetailRequest, Map&lt;String, SearchResponse&gt; empSearchResponse, String aggrField) {
+<span class="nc" id="L237">        BoolQueryBuilder filterDepTypeQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+
+<span class="nc" id="L239">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, DEPUTATION));</span>
+<span class="nc" id="L240">        empSearchResponse.put(TOTALDEPEMPLOYEE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L242">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, MALE));</span>
+<span class="nc" id="L243">        empSearchResponse.put(TOTALDEPMALE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L245">        BoolQueryBuilder filterDepFemaleQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L246">        filterDepFemaleQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, DEPUTATION))</span>
+<span class="nc" id="L247">                .must(QueryBuilders.matchQuery(EisConstants.GENDER, FEMALE));</span>
+<span class="nc" id="L248">        empSearchResponse.put(TOTALDEPFEMALE, getResponseFromIndexForTotalCount(filterDepFemaleQuery, aggrField));</span>
+<span class="nc" id="L249">    }</span>
+
+    private void getTemporaryTypeResonse(EmployeeDetailRequest employeeDetailRequest, Map&lt;String, SearchResponse&gt; empSearchResponse, String aggrField) {
+<span class="nc" id="L252">        BoolQueryBuilder filterDepTypeQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+
+<span class="nc" id="L254">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, TEMPORARY));</span>
+<span class="nc" id="L255">        empSearchResponse.put(TOTALTEMPEMPLOYEE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L257">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, MALE));</span>
+<span class="nc" id="L258">        empSearchResponse.put(TOTALTEMPMALE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L260">        BoolQueryBuilder filterDepFemaleQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L261">        filterDepFemaleQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, TEMPORARY))</span>
+<span class="nc" id="L262">                .must(QueryBuilders.matchQuery(EisConstants.GENDER, FEMALE));</span>
+<span class="nc" id="L263">        empSearchResponse.put(TOTALTEMPFEMALE, getResponseFromIndexForTotalCount(filterDepFemaleQuery, aggrField));</span>
+<span class="nc" id="L264">    }</span>
+
+    private void getOutsourcedTypeResonse(EmployeeDetailRequest employeeDetailRequest, Map&lt;String, SearchResponse&gt; empSearchResponse, String aggrField) {
+<span class="nc" id="L267">        BoolQueryBuilder filterDepTypeQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+
+<span class="nc" id="L269">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, OUTSOURCED));</span>
+<span class="nc" id="L270">        empSearchResponse.put(TOTALOUTSOURCEDEMPLOYEE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L272">        filterDepTypeQuery.must(QueryBuilders.matchQuery(EisConstants.GENDER, MALE));</span>
+<span class="nc" id="L273">        empSearchResponse.put(TOTALOUTSOURCEDMALE, getResponseFromIndexForTotalCount(filterDepTypeQuery, aggrField));</span>
+
+<span class="nc" id="L275">        BoolQueryBuilder filterDepFemaleQuery = EISDashBoardUtils.prepareWhereClauseForEmployees(employeeDetailRequest);</span>
+<span class="nc" id="L276">        filterDepFemaleQuery.must(QueryBuilders.matchQuery(EisConstants.EMPLOYEE_TYPE, OUTSOURCED))</span>
+<span class="nc" id="L277">                .must(QueryBuilders.matchQuery(EisConstants.GENDER, FEMALE));</span>
+<span class="nc" id="L278">        empSearchResponse.put(TOTALOUTSOURCEDFEMALE, getResponseFromIndexForTotalCount(filterDepFemaleQuery, aggrField));</span>
+<span class="nc" id="L279">    }</span>
+
+    private SearchResponse getResponseFromIndexForTotalCount(BoolQueryBuilder boolQuery, String aggrField) {
+<span class="nc" id="L282">        return elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L283">                .prepareSearch(EisConstants.EMPLOYEE_INDEX_NAME).setQuery(boolQuery)</span>
+<span class="nc" id="L284">                .addAggregation(AggregationBuilders.terms(AGGRFIELD).field(aggrField).size(5000)</span>
+<span class="nc" id="L285">                        .subAggregation(</span>
+<span class="nc" id="L286">                                AggregationBuilders.count(EisConstants.EMPLOYEE_CODE).field(EisConstants.EMPLOYEE_CODE))</span>
+<span class="nc" id="L287">                        .subAggregation(AggregationBuilders.topHits(EMPLOYEERECORDS).addField(EisConstants.DISTNAME)</span>
+<span class="nc" id="L288">                                .addField(EisConstants.ULBNAME)</span>
+<span class="nc" id="L289">                                .addField(EisConstants.ULBGRADE).addField(EisConstants.REGNAME)</span>
+<span class="nc" id="L290">                                .addField(EisConstants.DEPARTMENT_NAME.toLowerCase())</span>
+<span class="nc" id="L291">                                .setSize(1)))</span>
+<span class="nc" id="L292">                .execute().actionGet();</span>
+    }
+
+    private SearchResponse getResponseFromIndexForSanctionedPosts(BoolQueryBuilder boolQuery, String aggrField) {
+<span class="nc" id="L296">        return elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L297">                .prepareSearch(EisConstants.EMPLOYEE_SANCTIONEDPOSTS_INDEX_NAME).setQuery(boolQuery)</span>
+<span class="nc" id="L298">                .addAggregation(AggregationBuilders.terms(AGGRFIELD).field(aggrField).size(5000)</span>
+<span class="nc" id="L299">                        .subAggregation(</span>
+<span class="nc" id="L300">                                AggregationBuilders.sum(SANCTIONED).field(SANCTIONED))</span>
+<span class="nc" id="L301">                        .subAggregation(</span>
+<span class="nc" id="L302">                                AggregationBuilders.sum(WORKING).field(WORKING))</span>
+<span class="nc" id="L303">                        .subAggregation(</span>
+<span class="nc" id="L304">                                AggregationBuilders.sum(VACANT).field(VACANT))</span>
+<span class="nc" id="L305">                        .subAggregation(AggregationBuilders.topHits(EMPLOYEERECORDS).addField(EisConstants.DISTNAME)</span>
+<span class="nc" id="L306">                                .addField(EisConstants.ULBNAME)</span>
+<span class="nc" id="L307">                                .addField(EisConstants.ULBGRADE).addField(EisConstants.REGNAME)</span>
+<span class="nc" id="L308">                                .addField(EisConstants.DEPARTMENT_NAME.toLowerCase())</span>
+<span class="nc" id="L309">                                .setSize(1)))</span>
+<span class="nc" id="L310">                .execute().actionGet();</span>
+    }
+
+    private void setValues(EmployeeDetailRequest employeeDetailRequest, EmployeeCountResponse response, TopHits topHits,
+                           String aggrField, String keyName) {
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (employeeDetailRequest.getRegion() != null) {</span>
+<span class="nc" id="L317">            response.setRegion(employeeDetailRequest.getRegion());</span>
+        }
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if (employeeDetailRequest.getDistrict() != null) {</span>
+<span class="nc" id="L320">            response.setDistrict(employeeDetailRequest.getDistrict());</span>
+        }
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (employeeDetailRequest.getGrade() != null) {</span>
+<span class="nc" id="L323">            response.setUlbName(employeeDetailRequest.getGrade());</span>
+        }
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (employeeDetailRequest.getDepartmentName() != null) {</span>
+<span class="nc" id="L326">            response.setDepartment(employeeDetailRequest.getDepartmentName());</span>
+        }
+<span class="nc bnc" id="L328" title="All 2 branches missed.">        if (employeeDetailRequest.getUlbCode() != null) {</span>
+<span class="nc" id="L329">            response.setUlbCode(employeeDetailRequest.getUlbCode());</span>
+<span class="nc" id="L330">            setDepartmentAggrValues(response, aggrField, topHits);</span>
+        }
+
+<span class="nc" id="L333">        setAggregationFieldValues(response, aggrField, topHits, keyName);</span>
+<span class="nc" id="L334">    }</span>
+
+    private void setDepartmentAggrValues(EmployeeCountResponse response, String aggrField, TopHits topHits) {
+<span class="nc" id="L337">        final SearchHit[] hit = topHits.getHits().getHits();</span>
+
+<span class="nc" id="L339">        String regionName = hit[0].field(EisConstants.REGNAME).getValue();</span>
+<span class="nc" id="L340">        String districtName = hit[0].field(EisConstants.DISTNAME).getValue();</span>
+<span class="nc" id="L341">        String grade = hit[0].field(EisConstants.ULBGRADE).getValue();</span>
+<span class="nc" id="L342">        String ulb = hit[0].field(EisConstants.ULBNAME).getValue();</span>
+
+<span class="nc bnc" id="L344" title="All 2 branches missed.">        if (&quot;department&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L345">            response.setDistrict(districtName);</span>
+<span class="nc" id="L346">            response.setRegion(regionName);</span>
+<span class="nc" id="L347">            response.setUlbName(ulb);</span>
+<span class="nc" id="L348">            response.setGrade(grade);</span>
+        }
+<span class="nc" id="L350">    }</span>
+
+    private void setAggregationFieldValues(EmployeeCountResponse response, String aggrField, TopHits topHits, String keyName) {
+<span class="nc" id="L353">        final SearchHit[] hit = topHits.getHits().getHits();</span>
+
+<span class="nc" id="L355">        String regName = hit[0].field(EisConstants.REGNAME).getValue();</span>
+<span class="nc" id="L356">        String disName = hit[0].field(EisConstants.DISTNAME).getValue();</span>
+<span class="nc" id="L357">        String ulbGrade = hit[0].field(EisConstants.ULBGRADE).getValue();</span>
+<span class="nc" id="L358">        String ulbName = hit[0].field(EisConstants.ULBNAME).getValue();</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        String department = hit[0].field(EisConstants.DEPARTMENT_NAME) == null ? &quot;&quot; : hit[0].field(EisConstants.DEPARTMENT_NAME).getValue();</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">        if (&quot;regname&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L361">            response.setRegion(regName);</span>
+        }
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if (&quot;distname&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L364">            response.setRegion(regName);</span>
+<span class="nc" id="L365">            response.setDistrict(keyName);</span>
+        }
+<span class="nc bnc" id="L367" title="All 2 branches missed.">        if (&quot;ulbcode&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L368">            response.setDistrict(disName);</span>
+<span class="nc" id="L369">            response.setRegion(regName);</span>
+<span class="nc" id="L370">            response.setUlbName(ulbName);</span>
+<span class="nc" id="L371">            response.setGrade(ulbGrade);</span>
+<span class="nc" id="L372">            response.setUlbCode(keyName);</span>
+        }
+<span class="nc bnc" id="L374" title="All 2 branches missed.">        if (&quot;ulbgrade&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L375">            response.setGrade(ulbGrade);</span>
+        }
+<span class="nc bnc" id="L377" title="All 2 branches missed.">        if (&quot;department&quot;.equalsIgnoreCase(aggrField)) {</span>
+<span class="nc" id="L378">            response.setDepartment(department);</span>
+        }
+<span class="nc" id="L380">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

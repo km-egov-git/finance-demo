@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DuplicateFormSubmissionInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.spring.interceptor</a> &gt; <span class="el_source">DuplicateFormSubmissionInterceptor.java</span></div><h1>DuplicateFormSubmissionInterceptor.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.spring.interceptor;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.StringUtils;
+import org.egov.infra.web.spring.annotation.DuplicateRequestToken;
+import org.egov.infra.web.spring.annotation.ValidateToken;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@Component
+<span class="nc" id="L71">public class DuplicateFormSubmissionInterceptor extends HandlerInterceptorAdapter {</span>
+    private static final String TOKEN_NAME = &quot;tokenName&quot;;
+    private static final String ERROR_PAGE = &quot;/error/409&quot;;
+<span class="nc" id="L74">    private String errorPage = ERROR_PAGE;</span>
+
+    public void setErrorPage(final String errorPage) {
+<span class="nc" id="L77">        this.errorPage = errorPage;</span>
+<span class="nc" id="L78">    }</span>
+
+    @Override
+    public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler)
+            throws Exception {
+<span class="nc bnc" id="L83" title="All 4 branches missed.">        if (handler != null &amp;&amp; handler instanceof HandlerMethod</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                &amp;&amp; ((HandlerMethod) handler).getMethodAnnotation(ValidateToken.class) != null) {</span>
+<span class="nc" id="L85">            final HttpSession session = request.getSession();</span>
+<span class="nc" id="L86">            synchronized (session) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (havingValidToken(request, session))</span>
+<span class="nc" id="L88">                    removeToken(request, session);</span>
+                else {
+<span class="nc" id="L90">                    response.sendRedirect(request.getContextPath() + errorPage);</span>
+<span class="nc" id="L91">                    return false;</span>
+                }
+<span class="nc" id="L93">            }</span>
+        }
+<span class="nc" id="L95">        return super.preHandle(request, response, handler);</span>
+    }
+
+    @Override
+    public void postHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler,
+            final ModelAndView modelAndView) throws Exception {
+<span class="nc bnc" id="L101" title="All 4 branches missed.">        if (handler != null &amp;&amp; handler instanceof HandlerMethod) {</span>
+<span class="nc" id="L102">            final HandlerMethod handlerMethod = (HandlerMethod) handler;</span>
+<span class="nc" id="L103">            final HttpSession session = request.getSession();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            if (handlerMethod.getMethodAnnotation(DuplicateRequestToken.class) != null)</span>
+<span class="nc" id="L105">                addToken(request, session);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            else if (handlerMethod.getMethodAnnotation(ValidateToken.class) != null) {</span>
+<span class="nc" id="L107">                final BindingResult bindingResult = getBindingResult(modelAndView);</span>
+<span class="nc bnc" id="L108" title="All 4 branches missed.">                if (bindingResult != null &amp;&amp; bindingResult.hasErrors())</span>
+<span class="nc" id="L109">                    addToken(request, session);</span>
+            }
+        }
+<span class="nc" id="L112">    }</span>
+
+    private static BindingResult getBindingResult(final ModelAndView modelAndView) {
+<span class="nc" id="L115">        final Set&lt;String&gt; paramNames = modelAndView.getModelMap().keySet();</span>
+<span class="nc" id="L116">        return (BindingResult) modelAndView.getModelMap().get(</span>
+<span class="nc" id="L117">                paramNames.parallelStream().filter(e -&gt; e.startsWith(BindingResult.MODEL_KEY_PREFIX)).findFirst().get());</span>
+    }
+
+    private void addToken(final HttpServletRequest request, final HttpSession session) {
+<span class="nc" id="L121">        final String tokenName = RandomStringUtils.randomAlphanumeric(10);</span>
+<span class="nc" id="L122">        final String tokenValue = UUID.randomUUID().toString();</span>
+<span class="nc" id="L123">        scheduleForRemoval(session, tokenName);</span>
+<span class="nc" id="L124">        request.setAttribute(TOKEN_NAME, tokenName);</span>
+<span class="nc" id="L125">        request.setAttribute(tokenName, tokenValue);</span>
+<span class="nc" id="L126">        session.setAttribute(tokenName, tokenValue);</span>
+<span class="nc" id="L127">    }</span>
+
+    private boolean havingValidToken(final HttpServletRequest request, final HttpSession session) {
+<span class="nc" id="L130">        final String tokenName = StringUtils.defaultString(request.getParameter(TOKEN_NAME), &quot;NOTOKEN&quot;);</span>
+<span class="nc" id="L131">        final String tokenValue = request.getParameter(tokenName);</span>
+<span class="nc bnc" id="L132" title="All 4 branches missed.">        return !(tokenValue == null || session.getAttribute(tokenName) == null || !session.getAttribute(tokenName)</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                .equals(tokenValue));</span>
+    }
+
+    private void removeToken(final HttpServletRequest request, final HttpSession session) {
+<span class="nc" id="L137">        session.removeAttribute(request.getParameter(TOKEN_NAME));</span>
+<span class="nc" id="L138">    }</span>
+
+    private final static long ORPHEN_TOKEN_REMOVAL_DELAY = 30 * 60 * 1000; // 30 minutes
+<span class="nc" id="L141">    private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();</span>
+
+    private static void scheduleForRemoval(final HttpSession session, final String tokenName) {
+<span class="nc" id="L144">        final Runnable tokenRemoverTask = () -&gt; {</span>
+<span class="nc" id="L145">            try {session.removeAttribute(tokenName);}catch(Exception e) {}</span>
+<span class="nc" id="L146">        };</span>
+<span class="nc" id="L147">        executor.schedule(tokenRemoverTask, ORPHEN_TOKEN_REMOVAL_DELAY, TimeUnit.MILLISECONDS);</span>
+<span class="nc" id="L148">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SbimopsAdaptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.pgi</a> &gt; <span class="el_source">SbimopsAdaptor.java</span></div><h1>SbimopsAdaptor.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.pgi;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.egov.collection.config.properties.CollectionApplicationProperties;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infstr.models.ServiceDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.gson.JsonObject;
+
+/**
+ * The PaymentRequestAdaptor class frames the request object for the payment service.
+ */
+<span class="nc" id="L90">public class SbimopsAdaptor implements PaymentGatewayAdaptor {</span>
+<span class="nc" id="L91">    private static final Logger LOGGER = Logger.getLogger(SbimopsAdaptor.class);</span>
+    private static final String SBIMOPS_HOA_FORMAT = &quot;%-19sVN&quot;;
+    private static final String REQUEST_CONTENT_TYPE = &quot;application/json&quot;;
+
+    // SBIMOPS payment gateway variables
+    public static final String SBIMOPS_DEPTCODE = &quot;deptcode&quot;;
+    public static final String SBIMOPS_DDCODE = &quot;ddocode&quot;;
+    public static final String SBIMOPS_HOA = &quot;hoa&quot;;
+    public static final String SBIMOPS_DEPTTRANSID = &quot;depttransid&quot;;
+    public static final String SBIMOPS_REMITTER_NAME = &quot;remittersname&quot;;
+    public static final String SBIMOPS_TAMOUNT = &quot;tamount&quot;;
+    public static final String SBIMOPS_MD = &quot;MD&quot;;
+    public static final String SBIMOPS_DRU = &quot;dru&quot;;
+    public static final String SBIMOPS_BANKSTATUS = &quot;bankstatus&quot;;
+    public static final String SBIMOPS_BANK_DATE = &quot;bankdate&quot;;
+    public static final String SBIMOPS_BANK_AMOUNT = &quot;bankamount&quot;;
+    public static final String SBIMOPS_BANK_NAME = &quot;bankname&quot;;
+    public static final String SBIMOPS_UAMOUNT = &quot;uamount&quot;;
+
+    public static final String SBIMOPS_DC = &quot;DC&quot;;
+    public static final String SBIMOPS_DTID = &quot;DTID&quot;;
+    public static final String SBIMOPS_RN = &quot;RN&quot;;
+    public static final String SBIMOPS_RID = &quot;RID&quot;;
+    public static final String SBIMOPS_TA = &quot;TA&quot;;
+    public static final String SBIMOPS_CH = &quot;Ch&quot;;
+    public static final String SBIMOPS_RURL = &quot;RUrl&quot;;
+    public static final String SBIMOPS_CFMS_TRID = &quot;CFMS_TRID&quot;;
+    public static final String SBIMOPS_BANKTIME_STAMP = &quot;BankTimeStamp&quot;;
+    public static final String SBIMOPS_STATUS = &quot;Status&quot;;
+
+    // SBIMOPS reconciliation parameters name
+    public static final String SBIMOPS_DEPTTID = &quot;DEPTTID&quot;;
+    public static final String SBIMOPS_ROW = &quot;ROW&quot;;
+    public static final String SBIMOPS_RECORDSET = &quot;RECORDSET&quot;;
+    public static final String SBIMOPS_CFMSID = &quot;CFMSID&quot;;
+    public static final String SBIMOPS_TAMT = &quot;TAMT&quot;;
+    public static final String SBIMOPS_BNKDT = &quot;BNKDT&quot;;
+
+    public static final String MESSAGEKEY_SBIMOPS_DC = &quot;sbimops.department.code&quot;;
+
+<span class="nc" id="L131">    private static final ArrayList&lt;String&gt; SBIMOPS_CODES_WAITINGFOR_PG_RESPONSE = new ArrayList&lt;String&gt;() {</span>
+        {
+<span class="nc" id="L133">            add(&quot;Pending&quot;);</span>
+<span class="nc" id="L134">            add(&quot;P&quot;);</span>
+<span class="nc" id="L135">            add(&quot;Z&quot;);</span>
+<span class="nc" id="L136">        }</span>
+    };
+
+    @Autowired
+    private CollectionApplicationProperties collectionApplicationProperties;
+
+    /**
+     * This method invokes APIs to frame request object for the payment service passed as parameter
+     *
+     * @param serviceDetails
+     * @param receiptHeader
+     * @return
+     */
+    @Override
+    public PaymentRequest createPaymentRequest(final ServiceDetails paymentServiceDetails, final ReceiptHeader receiptHeader) {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L152">            LOGGER.debug(&quot; Inside SbimopsAdaptor-createPaymentRequest &quot;);</span>
+<span class="nc" id="L153">        final DefaultPaymentRequest sbiPaymentRequest = new DefaultPaymentRequest();</span>
+<span class="nc" id="L154">        sbiPaymentRequest.setParameter(SBIMOPS_DC,</span>
+<span class="nc" id="L155">                collectionApplicationProperties.sbimopsDepartmentcode(MESSAGEKEY_SBIMOPS_DC));</span>
+<span class="nc" id="L156">        StringBuilder transactionId = new StringBuilder(receiptHeader.getId().toString())</span>
+<span class="nc" id="L157">                .append(CollectionConstants.SEPARATOR_HYPHEN)</span>
+<span class="nc" id="L158">                .append(receiptHeader.getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L159">        sbiPaymentRequest.setParameter(SBIMOPS_DTID, transactionId.toString());</span>
+<span class="nc" id="L160">        sbiPaymentRequest.setParameter(SBIMOPS_RN, receiptHeader.getPayeeName());</span>
+<span class="nc" id="L161">        sbiPaymentRequest.setParameter(SBIMOPS_RID, receiptHeader.getConsumerCode());</span>
+<span class="nc" id="L162">        sbiPaymentRequest.setParameter(SBIMOPS_TA, receiptHeader.getTotalAmount());</span>
+<span class="nc" id="L163">        final StringBuilder chStringBuilder = new StringBuilder((String.format(SBIMOPS_HOA_FORMAT,</span>
+<span class="nc" id="L164">                collectionApplicationProperties.sbimopsHoa(ApplicationThreadLocals.getCityCode()))).replace(' ', '0'));</span>
+<span class="nc" id="L165">        chStringBuilder.append(CollectionConstants.SEPARATOR_COMMA)</span>
+<span class="nc" id="L166">                .append(collectionApplicationProperties.sbimopsDdocode(ApplicationThreadLocals.getCityCode()).toString())</span>
+<span class="nc" id="L167">                .append(CollectionConstants.SEPARATOR_COMMA)</span>
+<span class="nc" id="L168">                .append(collectionApplicationProperties.sbimopsServiceCode(receiptHeader.getService()))</span>
+<span class="nc" id="L169">                .append(CollectionConstants.SEPARATOR_COMMA)</span>
+<span class="nc" id="L170">                .append(receiptHeader.getTotalAmount().toString());</span>
+<span class="nc" id="L171">        sbiPaymentRequest.setParameter(SBIMOPS_CH, chStringBuilder.toString());</span>
+<span class="nc" id="L172">        final StringBuilder returnUrl = new StringBuilder(paymentServiceDetails.getCallBackurl());</span>
+<span class="nc" id="L173">        returnUrl.append(&quot;?paymentServiceId=&quot;).append(paymentServiceDetails.getId());</span>
+<span class="nc" id="L174">        sbiPaymentRequest.setParameter(SBIMOPS_RURL, returnUrl.toString());</span>
+
+<span class="nc" id="L176">        sbiPaymentRequest.setParameter(CollectionConstants.ONLINEPAYMENT_INVOKE_URL, paymentServiceDetails.getServiceUrl());</span>
+<span class="nc" id="L177">        final Map&lt;String, Object&gt; requestParameters = sbiPaymentRequest.getRequestParameters();</span>
+<span class="nc" id="L178">        LOGGER.info(SBIMOPS_DC + &quot;=&quot; + requestParameters.get(SBIMOPS_DC) + &quot;|&quot; +</span>
+<span class="nc" id="L179">                SBIMOPS_DTID + &quot;=&quot; + requestParameters.get(SBIMOPS_DTID) + &quot;|&quot; +</span>
+<span class="nc" id="L180">                SBIMOPS_RN + &quot;=&quot; + requestParameters.get(SBIMOPS_RN) + &quot;|&quot; +</span>
+<span class="nc" id="L181">                SBIMOPS_RID + &quot;=&quot; + requestParameters.get(SBIMOPS_RID) + &quot;|&quot; +</span>
+<span class="nc" id="L182">                SBIMOPS_TA + &quot;=&quot; + requestParameters.get(SBIMOPS_TA)</span>
+                + &quot;|&quot; +
+<span class="nc" id="L184">                SBIMOPS_CH + &quot;=&quot; + requestParameters.get(SBIMOPS_CH)</span>
+                + &quot;|&quot; +
+<span class="nc" id="L186">                SBIMOPS_RURL + &quot;=&quot; + requestParameters.get(SBIMOPS_RURL) + &quot;|&quot; +</span>
+                CollectionConstants.ONLINEPAYMENT_INVOKE_URL + &quot;=&quot;
+<span class="nc" id="L188">                + requestParameters.get(CollectionConstants.ONLINEPAYMENT_INVOKE_URL));</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L190">            LOGGER.debug(&quot;End SbimopsAdaptor-createPaymentRequest&quot;);</span>
+
+<span class="nc" id="L192">        return sbiPaymentRequest;</span>
+    }
+
+    @Override
+    public PaymentResponse parsePaymentResponse(final String response) {
+<span class="nc" id="L197">        final DefaultPaymentResponse sbiPaymentResponse = new DefaultPaymentResponse();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L199">            LOGGER.debug(&quot;Insider SbimopsAdaptor-parsePaymentResponse&quot;);</span>
+
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (isNotBlank(response)) {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">            if (LOGGER.isInfoEnabled())</span>
+<span class="nc" id="L203">                LOGGER.info(&quot;Sbimops realtime transaction response : &quot; + response);</span>
+<span class="nc" id="L204">            final String[] keyValueStr = response.replace(&quot;{&quot;, &quot;&quot;).replace(&quot;}&quot;, &quot;&quot;).split(&quot;,&quot;);</span>
+<span class="nc" id="L205">            final LinkedHashMap&lt;String, String&gt; responseMap = new LinkedHashMap&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            for (final String pair : keyValueStr) {</span>
+<span class="nc" id="L208">                final String[] entry = pair.split(&quot;=&quot;);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">                if (entry.length == 2)</span>
+<span class="nc" id="L210">                    responseMap.put(entry[0].trim(), entry[1].trim());</span>
+            }
+
+<span class="nc" id="L213">            sbiPaymentResponse.setAuthStatus(getTransactionStatus(responseMap.get(SBIMOPS_STATUS)));</span>
+<span class="nc" id="L214">            sbiPaymentResponse.setErrorDescription(responseMap.get(SBIMOPS_STATUS));</span>
+<span class="nc" id="L215">            final String[] consumercodeTransactionId = responseMap.get(SBIMOPS_DTID)</span>
+<span class="nc" id="L216">                    .split(CollectionConstants.SEPARATOR_HYPHEN);</span>
+<span class="nc" id="L217">            sbiPaymentResponse.setReceiptId(consumercodeTransactionId[0]);</span>
+<span class="nc" id="L218">            sbiPaymentResponse.setAdditionalInfo6(consumercodeTransactionId[1]);</span>
+
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            if (sbiPaymentResponse.getAuthStatus().equals(CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS)) {</span>
+<span class="nc" id="L221">                sbiPaymentResponse.setTxnAmount(new BigDecimal(responseMap.get(SBIMOPS_TA)));</span>
+<span class="nc" id="L222">                sbiPaymentResponse.setTxnReferenceNo(responseMap.get(SBIMOPS_CFMS_TRID));</span>
+<span class="nc" id="L223">                final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(&quot;ddMMyyyyHHmmss&quot;, Locale.getDefault());</span>
+<span class="nc" id="L224">                Date transDate = null;</span>
+                try {
+<span class="nc" id="L226">                    transDate = simpleDateFormat.parse(responseMap.get(SBIMOPS_BANKTIME_STAMP));</span>
+<span class="nc" id="L227">                    sbiPaymentResponse.setTxnDate(transDate);</span>
+<span class="nc" id="L228">                } catch (final ParseException e) {</span>
+<span class="nc" id="L229">                    LOGGER.error(</span>
+<span class="nc" id="L230">                            &quot;Error in parsing transaction date [&quot; + responseMap.get(SBIMOPS_BANKTIME_STAMP)</span>
+                                    + &quot;]&quot;,
+                            e);
+<span class="nc" id="L233">                    throw new ApplicationRuntimeException(&quot;.transactiondate.parse.error&quot;, e);</span>
+<span class="nc" id="L234">                }</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">                if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L236">                    LOGGER.debug(&quot;End SbimopsAdaptor-parsePaymentResponse&quot;);</span>
+
+            }
+<span class="nc" id="L239">        } else {</span>
+<span class="nc" id="L240">            LOGGER.info(&quot;Sbimops relatime transaction response is null or empty&quot;);</span>
+<span class="nc" id="L241">            throw new ApplicationRuntimeException(&quot;SBIMOPS response is null or empty&quot;);</span>
+        }
+<span class="nc" id="L243">        return sbiPaymentResponse;</span>
+    }
+
+    public PaymentResponse createOfflinePaymentRequest(final OnlinePayment onlinePayment) {
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L248">            LOGGER.debug(&quot;inside sbimops :createOfflinePaymentRequest&quot;);</span>
+<span class="nc" id="L249">        final PaymentResponse sbimopsResponse = new DefaultPaymentResponse();</span>
+
+<span class="nc" id="L251">        CloseableHttpResponse response = reconciliationResponse(onlinePayment);</span>
+
+<span class="nc bnc" id="L253" title="All 2 branches missed.">        if (response == null) {</span>
+<span class="nc" id="L254">            LOGGER.info(&quot;Sbimops reconciliation response is null&quot;);</span>
+<span class="nc" id="L255">            throw new ApplicationRuntimeException(&quot;SBIMOPS reconciliation response is null.&quot;);</span>
+        } else {
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (LOGGER.isInfoEnabled())</span>
+<span class="nc" id="L258">                LOGGER.info(&quot;Sbimops reconciliation transaction response : &quot; + response);</span>
+<span class="nc" id="L259">            final Map&lt;String, String&gt; responseParameterMap = prepareResponseMap(response);</span>
+<span class="nc" id="L260">            sbimopsResponse.setAdditionalInfo6(onlinePayment.getReceiptHeader().getConsumerCode().replace(&quot;-&quot;, &quot;&quot;)</span>
+<span class="nc" id="L261">                    .replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L262">            sbimopsResponse.setReceiptId(onlinePayment.getReceiptHeader().getId().toString());</span>
+<span class="nc" id="L263">            final String transactionStatus = responseParameterMap.get(SBIMOPS_STATUS.toUpperCase());</span>
+<span class="nc" id="L264">            sbimopsResponse.setAuthStatus(getTransactionStatus(transactionStatus));</span>
+<span class="nc" id="L265">            sbimopsResponse.setErrorDescription(transactionStatus);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">            if (sbimopsResponse.getAuthStatus().equals(CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS)) {</span>
+<span class="nc" id="L267">                sbimopsResponse</span>
+<span class="nc" id="L268">                        .setTxnAmount(new BigDecimal(Double.valueOf(responseParameterMap.get(SBIMOPS_TAMT))));</span>
+<span class="nc" id="L269">                sbimopsResponse.setTxnReferenceNo(responseParameterMap.get(SBIMOPS_CFMSID).toString());</span>
+                // CFMS is not sending the bank transaction date. Setting receipt date as transaction date.
+<span class="nc" id="L271">                sbimopsResponse.setTxnDate(onlinePayment.getReceiptHeader().getReceiptDate());</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">                if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L273">                    LOGGER.debug(&quot;End SbimopsAdaptor-parsePaymentResponse&quot;);</span>
+            }
+<span class="nc" id="L275">            return sbimopsResponse;</span>
+        }
+
+    }
+
+    private CloseableHttpResponse reconciliationResponse(OnlinePayment onlinePayment) {
+        CloseableHttpResponse response;
+        try {
+<span class="nc" id="L283">            final HttpPost httpPost = new HttpPost(collectionApplicationProperties.sbimopsReconcileUrl());</span>
+<span class="nc" id="L284">            StringEntity stringEntity = new StringEntity(prepeareReconciliationRequest(onlinePayment),</span>
+                    CollectionConstants.UTF_ENCODING);
+<span class="nc" id="L286">            stringEntity.setContentType(REQUEST_CONTENT_TYPE);</span>
+<span class="nc" id="L287">            httpPost.setEntity(stringEntity);</span>
+
+<span class="nc" id="L289">            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(</span>
+<span class="nc" id="L290">                    collectionApplicationProperties.sbimopsReconcileUsername(),</span>
+<span class="nc" id="L291">                    collectionApplicationProperties.sbimopsReconcilePassword());</span>
+
+<span class="nc bnc" id="L293" title="All 2 branches missed.">            if (LOGGER.isInfoEnabled())</span>
+<span class="nc" id="L294">                LOGGER.info(&quot;Sbimops reconciliation URL:&quot; + collectionApplicationProperties.sbimopsReconcileUrl()</span>
+<span class="nc" id="L295">                        + &quot; |username: &quot; + collectionApplicationProperties.sbimopsReconcileUsername()</span>
+<span class="nc" id="L296">                        + &quot; |password: &quot; + collectionApplicationProperties.sbimopsReconcilePassword());</span>
+
+<span class="nc" id="L298">            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();</span>
+<span class="nc" id="L299">            credentialsProvider.setCredentials(AuthScope.ANY, credentials);</span>
+<span class="nc" id="L300">            HttpClient client = HttpClientBuilder.create()</span>
+<span class="nc" id="L301">                    .setDefaultCredentialsProvider(credentialsProvider)</span>
+<span class="nc" id="L302">                    .build();</span>
+<span class="nc" id="L303">            response = (CloseableHttpResponse) client.execute(httpPost);</span>
+<span class="nc" id="L304">        } catch (IOException e) {</span>
+<span class="nc" id="L305">            LOGGER.error(</span>
+                    &quot;SBIMOPS reconciliation, error while sending the request for SBIMOPS reconciliation&quot;, e);
+<span class="nc" id="L307">            throw new ApplicationRuntimeException(</span>
+                    &quot;SBIMOPS reconciliation, error while sending the request for SBIMOPS reconciliation&quot;, e);
+<span class="nc" id="L309">        }</span>
+<span class="nc" id="L310">        return response;</span>
+    }
+
+    private String prepeareReconciliationRequest(final OnlinePayment onlinePayment) {
+<span class="nc" id="L314">        final JsonObject deptCodeJson = new JsonObject();</span>
+<span class="nc" id="L315">        deptCodeJson.addProperty(SBIMOPS_DEPTCODE,</span>
+<span class="nc" id="L316">                collectionApplicationProperties.sbimopsDepartmentcode(MESSAGEKEY_SBIMOPS_DC));</span>
+<span class="nc" id="L317">        final JsonObject transactionIdJson = new JsonObject();</span>
+<span class="nc" id="L318">        StringBuilder transactionId = new StringBuilder(onlinePayment.getReceiptHeader().getId().toString())</span>
+<span class="nc" id="L319">                .append(CollectionConstants.SEPARATOR_HYPHEN)</span>
+<span class="nc" id="L320">                .append(onlinePayment.getReceiptHeader().getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L321">        transactionIdJson.addProperty(SBIMOPS_DEPTTID, transactionId.toString());</span>
+<span class="nc" id="L322">        final JsonObject requestJson = new JsonObject();</span>
+<span class="nc" id="L323">        deptCodeJson.add(SBIMOPS_ROW, transactionIdJson);</span>
+<span class="nc" id="L324">        requestJson.add(SBIMOPS_RECORDSET, deptCodeJson);</span>
+
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        if (LOGGER.isInfoEnabled())</span>
+<span class="nc" id="L327">            LOGGER.info(&quot;SBIMOPS reconciliation request parameters:&quot; + requestJson.toString());</span>
+<span class="nc" id="L328">        return requestJson.toString();</span>
+    }
+
+    private Map&lt;String, String&gt; prepareResponseMap(CloseableHttpResponse response) {
+        try {
+
+<span class="nc" id="L334">            InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent());</span>
+<span class="nc" id="L335">            BufferedReader reader = new BufferedReader(inputStreamReader);</span>
+
+<span class="nc" id="L337">            ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="nc" id="L338">            Map&lt;String, Map&lt;String, Object&gt;&gt; responseMap = null;</span>
+
+            try {
+<span class="nc" id="L341">                responseMap = objectMapper.readValue(reader.readLine(),</span>
+<span class="nc" id="L342">                        new TypeReference&lt;Map&lt;String, Map&lt;String, Object&gt;&gt;&gt;() {</span>
+                        });
+            } finally {
+<span class="nc" id="L345">                reader.close();</span>
+<span class="nc" id="L346">                inputStreamReader.close();</span>
+<span class="nc" id="L347">            }</span>
+<span class="nc bnc" id="L348" title="All 4 branches missed.">            if (responseMap == null || responseMap.isEmpty()) {</span>
+<span class="nc" id="L349">                LOGGER.info(&quot;Sbimops reconciliation response is null or empty&quot;);</span>
+<span class="nc" id="L350">                throw new ApplicationRuntimeException(&quot;SBIMOPS reconciliation response is null or empty&quot;);</span>
+            } else {
+<span class="nc bnc" id="L352" title="All 2 branches missed.">                if (LOGGER.isInfoEnabled())</span>
+<span class="nc" id="L353">                    LOGGER.info(&quot;Sbimops reconciliation response : &quot; + responseMap);</span>
+<span class="nc" id="L354">                Map&lt;String, Object&gt; responseParameterMap = (Map&lt;String, Object&gt;) responseMap.get(SBIMOPS_RECORDSET)</span>
+<span class="nc" id="L355">                        .get(SBIMOPS_ROW);</span>
+<span class="nc" id="L356">                final Map&lt;String, String&gt; responseSbimopsMap = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L357">                responseParameterMap.forEach((key, value) -&gt; responseSbimopsMap.put(key, value.toString()));</span>
+<span class="nc" id="L358">                return responseSbimopsMap;</span>
+            }
+<span class="nc" id="L360">        } catch (IOException e) {</span>
+<span class="nc" id="L361">            LOGGER.error(&quot;SBIMOPS reconciliation, error while reading the response content&quot;, e);</span>
+<span class="nc" id="L362">            throw new ApplicationRuntimeException(&quot; SBIMOPS reconciliation, error while reading the response content&quot;, e);</span>
+        }
+    }
+
+    /**
+     * Real time successful transaction status is &quot;Success&quot;. Reconciliation successful transaction status is &quot;S&quot;. Transactions
+     * with statuses P and Pending are Pending transactions. Transaction statuses F, Failure and Invalid Department ID are failed
+     * transaction
+     * @param transactionStatus
+     * @return Transaction Status &lt;code&gt;String&lt;/code&gt;&gt;
+     */
+    private String getTransactionStatus(String transactionStatus) {
+
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        if (CollectionConstants.ONLINEPAYMENT_STATUS_DESC_SUCCESS.equalsIgnoreCase(transactionStatus)</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">                || &quot;S&quot;.equalsIgnoreCase(transactionStatus))</span>
+<span class="nc" id="L377">            return CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS;</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        else if (SBIMOPS_CODES_WAITINGFOR_PG_RESPONSE.contains(transactionStatus))</span>
+<span class="nc" id="L379">            return CollectionConstants.PGI_AUTHORISATION_CODE_PENDING;</span>
+        else
+<span class="nc" id="L381">            return CollectionConstants.PGI_AUTHORISATION_CODE_FAILED;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

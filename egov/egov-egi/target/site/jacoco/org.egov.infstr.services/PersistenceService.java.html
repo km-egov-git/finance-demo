@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersistenceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infstr.services</a> &gt; <span class="el_source">PersistenceService.java</span></div><h1>PersistenceService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infstr.services;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.validation.ConstraintViolation;
+import javax.validation.Path.Node;
+
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.utils.Page;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infstr.models.BaseModel;
+import org.hibernate.Criteria;
+import org.hibernate.FetchMode;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Example;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+
+/**
+ * Old persistence service
+ * 
+ * @deprecated use Repositories
+ **/
+@Transactional(readOnly = true)
+@Deprecated
+public class PersistenceService&lt;T, ID extends Serializable&gt; {
+<span class="nc" id="L93">	private static final Logger LOG = LoggerFactory.getLogger(PersistenceService.class);</span>
+
+	@PersistenceContext
+	protected EntityManager entityManager;
+
+	private Class&lt;T&gt; type;
+
+	@Autowired
+	@Qualifier(&quot;entityValidator&quot;)
+	private LocalValidatorFactoryBean entityValidator;
+
+<span class="nc" id="L104">	public PersistenceService(final Class&lt;T&gt; type) {</span>
+<span class="nc" id="L105">		this.type = type;</span>
+<span class="nc" id="L106">	}</span>
+
+	public Class&lt;T&gt; getType() {
+<span class="nc" id="L109">		return this.type;</span>
+	}
+
+	public Session getSession() {
+<span class="nc" id="L113">		return entityManager.unwrap(Session.class);</span>
+	}
+
+	public void validate(final T model) {
+<span class="nc" id="L117">		final List&lt;ValidationError&gt; errors = this.validateModel(model);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">		if (!errors.isEmpty())</span>
+<span class="nc" id="L119">			throw new ValidationException(errors);</span>
+<span class="nc" id="L120">	}</span>
+
+	public List&lt;ValidationError&gt; validateModel(final T model) {
+<span class="nc" id="L123">		LOG.debug(&quot;Validating Model&quot;);</span>
+<span class="nc" id="L124">		final List&lt;ValidationError&gt; errors = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">		if (model == null) {</span>
+<span class="nc" id="L126">			errors.add(new ValidationError(&quot;&quot;, &quot;model.null&quot;));</span>
+<span class="nc" id="L127">			return errors;</span>
+		}
+<span class="nc" id="L129">		final Set&lt;ConstraintViolation&lt;T&gt;&gt; constraintViolations = entityValidator.validate(model);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		for (final ConstraintViolation&lt;T&gt; constraintViolation : constraintViolations) {</span>
+<span class="nc" id="L131">			final Iterator&lt;Node&gt; nodes = constraintViolation.getPropertyPath().iterator();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">			while (nodes.hasNext())</span>
+<span class="nc" id="L133">				errors.add(new ValidationError(nodes.next().getName(), constraintViolation.getMessage()));</span>
+<span class="nc" id="L134">		}</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (model instanceof BaseModel) {</span>
+<span class="nc" id="L136">			final BaseModel basemodel = (BaseModel) model;</span>
+<span class="nc" id="L137">			final List&lt;ValidationError&gt; dependentValMessages = basemodel.validate();</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">			if (dependentValMessages != null)</span>
+<span class="nc" id="L139">				errors.addAll(dependentValMessages);</span>
+		}
+<span class="nc" id="L141">		return errors;</span>
+	}
+
+	public T find(final String query, final Object... params) {
+<span class="nc" id="L145">		final List&lt;T&gt; results = findAllBy(query, params);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">		return results.isEmpty() ? null : results.get(0);</span>
+	}
+
+	public T find(final String query) {
+<span class="nc" id="L150">		final Query q = getSession().createQuery(query);</span>
+<span class="nc" id="L151">		return (T) q.uniqueResult();</span>
+	}
+
+	protected T findById(final ID id) {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		return id == null ? null : getSession().get(this.type, id);</span>
+	}
+
+	public List&lt;T&gt; findAllBy(final String query, final Object... params) {
+<span class="nc" id="L159">		final Query q = getQueryWithParams(query, params);</span>
+<span class="nc" id="L160">		return q.list();</span>
+	}
+
+	/**
+	 * @param query
+	 * @param pageNumber
+	 *            used to determine the offset from which to return the results
+	 * @param pageSize
+	 *            Number of records to be returned in the page. If null then all
+	 *            records that match query are returned
+	 * @param params
+	 * @return
+	 */
+	public Page findPageBy(final String query, final Integer pageNumber, final Integer pageSize,
+			final Object... params) {
+<span class="nc" id="L175">		final Query q = getQueryWithParams(query, params);</span>
+<span class="nc" id="L176">		return new Page(q, pageNumber, pageSize);</span>
+	}
+
+	private Query getQueryWithParams(final String query, final Object... params) {
+<span class="nc" id="L180">		final Query q = getSession().createQuery(query);</span>
+<span class="nc" id="L181">		int index = 0;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">		for (final Object param : params) {</span>
+<span class="nc" id="L183">			q.setParameter(index, param);</span>
+<span class="nc" id="L184">			index++;</span>
+		}
+<span class="nc" id="L186">		return q;</span>
+	}
+
+	public List&lt;T&gt; findAllByNamedQuery(final String namedQuery, final Object... params) {
+<span class="nc" id="L190">		final Query q = getNamedQueryWithParams(namedQuery, params);</span>
+<span class="nc" id="L191">		return q.list();</span>
+	}
+
+	/**
+	 * @param namedQuery
+	 * @param pageNumber
+	 *            used to determine the offset from which to return the results
+	 * @param pageSize
+	 *            Number of records to be returned in the page. If null then all
+	 *            records that match query are returned
+	 * @param params
+	 * @return Page instance that can be used to implement pagination
+	 */
+	public Page findPageByNamedQuery(final String namedQuery, final Integer pageNumber, final Integer pageSize,
+			final Object... params) {
+<span class="nc" id="L206">		final Query q = getNamedQueryWithParams(namedQuery, params);</span>
+<span class="nc" id="L207">		return new Page(q, pageNumber, pageSize);</span>
+	}
+
+	private Query getNamedQueryWithParams(final String namedQuery, final Object... params) {
+<span class="nc" id="L211">		final Query q = getSession().getNamedQuery(namedQuery);</span>
+<span class="nc" id="L212">		int index = 0;</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">		for (final Object param : params) {</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">			if (param instanceof Collection)</span>
+<span class="nc" id="L215">				q.setParameterList(String.valueOf(&quot;param_&quot; + index), (Collection) param);</span>
+			else
+<span class="nc" id="L217">				q.setParameter(index, param);</span>
+<span class="nc" id="L218">			index++;</span>
+		}
+<span class="nc" id="L220">		return q;</span>
+	}
+
+	public T findByNamedQuery(final String namedQuery, final Object... params) {
+<span class="nc" id="L224">		final List&lt;T&gt; results = findAllByNamedQuery(namedQuery, params);</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">		return results.isEmpty() ? null : results.get(0);</span>
+	}
+
+	@Transactional
+	public T persist(final T model) {
+<span class="nc" id="L230">		validate(model);</span>
+<span class="nc" id="L231">		getSession().saveOrUpdate(model);</span>
+<span class="nc" id="L232">		return model;</span>
+	}
+
+	@Transactional
+	public T merge(final T model) {
+<span class="nc" id="L237">		validate(model);</span>
+<span class="nc" id="L238">		return (T) getSession().merge(model);</span>
+	}
+
+	@Transactional
+	public T create(final T entity) {
+<span class="nc" id="L243">		validate(entity);</span>
+<span class="nc" id="L244">		final Long id = (Long) getSession().save(entity);</span>
+<span class="nc" id="L245">		return getSession().load(this.type, id);</span>
+	}
+
+	public T load(final Serializable id, Class cls) {
+<span class="nc" id="L249">		return (T) getSession().load(cls, id);</span>
+	}
+
+	@Transactional
+	public void delete(final T entity) {
+<span class="nc" id="L254">		getSession().delete(entity);</span>
+<span class="nc" id="L255">	}</span>
+
+	public List&lt;T&gt; findAll() {
+<span class="nc" id="L258">		return getSession().createCriteria(this.type).list();</span>
+	}
+
+	public List&lt;T&gt; findByExample(final T exampleT) {
+<span class="nc" id="L262">		final Criteria criteria = getSession().createCriteria(this.type);</span>
+<span class="nc" id="L263">		return criteria.add(Example.create(exampleT)).list();</span>
+	}
+
+	public T findById(final ID id, final boolean lock) {
+<span class="nc" id="L267">		return findById(id);</span>
+	}
+
+	public T findByIdWithJoinFetch(final ID id, final String joinFetchPropertyName) {
+<span class="nc" id="L271">		return (T) getSession().createCriteria(type).setFetchMode(joinFetchPropertyName, FetchMode.JOIN)</span>
+<span class="nc" id="L272">				.add(Restrictions.idEq(id)).uniqueResult();</span>
+	}
+
+	@Transactional
+	public T update(final T entity) {
+<span class="nc" id="L277">		validate(entity);</span>
+<span class="nc" id="L278">		getSession().update(entity);</span>
+<span class="nc" id="L279">		return entity;</span>
+	}
+
+	public List&lt;T&gt; findAll(final String... orderByFields) {
+<span class="nc" id="L283">		final Criteria c = getSession().createCriteria(this.type);</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		for (final String orderBy : orderByFields)</span>
+<span class="nc" id="L285">			c.addOrder(Order.asc(orderBy).ignoreCase());</span>
+<span class="nc" id="L286">		return c.list();</span>
+	}
+
+	public String getNamedQuery(final String namedQuery) {
+<span class="nc" id="L290">		return getSession().getNamedQuery(namedQuery).getQueryString();</span>
+	}
+
+	public void addIndexparams(final Map&lt;String, List&gt; indexparams, final String key, final Object... values) {
+<span class="nc" id="L294">		final List objparams = new ArrayList();</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">		for (final Object value : values)</span>
+<span class="nc" id="L296">			objparams.add(value);</span>
+<span class="nc" id="L297">		indexparams.put(key, objparams);</span>
+<span class="nc" id="L298">	}</span>
+
+	public void addFilterCriteriaForObject(final Map&lt;String, List&gt; params, final Criteria c,
+			final String... orderbyFields) {
+<span class="nc bnc" id="L302" title="All 2 branches missed.">		for (final Map.Entry&lt;String, List&gt; entry : params.entrySet())</span>
+<span class="nc bnc" id="L303" title="All 4 branches missed.">			if (entry.getKey().contains(&quot;date&quot;) || entry.getKey().contains(&quot;Date&quot;))</span>
+<span class="nc" id="L304">				c.add(Restrictions.between(entry.getKey(), entry.getValue().get(0), entry.getValue().get(1)));</span>
+			else
+<span class="nc" id="L306">				c.add(Restrictions.eq(entry.getKey(), entry.getValue().get(0)));</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">		for (final String orderBy : orderbyFields)</span>
+<span class="nc" id="L308">			c.addOrder(Order.asc(orderBy).ignoreCase());</span>
+<span class="nc" id="L309">	}</span>
+
+	/**
+	 * This method is a workaround to apply auditing field values for JPA entity
+	 * when JPA mixed with hbm based entities, this will be removed in future
+	 * once modules are migrated to JPA annotation.
+	 **/
+	public void applyAuditing(AbstractAuditable auditable) {
+<span class="nc" id="L317">		Date currentDate = new Date();</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">		if (auditable.isNew()) {</span>
+<span class="nc" id="L319">			auditable.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L320">			auditable.setCreatedDate(currentDate);</span>
+		}
+<span class="nc" id="L322">		auditable.setLastModifiedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L323">		auditable.setLastModifiedDate(currentDate);</span>
+<span class="nc" id="L324">	}</span>
+	
+	public static void applyAuditingNew(AbstractAuditable auditable) {
+<span class="nc" id="L327">		Date currentDate = new Date();</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">		if (auditable.isNew()) {</span>
+<span class="nc" id="L329">			auditable.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L330">			auditable.setCreatedDate(currentDate);</span>
+		}
+<span class="nc" id="L332">		auditable.setLastModifiedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L333">		auditable.setLastModifiedDate(currentDate);</span>
+<span class="nc" id="L334">	}</span>
+
+	public void applyAuditing(BaseModel baseModel) {
+<span class="nc" id="L337">		Date currentDate = new Date();</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">		if (baseModel.getId() == null) {</span>
+<span class="nc" id="L339">			baseModel.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L340">			baseModel.setCreatedDate(currentDate);</span>
+		}
+<span class="nc" id="L342">		baseModel.setModifiedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L343">		baseModel.setModifiedDate(currentDate);</span>
+<span class="nc" id="L344">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

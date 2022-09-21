@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.service</a> &gt; <span class="el_source">CollectionReportService.java</span></div><h1>CollectionReportService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.service;
+
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.CollectionSummaryReport;
+import org.egov.collection.entity.CollectionSummaryReportResult;
+import org.egov.collection.entity.OnlinePaymentResult;
+import org.egov.infra.config.core.EnvironmentSettings;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.hibernate.transform.Transformers;
+import org.hibernate.type.BigDecimalType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+<span class="nc" id="L78">public class CollectionReportService {</span>
+<span class="nc" id="L79">    private static final Logger LOGGER = Logger.getLogger(CollectionReportService.class);</span>
+    private static final String amountSelectQuery = &quot; SUM(EGF_INSTRUMENTHEADER.INSTRUMENTAMOUNT) AS &quot;;
+    private static final String cashZeroSelectQuery = &quot;SELECT 0 AS cashCount, 0 AS cashAmount,&quot;;
+    private static final String chequeDDZeroSelectQuery = &quot; 0 AS chequeddCount, 0 AS chequeddAmount,&quot;;
+    private static final String onlineZeroSelectQuery = &quot; 0 AS onlineCount, 0 AS onlineAmount,&quot;;
+    private static final String bankZeroSelectQuery = &quot; 0 AS bankCount, 0 AS bankAmount,&quot;;
+    private static final String cardZeroSelectQuery = &quot; 0 AS cardCount, 0 AS cardAmount&quot;;
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private EnvironmentSettings environmentSettings;
+
+    public Session getCurrentSession() {
+<span class="nc" id="L93">        return entityManager.unwrap(Session.class);</span>
+    }
+
+    public SQLQuery getOnlinePaymentReportData(final String districtName, final String ulbName, final String fromDate,
+            final String toDate, final String transactionId) {
+<span class="nc" id="L98">        final SimpleDateFormat dateFormatter = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+<span class="nc" id="L99">        final StringBuilder queryStr = new StringBuilder(500);</span>
+<span class="nc" id="L100">        queryStr.append(&quot;select * from &quot;).append(environmentSettings.statewideSchemaName())</span>
+<span class="nc" id="L101">                .append(&quot;.onlinepayment_view opv where 1=1&quot;);</span>
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (StringUtils.isNotBlank(districtName))</span>
+<span class="nc" id="L104">            queryStr.append(&quot; and opv.districtName=:districtName &quot;);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (StringUtils.isNotBlank(ulbName))</span>
+<span class="nc" id="L106">            queryStr.append(&quot; and opv.ulbName=:ulbName &quot;);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (StringUtils.isNotBlank(fromDate))</span>
+<span class="nc" id="L108">            queryStr.append(&quot; and opv.transactiondate&gt;=:fromDate &quot;);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (StringUtils.isNotBlank(toDate))</span>
+<span class="nc" id="L110">            queryStr.append(&quot; and opv.transactiondate&lt;=:toDate &quot;);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (StringUtils.isNotBlank(transactionId))</span>
+<span class="nc" id="L112">            queryStr.append(&quot; and opv.transactionnumber like :transactionnumber &quot;);</span>
+<span class="nc" id="L113">        queryStr.append(&quot; order by receiptdate desc &quot;);</span>
+
+<span class="nc" id="L115">        final SQLQuery query = getCurrentSession().createSQLQuery(queryStr.toString());</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (StringUtils.isNotBlank(districtName))</span>
+<span class="nc" id="L118">            query.setString(&quot;districtName&quot;, districtName);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (StringUtils.isNotBlank(ulbName))</span>
+<span class="nc" id="L120">            query.setString(&quot;ulbName&quot;, ulbName);</span>
+        try {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            if (StringUtils.isNotBlank(fromDate))</span>
+<span class="nc" id="L123">                query.setDate(&quot;fromDate&quot;, dateFormatter.parse(fromDate));</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            if (StringUtils.isNotBlank(toDate))</span>
+<span class="nc" id="L125">                query.setDate(&quot;toDate&quot;, dateFormatter.parse(toDate));</span>
+<span class="nc" id="L126">        } catch (final ParseException e) {</span>
+<span class="nc" id="L127">            LOGGER.error(&quot;Exception parsing Date&quot; + e.getMessage());</span>
+<span class="nc" id="L128">        }</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (StringUtils.isNotBlank(transactionId))</span>
+<span class="nc" id="L130">            query.setString(&quot;transactionnumber&quot;, &quot;%&quot; + transactionId + &quot;%&quot;);</span>
+<span class="nc" id="L131">        queryStr.append(&quot; order by opv.receiptdate desc&quot;);</span>
+<span class="nc" id="L132">        query.setResultTransformer(new AliasToBeanResultTransformer(OnlinePaymentResult.class));</span>
+<span class="nc" id="L133">        return query;</span>
+    }
+
+    public List&lt;Object[]&gt; getUlbNames(final String districtName) {
+<span class="nc" id="L137">        final StringBuilder queryStr = new StringBuilder(&quot;select distinct ulbname from &quot;).append(</span>
+<span class="nc" id="L138">                environmentSettings.statewideSchemaName()).append(&quot;.onlinepayment_view opv where 1=1&quot;);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (StringUtils.isNotBlank(districtName))</span>
+<span class="nc" id="L140">            queryStr.append(&quot; and opv.districtName=:districtName &quot;);</span>
+<span class="nc" id="L141">        final SQLQuery query = getCurrentSession().createSQLQuery(queryStr.toString());</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (StringUtils.isNotBlank(districtName))</span>
+<span class="nc" id="L143">            query.setString(&quot;districtName&quot;, districtName);</span>
+<span class="nc" id="L144">        return query.list();</span>
+    }
+
+    public List&lt;Object[]&gt; getDistrictNames() {
+<span class="nc" id="L148">        final StringBuilder queryStr = new StringBuilder(&quot;select distinct districtname from &quot;).append(</span>
+<span class="nc" id="L149">                environmentSettings.statewideSchemaName()).append(&quot;.onlinepayment_view&quot;);</span>
+<span class="nc" id="L150">        final SQLQuery query = getCurrentSession().createSQLQuery(queryStr.toString());</span>
+<span class="nc" id="L151">        return query.list();</span>
+    }
+
+    public CollectionSummaryReportResult getCollectionSummaryReport(final Date fromDate, final Date toDate,
+            final String paymentMode, final String source, final Long serviceId, final int status,
+            final String serviceType) {
+<span class="nc" id="L157">        final SimpleDateFormat fromDateFormatter = new SimpleDateFormat(&quot;yyyy-MM-dd 00:00:00&quot;);</span>
+<span class="nc" id="L158">        final SimpleDateFormat toDateFormatter = new SimpleDateFormat(&quot;yyyy-MM-dd 23:59:59&quot;);</span>
+<span class="nc" id="L159">        StringBuilder aggregateQuery = new StringBuilder();</span>
+<span class="nc" id="L160">        StringBuilder userwiseQuery = new StringBuilder();</span>
+<span class="nc" id="L161">        final StringBuilder finalUserwiseQuery = new StringBuilder();</span>
+<span class="nc" id="L162">        final StringBuilder finalAggregateQuery = new StringBuilder();</span>
+<span class="nc" id="L163">        final StringBuilder selectQuery = new StringBuilder(&quot;SELECT &quot;);</span>
+
+<span class="nc" id="L165">        final StringBuilder fromQuery = new StringBuilder(</span>
+                &quot; FROM EGCL_COLLECTIONHEADER EGCL_COLLECTIONHEADER INNER JOIN EGCL_COLLECTIONINSTRUMENT EGCL_COLLECTIONINSTRUMENT ON EGCL_COLLECTIONHEADER.ID = EGCL_COLLECTIONINSTRUMENT.COLLECTIONHEADER&quot;)
+<span class="nc" id="L167">                        .append(&quot; INNER JOIN EGF_INSTRUMENTHEADER EGF_INSTRUMENTHEADER ON EGCL_COLLECTIONINSTRUMENT.INSTRUMENTHEADER = EGF_INSTRUMENTHEADER.ID&quot;)</span>
+<span class="nc" id="L168">                        .append(&quot; INNER JOIN EGW_STATUS EGW_STATUS ON EGCL_COLLECTIONHEADER.STATUS = EGW_STATUS.ID&quot;)</span>
+<span class="nc" id="L169">                        .append(&quot; INNER JOIN EGF_INSTRUMENTTYPE EGF_INSTRUMENTTYPE ON EGF_INSTRUMENTHEADER.INSTRUMENTTYPE = EGF_INSTRUMENTTYPE.ID&quot;)</span>
+<span class="nc" id="L170">                        .append(&quot; INNER JOIN EGCL_COLLECTIONMIS EGCL_COLLECTIONMIS ON EGCL_COLLECTIONHEADER.ID = EGCL_COLLECTIONMIS.COLLECTIONHEADER&quot;)</span>
+<span class="nc" id="L171">                        .append(&quot; INNER JOIN EGCL_SERVICEDETAILS SER ON SER.ID = EGCL_COLLECTIONHEADER.SERVICEDETAILS &quot;);</span>
+<span class="nc" id="L172">        final StringBuilder whereQuery = new StringBuilder(&quot; WHERE EGW_STATUS.DESCRIPTION != 'Cancelled'&quot;);</span>
+<span class="nc" id="L173">        final StringBuilder groupQuery = new StringBuilder(&quot; GROUP BY  source, counterName, employeeName, USERID,serviceName &quot;);</span>
+<span class="nc" id="L174">        aggregateQuery.append(</span>
+                &quot; ,count(distinct(EGCL_COLLECTIONHEADER.ID)) as totalReceiptCount ,EGCL_COLLECTIONHEADER.SOURCE AS source, SER.NAME AS serviceName, '' AS counterName, '' AS employeeName, 0 AS USERID &quot;)
+<span class="nc" id="L176">                .append(fromQuery);</span>
+<span class="nc" id="L177">        userwiseQuery.append(</span>
+                &quot; ,count(distinct(EGCL_COLLECTIONHEADER.ID)) as totalReceiptCount ,EGCL_COLLECTIONHEADER.SOURCE AS source, SER.NAME AS serviceName, EG_LOCATION.NAME AS counterName, EG_USER.NAME AS employeeName, EG_USER.ID AS USERID&quot;)
+<span class="nc" id="L179">                .append(fromQuery).append(&quot; LEFT JOIN EG_LOCATION EG_LOCATION ON EGCL_COLLECTIONHEADER.LOCATION = EG_LOCATION.ID &quot;</span>
+                        + &quot; INNER JOIN EG_USER EG_USER ON EGCL_COLLECTIONHEADER.CREATEDBY = EG_USER.ID &quot;);
+
+<span class="nc bnc" id="L182" title="All 4 branches missed.">        if (fromDate != null &amp;&amp; toDate != null) {</span>
+<span class="nc" id="L183">            whereQuery.append(&quot; AND EGCL_COLLECTIONHEADER.RECEIPTDATE between to_timestamp('&quot;)</span>
+<span class="nc" id="L184">                    .append(fromDateFormatter.format(fromDate) + &quot;', 'YYYY-MM-DD HH24:MI:SS') and &quot; + &quot; to_timestamp('&quot;)</span>
+<span class="nc" id="L185">                    .append(toDateFormatter.format(toDate) + &quot;', 'YYYY-MM-DD HH24:MI:SS') &quot;);</span>
+        }
+
+<span class="nc bnc" id="L188" title="All 4 branches missed.">        if (!source.isEmpty() &amp;&amp; !source.equals(CollectionConstants.ALL)) {</span>
+<span class="nc" id="L189">            whereQuery.append(&quot; AND EGCL_COLLECTIONHEADER.SOURCE=:source&quot;);</span>
+        } else {
+<span class="nc" id="L191">            userwiseQuery.setLength(0);</span>
+<span class="nc" id="L192">            userwiseQuery.append(aggregateQuery);</span>
+        }
+<span class="nc bnc" id="L194" title="All 4 branches missed.">        if (serviceId != null &amp;&amp; serviceId != -1)</span>
+<span class="nc" id="L195">            whereQuery.append(&quot; AND EGCL_COLLECTIONHEADER.SERVICEDETAILS =:serviceId&quot;);</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        if (status != -1)</span>
+<span class="nc" id="L197">            whereQuery.append(&quot; AND EGCL_COLLECTIONHEADER.STATUS =:searchStatus&quot;);</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (!serviceType.equals(CollectionConstants.ALL))</span>
+<span class="nc" id="L199">            whereQuery.append(&quot; AND SER.SERVICETYPE =:serviceType&quot;);</span>
+<span class="nc bnc" id="L200" title="All 4 branches missed.">        if (StringUtils.isNotBlank(paymentMode) &amp;&amp; !paymentMode.equals(CollectionConstants.ALL)) {</span>
+<span class="nc" id="L201">            whereQuery.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE in (:paymentMode)&quot;);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">            if (paymentMode.equals(CollectionConstants.INSTRUMENTTYPE_ONLINE)) {</span>
+<span class="nc" id="L203">                userwiseQuery.setLength(0);</span>
+<span class="nc" id="L204">                userwiseQuery.append(aggregateQuery);</span>
+            }
+<span class="nc" id="L206">            userwiseQuery = prepareSelectQuery(paymentMode).append(userwiseQuery).append(whereQuery).append(groupQuery);</span>
+<span class="nc" id="L207">            aggregateQuery = prepareSelectQuery(paymentMode).append(aggregateQuery).append(whereQuery).append(groupQuery);</span>
+        } else {
+<span class="nc" id="L209">            userwiseQuery.append(whereQuery);</span>
+<span class="nc" id="L210">            aggregateQuery.append(whereQuery);</span>
+<span class="nc" id="L211">            userwiseQuery = prepareQueryForAllPaymentMode(userwiseQuery, groupQuery);</span>
+<span class="nc" id="L212">            aggregateQuery = prepareQueryForAllPaymentMode(aggregateQuery, groupQuery);</span>
+        }
+<span class="nc" id="L214">        final StringBuilder finalSelectQuery = new StringBuilder(</span>
+                &quot;SELECT cast(sum(cashCount) AS NUMERIC) AS cashCount,cast(sum(chequeddCount) AS NUMERIC) AS chequeddCount,cast(sum(onlineCount) AS NUMERIC) AS onlineCount,source,counterName,employeeName,serviceName,cast(sum(cashAmount) AS NUMERIC) AS cashAmount, cast(sum(chequeddAmount) AS NUMERIC) AS chequeddAmount, cast(sum(onlineAmount) AS NUMERIC) AS onlineAmount ,USERID,cast(sum(bankCount) AS NUMERIC) AS bankCount, cast(sum(bankAmount) AS NUMERIC) AS bankAmount, &quot;
+                        + &quot;  cast(sum(cardCount) AS NUMERIC) AS cardCount, cast(sum(cardAmount) AS NUMERIC) AS cardAmount, cast(sum(totalReceiptCount) AS NUMERIC) as totalReceiptCount  FROM (&quot;);
+<span class="nc" id="L217">        final StringBuilder finalGroupQuery = new StringBuilder(</span>
+                &quot; ) AS RESULT GROUP BY RESULT.source,RESULT.counterName,RESULT.employeeName,RESULT.USERID,RESULT.serviceName order by source,employeeName, serviceName &quot;);
+
+<span class="nc" id="L220">        finalUserwiseQuery.append(finalSelectQuery).append(userwiseQuery).append(finalGroupQuery);</span>
+<span class="nc" id="L221">        finalAggregateQuery.append(finalSelectQuery).append(aggregateQuery).append(finalGroupQuery);</span>
+
+<span class="nc" id="L223">        final SQLQuery userwiseSqluery = createSQLQuery(finalUserwiseQuery.toString());</span>
+<span class="nc" id="L224">        final SQLQuery aggregateSqlQuery = createSQLQuery(finalAggregateQuery.toString());</span>
+
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        if (!source.isEmpty() &amp;&amp; !source.equals(CollectionConstants.ALL)) {</span>
+<span class="nc" id="L227">            userwiseSqluery.setString(&quot;source&quot;, source);</span>
+<span class="nc" id="L228">            aggregateSqlQuery.setString(&quot;source&quot;, source);</span>
+        }
+<span class="nc bnc" id="L230" title="All 4 branches missed.">        if (serviceId != null &amp;&amp; serviceId != -1) {</span>
+<span class="nc" id="L231">            userwiseSqluery.setLong(&quot;serviceId&quot;, serviceId);</span>
+<span class="nc" id="L232">            aggregateSqlQuery.setLong(&quot;serviceId&quot;, serviceId);</span>
+        }
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        if (status != -1) {</span>
+<span class="nc" id="L235">            userwiseSqluery.setLong(&quot;searchStatus&quot;, status);</span>
+<span class="nc" id="L236">            aggregateSqlQuery.setLong(&quot;searchStatus&quot;, status);</span>
+        }
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        if (!serviceType.equals(CollectionConstants.ALL)) {</span>
+<span class="nc" id="L240">            userwiseSqluery.setString(&quot;serviceType&quot;, serviceType);</span>
+<span class="nc" id="L241">            aggregateSqlQuery.setString(&quot;serviceType&quot;, serviceType);</span>
+        }
+
+<span class="nc bnc" id="L244" title="All 4 branches missed.">        if (StringUtils.isNotBlank(paymentMode) &amp;&amp; !paymentMode.equals(CollectionConstants.ALL))</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (paymentMode.equals(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD)) {</span>
+<span class="nc" id="L246">                userwiseSqluery.setParameterList(&quot;paymentMode&quot;, new ArrayList&lt;&gt;(Arrays.asList(&quot;cheque&quot;, &quot;dd&quot;)));</span>
+<span class="nc" id="L247">                aggregateSqlQuery.setParameterList(&quot;paymentMode&quot;, new ArrayList&lt;&gt;(Arrays.asList(&quot;cheque&quot;, &quot;dd&quot;)));</span>
+            } else {
+<span class="nc" id="L249">                userwiseSqluery.setString(&quot;paymentMode&quot;, paymentMode);</span>
+<span class="nc" id="L250">                aggregateSqlQuery.setString(&quot;paymentMode&quot;, paymentMode);</span>
+            }
+<span class="nc" id="L252">        final List&lt;CollectionSummaryReport&gt; reportResults = populateQueryResults(userwiseSqluery.list());</span>
+<span class="nc" id="L253">        final List&lt;CollectionSummaryReport&gt; aggrReportResults = populateQueryResults(aggregateSqlQuery.list());</span>
+<span class="nc" id="L254">        final CollectionSummaryReportResult collResult = new CollectionSummaryReportResult();</span>
+<span class="nc" id="L255">        collResult.setCollectionSummaryReportList(reportResults);</span>
+<span class="nc" id="L256">        collResult.setAggrCollectionSummaryReportList(aggrReportResults);</span>
+<span class="nc" id="L257">        return collResult;</span>
+    }
+
+    public StringBuilder prepareQueryForAllPaymentMode(StringBuilder query, StringBuilder groupQuery) {
+<span class="nc" id="L261">        String unionString = &quot; union &quot;;</span>
+<span class="nc" id="L262">        StringBuilder queryString = new StringBuilder();</span>
+<span class="nc" id="L263">        queryString.append(prepareSelectQuery(CollectionConstants.INSTRUMENTTYPE_CASH));</span>
+<span class="nc" id="L264">        queryString.append(query);</span>
+<span class="nc" id="L265">        queryString.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE = 'cash'&quot;);</span>
+<span class="nc" id="L266">        queryString.append(groupQuery);</span>
+<span class="nc" id="L267">        queryString.append(unionString);</span>
+<span class="nc" id="L268">        queryString.append(prepareSelectQuery(CollectionConstants.INSTRUMENTTYPE_BANK));</span>
+<span class="nc" id="L269">        queryString.append(query);</span>
+<span class="nc" id="L270">        queryString.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE = 'bankchallan'&quot;);</span>
+<span class="nc" id="L271">        queryString.append(groupQuery);</span>
+<span class="nc" id="L272">        queryString.append(unionString);</span>
+<span class="nc" id="L273">        queryString.append(prepareSelectQuery(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD));</span>
+<span class="nc" id="L274">        queryString.append(query);</span>
+<span class="nc" id="L275">        queryString.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE in( 'cheque','dd')&quot;);</span>
+<span class="nc" id="L276">        queryString.append(groupQuery);</span>
+<span class="nc" id="L277">        queryString.append(unionString);</span>
+<span class="nc" id="L278">        queryString.append(prepareSelectQuery(CollectionConstants.INSTRUMENTTYPE_ONLINE));</span>
+<span class="nc" id="L279">        queryString.append(query);</span>
+<span class="nc" id="L280">        queryString.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE = 'online'&quot;);</span>
+<span class="nc" id="L281">        queryString.append(groupQuery);</span>
+<span class="nc" id="L282">        queryString.append(unionString);</span>
+<span class="nc" id="L283">        queryString.append(prepareSelectQuery(CollectionConstants.INSTRUMENTTYPE_CARD));</span>
+<span class="nc" id="L284">        queryString.append(query);</span>
+<span class="nc" id="L285">        queryString.append(&quot; AND EGF_INSTRUMENTTYPE.TYPE  = 'card' &quot;);</span>
+<span class="nc" id="L286">        queryString.append(groupQuery);</span>
+<span class="nc" id="L287">        return queryString;</span>
+    }
+
+    public SQLQuery createSQLQuery(String query) {
+<span class="nc" id="L291">        return (SQLQuery) getCurrentSession().createSQLQuery(query)</span>
+<span class="nc" id="L292">                .addScalar(&quot;cashCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L293">                .addScalar(&quot;cashAmount&quot;, BigDecimalType.INSTANCE)</span>
+<span class="nc" id="L294">                .addScalar(&quot;chequeddCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L295">                .addScalar(&quot;chequeddAmount&quot;, BigDecimalType.INSTANCE)</span>
+<span class="nc" id="L296">                .addScalar(&quot;onlineCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L297">                .addScalar(&quot;onlineAmount&quot;, BigDecimalType.INSTANCE)</span>
+<span class="nc" id="L298">                .addScalar(&quot;source&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L299">                .addScalar(&quot;serviceName&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L300">                .addScalar(&quot;counterName&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L301">                .addScalar(&quot;employeeName&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L302">                .addScalar(&quot;bankCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L303">                .addScalar(&quot;bankAmount&quot;, BigDecimalType.INSTANCE).addScalar(&quot;cardAmount&quot;, BigDecimalType.INSTANCE)</span>
+<span class="nc" id="L304">                .addScalar(&quot;cardCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L305">                .addScalar(&quot;totalReceiptCount&quot;, org.hibernate.type.StringType.INSTANCE)</span>
+<span class="nc" id="L306">                .setResultTransformer(Transformers.aliasToBean(CollectionSummaryReport.class));</span>
+    }
+
+    public StringBuilder prepareSelectQuery(String instrumentType) {
+
+<span class="nc" id="L311">        StringBuilder countSelectQuery = new StringBuilder(&quot; COUNT(DISTINCT(EGCL_COLLECTIONHEADER.ID)) AS &quot;);</span>
+<span class="nc" id="L312">        StringBuilder selectQueryString = new StringBuilder();</span>
+
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CASH)) {</span>
+<span class="nc" id="L315">            StringBuilder cashCountAmountSelectQuery = new StringBuilder(&quot;SELECT &quot;).append(countSelectQuery.toString())</span>
+<span class="nc" id="L316">                    .append(&quot; cashCount,&quot;)</span>
+<span class="nc" id="L317">                    .append(amountSelectQuery).append(&quot; cashAmount,&quot;);</span>
+<span class="nc" id="L318">            selectQueryString.append(cashCountAmountSelectQuery).append(chequeDDZeroSelectQuery).append(onlineZeroSelectQuery)</span>
+<span class="nc" id="L319">                    .append(bankZeroSelectQuery).append(cardZeroSelectQuery);</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">        } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD)) {</span>
+<span class="nc" id="L321">            String chequeDDCountAmountSelectQuery = countSelectQuery.append(&quot; chequeddCount,&quot;)</span>
+<span class="nc" id="L322">                    .append(amountSelectQuery)</span>
+<span class="nc" id="L323">                    .append(&quot; chequeddAmount,&quot;).toString();</span>
+<span class="nc" id="L324">            selectQueryString.append(cashZeroSelectQuery).append(chequeDDCountAmountSelectQuery).append(onlineZeroSelectQuery)</span>
+<span class="nc" id="L325">                    .append(bankZeroSelectQuery).append(cardZeroSelectQuery);</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_ONLINE)) {</span>
+<span class="nc" id="L327">            String onlineCountAmountSelectQuery = countSelectQuery.append(&quot; onlineCount,&quot;)</span>
+<span class="nc" id="L328">                    .append(amountSelectQuery)</span>
+<span class="nc" id="L329">                    .append(&quot; onlineAmount,&quot;).toString();</span>
+<span class="nc" id="L330">            selectQueryString.append(cashZeroSelectQuery).append(chequeDDZeroSelectQuery).append(onlineCountAmountSelectQuery)</span>
+<span class="nc" id="L331">                    .append(bankZeroSelectQuery).append(cardZeroSelectQuery);</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_BANK)) {</span>
+<span class="nc" id="L333">            String bankCountAmountSelectQuery = countSelectQuery.append(&quot; bankCount,&quot;)</span>
+<span class="nc" id="L334">                    .append(amountSelectQuery)</span>
+<span class="nc" id="L335">                    .append(&quot; bankAmount,&quot;).toString();</span>
+<span class="nc" id="L336">            selectQueryString.append(cashZeroSelectQuery).append(chequeDDZeroSelectQuery).append(onlineZeroSelectQuery)</span>
+<span class="nc" id="L337">                    .append(bankCountAmountSelectQuery).append(cardZeroSelectQuery);</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">        } else if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CARD)) {</span>
+<span class="nc" id="L339">            String cardCountAmountSelectQuery = countSelectQuery.append(&quot; cardCount,&quot;)</span>
+<span class="nc" id="L340">                    .append(amountSelectQuery).append(&quot; cardAmount&quot;).toString();</span>
+<span class="nc" id="L341">            selectQueryString.append(cashZeroSelectQuery).append(chequeDDZeroSelectQuery).append(onlineZeroSelectQuery)</span>
+<span class="nc" id="L342">                    .append(bankZeroSelectQuery).append(cardCountAmountSelectQuery);</span>
+<span class="nc" id="L343">        } else</span>
+<span class="nc" id="L344">            throw new ApplicationRuntimeException(&quot; Error while preparing select query:: Invalid Instrument Type&quot;);</span>
+
+<span class="nc" id="L346">        return selectQueryString;</span>
+
+    }
+
+    public List&lt;CollectionSummaryReport&gt; populateQueryResults(final List&lt;CollectionSummaryReport&gt; queryResults) {
+<span class="nc bnc" id="L351" title="All 2 branches missed.">        for (final CollectionSummaryReport collectionSummaryReport : queryResults) {</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">            if (collectionSummaryReport.getCashCount() == null)</span>
+<span class="nc" id="L353">                collectionSummaryReport.setCashCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">            if (collectionSummaryReport.getChequeddCount() == null)</span>
+<span class="nc" id="L355">                collectionSummaryReport.setChequeddCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">            if (collectionSummaryReport.getOnlineCount() == null)</span>
+<span class="nc" id="L357">                collectionSummaryReport.setOnlineCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">            if (collectionSummaryReport.getBankCount() == null)</span>
+<span class="nc" id="L359">                collectionSummaryReport.setBankCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">            if (collectionSummaryReport.getCardCount() == null)</span>
+<span class="nc" id="L361">                collectionSummaryReport.setCardCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">            if (collectionSummaryReport.getTotalReceiptCount() == null)</span>
+<span class="nc" id="L363">                collectionSummaryReport.setTotalReceiptCount(&quot;&quot;);</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            if (collectionSummaryReport.getCashAmount() == null)</span>
+<span class="nc" id="L365">                collectionSummaryReport.setCashAmount(BigDecimal.ZERO);</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">            if (collectionSummaryReport.getChequeddAmount() == null)</span>
+<span class="nc" id="L367">                collectionSummaryReport.setChequeddAmount(BigDecimal.ZERO);</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">            if (collectionSummaryReport.getOnlineAmount() == null)</span>
+<span class="nc" id="L369">                collectionSummaryReport.setOnlineAmount(BigDecimal.ZERO);</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">            if (collectionSummaryReport.getBankAmount() == null)</span>
+<span class="nc" id="L371">                collectionSummaryReport.setBankAmount(BigDecimal.ZERO);</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            if (collectionSummaryReport.getCardAmount() == null)</span>
+<span class="nc" id="L373">                collectionSummaryReport.setCardAmount(BigDecimal.ZERO);</span>
+<span class="nc" id="L374">            collectionSummaryReport.setTotalAmount(collectionSummaryReport.getCardAmount()</span>
+<span class="nc" id="L375">                    .add(collectionSummaryReport.getBankAmount()).add(collectionSummaryReport.getOnlineAmount())</span>
+<span class="nc" id="L376">                    .add(collectionSummaryReport.getChequeddAmount()).add(collectionSummaryReport.getCashAmount()));</span>
+
+<span class="nc" id="L378">        }</span>
+<span class="nc" id="L379">        return queryResults;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

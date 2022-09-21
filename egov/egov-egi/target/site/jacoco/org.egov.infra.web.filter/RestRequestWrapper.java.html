@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RestRequestWrapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.filter</a> &gt; <span class="el_source">RestRequestWrapper.java</span></div><h1>RestRequestWrapper.java</h1><pre class="source lang-java linenums">package org.egov.infra.web.filter;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+
+import org.apache.commons.io.IOUtils;
+
+public class RestRequestWrapper extends HttpServletRequestWrapper {
+    
+    private String  strBody;
+    private Map&lt;String,String[]&gt; reqParamMap;
+    
+    public RestRequestWrapper(HttpServletRequest request) throws IOException {
+<span class="nc" id="L25">        super(request);</span>
+        
+<span class="nc" id="L27">        strBody =  IOUtils.toString(request.getInputStream());</span>
+<span class="nc" id="L28">        reqParamMap = new TreeMap&lt;String,String[]&gt;();</span>
+<span class="nc" id="L29">        reqParamMap.putAll(request.getParameterMap());</span>
+<span class="nc" id="L30">    }</span>
+    
+    @Override
+    public ServletInputStream getInputStream() throws IOException{
+<span class="nc" id="L34">        final ByteArrayInputStream bsiStream = new ByteArrayInputStream(strBody.getBytes(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L35">        System.out.println(&quot;********** getinputstream request************* &quot;);</span>
+        
+<span class="nc" id="L37">        return new ServletInputStream() {</span>
+            
+            @Override
+            public int read() throws IOException {
+                
+             /*   System.out.println(&quot;**************** read() ***************&quot;);
+                System.out.println(strBody);*/
+<span class="nc" id="L44">                return bsiStream.read();</span>
+            }
+            
+            @Override
+            public void setReadListener(ReadListener readListener) {
+<span class="nc" id="L49">                throw new RuntimeException(&quot;Not implemented&quot;);</span>
+            }
+            
+            @Override
+            public boolean isReady() {
+<span class="nc" id="L54">                return true;</span>
+            }
+            
+            @Override
+            public boolean isFinished() {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">              return  bsiStream.available() == 0;</span>
+//                return false;
+            }
+        };
+    }
+    
+    @Override
+    public BufferedReader getReader()throws IOException{
+<span class="nc" id="L67">        return new BufferedReader(new InputStreamReader(this.getInputStream()));</span>
+    }
+    
+    @Override
+    public String getParameter(final String name){
+<span class="nc" id="L72">      String[] strings = reqParamMap.get(name);</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">      if(strings!=null){</span>
+<span class="nc" id="L74">          return strings[0];</span>
+      }
+      
+<span class="nc" id="L77">      return super.getParameter(name);</span>
+  }
+    
+  @Override
+  public Map&lt;String,String[]&gt; getParameterMap(){
+      
+<span class="nc" id="L83">      return Collections.unmodifiableMap(reqParamMap);</span>
+  }
+  
+  @Override
+  public Enumeration&lt;String&gt; getParameterNames()
+  {
+<span class="nc" id="L89">      return Collections.enumeration(getParameterMap().keySet());</span>
+  }
+
+  @Override
+  public String[] getParameterValues(final String name)
+  {
+<span class="nc" id="L95">      return getParameterMap().get(name);</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

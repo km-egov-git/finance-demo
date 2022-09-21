@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileStoreMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.filestore.entity</a> &gt; <span class="el_source">FileStoreMapper.java</span></div><h1>FileStoreMapper.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.filestore.entity;
+
+import static org.egov.infra.filestore.entity.FileStoreMapper.SEQ_FILESTOREMAPPER;
+
+import java.util.Date;
+import java.util.Objects;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.SafeHtml;
+
+@Table(name = &quot;eg_filestoremap&quot;)
+@Entity
+@SequenceGenerator(name = SEQ_FILESTOREMAPPER, sequenceName = SEQ_FILESTOREMAPPER, allocationSize = 1)
+public class FileStoreMapper extends AbstractPersistable&lt;Long&gt; {
+    public static final String SEQ_FILESTOREMAPPER = &quot;SEQ_EG_FILESTOREMAP&quot;;
+    private static final long serialVersionUID = -2997164207274266823L;
+    @Id
+    @GeneratedValue(generator = SEQ_FILESTOREMAPPER, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @NotBlank
+    @Length(max = 36)
+    @Column(length = 36, unique = true, nullable = false)
+    private String fileStoreId;
+
+    @NotBlank
+    @Length(max = 100)
+    @SafeHtml
+    private String fileName;
+
+    @Length(max = 100)
+    @SafeHtml
+    private String contentType;
+
+<span class="pc" id="L95">    @Temporal(TemporalType.TIMESTAMP)</span>
+    private Date createdDate = new Date();
+
+<span class="nc" id="L98">    protected FileStoreMapper() {</span>
+        // For JPA
+<span class="nc" id="L100">    }</span>
+
+<span class="fc" id="L102">    public FileStoreMapper(String fileStoreId, String fileName) {</span>
+<span class="fc" id="L103">        this.fileStoreId = fileStoreId;</span>
+<span class="fc" id="L104">        this.fileName = fileName;</span>
+<span class="fc" id="L105">    }</span>
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L109">        return id;</span>
+    }
+
+    @Override
+    public void setId(Long id) {
+<span class="nc" id="L114">        this.id = id;</span>
+<span class="nc" id="L115">    }</span>
+
+    public String getFileStoreId() {
+<span class="fc" id="L118">        return fileStoreId;</span>
+    }
+
+    public void setFileStoreId(String fileStoreId) {
+<span class="nc" id="L122">        this.fileStoreId = fileStoreId;</span>
+<span class="nc" id="L123">    }</span>
+
+    public String getFileName() {
+<span class="nc" id="L126">        return fileName;</span>
+    }
+
+    public void setFileName(String fileName) {
+<span class="nc" id="L130">        this.fileName = fileName;</span>
+<span class="nc" id="L131">    }</span>
+
+    public String getContentType() {
+<span class="nc" id="L134">        return contentType;</span>
+    }
+
+    public void setContentType(String contentType) {
+<span class="fc" id="L138">        this.contentType = contentType;</span>
+<span class="fc" id="L139">    }</span>
+
+    public Date getCreatedDate() {
+<span class="nc" id="L142">        return createdDate;</span>
+    }
+
+    public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L146">        this.createdDate = createdDate;</span>
+<span class="nc" id="L147">    }</span>
+
+    @Override
+    public boolean equals(Object other) {
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (this == other)</span>
+<span class="nc" id="L152">            return true;</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">        if (!(other instanceof FileStoreMapper))</span>
+<span class="nc" id="L154">            return false;</span>
+<span class="fc" id="L155">        final FileStoreMapper that = (FileStoreMapper) other;</span>
+<span class="pc bpc" id="L156" title="3 of 4 branches missed.">        return that.id != null &amp;&amp; Objects.equals(id, that.id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L161">        return Objects.hash(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

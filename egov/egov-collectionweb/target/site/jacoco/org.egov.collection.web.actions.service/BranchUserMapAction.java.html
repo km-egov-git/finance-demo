@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BranchUserMapAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.service</a> &gt; <span class="el_source">BranchUserMapAction.java</span></div><h1>BranchUserMapAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.web.actions.service;
+
+import org.apache.log4j.Logger;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.BranchUserMap;
+import org.egov.commons.Bankbranch;
+import org.egov.commons.dao.BankBranchHibernateDAO;
+import org.egov.commons.dao.BankHibernateDAO;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infstr.services.PersistenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({
+        @Result(name = BranchUserMapAction.BANKBRANCHLIST, location = &quot;branchUserMap-bankBranchList.jsp&quot;),
+        @Result(name = BranchUserMapAction.SUCCESS, location = &quot;branchUserMap-success.jsp&quot;),
+        @Result(name = BranchUserMapAction.BEFORESEARCH, location = &quot;branchUserMap-search.jsp&quot;),
+        @Result(name = BranchUserMapAction.SEARCH, location = &quot;branchUserMap-search.jsp&quot;),
+        @Result(name = BranchUserMapAction.NEW, location = &quot;branchUserMap-new.jsp&quot;) })
+
+public class BranchUserMapAction extends BaseFormAction {
+<span class="nc" id="L83">    private static final Logger LOGGER = Logger.getLogger(BranchUserMapAction.class);</span>
+    private static final long serialVersionUID = 1L;
+    protected static final String BEFORECREATE = &quot;beforeCreate&quot;;
+    protected static final String SEARCH = &quot;search&quot;;
+    protected static final String BEFORESEARCH = &quot;beforesearch&quot;;
+    protected static final String MESSAGE = &quot;message&quot;;
+<span class="nc" id="L89">    private BranchUserMap branchUserMap = new BranchUserMap();</span>
+    private static final String BANK_BRANCH_LIST = &quot;bankBranchList&quot;;
+    private static final String BANK_NAME_LIST = &quot;bankNameList&quot;;
+    private static final String BANK_COLLECTION_OPERATOR_USER_LIST = &quot;bankCollectionOperatorUserList&quot;;
+    protected static final String BANKBRANCHLIST = &quot;bankBranchList&quot;;
+<span class="nc" id="L94">    private List&lt;Bankbranch&gt; bankBranchArrayList = new ArrayList&lt;Bankbranch&gt;(0);</span>
+    private PersistenceService&lt;BranchUserMap, Long&gt; branchUserMapService;
+<span class="nc" id="L96">    private List&lt;BranchUserMap&gt; branchUserList = null;</span>
+    private Integer bankId;
+    private Integer branchId;
+    private Long userId;
+    @Autowired
+    private BankHibernateDAO bankHibernateDAO;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private BankBranchHibernateDAO bankBranchHibernateDAO;
+    @PersistenceContext
+    private EntityManager entityManager;
+<span class="nc" id="L108">    private Boolean isActive = Boolean.FALSE;</span>
+
+<span class="nc" id="L110">    public BranchUserMapAction() {</span>
+<span class="nc" id="L111">        addRelatedEntity(&quot;bankbranch&quot;, Bankbranch.class);</span>
+<span class="nc" id="L112">        addRelatedEntity(&quot;bankuser&quot;, User.class);</span>
+<span class="nc" id="L113">    }</span>
+
+    @Override
+    public BranchUserMap getModel() {
+<span class="nc" id="L117">        return branchUserMap;</span>
+    }
+
+    @Action(value = &quot;/service/branchUserMap-newform&quot;)
+    public String newform() {
+<span class="nc" id="L122">        addDropdownData(BANK_NAME_LIST, bankHibernateDAO.getAllBankHavingBranchAndAccounts());</span>
+<span class="nc" id="L123">        System.out.println(branchUserMap.getIsActive());</span>
+<span class="nc" id="L124">        addDropdownData(BANK_BRANCH_LIST, Collections.emptyList());</span>
+<span class="nc" id="L125">        addDropdownData(BANK_COLLECTION_OPERATOR_USER_LIST, getBankCollectionOperator());</span>
+<span class="nc" id="L126">        return NEW;</span>
+    }
+
+    private List&lt;User&gt; getBankCollectionOperator() {
+<span class="nc" id="L130">        List&lt;User&gt; bankCollOpUserList = new ArrayList&lt;User&gt;(</span>
+<span class="nc" id="L131">                userService.getUsersByRoleName(CollectionConstants.BANK_COLLECTION_OPERATOR));</span>
+<span class="nc" id="L132">        final Query query = entityManager.createNamedQuery(CollectionConstants.QUERY_ACTIVE_BRANCHUSER, User.class);</span>
+<span class="nc" id="L133">        List&lt;User&gt; userMapToBranchList = query.getResultList();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (!userMapToBranchList.isEmpty())</span>
+<span class="nc" id="L135">            bankCollOpUserList.removeAll(userMapToBranchList);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (bankCollOpUserList.isEmpty())</span>
+<span class="nc" id="L137">            return Collections.emptyList();</span>
+        else
+<span class="nc" id="L139">            return bankCollOpUserList;</span>
+    }
+
+    @Action(value = &quot;/service/branchUserMap-bankBranchsByBankForReceiptPayments&quot;)
+    public String bankBranchsByBankForReceiptPayments() {
+<span class="nc" id="L144">        bankBranchArrayList = bankBranchHibernateDAO.getAllBankBranchsByBankForReceiptPayments(bankId);</span>
+<span class="nc" id="L145">        return BANKBRANCHLIST;</span>
+    }
+
+    @Action(value = &quot;/service/branchUserMap-create&quot;)
+    public String create() {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L151">            LOGGER.debug(&quot;Inside create&quot;);</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (branchId != null &amp;&amp; userId != null) {</span>
+<span class="nc" id="L153">            branchUserMap.setBankbranch(bankBranchHibernateDAO.findById(branchId, Boolean.FALSE));</span>
+<span class="nc" id="L154">            branchUserMap.setIsActive(getIsActive());</span>
+<span class="nc" id="L155">            branchUserMap.setBankuser(userService.getUserById(userId));</span>
+<span class="nc" id="L156">            branchUserMapService.persist(branchUserMap);</span>
+<span class="nc" id="L157">            addActionMessage(getText(&quot;branchuser.master.success&quot;, new String[] {</span>
+<span class="nc" id="L158">                    branchUserMap.getBankuser().getUsername(),</span>
+<span class="nc" id="L159">                    branchUserMap.getBankbranch().getBranchname() }));</span>
+        }
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L162">            LOGGER.debug(&quot;end create&quot;);</span>
+<span class="nc" id="L163">        return SUCCESS;</span>
+    }
+
+    public Integer getBankId() {
+<span class="nc" id="L167">        return bankId;</span>
+    }
+
+    public void setBankId(final Integer bankId) {
+<span class="nc" id="L171">        this.bankId = bankId;</span>
+<span class="nc" id="L172">    }</span>
+
+    public List getBankBranchArrayList() {
+<span class="nc" id="L175">        return bankBranchArrayList;</span>
+    }
+
+    public Long getUserId() {
+<span class="nc" id="L179">        return userId;</span>
+    }
+
+    public void setUserId(Long userId) {
+<span class="nc" id="L183">        this.userId = userId;</span>
+<span class="nc" id="L184">    }</span>
+
+    public Integer getBranchId() {
+<span class="nc" id="L187">        return branchId;</span>
+    }
+
+    public void setBranchId(Integer branchId) {
+<span class="nc" id="L191">        this.branchId = branchId;</span>
+<span class="nc" id="L192">    }</span>
+
+    public PersistenceService&lt;BranchUserMap, Long&gt; getBranchUserMapService() {
+<span class="nc" id="L195">        return branchUserMapService;</span>
+    }
+
+    public void setBranchUserMapService(PersistenceService&lt;BranchUserMap, Long&gt; branchUserMapService) {
+<span class="nc" id="L199">        this.branchUserMapService = branchUserMapService;</span>
+<span class="nc" id="L200">    }</span>
+
+    public Boolean getIsActive() {
+<span class="nc" id="L203">        return isActive;</span>
+    }
+
+    public void setIsActive(Boolean isActive) {
+<span class="nc" id="L207">        this.isActive = isActive;</span>
+<span class="nc" id="L208">    }</span>
+
+    public List&lt;BranchUserMap&gt; getBranchUserList() {
+<span class="nc" id="L211">        return branchUserList;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

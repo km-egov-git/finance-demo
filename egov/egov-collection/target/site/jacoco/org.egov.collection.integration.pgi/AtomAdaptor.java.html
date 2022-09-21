@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AtomAdaptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.pgi</a> &gt; <span class="el_source">AtomAdaptor.java</span></div><h1>AtomAdaptor.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.pgi;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.log4j.Logger;
+import org.egov.collection.config.properties.CollectionApplicationProperties;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.integration.models.ResponseAtomMmp;
+import org.egov.collection.integration.models.ResponseAtomParam;
+import org.egov.collection.integration.models.ResponseAtomReconcilation;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationException;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infstr.models.ServiceDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * The PaymentRequestAdaptor class frames the request object for the payment service.
+ */
+@Service
+<span class="nc" id="L97">public class AtomAdaptor implements PaymentGatewayAdaptor {</span>
+
+<span class="nc" id="L99">    private static final Logger LOGGER = Logger.getLogger(AtomAdaptor.class);</span>
+    @Autowired
+    private CollectionApplicationProperties collectionApplicationProperties;
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    /**
+     * This method invokes APIs to frame request object for the payment service passed as parameter
+     *
+     * @param serviceDetails
+     * @param receiptHeader
+     * @return
+     */
+    @Override
+    public PaymentRequest createPaymentRequest(final ServiceDetails paymentServiceDetails,
+            final ReceiptHeader receiptHeader) {
+<span class="nc" id="L115">        LOGGER.debug(&quot;inside  AtomAdaptor createPaymentRequest&quot;);</span>
+<span class="nc" id="L116">        final DefaultPaymentRequest paymentRequest = new DefaultPaymentRequest();</span>
+<span class="nc" id="L117">        String ttype = null, tempTxnId = null, token = null, txnStage = null;</span>
+<span class="nc" id="L118">        final HttpPost httpPost = new HttpPost(paymentServiceDetails.getServiceUrl());</span>
+<span class="nc" id="L119">        final List&lt;NameValuePair&gt; formData = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L120">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_LOGIN, collectionApplicationProperties.atomLogin()));</span>
+<span class="nc" id="L121">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_PASS, collectionApplicationProperties.atomPass()));</span>
+<span class="nc" id="L122">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_TTYPE, collectionApplicationProperties.atomTtype()));</span>
+<span class="nc" id="L123">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_PRODID, collectionApplicationProperties.atomProdid()));</span>
+<span class="nc" id="L124">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_AMT, receiptHeader.getTotalAmount()</span>
+<span class="nc" id="L125">                .setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP).toString()));</span>
+<span class="nc" id="L126">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_TXNCURR, collectionApplicationProperties.atomTxncurr()));</span>
+<span class="nc" id="L127">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_TXNSCAMT, collectionApplicationProperties.atomTxnscamt()));</span>
+<span class="nc" id="L128">        formData.add(</span>
+<span class="nc" id="L129">                new BasicNameValuePair(CollectionConstants.ATOM_CLIENTCODE, collectionApplicationProperties.atomClientcode()));</span>
+<span class="nc" id="L130">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_TXNID, receiptHeader.getId().toString()));</span>
+<span class="nc" id="L131">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_DATE,</span>
+<span class="nc" id="L132">                DateUtils.getFormattedDate(receiptHeader.getCreatedDate(), &quot;dd/MM/yyyy HH:mm:ss&quot;)));</span>
+<span class="nc" id="L133">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_CUSTACC, collectionApplicationProperties.atomCustacc()));</span>
+<span class="nc" id="L134">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_MDD, collectionApplicationProperties.atomMdd()));</span>
+<span class="nc" id="L135">        StringBuilder returnUrl = new StringBuilder();</span>
+<span class="nc" id="L136">        returnUrl.append(paymentServiceDetails.getCallBackurl()).append(&quot;?paymentServiceId=&quot;)</span>
+<span class="nc" id="L137">                .append(paymentServiceDetails.getId());</span>
+<span class="nc" id="L138">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_RU, returnUrl.toString()));</span>
+<span class="nc" id="L139">        formData.add(new BasicNameValuePair(CollectionConstants.ATOM_UDF9, (ApplicationThreadLocals.getCityCode() + &quot;|&quot;</span>
+<span class="nc" id="L140">                + receiptHeader.getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;))));</span>
+<span class="nc" id="L141">        LOGGER.info(&quot;First request ATOM: &quot; + formData);</span>
+<span class="nc" id="L142">        UrlEncodedFormEntity urlEncodedFormEntity = null;</span>
+        try {
+<span class="nc" id="L144">            urlEncodedFormEntity = new UrlEncodedFormEntity(formData);</span>
+<span class="nc" id="L145">            httpPost.setEntity(urlEncodedFormEntity);</span>
+<span class="nc" id="L146">            final CloseableHttpClient httpclient = HttpClients.createDefault();</span>
+<span class="nc" id="L147">            CloseableHttpResponse response = httpclient.execute(httpPost);</span>
+<span class="nc" id="L148">            HttpEntity responseAtom = response.getEntity();</span>
+<span class="nc" id="L149">            BufferedReader reader = new BufferedReader(new InputStreamReader(responseAtom.getContent()));</span>
+<span class="nc" id="L150">            final StringBuilder data = new StringBuilder();</span>
+            String line;
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            while ((line = reader.readLine()) != null)</span>
+<span class="nc" id="L153">                data.append(line);</span>
+<span class="nc" id="L154">            reader.close();</span>
+
+<span class="nc" id="L156">            LOGGER.info(&quot;First Response ATOM: &quot; + data.toString());</span>
+<span class="nc" id="L157">            JAXBContext jaxbContext = JAXBContext.newInstance(ResponseAtomMmp.class);</span>
+<span class="nc" id="L158">            Unmarshaller unMarshaller = jaxbContext.createUnmarshaller();</span>
+<span class="nc" id="L159">            StringReader strReader = new StringReader(data.toString());</span>
+<span class="nc" id="L160">            ResponseAtomMmp responseMmp = (ResponseAtomMmp) unMarshaller.unmarshal(strReader);</span>
+
+            // Setting first request response values to second request
+            // parameters.
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            for (ResponseAtomParam responseParam : responseMmp.getMERCHANT().getRESPONSE().getParam()) {</span>
+<span class="nc bnc" id="L165" title="All 4 branches missed.">                if (null != responseParam.getName() &amp;&amp; !responseParam.getName().isEmpty()) {</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                    if (responseParam.getName().equals(CollectionConstants.ATOM_TTYPE))</span>
+<span class="nc" id="L167">                        ttype = responseParam.getValue();</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                    else if (responseParam.getName().equals(CollectionConstants.ATOM_TEMPTXNID))</span>
+<span class="nc" id="L169">                        tempTxnId = responseParam.getValue();</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">                    else if (responseParam.getName().equals(CollectionConstants.ATOM_TOKEN))</span>
+<span class="nc" id="L171">                        token = responseParam.getValue();</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">                    else if (responseParam.getName().equals(CollectionConstants.ATOM_TXNSTAGE))</span>
+<span class="nc" id="L173">                        txnStage = responseParam.getValue();</span>
+                }
+<span class="nc" id="L175">            }</span>
+
+<span class="nc" id="L177">        } catch (Exception exp) {</span>
+<span class="nc" id="L178">            exp.printStackTrace();</span>
+<span class="nc" id="L179">        }</span>
+<span class="nc" id="L180">        String secondRequestStr = paymentServiceDetails.getServiceUrl() + &quot;?ttype=&quot; + ttype + &quot;&amp;tempTxnId=&quot; + tempTxnId</span>
+                + &quot;&amp;token=&quot; + token + &quot;&amp;txnStage=&quot; + txnStage;
+<span class="nc" id="L182">        LOGGER.debug(&quot;Second request ATOM : &quot; + secondRequestStr);</span>
+<span class="nc" id="L183">        paymentRequest.setParameter(CollectionConstants.ONLINEPAYMENT_INVOKE_URL, secondRequestStr);</span>
+<span class="nc" id="L184">        LOGGER.info(&quot;Second paymentRequest: &quot; + paymentRequest.getRequestParameters());</span>
+<span class="nc" id="L185">        return paymentRequest;</span>
+    }
+
+    @Override
+    public PaymentResponse parsePaymentResponse(final String response) {
+<span class="nc" id="L190">        LOGGER.debug(&quot;inside  ATOM createPaymentRequest&quot;);</span>
+<span class="nc" id="L191">        LOGGER.info(&quot;Response message from Atom Payment gateway: &quot; + response);</span>
+<span class="nc" id="L192">        String[] keyValueStr = response.replace(&quot;{&quot;, &quot;&quot;).replace(&quot;}&quot;, &quot;&quot;).split(&quot;,&quot;);</span>
+<span class="nc" id="L193">        PaymentResponse atomResponse = new DefaultPaymentResponse();</span>
+<span class="nc" id="L194">        Map&lt;String, String&gt; responseMap = new HashMap&lt;String, String&gt;(0);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        for (String pair : keyValueStr) {</span>
+<span class="nc" id="L196">            String[] entry = pair.split(&quot;=&quot;);</span>
+<span class="nc" id="L197">            responseMap.put(entry[0].trim(), entry[1].trim());</span>
+        }
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        atomResponse.setAuthStatus(responseMap.get(CollectionConstants.ATOM_F_CODE).equalsIgnoreCase(&quot;Ok&quot;)</span>
+<span class="nc" id="L200">                ? CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS : responseMap.get(CollectionConstants.ATOM_F_CODE));</span>
+<span class="nc" id="L201">        atomResponse.setErrorDescription(responseMap.get(CollectionConstants.ATOM_F_CODE));</span>
+<span class="nc" id="L202">        atomResponse.setReceiptId(responseMap.get(CollectionConstants.ATOM_MER_TXN));</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (responseMap.get(CollectionConstants.ATOM_UDF9) != null) {</span>
+<span class="nc" id="L204">            String[] udf9 = responseMap.get(CollectionConstants.ATOM_UDF9).split(&quot;\\|&quot;);</span>
+<span class="nc" id="L205">            atomResponse.setAdditionalInfo6(udf9[1]);</span>
+<span class="nc" id="L206">            atomResponse.setAdditionalInfo2(udf9[0]);</span>
+<span class="nc" id="L207">        } else {</span>
+<span class="nc" id="L208">            final String receiptId = responseMap.get(CollectionConstants.ATOM_MER_TXN);</span>
+<span class="nc" id="L209">            final String ulbCode = ApplicationThreadLocals.getCityCode();</span>
+            final ReceiptHeader receiptHeader;
+<span class="nc" id="L211">            final Query qry = entityManager.createNamedQuery(CollectionConstants.QUERY_RECEIPT_BY_ID_AND_CITYCODE);</span>
+<span class="nc" id="L212">            qry.setParameter(1, Long.valueOf(receiptId));</span>
+<span class="nc" id="L213">            qry.setParameter(2, ulbCode);</span>
+<span class="nc" id="L214">            receiptHeader = (ReceiptHeader) qry.getSingleResult();</span>
+<span class="nc" id="L215">            atomResponse.setAdditionalInfo6(receiptHeader.getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L216">            atomResponse.setAdditionalInfo2(ulbCode);</span>
+        }
+
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (atomResponse.getAuthStatus().equals(CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS)) {</span>
+<span class="nc" id="L220">            atomResponse.setTxnAmount(new BigDecimal(responseMap.get(CollectionConstants.ATOM_AMT)));</span>
+<span class="nc" id="L221">            atomResponse.setTxnReferenceNo(responseMap.get(CollectionConstants.ATOM_MMP_TXN));</span>
+<span class="nc" id="L222">            SimpleDateFormat sdf = new SimpleDateFormat(&quot;EEE MMM dd HH:mm:ss zzz yyyy&quot;, Locale.getDefault());</span>
+<span class="nc" id="L223">            Date transactionDate = null;</span>
+            try {
+<span class="nc" id="L225">                transactionDate = sdf.parse(responseMap.get(CollectionConstants.ATOM_DATE));</span>
+<span class="nc" id="L226">                atomResponse.setTxnDate(transactionDate);</span>
+<span class="nc" id="L227">            } catch (ParseException e) {</span>
+<span class="nc" id="L228">                LOGGER.error(&quot;Error occured in parsing the transaction date [&quot; + transactionDate + &quot;]&quot;, e);</span>
+                try {
+<span class="nc" id="L230">                    throw new ApplicationException(&quot;.transactiondate.parse.error&quot;, e);</span>
+<span class="nc" id="L231">                } catch (ApplicationException e1) {</span>
+<span class="nc" id="L232">                    e1.printStackTrace();</span>
+                }
+<span class="nc" id="L234">            }</span>
+        }
+<span class="nc" id="L236">        return atomResponse;</span>
+    }
+
+    @Transactional
+    public PaymentResponse createOfflinePaymentRequest(final OnlinePayment onlinePayment) {
+<span class="nc" id="L241">        LOGGER.debug(&quot;Inside AtomAdaptor createOfflinePaymentRequest&quot;);</span>
+<span class="nc" id="L242">        PaymentResponse atomResponse = new DefaultPaymentResponse();</span>
+        try {
+<span class="nc" id="L244">            final HttpPost httpPost = new HttpPost(collectionApplicationProperties.atomReconcileUrl());</span>
+<span class="nc" id="L245">            final List&lt;NameValuePair&gt; formData = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L246">            formData.add(</span>
+<span class="nc" id="L247">                    new BasicNameValuePair(CollectionConstants.ATOM_MERCHANTID, collectionApplicationProperties.atomLogin()));</span>
+<span class="nc" id="L248">            formData.add(new BasicNameValuePair(CollectionConstants.ATOM_MERCHANT_TXNID,</span>
+<span class="nc" id="L249">                    onlinePayment.getReceiptHeader().getId().toString()));</span>
+<span class="nc" id="L250">            formData.add(new BasicNameValuePair(CollectionConstants.ATOM_AMT, onlinePayment.getReceiptHeader().getTotalAmount()</span>
+<span class="nc" id="L251">                    .setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP).toString()));</span>
+<span class="nc" id="L252">            formData.add(new BasicNameValuePair(CollectionConstants.ATOM_TDATE,</span>
+<span class="nc" id="L253">                    DateUtils.getFormattedDate(onlinePayment.getCreatedDate(), &quot;yyyy-MM-dd&quot;)));</span>
+<span class="nc" id="L254">            LOGGER.debug(&quot;ATOM  Reconcilation request : &quot; + formData);</span>
+<span class="nc" id="L255">            UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(formData);</span>
+<span class="nc" id="L256">            httpPost.setEntity(urlEncodedFormEntity);</span>
+<span class="nc" id="L257">            final CloseableHttpClient httpclient = HttpClients.createDefault();</span>
+<span class="nc" id="L258">            CloseableHttpResponse response = httpclient.execute(httpPost);</span>
+<span class="nc" id="L259">            HttpEntity responseAtom = response.getEntity();</span>
+<span class="nc" id="L260">            BufferedReader reader = new BufferedReader(new InputStreamReader(responseAtom.getContent()));</span>
+<span class="nc" id="L261">            final StringBuilder data = new StringBuilder();</span>
+            String line;
+<span class="nc bnc" id="L263" title="All 2 branches missed.">            while ((line = reader.readLine()) != null)</span>
+<span class="nc" id="L264">                data.append(line);</span>
+<span class="nc" id="L265">            reader.close();</span>
+<span class="nc" id="L266">            LOGGER.info(&quot;ATOM Reconcile Response : &quot; + data.toString());</span>
+<span class="nc" id="L267">            JAXBContext jaxbContext = JAXBContext.newInstance(ResponseAtomReconcilation.class);</span>
+<span class="nc" id="L268">            Unmarshaller unMarshaller = jaxbContext.createUnmarshaller();</span>
+<span class="nc" id="L269">            StringReader strReader = new StringReader(data.toString());</span>
+<span class="nc" id="L270">            ResponseAtomReconcilation responseAtomReconcilation = (ResponseAtomReconcilation) unMarshaller</span>
+<span class="nc" id="L271">                    .unmarshal(strReader);</span>
+<span class="nc" id="L272">            atomResponse.setAuthStatus(</span>
+<span class="nc bnc" id="L273" title="All 4 branches missed.">                    (null != responseAtomReconcilation.getVerified() &amp;&amp; responseAtomReconcilation.getVerified().equals(&quot;SUCCESS&quot;))</span>
+                            ? CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS
+<span class="nc" id="L275">                            : responseAtomReconcilation.getVerified());</span>
+<span class="nc" id="L276">            atomResponse.setErrorDescription(responseAtomReconcilation.getVerified());</span>
+<span class="nc" id="L277">            atomResponse.setReceiptId(responseAtomReconcilation.getMerchantTxnID());</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">            if (CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS.equals(atomResponse.getAuthStatus())) {</span>
+<span class="nc" id="L279">                atomResponse.setTxnReferenceNo(responseAtomReconcilation.getAtomtxnId());</span>
+<span class="nc" id="L280">                atomResponse.setTxnAmount(new BigDecimal(responseAtomReconcilation.getAmt()));</span>
+<span class="nc" id="L281">                String[] udf9 = responseAtomReconcilation.getUdf9().split(&quot;\\|&quot;);</span>
+<span class="nc" id="L282">                atomResponse.setAdditionalInfo6(udf9[1]);</span>
+<span class="nc" id="L283">                atomResponse.setAdditionalInfo2(udf9[0]);</span>
+<span class="nc" id="L284">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;, Locale.getDefault());</span>
+<span class="nc" id="L285">                Date transactionDate = null;</span>
+                try {
+<span class="nc" id="L287">                    transactionDate = sdf.parse(responseAtomReconcilation.getTxnDate());</span>
+<span class="nc" id="L288">                    atomResponse.setTxnDate(transactionDate);</span>
+<span class="nc" id="L289">                } catch (ParseException e) {</span>
+<span class="nc" id="L290">                    LOGGER.error(&quot;Error occured in parsing the transaction date [&quot; + responseAtomReconcilation.getTxnDate() + &quot;]&quot;,</span>
+                            e);
+<span class="nc" id="L292">                    throw new ApplicationException(&quot;.transactiondate.parse.error&quot;, e);</span>
+<span class="nc" id="L293">                }</span>
+<span class="nc" id="L294">            } else {</span>
+<span class="nc" id="L295">                atomResponse</span>
+<span class="nc" id="L296">                        .setAdditionalInfo6(onlinePayment.getReceiptHeader().getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L297">                atomResponse.setAdditionalInfo2(ApplicationThreadLocals.getCityCode());</span>
+            }
+<span class="nc" id="L299">        } catch (Exception exp) {</span>
+<span class="nc" id="L300">            exp.printStackTrace();</span>
+<span class="nc" id="L301">        }</span>
+<span class="nc" id="L302">        return atomResponse;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

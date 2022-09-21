@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReceiptDetail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">ReceiptDetail.java</span></div><h1>ReceiptDetail.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CFinancialYear;
+import org.egov.commons.CFunction;
+
+public class ReceiptDetail implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final String TO_STRING_SEP = &quot;-&quot;;
+    private Long id;
+    private ReceiptHeader receiptHeader;
+    private CChartOfAccounts accounthead;
+    private BigDecimal dramount;
+
+    /**
+     * A &lt;code&gt;BigDecimal&lt;/code&gt; representing the actual amount to be paid by the user
+     */
+    private BigDecimal cramountToBePaid;
+
+    /**
+     * A &lt;code&gt;BigDecimal&lt;/code&gt; representing the actual amount paid by the user
+     */
+    private BigDecimal cramount;
+    private Long ordernumber;
+
+    /**
+     * A &lt;code&gt;String&lt;/code&gt; representing the glcode description sent from billing system
+     */
+    private String description;
+    private CFunction function;
+
+    /**
+     * A &lt;code&gt;Long&lt;/code&gt; representing the glcode is part of actual demand or not
+     */
+    private Boolean isActualDemand;
+
+<span class="nc" id="L88">    private Set&lt;AccountPayeeDetail&gt; accountPayeeDetails = new HashSet&lt;AccountPayeeDetail&gt;(0);</span>
+
+    private CFinancialYear financialYear;
+
+    private String purpose;
+
+    private Long groupId;
+
+    private String taxheadCode;
+
+<span class="nc" id="L98">    public ReceiptDetail() {</span>
+<span class="nc" id="L99">    }</span>
+
+    public ReceiptDetail(final CChartOfAccounts accounthead, final CFunction function, final BigDecimal cramountToBePaid,
+            final BigDecimal dramount, final BigDecimal cramount, final Long ordernumber, final String description,
+            final Boolean isActualDemand,
+<span class="nc" id="L104">            final ReceiptHeader receiptHeader, final String purpose) {</span>
+<span class="nc" id="L105">        this.accounthead = accounthead;</span>
+<span class="nc" id="L106">        this.function = function;</span>
+<span class="nc" id="L107">        this.cramountToBePaid = cramountToBePaid;</span>
+<span class="nc" id="L108">        this.dramount = dramount;</span>
+<span class="nc" id="L109">        this.cramount = cramount;</span>
+<span class="nc" id="L110">        this.ordernumber = ordernumber;</span>
+<span class="nc" id="L111">        this.description = description;</span>
+<span class="nc" id="L112">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L113">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L114">        this.purpose = purpose;</span>
+<span class="nc" id="L115">    }</span>
+
+    public ReceiptDetail(final CChartOfAccounts accounthead, final CFunction function, final BigDecimal cramountToBePaid,
+            final BigDecimal dramount, final BigDecimal cramount, final Long ordernumber, final String description,
+            final Boolean isActualDemand,
+<span class="nc" id="L120">            final ReceiptHeader receiptHeader, final String purpose, final Long groupId) {</span>
+<span class="nc" id="L121">        this.accounthead = accounthead;</span>
+<span class="nc" id="L122">        this.function = function;</span>
+<span class="nc" id="L123">        this.cramountToBePaid = cramountToBePaid;</span>
+<span class="nc" id="L124">        this.dramount = dramount;</span>
+<span class="nc" id="L125">        this.cramount = cramount;</span>
+<span class="nc" id="L126">        this.ordernumber = ordernumber;</span>
+<span class="nc" id="L127">        this.description = description;</span>
+<span class="nc" id="L128">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L129">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L130">        this.purpose = purpose;</span>
+<span class="nc" id="L131">        this.groupId = groupId;</span>
+<span class="nc" id="L132">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L136">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L137">        sb</span>
+<span class="nc" id="L138">                .append(ordernumber).append(TO_STRING_SEP)</span>
+<span class="nc" id="L139">                .append(accounthead.getGlcode()).append(TO_STRING_SEP)</span>
+<span class="nc" id="L140">                .append(cramountToBePaid).append(TO_STRING_SEP)</span>
+<span class="nc" id="L141">                .append(cramount).append(TO_STRING_SEP)</span>
+<span class="nc" id="L142">                .append(dramount).append(TO_STRING_SEP)</span>
+<span class="nc" id="L143">                .append(description).append(TO_STRING_SEP)</span>
+<span class="nc" id="L144">                .append(isActualDemand);</span>
+<span class="nc" id="L145">        return sb.toString();</span>
+    }
+
+    public Long getId() {
+<span class="nc" id="L149">        return id;</span>
+    }
+
+    public void setId(final Long id) {
+<span class="nc" id="L153">        this.id = id;</span>
+<span class="nc" id="L154">    }</span>
+
+    public ReceiptHeader getReceiptHeader() {
+<span class="nc" id="L157">        return receiptHeader;</span>
+    }
+
+    public void setReceiptHeader(
+            final ReceiptHeader receiptHeader) {
+<span class="nc" id="L162">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L163">    }</span>
+
+    public BigDecimal getDramount() {
+<span class="nc" id="L166">        return dramount;</span>
+    }
+
+    public void setDramount(final BigDecimal dramount) {
+<span class="nc" id="L170">        this.dramount = dramount;</span>
+<span class="nc" id="L171">    }</span>
+
+    public BigDecimal getCramount() {
+<span class="nc" id="L174">        return cramount;</span>
+    }
+
+    public void setCramount(final BigDecimal cramount) {
+<span class="nc" id="L178">        this.cramount = cramount;</span>
+<span class="nc" id="L179">    }</span>
+
+    /**
+     * Sets both DR and CR amounts to zero.
+     */
+    public void zeroDrAndCrAmounts() {
+<span class="nc" id="L185">        dramount = BigDecimal.ZERO;</span>
+<span class="nc" id="L186">        cramount = BigDecimal.ZERO;</span>
+<span class="nc" id="L187">    }</span>
+
+    public Long getOrdernumber() {
+<span class="nc" id="L190">        return ordernumber;</span>
+    }
+
+    public void setOrdernumber(final Long ordernumber) {
+<span class="nc" id="L194">        this.ordernumber = ordernumber;</span>
+<span class="nc" id="L195">    }</span>
+
+    public CFunction getFunction() {
+<span class="nc" id="L198">        return function;</span>
+    }
+
+    public void setFunction(final CFunction function) {
+<span class="nc" id="L202">        this.function = function;</span>
+<span class="nc" id="L203">    }</span>
+
+    /**
+     * @return the accounthead
+     */
+    public CChartOfAccounts getAccounthead() {
+<span class="nc" id="L209">        return accounthead;</span>
+    }
+
+    /**
+     * @param accounthead the accounthead to set
+     */
+    public void setAccounthead(final CChartOfAccounts accounthead) {
+<span class="nc" id="L216">        this.accounthead = accounthead;</span>
+<span class="nc" id="L217">    }</span>
+
+    public BigDecimal getCramountToBePaid() {
+<span class="nc" id="L220">        return cramountToBePaid;</span>
+    }
+
+    public void setCramountToBePaid(final BigDecimal cramountToBePaid) {
+<span class="nc" id="L224">        this.cramountToBePaid = cramountToBePaid;</span>
+<span class="nc" id="L225">    }</span>
+
+    public Set&lt;AccountPayeeDetail&gt; getAccountPayeeDetails() {
+<span class="nc" id="L228">        return accountPayeeDetails;</span>
+    }
+
+    public void setAccountPayeeDetails(final Set&lt;AccountPayeeDetail&gt; accountPayeeDetails) {
+<span class="nc" id="L232">        this.accountPayeeDetails = accountPayeeDetails;</span>
+<span class="nc" id="L233">    }</span>
+
+    public void addAccountPayeeDetail(final AccountPayeeDetail accountPayeeDetails) {
+<span class="nc" id="L236">        getAccountPayeeDetails().add(accountPayeeDetails);</span>
+<span class="nc" id="L237">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L240">        return description;</span>
+    }
+
+    public void setDescription(final String description) {
+<span class="nc" id="L244">        this.description = description;</span>
+<span class="nc" id="L245">    }</span>
+
+    public CFinancialYear getFinancialYear() {
+<span class="nc" id="L248">        return financialYear;</span>
+    }
+
+    public void setFinancialYear(final CFinancialYear financialYear) {
+<span class="nc" id="L252">        this.financialYear = financialYear;</span>
+<span class="nc" id="L253">    }</span>
+
+    /**
+     * @return the isActualDemand
+     */
+    public Boolean getIsActualDemand() {
+<span class="nc" id="L259">        return isActualDemand;</span>
+    }
+
+    /**
+     * @param isActualDemand the isActualDemand to set
+     */
+    public void setIsActualDemand(final Boolean isActualDemand) {
+<span class="nc" id="L266">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L267">    }</span>
+
+    /**
+     * @return the purpose
+     */
+    public String getPurpose() {
+<span class="nc" id="L273">        return purpose;</span>
+    }
+
+    /**
+     * @param purpose the purpose to set
+     */
+    public void setPurpose(final String purpose) {
+<span class="nc" id="L280">        this.purpose = purpose;</span>
+<span class="nc" id="L281">    }</span>
+
+    public Long getGroupId() {
+<span class="nc" id="L284">        return groupId;</span>
+    }
+
+    public void setGroupId(Long groupId) {
+<span class="nc" id="L288">        this.groupId = groupId;</span>
+<span class="nc" id="L289">    }</span>
+
+    public String getTaxheadCode() {
+<span class="nc" id="L292">        return taxheadCode;</span>
+    }
+
+    public void setTaxheadCode(String taxheadCode) {
+<span class="nc" id="L296">        this.taxheadCode = taxheadCode;</span>
+<span class="nc" id="L297">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

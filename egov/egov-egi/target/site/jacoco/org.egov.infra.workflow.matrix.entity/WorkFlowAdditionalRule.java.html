@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WorkFlowAdditionalRule.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.matrix.entity</a> &gt; <span class="el_source">WorkFlowAdditionalRule.java</span></div><h1>WorkFlowAdditionalRule.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.matrix.entity;
+
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.egov.infra.workflow.entity.WorkflowTypes;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+import static org.egov.infra.workflow.matrix.entity.WorkFlowAdditionalRule.SEQ_WF_ADDITIONALRULE;
+
+@Entity
+@Table(name = &quot;EG_WF_ADDITIONALRULE&quot;)
+@SequenceGenerator(name = SEQ_WF_ADDITIONALRULE, sequenceName = SEQ_WF_ADDITIONALRULE, allocationSize = 1)
+<span class="nc" id="L68">public class WorkFlowAdditionalRule extends AbstractPersistable&lt;Long&gt; {</span>
+
+    public static final String SEQ_WF_ADDITIONALRULE = &quot;SEQ_EG_WF_ADDITIONALRULE&quot;;
+    private static final long serialVersionUID = 6698631796849930996L;
+    @Id
+    @GeneratedValue(generator = SEQ_WF_ADDITIONALRULE, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;objecttypeid&quot;)
+    private WorkflowTypes objecttypeid;
+    private String additionalRule;
+    private String states;
+    private String status;
+    private String buttons;
+    private String workFlowActions;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L87">        return this.id;</span>
+    }
+
+    @Override
+    public void setId(Long id) {
+<span class="nc" id="L92">        this.id = id;</span>
+<span class="nc" id="L93">    }</span>
+
+    public WorkflowTypes getObjecttypeid() {
+<span class="nc" id="L96">        return this.objecttypeid;</span>
+    }
+
+    public void setObjecttypeid(WorkflowTypes objecttypeid) {
+<span class="nc" id="L100">        this.objecttypeid = objecttypeid;</span>
+<span class="nc" id="L101">    }</span>
+
+    public String getAdditionalRule() {
+<span class="nc" id="L104">        return this.additionalRule;</span>
+    }
+
+    public void setAdditionalRule(String additionalRule) {
+<span class="nc" id="L108">        this.additionalRule = additionalRule;</span>
+<span class="nc" id="L109">    }</span>
+
+    public String getStates() {
+<span class="nc" id="L112">        return this.states;</span>
+    }
+
+    public void setStates(String states) {
+<span class="nc" id="L116">        this.states = states;</span>
+<span class="nc" id="L117">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L120">        return this.status;</span>
+    }
+
+    public void setStatus(String status) {
+<span class="nc" id="L124">        this.status = status;</span>
+<span class="nc" id="L125">    }</span>
+
+    public String getButtons() {
+<span class="nc" id="L128">        return this.buttons;</span>
+    }
+
+    public void setButtons(String buttons) {
+<span class="nc" id="L132">        this.buttons = buttons;</span>
+<span class="nc" id="L133">    }</span>
+
+    public String getWorkFlowActions() {
+<span class="nc" id="L136">        return this.workFlowActions;</span>
+    }
+
+    public void setWorkFlowActions(String workFlowActions) {
+<span class="nc" id="L140">        this.workFlowActions = workFlowActions;</span>
+<span class="nc" id="L141">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

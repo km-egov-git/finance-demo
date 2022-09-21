@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScriptService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.script.service</a> &gt; <span class="el_source">ScriptService.java</span></div><h1>ScriptService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.script.service;
+
+import org.egov.infra.cache.impl.LRUCache;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.script.entity.Script;
+import org.egov.infra.script.repository.ScriptRepository;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+/**
+ * Service for executing scripts. Caches the script engine and frequently used
+ * scripts to improve performance. Also provides methods that can be used from
+ * within scripts to invoke other scripts or functions from already loaded
+ * scripts. &lt;br&gt;
+ * &lt;br&gt;
+ * Code snippet: &lt;br&gt;
+ *
+ * &lt;pre&gt;
+ * &lt;code&gt;scriptService.executeScript(&amp;quot;script name&amp;quot;, ScriptService.createContext(&amp;quot;var1&amp;quot;,
+ * 		value1, &amp;quot;var2&amp;quot;, value2));
+ * &lt;/code&gt;
+ * &lt;/pre&gt;
+ */
+
+@Transactional(readOnly=true)
+@Service
+public class ScriptService  {
+    private static LRUCache&lt;String, Script&gt; scriptCache;
+<span class="nc" id="L99">    private static final Logger LOG = LoggerFactory.getLogger(ScriptService.class);</span>
+    
+    @Autowired
+    private ScriptRepository scriptRepository;
+    
+    @Autowired
+    private ScriptEngineProvider scriptEngineProvider;
+    
+    public Script getByName(String name) {
+<span class="nc" id="L108">        return scriptRepository.findByName(name);</span>
+    }
+
+    public Script findByNameAndPeriod( String name, Date period) {
+<span class="nc" id="L112">        return scriptRepository.findByNameAndPeriod(name, period);</span>
+    }
+    
+<span class="nc" id="L115">    public ScriptService() {</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (scriptCache == null)</span>
+<span class="nc" id="L117">            scriptCache = new LRUCache&lt;String, Script&gt;(10, 50);</span>
+<span class="nc" id="L118">    }</span>
+
+    /**
+     * Takes an even number of arguments, and creates a
+     * &lt;code&gt;ScriptContext&lt;/code&gt; object, with ith argument as the key and
+     * (i+1)th argument as the value. This is why this method expects an even
+     * number of arguments.
+     * 
+     * @param args
+     *            Arguments from which the context will be created
+     * @return The script context in which a script can be executed. This can be
+     *         passed as second argument to the method
+     *         {@link ScriptService#executeScript(String, ScriptContext)}
+     */
+    public static ScriptContext createContext(final Object... args) {
+<span class="nc" id="L133">        final SimpleScriptContext context = new SimpleScriptContext();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (args.length % 2 != 0)</span>
+<span class="nc" id="L135">            throw new ApplicationRuntimeException(&quot;Number of arguments must be even&quot;);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        for (int i = 0; i &lt; args.length; i += 2)</span>
+<span class="nc" id="L137">            context.setAttribute((String) args[i], args[i + 1], ScriptContext.ENGINE_SCOPE);</span>
+<span class="nc" id="L138">        return context;</span>
+    }
+
+    /**
+     * Loads all functions from given script.
+     * 
+     * @param scriptName
+     *            Script which is to be loaded
+     */
+    public void loadFunctionsFromScript(final String scriptName) {
+<span class="nc" id="L148">        final Script script = getScript(scriptName, DateUtils.today());</span>
+<span class="nc" id="L149">        final ScriptEngine engine = scriptEngineProvider.getScriptEngine(script.getType());</span>
+<span class="nc" id="L150">        executeScript(script, engine, engine.getContext());</span>
+<span class="nc" id="L151">    }</span>
+
+    /**
+     * Sets standard context attributes that can be used inside the script.
+     * These are: &lt;br&gt;
+     * &lt;code&gt;scriptService&lt;/code&gt; - Instance of script service - can be used to
+     * invoke another script, load functions from a script, or execute an
+     * already loaded function.&lt;br&gt;
+     * &lt;code&gt;scriptEngine&lt;/code&gt; - The script engine - to be passed as first
+     * argument to the
+     * {@link ScriptService#executeFunction(ScriptEngine, String, Object...)}
+     * &lt;br&gt;
+     * &lt;code&gt;scriptContext&lt;/code&gt; - The script context - to be passed as second
+     * argument to the
+     * {@link ScriptService#executeScript(String, ScriptContext)} API&lt;br&gt;
+     * 
+     * @param engine
+     *            The script engine
+     * @param context
+     *            The script context
+     */
+    private void setupContextAttributes(final ScriptEngine engine, final ScriptContext context) {
+<span class="nc" id="L173">        context.setAttribute(&quot;scriptService&quot;, this, ScriptContext.ENGINE_SCOPE);</span>
+<span class="nc" id="L174">        context.setAttribute(&quot;scriptEngine&quot;, engine, ScriptContext.ENGINE_SCOPE);</span>
+<span class="nc" id="L175">        context.setAttribute(&quot;scriptContext&quot;, context, ScriptContext.ENGINE_SCOPE);</span>
+<span class="nc" id="L176">    }</span>
+
+    /**
+     * Executes the given script using given script engine and context
+     * 
+     * @param script
+     *            Script to be executed
+     * @param engine
+     *            Engine to be used for executing the script
+     * @param context
+     *            Context in which the script is to be executed
+     * @return The result from the script, or the value of the script variable
+     *         &quot;result&quot;
+     * @throws ValidationException
+     *             if the script returns a list of ValidationErrors
+     * @throws EGOVRuntimException
+     *             if script execution throws an exception
+     */
+    private Object executeScript(final Script script, final ScriptEngine engine, final ScriptContext context) {
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (context == null) {</span>
+            // Context must be passed. We don't want to use the default engine
+            // context as it will keep on growing over a period of time
+<span class="nc" id="L198">            final String errMsg = &quot;ScriptContext not passed to executeScript method!&quot;;</span>
+<span class="nc" id="L199">            LOG.error(errMsg);</span>
+<span class="nc" id="L200">            throw new ApplicationRuntimeException(errMsg);</span>
+        }
+
+<span class="nc" id="L203">        Object evalResult = null;</span>
+
+        // Set up standard context attributes
+<span class="nc" id="L206">        setupContextAttributes(engine, context);</span>
+
+        try {
+<span class="nc" id="L209">            final CompiledScript compiledScript = script.getCompiledScript();</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">            if (engine instanceof Compilable &amp;&amp; compiledScript != null)</span>
+                // Script engine supports compiled scripts.
+                // Execute the compiled script using given context.
+<span class="nc" id="L213">                evalResult = compiledScript.eval(context);</span>
+            else
+                // Script engine doesn't support compiled scripts.
+                // Set the context on engine and execute the script.
+<span class="nc" id="L217">                evalResult = engine.eval(script.getScript(), context);</span>
+
+<span class="nc" id="L219">            handleErrorsIfAny(context.getAttribute(&quot;validationErrors&quot;));</span>
+
+            // No errors. Get and return the result.
+<span class="nc" id="L222">            final Object result = context.getAttribute(&quot;result&quot;);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">            return evalResult == null ? result : evalResult;</span>
+<span class="nc" id="L224">        } catch (final ScriptException e) {</span>
+<span class="nc" id="L225">            LOG.error(&quot;script error for &quot; + script.getType() + &quot;:&quot; + script.getName() + &quot;:&quot; + script.getScript(), e);</span>
+<span class="nc" id="L226">            throw new ApplicationRuntimeException(&quot;script.error&quot;, e);</span>
+<span class="nc" id="L227">        } catch (final  ValidationException e) {</span>
+<span class="nc bnc" id="L228" title="All 4 branches missed.">            if(e.getErrors()!=null &amp;&amp; !e.getErrors().isEmpty())</span>
+<span class="nc" id="L229">            LOG.error(e.getErrors().get(0).getMessage());</span>
+<span class="nc" id="L230">            throw e;</span>
+        }
+<span class="nc" id="L232">        catch (final  Exception e) {</span>
+<span class="nc" id="L233">            LOG.error(&quot;Exception  for &quot; + script.getType() + &quot;:&quot; + script.getName() + &quot;:&quot; + script.getScript(), e);</span>
+<span class="nc" id="L234">            throw new ApplicationRuntimeException(&quot;script.error&quot;, e);</span>
+        }
+    }
+
+    /**
+     * Executes given function using given script engine
+     * 
+     * @param engine
+     *            Script engine to be used for executing the function
+     * @param functionName
+     *            Name of function to be executed
+     * @return Return value from the function
+     */
+    public Object executeFunctionNoArgs(final ScriptEngine engine, final String functionName) {
+<span class="nc" id="L248">        return executeFunction(engine, functionName);</span>
+    }
+
+    /**
+     * Executes given function using given script engine
+     * 
+     * @param engine
+     *            Script engine to be used for executing the function
+     * @param functionName
+     *            Name of function to be executed
+     * @param args
+     *            Arguments to be passed to the function
+     * @return Return value from the function
+     */
+    public Object executeFunction(final ScriptEngine engine, final String functionName, final Object... args) {
+<span class="nc" id="L263">        Object evalResult = null;</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">        if (engine instanceof Invocable)</span>
+            try {
+<span class="nc" id="L266">                evalResult = ((Invocable) engine).invokeFunction(functionName, args);</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">                if (evalResult == null)</span>
+<span class="nc" id="L268">                    evalResult = engine.get(&quot;result&quot;);</span>
+<span class="nc" id="L269">            } catch (final Exception e) {</span>
+<span class="nc" id="L270">                final String errMsg = &quot;Exception while invoking function [&quot; + functionName + &quot;]&quot;;</span>
+<span class="nc" id="L271">                LOG.error(errMsg, e);</span>
+<span class="nc" id="L272">                throw new ApplicationRuntimeException(errMsg, e);</span>
+<span class="nc" id="L273">            }</span>
+        else {
+<span class="nc" id="L275">            final String errMsg = &quot;Script engine [&quot; + engine + &quot;] does not support method execution!&quot;;</span>
+<span class="nc" id="L276">            LOG.error(errMsg);</span>
+<span class="nc" id="L277">            throw new ApplicationRuntimeException(errMsg);</span>
+        }
+<span class="nc" id="L279">        return evalResult;</span>
+    }
+
+    /**
+     * Compiles given script if it is not already compiled, and if the
+     * corresponding script engine supports compilation
+     * 
+     * @param script
+     *            Script to be compiled
+     * @return The compiled script object. Returns null if the script engine
+     *         doesn't support compilation.
+     */
+    private CompiledScript compileScriptIfRequired(final Script script) {
+<span class="nc" id="L292">        CompiledScript compiledScript = script.getCompiledScript();</span>
+
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (compiledScript != null)</span>
+<span class="nc" id="L295">            return compiledScript;</span>
+
+<span class="nc" id="L297">        final ScriptEngine engine = scriptEngineProvider.getScriptEngine(script.getType());</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        if (engine instanceof Compilable)</span>
+            try {
+                // Script engine supports compilation
+<span class="nc" id="L301">                compiledScript = ((Compilable) engine).compile(script.getScript());</span>
+<span class="nc" id="L302">                script.setCompiledScript(compiledScript);</span>
+
+                // TODO: Add compiledScript column to SCRIPT table and persist
+                // the modified object. Problem: JythonCompiledScript is not
+                // serializable!
+                // scriptService.persist(script);
+<span class="nc" id="L308">            } catch (final ScriptException e) {</span>
+<span class="nc" id="L309">                final String errMsg = &quot;Could not compile script &quot; + script.getType() + &quot;:&quot; + script.getName() + &quot;:&quot;</span>
+<span class="nc" id="L310">                        + script.getScript();</span>
+<span class="nc" id="L311">                LOG.error(errMsg, e);</span>
+<span class="nc" id="L312">                throw new ApplicationRuntimeException(errMsg, e);</span>
+<span class="nc" id="L313">            }</span>
+
+<span class="nc" id="L315">        return compiledScript;</span>
+    }
+
+    /**
+     * @param scriptName
+     *            Script name
+     * @param asOnDate
+     *            The date against which validity of the script is to be
+     *            checked. If null, validity as of current date will be checked.
+     * @return Script object for given name
+     * @throws ApplicationRuntimeException
+     *             if the script is not configured in the system
+     */
+    private Script getScript(final String scriptName, Date asOnDate) {
+<span class="nc" id="L329">    	  Date currentDate = new Date();</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">    	if (asOnDate != null)</span>
+<span class="nc" id="L331">    		currentDate =  asOnDate;</span>
+
+<span class="nc" id="L333">        Script script = scriptCache.get(scriptName);</span>
+<span class="nc bnc" id="L334" title="All 4 branches missed.">        if (script != null &amp;&amp; new DateTime(script.getPeriod().getEndDate()).isAfter(new DateTime(asOnDate.getTime())))</span>
+            // Script found in cache and is still valid
+<span class="nc" id="L336">            return script;</span>
+
+        // Script not available in cache. Try to fetch from database.
+        
+<span class="nc" id="L340">        script = scriptRepository.findByNameAndPeriod(scriptName, currentDate);</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">        if (script == null)</span>
+<span class="nc" id="L342">            throw new ApplicationRuntimeException(&quot;Script [&quot; + scriptName + &quot;] not found!&quot;);</span>
+
+        // Compile the script if required and possible
+<span class="nc" id="L345">        compileScriptIfRequired(script);</span>
+
+        // Add the script to cache
+<span class="nc" id="L348">        scriptCache.put(scriptName, script);</span>
+
+<span class="nc" id="L350">        return script;</span>
+    }
+
+    /**
+     * Executes the given script with context as the ScriptContext. The values
+     * in the context are available as variables in the script. The names of
+     * these variables will be the attributes in the context.
+     * 
+     * @param script
+     *            Script to be executed
+     * @param context
+     *            The script context - attributes in this context can be used as
+     *            variables inside the script
+     * @return The result from the script, or the value of the script variable
+     *         &quot;result&quot;
+     * @throws ValidationException
+     *             if the script returns a list of ValidationErrors
+     */
+    public Object executeScript(final Script script, final ScriptContext context) {
+<span class="nc" id="L369">        final ScriptEngine engine = scriptEngineProvider.getScriptEngine(script.getType());</span>
+<span class="nc" id="L370">        return executeScript(script, engine, context);</span>
+    }
+
+    /**
+     * Executes the given script with context as the ScriptContext. The values
+     * in the context are available as variables in the script. The names of
+     * these variables will be the attributes in the context
+     * 
+     * @param scriptName
+     *            Name of script to be executed
+     * @param context
+     * @return The result from the script, or the value of the script variable
+     *         &quot;result&quot;
+     * @throws ValidationException
+     *             , if the script returns a list of ValidationErrors
+     */
+    public Object executeScript(final String scriptName, final ScriptContext context) {
+<span class="nc" id="L387">        return executeScript(getScript(scriptName, DateUtils.today()), context);</span>
+    }
+
+    /**
+     * Executes the given script with context as the ScriptContext as on given
+     * date. This means that the script that was valid as on given date will be
+     * executed (not the currently valid one). The values in the context are
+     * available as variables in the script. The names of these variables will
+     * be the attributes in the context.
+     * 
+     * @param scriptName
+     *            Name of script to be executed
+     * @param context
+     * @param asOnDate
+     *            The date as on which the script is to be executed
+     * @return The result from the script, or the value of the script variable
+     *         &quot;result&quot;
+     * @throws ValidationException
+     *             , if the script returns a list of ValidationErrors
+     */
+    public Object executeScript(final String scriptName, final ScriptContext context, final Date asOnDate) {
+<span class="nc" id="L408">        return executeScript(getScript(scriptName, asOnDate), context);</span>
+    }
+
+    /**
+     * Checks if the script has returned any validation errors. If yes, throws a
+     * new &lt;code&gt;ValidationException&lt;/code&gt; containing the errors.
+     * 
+     * @param errors
+     *            The value of &quot;validationErrors&quot; attributes from script context
+     */
+    private void handleErrorsIfAny(final Object errors) {
+<span class="nc bnc" id="L419" title="All 2 branches missed.">        if (errors != null) {</span>
+<span class="nc" id="L420">            List&lt;ValidationError&gt; validationErrors = null;</span>
+<span class="nc bnc" id="L421" title="All 2 branches missed.">            if (errors instanceof List)</span>
+<span class="nc" id="L422">                validationErrors = (List&lt;ValidationError&gt;) errors;</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">            else if (errors instanceof Map)</span>
+<span class="nc" id="L424">                validationErrors = toErrors((Map) errors);</span>
+            else
+<span class="nc" id="L426">                validationErrors = Arrays.asList(new ValidationError(errors.toString(), errors.toString()));</span>
+<span class="nc" id="L427">            throw new ValidationException(validationErrors);</span>
+        }
+<span class="nc" id="L429">    }</span>
+
+    /**
+     * Converts a map of validation errors to a list of ValidationError objects
+     * assuming that key = error key and value = error message
+     * 
+     * @param errors
+     *            Map of validation errors
+     * @return List of ValidationError objects
+     */
+    private List&lt;ValidationError&gt; toErrors(final Map errors) {
+        List&lt;ValidationError&gt; validationErrors;
+<span class="nc" id="L441">        validationErrors = new LinkedList&lt;ValidationError&gt;();</span>
+<span class="nc" id="L442">        final Set&lt;Entry&gt; errorEntries = errors.entrySet();</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">        for (final Entry entry : errorEntries)</span>
+<span class="nc" id="L444">            validationErrors.add(new ValidationError(entry.getKey().toString(), entry.getValue().toString()));</span>
+<span class="nc" id="L445">        return validationErrors;</span>
+    }
+
+    /**
+     * Clears the script cache
+     */
+    public void clearScriptCache() {
+<span class="nc" id="L452">        scriptCache.clear();</span>
+<span class="nc" id="L453">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

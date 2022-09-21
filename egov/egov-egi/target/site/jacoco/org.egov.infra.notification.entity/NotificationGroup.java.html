@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationGroup.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.notification.entity</a> &gt; <span class="el_source">NotificationGroup.java</span></div><h1>NotificationGroup.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.notification.entity;
+
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.workflow.entity.OwnerGroup;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.SafeHtml;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
+import java.util.Date;
+import java.util.Set;
+
+import static org.egov.infra.notification.entity.NotificationGroup.SEQ_EG_NOTIFICATION_GROUP;
+
+@Entity
+@Table(name = &quot;EG_NOTIFICATION_GROUP&quot;)
+@SequenceGenerator(name = SEQ_EG_NOTIFICATION_GROUP, sequenceName = SEQ_EG_NOTIFICATION_GROUP, allocationSize = 1)
+<span class="nc" id="L72">public class NotificationGroup extends AbstractAuditable {</span>
+
+    public static final String SEQ_EG_NOTIFICATION_GROUP = &quot;SEQ_EG_NOTIFICATION_GROUP&quot;;
+    private static final long serialVersionUID = -6657657337034880987L;
+    @Id
+    @GeneratedValue(generator = SEQ_EG_NOTIFICATION_GROUP, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @Length(min = 1, max = 100)
+    @SafeHtml
+    private String name;
+
+    @Length(max = 250)
+    @SafeHtml
+    private String description;
+
+    @NotNull
+    private Date effectiveDate;
+
+    private boolean active;
+
+    @Transient
+    private Set&lt;OwnerGroup&gt; members;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L98">        return id;</span>
+    }
+
+    @Override
+    protected void setId(Long id) {
+<span class="nc" id="L103">        this.id = id;</span>
+<span class="nc" id="L104">    }</span>
+
+    public String getName() {
+<span class="nc" id="L107">        return this.name;</span>
+    }
+
+    public void setName(String name) {
+<span class="nc" id="L111">        this.name = name;</span>
+<span class="nc" id="L112">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L115">        return this.description;</span>
+    }
+
+    public void setDescription(String description) {
+<span class="nc" id="L119">        this.description = description;</span>
+<span class="nc" id="L120">    }</span>
+
+    public Date getEffectiveDate() {
+<span class="nc" id="L123">        return this.effectiveDate;</span>
+    }
+
+    public void setEffectiveDate(Date effectiveDate) {
+<span class="nc" id="L127">        this.effectiveDate = effectiveDate;</span>
+<span class="nc" id="L128">    }</span>
+
+    public Set&lt;OwnerGroup&gt; getMembers() {
+<span class="nc" id="L131">        return this.members;</span>
+    }
+
+    public void setMembers(Set&lt;OwnerGroup&gt; members) {
+<span class="nc" id="L135">        this.members = members;</span>
+<span class="nc" id="L136">    }</span>
+
+    public boolean isActive() {
+<span class="nc" id="L139">        return active;</span>
+    }
+
+    public void setActive(boolean active) {
+<span class="nc" id="L143">        this.active = active;</span>
+<span class="nc" id="L144">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L148">        return name;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

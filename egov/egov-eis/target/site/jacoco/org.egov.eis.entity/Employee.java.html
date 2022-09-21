@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Employee.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.entity</a> &gt; <span class="el_source">Employee.java</span></div><h1>Employee.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.entity;
+
+import org.egov.commons.EgwStatus;
+import org.egov.commons.utils.EntityType;
+import org.egov.eis.entity.enums.EmployeeStatus;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.egov.infra.persistence.validator.annotation.Unique;
+import org.egov.infra.validation.regex.Constants;
+import org.hibernate.envers.AuditOverride;
+import org.hibernate.envers.AuditOverrides;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
+import org.hibernate.validator.constraints.SafeHtml;
+import org.joda.time.DateTime;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;egeis_employee&quot;)
+@Unique(fields = { &quot;code&quot; }, enableDfltMsg = true)
+@AuditOverrides({
+        @AuditOverride(forClass = User.class, name = &quot;name&quot;),
+        @AuditOverride(forClass = User.class, name = &quot;mobileNumber&quot;),
+        @AuditOverride(forClass = User.class, name = &quot;emailId&quot;)
+})
+public class Employee extends User implements EntityType {
+
+    private static final long serialVersionUID = -1105585841211211215L;
+    @NotNull
+    @SafeHtml
+    @Column(name = &quot;code&quot;, unique = true)
+    @Pattern(regexp = Constants.ALPHANUMERIC)
+    @Audited
+    private String code;
+
+    @Temporal(value = TemporalType.DATE)
+    @Audited
+    private Date dateOfAppointment;
+
+    @Temporal(value = TemporalType.DATE)
+    @Audited
+    private Date dateOfRetirement;
+
+    @Enumerated(EnumType.STRING)
+    @Audited
+    private EmployeeStatus employeeStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;employeetype&quot;)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private EmployeeType employeeType;
+
+<span class="nc" id="L119">    @OneToMany(mappedBy = &quot;employee&quot;, fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)</span>
+    @OrderBy(&quot; primary desc,toDate DESC &quot;)
+    @NotAudited
+    private final List&lt;Assignment&gt; assignments = new ArrayList&lt;Assignment&gt;(0);
+
+<span class="nc" id="L124">    @OneToMany(mappedBy = &quot;employee&quot;, fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)</span>
+    @OrderBy(&quot;id DESC &quot;)
+    @NotAudited
+    private final List&lt;Jurisdiction&gt; jurisdictions = new ArrayList&lt;Jurisdiction&gt;(0);
+
+<span class="nc" id="L129">    public Employee() {</span>
+<span class="nc" id="L130">        setType(UserType.EMPLOYEE);</span>
+<span class="nc" id="L131">    }</span>
+
+    @Override
+    public String getCode() {
+<span class="nc" id="L135">        return code;</span>
+    }
+
+    public void setCode(final String code) {
+<span class="nc" id="L139">        this.code = code;</span>
+<span class="nc" id="L140">    }</span>
+
+    public DateTime getDateOfAppointment() {
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        return null == dateOfAppointment ? null : new DateTime(dateOfAppointment);</span>
+    }
+
+    public void setDateOfAppointment(final DateTime dateOfAppointment) {
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        this.dateOfAppointment = null == dateOfAppointment ? null : dateOfAppointment.toDate();</span>
+<span class="nc" id="L148">    }</span>
+
+    public DateTime getDateOfRetirement() {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        return null == dateOfRetirement ? null : new DateTime(dateOfRetirement);</span>
+    }
+
+    public void setDateOfRetirement(final DateTime dateOfRetirement) {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        this.dateOfRetirement = null == dateOfRetirement ? null : dateOfRetirement.toDate();</span>
+<span class="nc" id="L156">    }</span>
+
+    public EmployeeStatus getEmployeeStatus() {
+<span class="nc" id="L159">        return employeeStatus;</span>
+    }
+
+    public void setEmployeeStatus(final EmployeeStatus employeeStatus) {
+<span class="nc" id="L163">        this.employeeStatus = employeeStatus;</span>
+<span class="nc" id="L164">    }</span>
+
+    public EmployeeType getEmployeeType() {
+<span class="nc" id="L167">        return employeeType;</span>
+    }
+
+    public void setEmployeeType(final EmployeeType employeeType) {
+<span class="nc" id="L171">        this.employeeType = employeeType;</span>
+<span class="nc" id="L172">    }</span>
+
+    public List&lt;Assignment&gt; getAssignments() {
+<span class="nc" id="L175">        return assignments;</span>
+    }
+
+    public void setAssignments(final List&lt;Assignment&gt; assignments) {
+<span class="nc" id="L179">        this.assignments.clear();</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (assignments != null)</span>
+<span class="nc" id="L181">            this.assignments.addAll(assignments);</span>
+<span class="nc" id="L182">    }</span>
+
+    public List&lt;Jurisdiction&gt; getJurisdictions() {
+<span class="nc" id="L185">        return jurisdictions;</span>
+    }
+
+    public void setJurisdictions(final List&lt;Jurisdiction&gt; jurisdictions) {
+<span class="nc" id="L189">        this.jurisdictions.clear();</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        if (jurisdictions != null)</span>
+<span class="nc" id="L191">            this.jurisdictions.addAll(jurisdictions);</span>
+<span class="nc" id="L192">    }</span>
+
+    @Override
+    public String getBankname() {
+<span class="nc" id="L196">        return null;</span>
+    }
+
+    @Override
+    public String getBankaccount() {
+<span class="nc" id="L201">        return null;</span>
+    }
+
+    @Override
+    public String getPanno() {
+<span class="nc" id="L206">        return null;</span>
+    }
+
+    @Override
+    public String getTinno() {
+<span class="nc" id="L211">        return null;</span>
+    }
+
+    @Override
+    public String getIfsccode() {
+<span class="nc" id="L216">        return null;</span>
+    }
+
+    @Override
+    public String getModeofpay() {
+<span class="nc" id="L221">        return null;</span>
+    }
+
+    @Override
+    public Integer getEntityId() {
+<span class="nc" id="L226">        return getId().intValue();</span>
+    }
+
+    @Override
+    public String getEntityDescription() {
+<span class="nc" id="L231">        return getName();</span>
+    }
+
+    @Override
+    public EgwStatus getEgwStatus() {
+<span class="nc" id="L236">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

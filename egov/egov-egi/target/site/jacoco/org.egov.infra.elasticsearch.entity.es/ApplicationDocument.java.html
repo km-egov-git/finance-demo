@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationDocument.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.elasticsearch.entity.es</a> &gt; <span class="el_source">ApplicationDocument.java</span></div><h1>ApplicationDocument.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.elasticsearch.entity.es;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.egov.infra.elasticsearch.entity.enums.ClosureStatus;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+import java.util.Date;
+
+import static org.egov.infra.utils.ApplicationConstant.DEFAULT_TIMEZONE;
+import static org.egov.infra.utils.ApplicationConstant.ES_DATE_FORMAT;
+import static org.springframework.data.elasticsearch.annotations.DateFormat.date_optional_time;
+import static org.springframework.data.elasticsearch.annotations.FieldIndex.not_analyzed;
+
+@Document(indexName = &quot;applications&quot;, type = &quot;applications&quot;)
+<span class="nc" id="L67">public class ApplicationDocument {</span>
+
+    @Id
+    private String id;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String moduleName;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String applicationNumber;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ES_DATE_FORMAT, timezone = DEFAULT_TIMEZONE)
+    @Field(type = FieldType.Date, format = date_optional_time, pattern = ES_DATE_FORMAT)
+    private Date applicationDate;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String applicationType;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String applicantName;
+
+    @Field(type = FieldType.String)
+    private String applicantAddress;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ES_DATE_FORMAT, timezone = DEFAULT_TIMEZONE)
+    @Field(type = FieldType.Date, format = date_optional_time, pattern = ES_DATE_FORMAT)
+    private Date disposalDate;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String status;
+
+    @Field(type = FieldType.String)
+    private String url;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String consumerCode;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String mobileNumber;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String ownerName;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String aadharNumber;
+
+    @Field(type = FieldType.Integer)
+    private Integer elapsedDays;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String closed;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String approved;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String channel;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String cityCode;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String cityName;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String cityGrade;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String districtName;
+
+    @Field(type = FieldType.String, index = not_analyzed)
+    private String regionName;
+
+    @Field(type = FieldType.Integer)
+    private Integer isClosed;
+
+    @Field(type = FieldType.Integer)
+    private Integer sla;
+
+    @Field(type = FieldType.Integer)
+    private Integer slaGap;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ES_DATE_FORMAT, timezone = DEFAULT_TIMEZONE)
+    @Field(type = FieldType.Date, format = DateFormat.date_optional_time, pattern = ES_DATE_FORMAT)
+    private Date createdDate;
+
+    public String getId() {
+<span class="nc" id="L154">        return id;</span>
+    }
+
+    public void setId(final String id) {
+<span class="nc" id="L158">        this.id = id;</span>
+<span class="nc" id="L159">    }</span>
+
+    public String getModuleName() {
+<span class="nc" id="L162">        return moduleName;</span>
+    }
+
+    public void setModuleName(final String moduleName) {
+<span class="nc" id="L166">        this.moduleName = moduleName;</span>
+<span class="nc" id="L167">    }</span>
+
+    public String getApplicationNumber() {
+<span class="nc" id="L170">        return applicationNumber;</span>
+    }
+
+    public void setApplicationNumber(final String applicationNumber) {
+<span class="nc" id="L174">        this.applicationNumber = applicationNumber;</span>
+<span class="nc" id="L175">    }</span>
+
+    public Date getApplicationDate() {
+<span class="nc" id="L178">        return applicationDate;</span>
+    }
+
+    public void setApplicationDate(final Date applicationDate) {
+<span class="nc" id="L182">        this.applicationDate = applicationDate;</span>
+<span class="nc" id="L183">    }</span>
+
+    public String getApplicationType() {
+<span class="nc" id="L186">        return applicationType;</span>
+    }
+
+    public void setApplicationType(final String applicationType) {
+<span class="nc" id="L190">        this.applicationType = applicationType;</span>
+<span class="nc" id="L191">    }</span>
+
+    public String getApplicantName() {
+<span class="nc" id="L194">        return applicantName;</span>
+    }
+
+    public void setApplicantName(final String applicantName) {
+<span class="nc" id="L198">        this.applicantName = applicantName;</span>
+<span class="nc" id="L199">    }</span>
+
+    public String getApplicantAddress() {
+<span class="nc" id="L202">        return applicantAddress;</span>
+    }
+
+    public void setApplicantAddress(final String applicantAddress) {
+<span class="nc" id="L206">        this.applicantAddress = applicantAddress;</span>
+<span class="nc" id="L207">    }</span>
+
+    public Date getDisposalDate() {
+<span class="nc" id="L210">        return disposalDate;</span>
+    }
+
+    public void setDisposalDate(final Date disposalDate) {
+<span class="nc" id="L214">        this.disposalDate = disposalDate;</span>
+<span class="nc" id="L215">    }</span>
+
+    public String getCityName() {
+<span class="nc" id="L218">        return cityName;</span>
+    }
+
+    public void setCityName(final String cityName) {
+<span class="nc" id="L222">        this.cityName = cityName;</span>
+<span class="nc" id="L223">    }</span>
+
+    public String getDistrictName() {
+<span class="nc" id="L226">        return districtName;</span>
+    }
+
+    public void setDistrictName(final String districtName) {
+<span class="nc" id="L230">        this.districtName = districtName;</span>
+<span class="nc" id="L231">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L234">        return status;</span>
+    }
+
+    public void setStatus(final String status) {
+<span class="nc" id="L238">        this.status = status;</span>
+<span class="nc" id="L239">    }</span>
+
+    public String getUrl() {
+<span class="nc" id="L242">        return url;</span>
+    }
+
+    public void setUrl(final String url) {
+<span class="nc" id="L246">        this.url = url;</span>
+<span class="nc" id="L247">    }</span>
+
+    public String getConsumerCode() {
+<span class="nc" id="L250">        return consumerCode;</span>
+    }
+
+    public void setConsumerCode(final String consumerCode) {
+<span class="nc" id="L254">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L255">    }</span>
+
+    public String getMobileNumber() {
+<span class="nc" id="L258">        return mobileNumber;</span>
+    }
+
+    public void setMobileNumber(final String mobileNumber) {
+<span class="nc" id="L262">        this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L263">    }</span>
+
+    public String getOwnerName() {
+<span class="nc" id="L266">        return ownerName;</span>
+    }
+
+    public void setOwnerName(final String ownerName) {
+<span class="nc" id="L270">        this.ownerName = ownerName;</span>
+<span class="nc" id="L271">    }</span>
+
+    public void setIsClosed(final Integer isClosed) {
+<span class="nc" id="L274">        this.isClosed = isClosed;</span>
+<span class="nc" id="L275">    }</span>
+
+    public String getAadharNumber() {
+<span class="nc" id="L278">        return aadharNumber;</span>
+    }
+
+    public void setAadharNumber(final String aadharNumber) {
+<span class="nc" id="L282">        this.aadharNumber = aadharNumber;</span>
+<span class="nc" id="L283">    }</span>
+
+    public Integer getElapsedDays() {
+<span class="nc" id="L286">        return elapsedDays;</span>
+    }
+
+    public void setElapsedDays(final Integer elapsedDays) {
+<span class="nc" id="L290">        this.elapsedDays = elapsedDays;</span>
+<span class="nc" id="L291">    }</span>
+
+    public String getClosed() {
+<span class="nc" id="L294">        return closed;</span>
+    }
+
+    public void setClosed(final String closed) {
+<span class="nc" id="L298">        this.closed = closed;</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (this.closed.equals(ClosureStatus.YES.toString()))</span>
+<span class="nc" id="L300">            isClosed = 1;</span>
+        else
+<span class="nc" id="L302">            isClosed = 0;</span>
+<span class="nc" id="L303">    }</span>
+
+    public String getApproved() {
+<span class="nc" id="L306">        return approved;</span>
+    }
+
+    public void setApproved(final String approved) {
+<span class="nc" id="L310">        this.approved = approved;</span>
+<span class="nc" id="L311">    }</span>
+
+    public String getChannel() {
+<span class="nc" id="L314">        return channel;</span>
+    }
+
+    public void setChannel(final String channel) {
+<span class="nc" id="L318">        this.channel = channel;</span>
+<span class="nc" id="L319">    }</span>
+
+    public String getCityCode() {
+<span class="nc" id="L322">        return cityCode;</span>
+    }
+
+    public void setCityCode(final String cityCode) {
+<span class="nc" id="L326">        this.cityCode = cityCode;</span>
+<span class="nc" id="L327">    }</span>
+
+    public String getRegionName() {
+<span class="nc" id="L330">        return regionName;</span>
+    }
+
+    public void setRegionName(final String regionName) {
+<span class="nc" id="L334">        this.regionName = regionName;</span>
+<span class="nc" id="L335">    }</span>
+
+    public Integer getIsClosed() {
+<span class="nc" id="L338">        return isClosed;</span>
+    }
+
+    public String getCityGrade() {
+<span class="nc" id="L342">        return cityGrade;</span>
+    }
+
+    public void setCityGrade(final String cityGrade) {
+<span class="nc" id="L346">        this.cityGrade = cityGrade;</span>
+<span class="nc" id="L347">    }</span>
+
+    public Date getCreatedDate() {
+<span class="nc" id="L350">        return createdDate;</span>
+    }
+
+    public void setCreatedDate(final Date createdDate) {
+<span class="nc" id="L354">        this.createdDate = createdDate;</span>
+<span class="nc" id="L355">    }</span>
+
+    public Integer getSla() {
+<span class="nc" id="L358">        return sla;</span>
+    }
+
+    public void setSla(final Integer sla) {
+<span class="nc" id="L362">        this.sla = sla;</span>
+<span class="nc" id="L363">    }</span>
+
+    public Integer getSlaGap() {
+<span class="nc bnc" id="L366" title="All 2 branches missed.">        if (sla != null)</span>
+<span class="nc" id="L367">            return elapsedDays - sla;</span>
+<span class="nc" id="L368">        return null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

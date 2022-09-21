@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoundaryService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.service</a> &gt; <span class="el_source">BoundaryService.java</span></div><h1>BoundaryService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.service;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.Point;
+import org.egov.infra.admin.master.contracts.BoundarySearchRequest;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.BoundaryType;
+import org.egov.infra.admin.master.entity.HierarchyType;
+import org.egov.infra.admin.master.repository.BoundaryRepository;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.utils.StringUtils;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.validation.ValidationException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+@Service
+@Transactional(readOnly = true)
+public class BoundaryService {
+
+<span class="nc" id="L91">    private static final Logger LOG = LoggerFactory.getLogger(BoundaryService.class);</span>
+    private static final String GIS_SHAPE_FILE_LOCATION = &quot;gis/%s/wards.shp&quot;;
+
+    private final BoundaryRepository boundaryRepository;
+
+    @Autowired
+    private CrossHierarchyService crossHierarchyService;
+
+    @Autowired
+    private BoundaryTypeService boundaryTypeService;
+
+    @Autowired
+<span class="nc" id="L103">    public BoundaryService(final BoundaryRepository boundaryRepository) {</span>
+<span class="nc" id="L104">        this.boundaryRepository = boundaryRepository;</span>
+<span class="nc" id="L105">    }</span>
+
+    @Transactional
+    public Boundary createBoundary(final Boundary boundary) {
+<span class="nc" id="L109">        boundary.setMaterializedPath(getMaterializedPath(null, boundary.getParent()));</span>
+<span class="nc" id="L110">        return boundaryRepository.save(boundary);</span>
+    }
+
+    @Transactional
+    public void updateBoundary(final Boundary boundary) {
+<span class="nc" id="L115">        boundary.setMaterializedPath(getMaterializedPath(boundary, boundary.getParent()));</span>
+<span class="nc" id="L116">        boundaryRepository.save(boundary);</span>
+<span class="nc" id="L117">    }</span>
+
+    public Boundary getBoundaryById(final Long id) {
+<span class="nc" id="L120">        return boundaryRepository.findOne(id);</span>
+    }
+
+    public List&lt;Boundary&gt; getAllBoundariesOrderByBoundaryNumAsc(BoundaryType boundaryType) {
+<span class="nc" id="L124">        return boundaryRepository.findByBoundaryTypeOrderByBoundaryNumAsc(boundaryType);</span>
+    }
+
+    public List&lt;Boundary&gt; getAllBoundariesByBoundaryTypeId(final Long boundaryTypeId) {
+<span class="nc" id="L128">        return boundaryRepository.findByBoundaryTypeId(boundaryTypeId);</span>
+    }
+
+    public Page&lt;Boundary&gt; getPageOfBoundaries(BoundarySearchRequest searchRequest) {
+<span class="nc" id="L132">        Pageable pageable = new PageRequest(searchRequest.pageNumber(), searchRequest.pageSize(),</span>
+<span class="nc" id="L133">                searchRequest.orderDir(), searchRequest.orderBy());</span>
+<span class="nc" id="L134">        return boundaryRepository.findByBoundaryTypeId(searchRequest.getBoundaryTypeId(), pageable);</span>
+    }
+
+    public Boundary getBoundaryByTypeAndNo(final BoundaryType boundaryType, final Long boundaryNum) {
+<span class="nc" id="L138">        return boundaryRepository.findByBoundaryTypeAndBoundaryNum(boundaryType, boundaryNum);</span>
+    }
+
+    public List&lt;Boundary&gt; getParentBoundariesByBoundaryId(final Long boundaryId) {
+<span class="nc" id="L142">        List&lt;Boundary&gt; boundaries = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L143">        final Boundary boundary = getBoundaryById(boundaryId);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (boundary != null) {</span>
+<span class="nc" id="L145">            boundaries.add(boundary);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            if (boundary.getParent() != null)</span>
+<span class="nc" id="L147">                boundaries = getParentBoundariesByBoundaryId(boundary.getParent().getId());</span>
+        }
+<span class="nc" id="L149">        return boundaries;</span>
+    }
+
+    public List&lt;Boundary&gt; getBoundaryWithItsAncestors(Long boundaryId) {
+<span class="nc" id="L153">        List&lt;Boundary&gt; boundaries = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L154">        Boundary boundary = getBoundaryById(boundaryId);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (boundary != null) {</span>
+<span class="nc" id="L156">            boundaries.add(boundary);</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (boundary.getParent() != null)</span>
+<span class="nc" id="L158">                boundaries.addAll(getBoundaryWithItsAncestors(boundary.getParent().getId()));</span>
+        }
+<span class="nc" id="L160">        return boundaries;</span>
+    }
+
+    public List&lt;Boundary&gt; getActiveBoundariesByBoundaryTypeId(final Long boundaryTypeId) {
+<span class="nc" id="L164">        return boundaryRepository.findActiveBoundariesByBoundaryTypeId(boundaryTypeId);</span>
+    }
+
+    public List&lt;Boundary&gt; getTopLevelBoundaryByHierarchyType(final HierarchyType hierarchyType) {
+<span class="nc" id="L168">        return boundaryRepository.findActiveBoundariesByHierarchyTypeAndLevelAndAsOnDate(hierarchyType, 1l, new Date());</span>
+    }
+
+    public List&lt;Boundary&gt; getActiveChildBoundariesByBoundaryId(final Long boundaryId) {
+<span class="nc" id="L172">        return boundaryRepository.findActiveChildBoundariesByBoundaryIdAndAsOnDate(boundaryId, new Date());</span>
+    }
+
+    public List&lt;Boundary&gt; getChildBoundariesByBoundaryId(final Long boundaryId) {
+<span class="nc" id="L176">        return boundaryRepository.findChildBoundariesByBoundaryIdAndAsOnDate(boundaryId, new Date());</span>
+    }
+
+    public Boundary getActiveBoundaryByBndryNumAndTypeAndHierarchyTypeCode(final Long bndryNum,
+                                                                           final String boundaryType, final String hierarchyTypeCode) {
+<span class="nc" id="L181">        return boundaryRepository.findActiveBoundaryByBndryNumAndTypeAndHierarchyTypeCodeAndAsOnDate(bndryNum,</span>
+                boundaryType, hierarchyTypeCode, new Date());
+    }
+
+    public List&lt;Boundary&gt; getActiveBoundariesByBndryTypeNameAndHierarchyTypeName(final String boundaryTypeName,
+                                                                                 final String hierarchyTypeName) {
+<span class="nc" id="L187">        return boundaryRepository.findActiveBoundariesByBndryTypeNameAndHierarchyTypeName(boundaryTypeName,</span>
+                hierarchyTypeName);
+    }
+
+    public List&lt;Boundary&gt; getBoundariesByBndryTypeNameAndHierarchyTypeName(final String boundaryTypeName,
+                                                                           final String hierarchyTypeName) {
+<span class="nc" id="L193">        return boundaryRepository.findBoundariesByBndryTypeNameAndHierarchyTypeName(boundaryTypeName,</span>
+                hierarchyTypeName);
+    }
+
+    public Boundary getBoundaryByBndryTypeNameAndHierarchyTypeName(final String boundaryTypeName,
+                                                                   final String hierarchyTypeName) {
+<span class="nc" id="L199">        return boundaryRepository.findBoundaryByBndryTypeNameAndHierarchyTypeName(boundaryTypeName, hierarchyTypeName);</span>
+    }
+
+    public List&lt;Boundary&gt; getBondariesByNameAndTypeOrderByBoundaryNumAsc(final String boundaryName, final Long boundaryTypeId) {
+<span class="nc" id="L203">        return boundaryRepository.findByNameAndBoundaryTypeOrderByBoundaryNumAsc(boundaryName, boundaryTypeId);</span>
+    }
+
+    public Boolean validateBoundary(final BoundaryType boundaryType) {
+<span class="nc" id="L207">        return Optional.ofNullable(boundaryRepository.findByBoundaryTypeNameAndHierarchyTypeNameAndLevel(</span>
+<span class="nc" id="L208">                boundaryType.getName(), boundaryType.getHierarchyType().getName(), 1L)).isPresent();</span>
+    }
+
+    public List&lt;Boundary&gt; getBondariesByNameAndBndryTypeAndHierarchyType(final String boundaryTypeName,
+                                                                         final String hierarchyTypeName, final String name) {
+<span class="nc" id="L213">        return boundaryRepository.findActiveBoundariesByNameAndBndryTypeNameAndHierarchyTypeName(boundaryTypeName,</span>
+                hierarchyTypeName, name);
+    }
+
+    public List&lt;Map&lt;String, Object&gt;&gt; getBoundaryDataByNameLike(final String name) {
+<span class="nc" id="L218">        final List&lt;Map&lt;String, Object&gt;&gt; list = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L220">        crossHierarchyService.getChildBoundaryNameAndBndryTypeAndHierarchyType(&quot;Locality&quot;, &quot;Location&quot;, &quot;Administration&quot;,</span>
+<span class="nc" id="L221">                '%' + name + '%').stream().forEach(location -&gt; {</span>
+<span class="nc" id="L222">            final Map&lt;String, Object&gt; res = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L223">            res.put(&quot;id&quot;, location.getId());</span>
+<span class="nc" id="L224">            res.put(&quot;name&quot;, location.getChild().getName() + &quot; - &quot; + location.getParent().getName());</span>
+<span class="nc" id="L225">            list.add(res);</span>
+<span class="nc" id="L226">        });</span>
+<span class="nc" id="L227">        return list;</span>
+    }
+
+    public List&lt;Boundary&gt; findActiveChildrenWithParent(final Long parentBoundaryId) {
+<span class="nc" id="L231">        return boundaryRepository.findActiveChildrenWithParent(parentBoundaryId);</span>
+    }
+
+    public List&lt;Boundary&gt; findActiveBoundariesForMpath(final Set&lt;String&gt; mpath) {
+<span class="nc" id="L235">        return boundaryRepository.findActiveBoundariesForMpath(mpath);</span>
+    }
+
+    public String getMaterializedPath(final Boundary child, final Boundary parent) {
+<span class="nc" id="L239">        String mpath = &quot;&quot;;</span>
+<span class="nc" id="L240">        int childSize = 0;</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (null == parent)</span>
+<span class="nc" id="L242">            mpath = String.valueOf(boundaryRepository.findAllParents().size() + 1);</span>
+        else
+<span class="nc" id="L244">            childSize = boundaryRepository.findActiveImmediateChildrenWithOutParent(parent.getId()).size();</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">        if (mpath.isEmpty())</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">            if (null != child) {</span>
+<span class="nc bnc" id="L247" title="All 4 branches missed.">                if (parent != null &amp;&amp; !child.getMaterializedPath().equalsIgnoreCase(parent.getMaterializedPath() + &quot;.&quot; + childSize)) {</span>
+<span class="nc" id="L248">                    childSize += 1;</span>
+<span class="nc" id="L249">                    mpath = parent.getMaterializedPath() + &quot;.&quot; + childSize;</span>
+                } else
+<span class="nc" id="L251">                    mpath = child.getMaterializedPath();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            } else if (parent != null) {</span>
+<span class="nc" id="L253">                childSize += 1;</span>
+<span class="nc" id="L254">                mpath = parent.getMaterializedPath() + &quot;.&quot; + childSize;</span>
+            }
+
+<span class="nc" id="L257">        return mpath;</span>
+    }
+
+    public Boundary getBoundaryByGisCoordinates(final Double latitude, final Double longitude) {
+<span class="nc" id="L261">        return getBoundary(latitude, longitude)</span>
+<span class="nc" id="L262">                .orElseThrow(() -&gt; new ValidationException(&quot;gis.location.info.not.found&quot;));</span>
+    }
+
+    public Optional&lt;Boundary&gt; getBoundary(final Double latitude, final Double longitude) {
+        try {
+<span class="nc bnc" id="L267" title="All 4 branches missed.">            if (latitude != null &amp;&amp; longitude != null) {</span>
+<span class="nc" id="L268">                final Map&lt;String, URL&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L269">                map.put(&quot;url&quot;, Thread.currentThread().getContextClassLoader()</span>
+<span class="nc" id="L270">                        .getResource(String.format(GIS_SHAPE_FILE_LOCATION, ApplicationThreadLocals.getTenantID())));</span>
+<span class="nc" id="L271">                final DataStore dataStore = DataStoreFinder.getDataStore(map);</span>
+<span class="nc" id="L272">                final FeatureCollection&lt;SimpleFeatureType, SimpleFeature&gt; collection = dataStore</span>
+<span class="nc" id="L273">                        .getFeatureSource(dataStore.getTypeNames()[0]).getFeatures();</span>
+<span class="nc" id="L274">                final Iterator&lt;SimpleFeature&gt; iterator = collection.iterator();</span>
+<span class="nc" id="L275">                final Point point = JTSFactoryFinder.getGeometryFactory(null)</span>
+<span class="nc" id="L276">                        .createPoint(new Coordinate(longitude, latitude));</span>
+                try {
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                    while (iterator.hasNext()) {</span>
+<span class="nc" id="L279">                        final SimpleFeature feature = iterator.next();</span>
+<span class="nc" id="L280">                        final Geometry geom = (Geometry) feature.getDefaultGeometry();</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">                        if (geom.contains(point)) {</span>
+<span class="nc" id="L282">                            return getBoundaryByNumberAndType((Long) feature.getAttribute(&quot;bndrynum&quot;), (String) feature.getAttribute(&quot;bndrytype&quot;));</span>
+                        }
+<span class="nc" id="L284">                    }</span>
+                } finally {
+<span class="nc" id="L286">                    collection.close(iterator);</span>
+<span class="nc" id="L287">                }</span>
+            }
+
+<span class="nc" id="L290">            return Optional.empty();</span>
+<span class="nc" id="L291">        } catch (final Exception e) {</span>
+<span class="nc" id="L292">            LOG.error(&quot;Error occurred while fetching boundary from GIS data&quot;, e);</span>
+<span class="nc" id="L293">            return Optional.empty();</span>
+        }
+    }
+
+    public Optional&lt;Boundary&gt; getBoundaryByNumberAndType(Long boundaryNum, String boundaryTypeName) {
+<span class="nc bnc" id="L298" title="All 4 branches missed.">        if (boundaryNum != null &amp;&amp; StringUtils.isNotBlank(boundaryTypeName)) {</span>
+<span class="nc" id="L299">            final BoundaryType boundaryType = boundaryTypeService</span>
+<span class="nc" id="L300">                    .getBoundaryTypeByNameAndHierarchyTypeName(boundaryTypeName, &quot;ADMINISTRATION&quot;);</span>
+<span class="nc" id="L301">            final Boundary boundary = this.getBoundaryByTypeAndNo(boundaryType,</span>
+                    boundaryNum);
+<span class="nc bnc" id="L303" title="All 2 branches missed.">            if (boundary == null) {</span>
+<span class="nc" id="L304">                final BoundaryType cityBoundaryType = boundaryTypeService</span>
+<span class="nc" id="L305">                        .getBoundaryTypeByNameAndHierarchyTypeName(&quot;City&quot;, &quot;ADMINISTRATION&quot;);</span>
+<span class="nc" id="L306">                return Optional.ofNullable(this.getAllBoundariesByBoundaryTypeId(cityBoundaryType.getId()).get(0));</span>
+            }
+<span class="nc" id="L308">            return Optional.of(boundary);</span>
+        }
+
+<span class="nc" id="L311">        return Optional.empty();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

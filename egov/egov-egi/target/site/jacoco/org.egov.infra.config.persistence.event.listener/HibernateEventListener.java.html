@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HibernateEventListener.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.persistence.event.listener</a> &gt; <span class="el_source">HibernateEventListener.java</span></div><h1>HibernateEventListener.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.config.persistence.event.listener;
+
+import java.util.Date;
+
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.persistence.entity.AbstractAuditable;
+import org.egov.infra.persistence.entity.Auditable;
+import org.egov.infstr.models.BaseModel;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.event.spi.EventSource;
+import org.hibernate.event.spi.PreUpdateEvent;
+import org.hibernate.event.spi.PreUpdateEventListener;
+import org.hibernate.event.spi.SaveOrUpdateEvent;
+import org.hibernate.event.spi.SaveOrUpdateEventListener;
+
+/**
+ * This Event listener class sets the audit properties createdBy, createdDate
+ * modifiedBy and modifiedDate. It does this by hooking to the pre-update and
+ * pre-insert events. The pre-update event was chosen instead of save-update
+ * events for setting modified properties to fix a bug where even for object
+ * reads the Hibernate objects were getting updated. However, the save-update
+ * event is still required for new objects (inserts) as Hibernate checks for
+ * not-null constraints before the pre-update event is fired. Due to auto
+ * flushing strategy that we use, every transaction commit causes a
+ * session.flush to be called. Flush calls cascade of collections or properties
+ * which fires the save-update event if cascade value is anything other than
+ * Cascade.NONE.
+ *
+ * @author sahinab
+ */
+<span class="nc" id="L81">public class HibernateEventListener implements SaveOrUpdateEventListener, PreUpdateEventListener {</span>
+
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Sets the modifiedBy and modifiedDate properties on objects that inherit
+	 * from {@link org.egov.infstr.models.BaseModel}. event.getState() is used
+	 * to get the list of properties for the object as these are the properties
+	 * that Hibernate generates the UPDATE statement for. A separate session is
+	 * used to get the User object to ensure that the object thus obtained is
+	 * flushed from within the event. @ return false to continue the processing
+	 */
+	@Override
+	public boolean onPreUpdate(final PreUpdateEvent event) {
+<span class="nc" id="L95">		final Object entity = event.getEntity();</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		if (entity instanceof BaseModel)</span>
+<span class="nc" id="L97">			updateAuditableProperties(event);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">		else if (entity instanceof Auditable)</span>
+<span class="nc" id="L99">			updateAuditable(event);</span>
+<span class="nc" id="L100">		return false;</span>
+	}
+
+	/**
+	 * For new objects that are created, this event is used to set the audit
+	 * properties. This is done here instead of the pre-insert event because
+	 * Hibernate checks for not-null constraints before the pre-update and
+	 * pre-insert are fired.
+	 */
+	@Override
+	public void onSaveOrUpdate(final SaveOrUpdateEvent event) {
+<span class="nc" id="L111">		final EventSource session = event.getSession();</span>
+<span class="nc" id="L112">		final Object object = event.getObject();</span>
+<span class="nc bnc" id="L113" title="All 4 branches missed.">		if (object instanceof BaseModel &amp;&amp; !session.getPersistenceContext().reassociateIfUninitializedProxy(object)) {</span>
+			// only update the entity if it has been changed
+<span class="nc" id="L115">			final Date currentDate = new Date();</span>
+
+<span class="nc" id="L117">			final BaseModel entity = (BaseModel) session.getPersistenceContext().unproxyAndReassociate(object);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">			if (entity.getCreatedBy() == null) {</span>
+<span class="nc" id="L119">				entity.setCreatedDate(currentDate);</span>
+<span class="nc" id="L120">				entity.setCreatedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L121">				entity.setModifiedBy(ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L122">				entity.setModifiedDate(currentDate);</span>
+			}
+
+<span class="nc bnc" id="L125" title="All 2 branches missed.">		} else if (object instanceof Auditable</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">				&amp;&amp; !session.getPersistenceContext().reassociateIfUninitializedProxy(object)) {</span>
+			// final User usr = session.load(User.class,
+			// ApplicationThreadLocals.getUserId());
+<span class="nc" id="L129">			final Long usr = ApplicationThreadLocals.getUserId();</span>
+<span class="nc" id="L130">			final AbstractAuditable entity = (AbstractAuditable) session.getPersistenceContext()</span>
+<span class="nc" id="L131">					.unproxyAndReassociate(object);</span>
+<span class="nc bnc" id="L132" title="All 4 branches missed.">			if (entity.getCreatedBy()==null || entity.getCreatedBy() == 0) {</span>
+<span class="nc" id="L133">				final Date currentDate = new Date();</span>
+<span class="nc" id="L134">				entity.setCreatedDate(currentDate);</span>
+<span class="nc" id="L135">				entity.setCreatedBy(usr);</span>
+<span class="nc" id="L136">				entity.setLastModifiedBy(usr);</span>
+<span class="nc" id="L137">				entity.setLastModifiedDate(currentDate);</span>
+			}
+		}
+
+<span class="nc" id="L141">	}</span>
+
+	/**
+	 * When reading an object from within the PreInsert or PreUpdate event
+	 * handlers, a different session has to be used from the one in which the
+	 * event was fired. This is to make sure that the objects loaded here are
+	 * flushed. Otherwise it results in collection was not processed by flush()
+	 * Assertion failures
+	 *
+	 * @param session
+	 * @return
+	 */
+	private User getUserObjectFromWithinEventListener(final EventSource session) {
+		// Since we are already in the flush logic of our current session,
+		// get the user object from a different session
+<span class="nc" id="L156">		final SessionFactory factory = session.getFactory();</span>
+<span class="nc" id="L157">		final Session session2 = factory.openSession();</span>
+<span class="nc" id="L158">		final User usr = session2.load(User.class, ApplicationThreadLocals.getUserId());</span>
+<span class="nc" id="L159">		session2.flush();</span>
+<span class="nc" id="L160">		session2.close();</span>
+<span class="nc" id="L161">		return usr;</span>
+	}
+
+	private void updateAuditableProperties(final PreUpdateEvent event) {
+<span class="nc" id="L165">		int i = 0;</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		for (final String propName : event.getPersister().getPropertyNames()) {</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">			if (&quot;modifiedDate&quot;.equals(propName))</span>
+<span class="nc" id="L168">				event.getState()[i] = new Date();</span>
+			/*if (&quot;modifiedBy&quot;.equals(propName))
+				event.getState()[i] = getUserObjectFromWithinEventListener(event.getSession());*/
+<span class="nc" id="L171">			i++;</span>
+		}
+<span class="nc" id="L173">	}</span>
+
+	private void updateAuditable(final PreUpdateEvent event) {
+<span class="nc" id="L176">		int i = 0;</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		for (final String propName : event.getPersister().getPropertyNames()) {</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">			if (&quot;lastModifiedDate&quot;.equals(propName))</span>
+<span class="nc" id="L179">				event.getState()[i] = new Date();</span>
+			/*if (&quot;lastModifiedBy&quot;.equals(propName))
+				event.getState()[i] = getUserObjectFromWithinEventListener(event.getSession());*/
+<span class="nc" id="L182">			i++;</span>
+		}
+<span class="nc" id="L184">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

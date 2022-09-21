@@ -1,0 +1,2690 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReceiptAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">ReceiptAction.java</span></div><h1>ReceiptAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.log4j.Logger;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.egov.collection.bean.SubDivison;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.AccountPayeeDetail;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.collection.entity.ReceiptDetailInfo;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.entity.ReceiptMisc;
+import org.egov.collection.entity.ReceiptVoucher;
+import org.egov.collection.handler.BillInfoMarshaller;
+import org.egov.collection.integration.models.BillAccountDetails.PURPOSE;
+import org.egov.collection.integration.models.BillInfoImpl;
+import org.egov.collection.integration.pgi.PaymentRequest;
+import org.egov.collection.service.CollectionService;
+import org.egov.collection.service.ReceiptHeaderService;
+import org.egov.collection.utils.CollectionCommon;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.collection.utils.FinancialsUtil;
+import org.egov.commons.Accountdetailkey;
+import org.egov.commons.Accountdetailtype;
+import org.egov.commons.Bank;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.Bankbranch;
+import org.egov.commons.CChartOfAccountDetail;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CFinancialYear;
+import org.egov.commons.CFunction;
+import org.egov.commons.Fund;
+import org.egov.commons.Scheme;
+import org.egov.commons.SubScheme;
+import org.egov.commons.Vouchermis;
+import org.egov.commons.dao.BankBranchHibernateDAO;
+import org.egov.commons.dao.BankHibernateDAO;
+import org.egov.commons.dao.BankaccountHibernateDAO;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FunctionHibernateDAO;
+import org.egov.commons.dao.FunctionaryHibernateDAO;
+import org.egov.commons.dao.FundHibernateDAO;
+import org.egov.commons.dao.FundSourceHibernateDAO;
+import org.egov.commons.dao.SchemeHibernateDAO;
+import org.egov.commons.dao.SubSchemeHibernateDAO;
+import org.egov.commons.dao.VoucherHeaderDAO;
+import org.egov.commons.dao.VoucherHeaderHibernateDAO;
+import org.egov.commons.dao.VouchermisHibernateDAO;
+import org.egov.commons.entity.Source;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.microservice.models.Assignment;
+import org.egov.infra.microservice.models.BillDetailAdditional;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.microservice.models.CollectionType;
+import org.egov.infra.microservice.models.EmployeeInfo;
+import org.egov.infra.microservice.models.Instrument;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.microservice.models.ReceiptResponse;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.utils.NumberUtil;
+import org.egov.infra.utils.StringUtils;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infstr.models.ServiceCategory;
+import org.egov.infstr.models.ServiceDetails;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.infstr.utils.EgovMasterDataCaching;
+import org.egov.model.instrument.InstrumentHeader;
+import org.egov.model.instrument.InstrumentType;
+import org.egov.services.voucher.VoucherService;
+import org.hibernate.SQLQuery;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = ReceiptAction.NEW, location = &quot;receipt-new.jsp&quot;),
+        @Result(name = ReceiptAction.SUCCESS, location = &quot;receipt-success.jsp&quot;),
+        @Result(name = ReceiptAction.INDEX, location = &quot;receipt-index.jsp&quot;),
+        @Result(name = ReceiptAction.REDIRECT, location = &quot;receipt-redirect.jsp&quot;),
+        @Result(name = CollectionConstants.REPORT, location = &quot;receipt-report.jsp&quot;) })
+<span class="nc" id="L168">public class ReceiptAction extends BaseFormAction {</span>
+    protected static final String REDIRECT = &quot;redirect&quot;;
+    private static final String ACCOUNT_NUMBER_LIST = &quot;accountNumberList&quot;;
+    private static final String BANK_BRANCH_LIST = &quot;bankBranchList&quot;;
+<span class="nc" id="L172">    private static final Logger LOGGER = Logger.getLogger(ReceiptAction.class);</span>
+    private static final long serialVersionUID = 1L;
+    private static final String CANCEL = &quot;cancel&quot;;
+    protected List&lt;String&gt; headerFields;
+    protected List&lt;String&gt; mandatoryFields;
+    private String reportId;
+<span class="nc" id="L178">    private String message = &quot;&quot;;</span>
+<span class="nc" id="L179">    private String reciptNumber = &quot;&quot;;</span>
+<span class="nc" id="L180">    private String currentState = &quot;&quot;;</span>
+    /**
+     * A &lt;code&gt;String&lt;/code&gt; representing the input xml coming from the billing system
+     */
+    private String collectXML;
+    private FinancialsUtil financialsUtil;
+    /**
+     * A &lt;code&gt;Long&lt;/code&gt; array of receipt header ids , which have to be displayed for view/print/cancel purposes
+     */
+    private String[] selectedReceipts;
+    /**
+     * An array of &lt;code&gt;ReceiptHeader&lt;/code&gt; instances which have to be displayed for view/print/cancel purposes
+     */
+    private ReceiptHeader[] receipts;
+    private ReceiptHeaderService receiptHeaderService;
+    private CollectionService collectionService;
+    private CollectionsUtil collectionsUtil;
+<span class="nc" id="L197">    private List&lt;ReceiptHeader&gt; receiptHeaderValues = new ArrayList&lt;&gt;(0);</span>
+    // Instrument information derived from UI
+    private List&lt;InstrumentHeader&gt; instrumentProxyList;
+    private int instrumentCount;
+<span class="nc" id="L201">    private BigDecimal cashOrCardInstrumenttotal = BigDecimal.ZERO;</span>
+<span class="nc" id="L202">    private BigDecimal chequeInstrumenttotal = BigDecimal.ZERO;</span>
+<span class="nc" id="L203">    private BigDecimal instrumenttotal = BigDecimal.ZERO;</span>
+    private String reasonForCancellation;
+<span class="nc" id="L205">    private String target = &quot;view&quot;;</span>
+    private String paidBy;
+    private String gstno;
+    private String subdivison;
+    private String referenceDesc;
+<span class="nc" id="L210">    private String paymentId=&quot;&quot;;</span>
+<span class="nc" id="L211">    private ReceiptHeader receiptHeader = new ReceiptHeader();</span>
+<span class="nc" id="L212">    private ReceiptResponse receiptResponse = new ReceiptResponse();</span>
+    /**
+     * A &lt;code&gt;Long&lt;/code&gt; value representing the receipt header id captured from the front end, which has to be cancelled.
+     */
+    private Long oldReceiptId;
+    private String fundName;
+<span class="nc" id="L218">    private Boolean overrideAccountHeads = Boolean.FALSE;</span>
+    private Boolean partPaymentAllowed;
+<span class="nc" id="L220">    private Boolean callbackForApportioning = Boolean.FALSE;</span>
+    private BigDecimal totalAmntToBeCollected;
+<span class="nc" id="L222">    private Boolean cashAllowed = Boolean.TRUE;</span>
+<span class="nc" id="L223">    private Boolean cardAllowed = Boolean.TRUE;</span>
+<span class="nc" id="L224">    private Boolean chequeAllowed = Boolean.TRUE;</span>
+<span class="nc" id="L225">    private Boolean ddAllowed = Boolean.FALSE;</span>
+<span class="nc" id="L226">    private Boolean bankAllowed = Boolean.TRUE;</span>
+<span class="nc" id="L227">    private Boolean onlineAllowed = Boolean.TRUE;</span>
+<span class="nc" id="L228">    private Boolean isReceiptCancelEnable = Boolean.TRUE;</span>
+    
+    @Autowired
+    private VoucherService voucherService;
+    private String vouchermissourcepath;
+    @Autowired
+    private VoucherHeaderDAO voucherHeaderDao;
+    /**
+     * An instance of &lt;code&gt;InstrumentHeader&lt;/code&gt; representing the cash instrument details entered by the user during receipt
+     * creation
+     */
+    private InstrumentHeader instrHeaderCash;
+    /**
+     * An instance of &lt;code&gt;InstrumentHeader&lt;/code&gt; representing the card instrument details entered by the user during receipt
+     * creation
+     */
+    private InstrumentHeader instrHeaderCard;
+    /**
+     * An instance of &lt;code&gt;InstrumentHeader&lt;/code&gt; representing the 'bank' instrument details entered by the user during receipt
+     * creation
+     */
+    private InstrumentHeader instrHeaderBank;
+    /**
+     * An instance of &lt;code&gt;InstrumentHeader&lt;/code&gt; representing the online instrument details entered by the user during receipt
+     * creation
+     */
+    private InstrumentHeader instrHeaderOnline;
+    private Date voucherDate;
+    private String voucherNum;
+    private List&lt;ReceiptDetailInfo&gt; subLedgerlist;
+    private List&lt;ReceiptDetailInfo&gt; billCreditDetailslist;
+    private List&lt;ReceiptDetailInfo&gt; billRebateDetailslist;
+<span class="nc" id="L260">    private String billSource = &quot;bill&quot;;</span>
+<span class="nc" id="L261">    private ReceiptMisc receiptMisc = new ReceiptMisc();</span>
+    private String deptId;
+    private BigDecimal totalDebitAmount;
+    /**
+     * A code&gt;String&lt;/code&gt; representing the service name
+     */
+    private String serviceName;
+
+    /**
+     * A &lt;code&gt;List&lt;/code&gt; of &lt;code&gt;String&lt;/code&gt; informations sent by the billing system indicating which are the modes of
+     * payment that are not allowed during receipt creation
+     */
+<span class="nc" id="L273">    private List&lt;String&gt; collectionModesNotAllowed = new ArrayList&lt;&gt;(0);</span>
+    
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    /**
+     * The &lt;code&gt;User&lt;/code&gt; representing the counter operator who has created the receipt
+     */
+    /* private User receiptCreatedByCounterOperator; */
+
+    /**
+     * A &lt;code&gt;List&lt;/code&gt; of &lt;code&gt;ReceiptPayeeDetails&lt;/code&gt; representing the model for the action.
+     */
+
+<span class="nc" id="L287">    private List&lt;ReceiptDetail&gt; receiptDetailList = new ArrayList&lt;&gt;(0);</span>
+
+    private String instrumentTypeCashOrCard;
+
+    private CollectionCommon collectionCommon;
+
+    private Long bankAccountId;
+
+    private Integer bankBranchId;
+
+<span class="nc" id="L297">    private String payeename = &quot;&quot;;</span>
+<span class="nc" id="L298">    private String sourcePath=&quot;&quot;;</span>
+
+    private Date manualReceiptDate;
+
+    private String manualReceiptNumber;
+
+<span class="nc" id="L304">    private Boolean manualReceiptNumberAndDateReq = Boolean.FALSE;</span>
+
+<span class="nc" id="L306">    private Boolean receiptBulkUpload = Boolean.FALSE;</span>
+
+    private PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService;
+
+    private PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService;
+
+    private String serviceId;
+    private String serviceCategory;
+    private String serviceIdText;
+
+    @Autowired
+    private FundHibernateDAO fundDAO;
+
+    @Autowired
+    private FunctionHibernateDAO functionDAO;
+
+    @Autowired
+    private FunctionaryHibernateDAO functionaryDAO;
+
+    @Autowired
+    private SchemeHibernateDAO schemeDAO;
+
+    @Autowired
+    private FundSourceHibernateDAO fundSourceDAO;
+
+    @Autowired
+    private BankBranchHibernateDAO bankBranchDAO;
+
+    @Autowired
+    private BankHibernateDAO bankDAO;
+
+    @Autowired
+    private BankaccountHibernateDAO bankAccountDAO;
+
+    @Autowired
+    private SubSchemeHibernateDAO subSchemeDAO;
+
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsDAO;
+
+    @Autowired
+    private EgwStatusHibernateDAO statusDAO;
+
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+
+    @Autowired
+    private VouchermisHibernateDAO vmisHibernateDao;
+    
+
+    private List&lt;CChartOfAccounts&gt; bankCOAList;
+
+    private String functionId;
+
+    private String instrumentType;
+
+    private PaymentRequest paymentRequest;
+
+    @Autowired
+    private ApplicationContext beanProvider;
+
+    private String receipt;
+
+    @Autowired
+    protected EgovMasterDataCaching masterDataCache;
+    
+    @Autowired
+	private AppConfigValueService appConfigValuesService;
+    
+<span class="nc" id="L375">    Map&lt;String,String&gt; serviceCategoryNames = new HashMap&lt;String,String&gt;();</span>
+<span class="nc" id="L376">    Map&lt;String,Map&lt;String,String&gt;&gt; serviceTypeMap = new HashMap&lt;&gt;();</span>
+    private String[] selectedPayments;
+    private String payeeAddress;
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L382">        super.prepare();</span>
+        BillInfoImpl collDetails;
+        // setReceiptCreatedByCounterOperator(collectionsUtil.getLoggedInUser());
+        // populates model when request is from the billing system
+        
+<span class="nc" id="L387">        this.getServiceCategoryList();</span>
+<span class="nc bnc" id="L388" title="All 4 branches missed.">        if (getCollectXML() != null &amp;&amp; !getCollectXML().isEmpty()) {</span>
+<span class="nc" id="L389">            final String decodedCollectXML = decodeBillXML();</span>
+            try {
+<span class="nc" id="L391">                collDetails = BillInfoMarshaller.toObject(decodedCollectXML);</span>
+
+<span class="nc" id="L393">                final Fund fund = fundDAO.fundByCode(collDetails.getFundCode());</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">                if (fund == null)</span>
+<span class="nc" id="L395">                    addActionError(getText(&quot;billreceipt.improperbilldata.missingfund&quot;));</span>
+
+<span class="nc" id="L397">                setFundName(fund.getName());</span>
+
+<span class="nc" id="L399">                final Department dept = (Department) getPersistenceService().findByNamedQuery(</span>
+<span class="nc" id="L400">                        CollectionConstants.QUERY_DEPARTMENT_BY_CODE, collDetails.getDepartmentCode());</span>
+<span class="nc bnc" id="L401" title="All 2 branches missed.">                if (dept == null)</span>
+<span class="nc" id="L402">                    addActionError(getText(&quot;billreceipt.improperbilldata.missingdepartment&quot;));</span>
+
+<span class="nc" id="L404">                final ServiceDetails service = (ServiceDetails) getPersistenceService()</span>
+<span class="nc" id="L405">                        .findByNamedQuery(CollectionConstants.QUERY_SERVICE_BY_CODE, collDetails.getServiceCode());</span>
+<span class="nc" id="L406">                setServiceName(service.getName());</span>
+<span class="nc" id="L407">                setCollectionModesNotAllowed(collDetails.getCollectionModesNotAllowed());</span>
+<span class="nc" id="L408">                setOverrideAccountHeads(collDetails.getOverrideAccountHeadsAllowed());</span>
+<span class="nc" id="L409">                setCallbackForApportioning(collDetails.getCallbackForApportioning());</span>
+<span class="nc" id="L410">                setPartPaymentAllowed(collDetails.getPartPaymentAllowed());</span>
+<span class="nc" id="L411">                totalAmntToBeCollected = BigDecimal.ZERO;</span>
+
+                // populate bank account list
+<span class="nc" id="L414">                populateBankBranchList(true);</span>
+<span class="nc" id="L415">                receiptHeader = collectionCommon.initialiseReceiptModelWithBillInfo(collDetails, fund, dept);</span>
+<span class="nc" id="L416">                totalAmntToBeCollected = totalAmntToBeCollected.add(receiptHeader.getTotalAmountToBeCollected());</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">                for (final ReceiptDetail rDetails : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L418">                    rDetails.getCramountToBePaid().setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT,</span>
+                            BigDecimal.ROUND_UP);
+<span class="nc" id="L420">                setReceiptDetailList(new ArrayList&lt;ReceiptDetail&gt;(receiptHeader.getReceiptDetails()));</span>
+
+<span class="nc bnc" id="L422" title="All 2 branches missed.">                if (totalAmntToBeCollected.compareTo(BigDecimal.ZERO) == -1) {</span>
+<span class="nc" id="L423">                    addActionError(getText(&quot;billreceipt.totalamountlessthanzero.error&quot;));</span>
+<span class="nc" id="L424">                    LOGGER.info(getText(&quot;billreceipt.totalamountlessthanzero.error&quot;));</span>
+                } else
+<span class="nc" id="L426">                    setTotalAmntToBeCollected(totalAmntToBeCollected</span>
+<span class="nc" id="L427">                            .setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP));</span>
+<span class="nc" id="L428">            } catch (final Exception e) {</span>
+<span class="nc" id="L429">                LOGGER.error(getText(&quot;billreceipt.error.improperbilldata&quot;), e);</span>
+<span class="nc" id="L430">                addActionError(getText(&quot;billreceipt.error.improperbilldata&quot;));</span>
+<span class="nc" id="L431">            }</span>
+        }
+//        addDropdownData(&quot;serviceCategoryList&quot;, this.getServiceCategory());
+<span class="nc" id="L434">        addDropdownData(&quot;serviceList&quot;, Collections.emptyList());</span>
+        
+<span class="nc" id="L436">        List&lt;AppConfigValues&gt; appConfigValuesList =appConfigValuesService.getConfigValuesByModuleAndKey(&quot;EGF&quot;,</span>
+				&quot;receipt_sub_divison&quot;);
+<span class="nc" id="L438">        List&lt;SubDivison&gt; subdivisonList=new ArrayList&lt;SubDivison&gt;();</span>
+<span class="nc" id="L439">        SubDivison subdivison=null;</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">        for(AppConfigValues value:appConfigValuesList)</span>
+        {
+<span class="nc" id="L442">        	subdivison = new SubDivison();</span>
+<span class="nc" id="L443">        	subdivison.setSubdivisonCode(value.getValue());</span>
+<span class="nc" id="L444">        	subdivison.setSubdivisonName(value.getValue());</span>
+<span class="nc" id="L445">        	subdivisonList.add(subdivison);</span>
+<span class="nc" id="L446">        }</span>
+<span class="nc" id="L447">        addDropdownData(&quot;subdivisonList&quot;, subdivisonList);</span>
+        
+<span class="nc bnc" id="L449" title="All 2 branches missed.">        if (instrumentProxyList == null)</span>
+<span class="nc" id="L450">            instrumentCount = 0;</span>
+        else
+<span class="nc" id="L452">            instrumentCount = instrumentProxyList.size();</span>
+<span class="nc" id="L453">    }</span>
+    
+    
+
+    private void getServiceCategoryList() {
+<span class="nc" id="L458">        List&lt;BusinessService&gt; businessService = microserviceUtils.getBusinessService(null);</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">        for(BusinessService bs : businessService){</span>
+<span class="nc" id="L460">            String[] splitServName = bs.getBusinessService().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L461">            String[] splitSerCode = bs.getCode().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc bnc" id="L462" title="All 4 branches missed.">            if(splitServName.length==2 &amp;&amp; splitSerCode.length == 2){</span>
+<span class="nc bnc" id="L463" title="All 2 branches missed.">                if(!serviceCategoryNames.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L464">                    serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+                }
+<span class="nc bnc" id="L466" title="All 2 branches missed.">                if(serviceTypeMap.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L467">                    Map&lt;String, String&gt; map = serviceTypeMap.get(splitSerCode[0]);</span>
+<span class="nc" id="L468">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L469">                    serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L470">                }else{</span>
+<span class="nc" id="L471">                    Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L472">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L473">                    serviceTypeMap.put(splitSerCode[0],map);</span>
+<span class="nc" id="L474">                }</span>
+            }else{
+<span class="nc" id="L476">                serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+            }
+<span class="nc" id="L478">        }</span>
+<span class="nc" id="L479">    }</span>
+
+
+
+    private String decodeBillXML() {
+<span class="nc" id="L484">        String decodedBillXml = &quot;&quot;;</span>
+        try {
+<span class="nc" id="L486">            decodedBillXml = java.net.URLDecoder.decode(getCollectXML(), &quot;UTF-8&quot;);</span>
+<span class="nc" id="L487">        } catch (final UnsupportedEncodingException e) {</span>
+<span class="nc" id="L488">            LOGGER.error(getText(&quot;billreceipt.error.improperbilldata&quot;) + e);</span>
+<span class="nc" id="L489">            throw new ApplicationRuntimeException(e.getMessage());</span>
+<span class="nc" id="L490">        }</span>
+<span class="nc" id="L491">        return decodedBillXml;</span>
+    }
+
+    /**
+     * @param populate
+     */
+    private void populateBankBranchList(final boolean populate) {
+<span class="nc" id="L498">        final AjaxBankRemittanceAction ajaxBankRemittanceAction = new AjaxBankRemittanceAction();</span>
+<span class="nc" id="L499">        ajaxBankRemittanceAction.setServiceName(getServiceName());</span>
+<span class="nc" id="L500">        ajaxBankRemittanceAction.setPersistenceService(getPersistenceService());</span>
+
+<span class="nc bnc" id="L502" title="All 2 branches missed.">        if (populate) {</span>
+<span class="nc" id="L503">            ajaxBankRemittanceAction.setFundName(getFundName());</span>
+<span class="nc" id="L504">            ajaxBankRemittanceAction.bankBranchList();</span>
+<span class="nc" id="L505">            addDropdownData(BANK_BRANCH_LIST, ajaxBankRemittanceAction.getBankBranchArrayList());</span>
+<span class="nc" id="L506">            addDropdownData(ACCOUNT_NUMBER_LIST, Collections.emptyList());</span>
+        } else // to load branch list and account list while returning after an
+               // error
+<span class="nc bnc" id="L509" title="All 4 branches missed.">        if (getServiceName() != null &amp;&amp; receiptMisc.getFund() != null) {</span>
+<span class="nc" id="L510">            final Fund fund = fundDAO.fundByCode(receiptMisc.getFund().getCode());</span>
+<span class="nc" id="L511">            ajaxBankRemittanceAction.setFundName(fund.getName());</span>
+<span class="nc" id="L512">            ajaxBankRemittanceAction.bankBranchList();</span>
+<span class="nc" id="L513">            addDropdownData(BANK_BRANCH_LIST, ajaxBankRemittanceAction.getBankBranchArrayList());</span>
+
+            // account list should be populated only if bank branch had been
+            // chosen
+<span class="nc bnc" id="L517" title="All 4 branches missed.">            if (bankBranchId != null &amp;&amp; bankBranchId != 0) {</span>
+<span class="nc" id="L518">                final Bankbranch branch = bankBranchDAO.findById(bankBranchId, false);</span>
+
+<span class="nc" id="L520">                ajaxBankRemittanceAction.setBranchId(branch.getId());</span>
+<span class="nc" id="L521">                ajaxBankRemittanceAction.accountList();</span>
+<span class="nc" id="L522">                addDropdownData(ACCOUNT_NUMBER_LIST, ajaxBankRemittanceAction.getBankAccountArrayList());</span>
+<span class="nc" id="L523">            } else</span>
+<span class="nc" id="L524">                addDropdownData(ACCOUNT_NUMBER_LIST, Collections.emptyList());</span>
+<span class="nc" id="L525">        } else {</span>
+<span class="nc" id="L526">            addDropdownData(BANK_BRANCH_LIST, Collections.emptyList());</span>
+<span class="nc" id="L527">            addDropdownData(ACCOUNT_NUMBER_LIST, Collections.emptyList());</span>
+        }
+<span class="nc" id="L529">    }</span>
+
+    /**
+     * This method checks for the modes of payment allowed
+     */
+    private void setCollModesNotAllowedForRemitReceipt(final String collModesNotAllowed) {
+<span class="nc bnc" id="L535" title="All 2 branches missed.">        final List modesNotAllowed = Arrays</span>
+<span class="nc" id="L536">                .asList(collModesNotAllowed == null ? Collections.emptyList() : collModesNotAllowed.split(&quot;,&quot;));</span>
+
+<span class="nc bnc" id="L538" title="All 4 branches missed.">        if (modesNotAllowed != null &amp;&amp; modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CASH))</span>
+<span class="nc" id="L539">            setCashAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L541" title="All 4 branches missed.">        if (modesNotAllowed != null &amp;&amp; modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CARD))</span>
+<span class="nc" id="L542">            setCardAllowed(Boolean.FALSE);</span>
+<span class="nc bnc" id="L543" title="All 4 branches missed.">        if (modesNotAllowed != null &amp;&amp; modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CHEQUE))</span>
+<span class="nc" id="L544">            setChequeAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L546" title="All 4 branches missed.">        if (modesNotAllowed != null &amp;&amp; modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_DD))</span>
+<span class="nc" id="L547">            setDdAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L549" title="All 4 branches missed.">        if (modesNotAllowed != null &amp;&amp; modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_BANK))</span>
+<span class="nc" id="L550">            setBankAllowed(Boolean.FALSE);</span>
+<span class="nc" id="L551">    }</span>
+
+    /**
+     * This method checks for the modes of payment allowed
+     */
+    private void setCollectionModesNotAllowed() {
+
+<span class="nc" id="L558">        final List&lt;String&gt; modesNotAllowed = Collections.singletonList(CollectionConstants.INSTRUMENTTYPE_BANK);</span>
+
+<span class="nc" id="L560">        final List&lt;String&gt; collModesNotAllowed = getCollectionModesNotAllowed();</span>
+
+<span class="nc bnc" id="L562" title="All 4 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CASH)</span>
+<span class="nc bnc" id="L563" title="All 2 branches missed.">                || collModesNotAllowed != null &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CASH))</span>
+<span class="nc" id="L564">            setCashAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L566" title="All 4 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CARD)</span>
+<span class="nc bnc" id="L567" title="All 2 branches missed.">                || collModesNotAllowed != null &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CARD))</span>
+<span class="nc" id="L568">            setCardAllowed(Boolean.FALSE);</span>
+<span class="nc bnc" id="L569" title="All 4 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CHEQUE) || collModesNotAllowed != null</span>
+<span class="nc bnc" id="L570" title="All 2 branches missed.">                &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_CHEQUE))</span>
+<span class="nc" id="L571">            setChequeAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L573" title="All 4 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_DD)</span>
+<span class="nc bnc" id="L574" title="All 2 branches missed.">                || collModesNotAllowed != null &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_DD))</span>
+<span class="nc" id="L575">            setDdAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L577" title="All 4 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_BANK)</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">                || collModesNotAllowed != null &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_BANK))</span>
+<span class="nc" id="L579">            setBankAllowed(Boolean.FALSE);</span>
+
+<span class="nc bnc" id="L581" title="All 6 branches missed.">        if (modesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_ONLINE) || isBillSourcemisc()</span>
+                || collModesNotAllowed != null
+<span class="nc bnc" id="L583" title="All 2 branches missed.">                        &amp;&amp; collModesNotAllowed.contains(CollectionConstants.INSTRUMENTTYPE_ONLINE))</span>
+<span class="nc" id="L584">            setOnlineAllowed(Boolean.FALSE);</span>
+<span class="nc" id="L585">    }</span>
+
+    /**
+     * To set the receiptpayee details for misc receipts
+     */
+    private boolean setMiscReceiptDetails() {
+<span class="nc bnc" id="L591" title="All 2 branches missed.">        if (CollectionConstants.BLANK.equals(payeename))</span>
+<span class="nc" id="L592">            payeename = collectionsUtil.getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+                    CollectionConstants.APPCONFIG_VALUE_PAYEEFORMISCRECEIPTS);
+<span class="nc" id="L594">        receiptHeader.setPartPaymentAllowed(false);</span>
+<span class="nc bnc" id="L595" title="All 4 branches missed.">        serviceId = (serviceId != null &amp;&amp; !serviceId.isEmpty())? serviceCategory + &quot;.&quot;+serviceId : serviceCategory;</span>
+<span class="nc" id="L596">        receiptHeader.setService(serviceId);</span>
+<span class="nc" id="L597">        receiptHeader.setServiceIdText(serviceIdText);</span>
+<span class="nc" id="L598">        totalAmntToBeCollected = BigDecimal.ZERO;</span>
+<span class="nc" id="L599">        int m = 0;</span>
+<span class="nc" id="L600">        BigDecimal debitamount = BigDecimal.ZERO;</span>
+<span class="nc" id="L601">        removeEmptyRows(billCreditDetailslist);</span>
+//        removeEmptyRows(billRebateDetailslist);
+//        removeEmptyRows(subLedgerlist);
+//        if (validateData(billCreditDetailslist, subLedgerlist))
+<span class="nc bnc" id="L605" title="All 2 branches missed.">            for (final ReceiptDetailInfo voucherDetails : billCreditDetailslist) {</span>
+<span class="nc" id="L606">                final CChartOfAccounts account = chartOfAccountsDAO</span>
+<span class="nc" id="L607">                        .getCChartOfAccountsByGlCode(voucherDetails.getGlcodeDetail());</span>
+<span class="nc" id="L608">                CFunction function = null;</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">                if (functionId != null)</span>
+<span class="nc" id="L610">                    function = functionDAO.getFunctionByCode(functionId);</span>
+<span class="nc" id="L611">                ReceiptDetail receiptDetail = new ReceiptDetail(account, function,</span>
+<span class="nc" id="L612">                        voucherDetails.getCreditAmountDetail(), voucherDetails.getDebitAmountDetail(), BigDecimal.ZERO,</span>
+<span class="nc" id="L613">                        Long.valueOf(m), null, true, receiptHeader, PURPOSE.OTHERS.toString());</span>
+
+<span class="nc bnc" id="L615" title="All 2 branches missed.">                if (voucherDetails.getCreditAmountDetail() == null)</span>
+<span class="nc" id="L616">                    receiptDetail.setCramount(BigDecimal.ZERO);</span>
+                else
+<span class="nc" id="L618">                    receiptDetail.setCramount(voucherDetails.getCreditAmountDetail());</span>
+
+<span class="nc bnc" id="L620" title="All 2 branches missed.">                if (voucherDetails.getDebitAmountDetail() == null)</span>
+<span class="nc" id="L621">                    receiptDetail.setDramount(BigDecimal.ZERO);</span>
+                else
+<span class="nc" id="L623">                    receiptDetail.setDramount(voucherDetails.getDebitAmountDetail());</span>
+
+//                receiptDetail = setAccountPayeeDetails(subLedgerlist, receiptDetail);
+<span class="nc" id="L626">                receiptDetail.setTaxheadCode(voucherDetails.getGlcodeIdDetail());</span>
+<span class="nc" id="L627">                receiptHeader.addReceiptDetail(receiptDetail);</span>
+<span class="nc" id="L628">                debitamount = debitamount.add(voucherDetails.getCreditAmountDetail());</span>
+<span class="nc" id="L629">                debitamount = debitamount.subtract(voucherDetails.getDebitAmountDetail());</span>
+<span class="nc" id="L630">                m++;</span>
+<span class="nc" id="L631">            }</span>
+//        if (validateRebateData(billRebateDetailslist, subLedgerlist)) {
+//            for (final ReceiptDetailInfo voucherDetails : billRebateDetailslist)
+//                if (voucherDetails.getGlcodeDetail() != null
+//                        &amp;&amp; org.apache.commons.lang.StringUtils.isNotBlank(voucherDetails.getGlcodeDetail())) {
+//                    final CChartOfAccounts account = chartOfAccountsDAO
+//                            .getCChartOfAccountsByGlCode(voucherDetails.getGlcodeDetail());
+//                    CFunction function = null;
+//                    if (voucherDetails.getFunctionIdDetail() != null)
+//                        function = functionDAO.getFunctionById(voucherDetails.getFunctionIdDetail());
+//                    ReceiptDetail receiptDetail = new ReceiptDetail(account, function,
+//                            voucherDetails.getCreditAmountDetail(), voucherDetails.getDebitAmountDetail(),
+//                            BigDecimal.ZERO, Long.valueOf(m), null, true, receiptHeader, PURPOSE.OTHERS.toString());
+//
+//                    if (voucherDetails.getDebitAmountDetail() == null)
+//                        receiptDetail.setDramount(BigDecimal.ZERO);
+//                    else
+//                        receiptDetail.setDramount(voucherDetails.getDebitAmountDetail());
+//                    if (voucherDetails.getCreditAmountDetail() == null)
+//                        receiptDetail.setCramount(BigDecimal.ZERO);
+//                    else
+//                        receiptDetail.setCramount(voucherDetails.getCreditAmountDetail());
+//
+//                    receiptDetail = setAccountPayeeDetails(subLedgerlist, receiptDetail);
+//                    receiptHeader.addReceiptDetail(receiptDetail);
+//                    debitamount = debitamount.add(voucherDetails.getCreditAmountDetail());
+//                    debitamount = debitamount.subtract(voucherDetails.getDebitAmountDetail());
+//                    m++;
+//                }
+//        } else
+//            return false;
+<span class="nc" id="L662">        setTotalDebitAmount(debitamount);</span>
+<span class="nc" id="L663">        return true;</span>
+    }
+
+    public ReceiptDetail setAccountPayeeDetails(final List&lt;ReceiptDetailInfo&gt; subLedgerlist,
+            final ReceiptDetail receiptDetail) {
+<span class="nc bnc" id="L668" title="All 2 branches missed.">        for (final ReceiptDetailInfo subvoucherDetails : subLedgerlist)</span>
+<span class="nc bnc" id="L669" title="All 4 branches missed.">            if (subvoucherDetails.getGlcode() != null &amp;&amp; subvoucherDetails.getGlcode().getId() != 0</span>
+<span class="nc bnc" id="L670" title="All 2 branches missed.">                    &amp;&amp; subvoucherDetails.getGlcode().getId().equals(receiptDetail.getAccounthead().getId())) {</span>
+
+<span class="nc" id="L672">                final Accountdetailtype accdetailtype = (Accountdetailtype) getPersistenceService().findByNamedQuery(</span>
+<span class="nc" id="L673">                        CollectionConstants.QUERY_ACCOUNTDETAILTYPE_BY_ID, subvoucherDetails.getDetailType().getId());</span>
+<span class="nc" id="L674">                final Accountdetailkey accdetailkey = (Accountdetailkey) getPersistenceService().findByNamedQuery(</span>
+<span class="nc" id="L675">                        CollectionConstants.QUERY_ACCOUNTDETAILKEY_BY_DETAILKEY, subvoucherDetails.getDetailKeyId(),</span>
+<span class="nc" id="L676">                        subvoucherDetails.getDetailType().getId());</span>
+
+<span class="nc" id="L678">                final AccountPayeeDetail accPayeeDetail = new AccountPayeeDetail(accdetailtype, accdetailkey,</span>
+<span class="nc" id="L679">                        subvoucherDetails.getAmount(), receiptDetail);</span>
+
+<span class="nc" id="L681">                receiptDetail.addAccountPayeeDetail(accPayeeDetail);</span>
+            }
+<span class="nc" id="L683">        return receiptDetail;</span>
+    }
+
+    @ValidationErrorPage(value = &quot;new&quot;)
+    @Action(value = &quot;/receipts/receipt-newform&quot;)
+    public String newform() {
+
+<span class="nc" id="L690">        final String manualReceiptInfoRequired = collectionsUtil.getAppConfigValue(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG, CollectionConstants.MANUALRECEIPTINFOREQUIRED);
+<span class="nc bnc" id="L692" title="All 2 branches missed.">        if (CollectionConstants.YES.equalsIgnoreCase(manualReceiptInfoRequired))</span>
+<span class="nc" id="L693">            setManualReceiptNumberAndDateReq(Boolean.TRUE);</span>
+
+<span class="nc" id="L695">        createMisc();</span>
+
+        // set collection modes allowed rule through script
+<span class="nc" id="L698">        setCollectionModesNotAllowed();</span>
+<span class="nc" id="L699">        return NEW;</span>
+    }
+
+    
+    /*@Action(value = &quot;/receipts/receipt-successprint&quot;)
+    public String successprint() {
+    	message=&quot;Bhushan edits&quot;;
+    	reciptNumber=&quot;06/2020-21/000094&quot;;
+    	paymentId=&quot;54c50500-0c2c-4bce-9adc-f3f2ef8bdc2d&quot;;
+        return SUCCESS;
+    }*/
+    
+
+    /**
+     * This method is invoked when user creates a receipt.
+     *
+     * @return
+     */
+    @ValidationErrorPage(value = &quot;new&quot;)
+    @Action(value = &quot;/receipts/receipt-save&quot;)
+    public String save() {
+        String returnValue;
+<span class="nc" id="L721">        List&lt;InstrumentHeader&gt; receiptInstrList = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L722">        LOGGER.info(&quot;Receipt creation process is started !!!!!!&quot;);</span>
+<span class="nc" id="L723">        ReceiptHeader rhForValidation = null;</span>
+<span class="nc" id="L724">        final long startTimeMillis = System.currentTimeMillis();</span>
+
+        /*
+         * if (manualReceiptNumber != null &amp;&amp; manualReceiptDate != null) { final CFinancialYear financialYear =
+         * collectionsUtil.getFinancialYearforDate(manualReceiptDate); rhForValidation = receiptHeaderService.findByNamedQuery(
+         * CollectionConstants.QUERY_RECEIPT_BY_SERVICE_MANUALRECEIPTNO_AND_DATE, manualReceiptNumber, receiptHeader.getService(),
+         * financialYear.getStartingDate(), financialYear.getEndingDate(), CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED); }
+         */
+
+        /* if (rhForValidation == null) { */
+        // For interday cancellation
+        /*
+         * if (oldReceiptId != null) { final ReceiptHeader receiptHeaderToBeCancelled =
+         * receiptHeaderService.findById(oldReceiptId, false); receiptHeaderToBeCancelled
+         * .setStatus(statusDAO.getStatusByModuleAndCode(CollectionConstants.MODULE_NAME_RECEIPTHEADER,
+         * CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED));
+         * receiptHeaderToBeCancelled.setReasonForCancellation(reasonForCancellation); // set isReconciled to false before calling
+         * update to // billing system for // cancel receipt receiptHeaderToBeCancelled.setIsReconciled(false);
+         * receiptHeader.setLocation(receiptHeaderToBeCancelled.getLocation());
+         * receiptHeaderService.persist(receiptHeaderToBeCancelled); if (receiptHeaderToBeCancelled.getReceipttype() ==
+         * CollectionConstants.RECEIPT_TYPE_BILL) { populateReceiptModelWithExistingReceiptInfo(receiptHeaderToBeCancelled);
+         * LOGGER.info(&quot;Receipt Cancelled with Receipt Number(recreateNewReceiptOnCancellation): &quot; +
+         * receiptHeaderToBeCancelled.getReceiptnumber() + &quot;; Consumer Code: &quot; + receiptHeaderToBeCancelled.getConsumerCode()); }
+         * }
+         */
+
+<span class="nc bnc" id="L750" title="All 2 branches missed.">        if (&quot;misc&quot;.equalsIgnoreCase(billSource)) {</span>
+<span class="nc" id="L751">            createMisc();</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">            if (!setMiscReceiptDetails())</span>
+<span class="nc" id="L753">                returnValue = NEW;</span>
+        } else {
+<span class="nc bnc" id="L755" title="All 4 branches missed.">            if (callbackForApportioning &amp;&amp; !overrideAccountHeads)</span>
+<span class="nc" id="L756">                apportionBillAmount();</span>
+<span class="nc bnc" id="L757" title="All 4 branches missed.">            if (receiptDetailList == null || receiptDetailList.isEmpty())</span>
+<span class="nc" id="L758">                throw new ApplicationRuntimeException(</span>
+                        &quot;Receipt could not be created as the apportioned receipt detail list is empty&quot;);
+            else {
+<span class="nc" id="L761">                BigDecimal totalCreditAmount = BigDecimal.ZERO;</span>
+<span class="nc bnc" id="L762" title="All 2 branches missed.">                for (final ReceiptDetail receiptDetail : receiptDetailList)</span>
+<span class="nc" id="L763">                    totalCreditAmount = totalCreditAmount.add(receiptDetail.getCramount());</span>
+<span class="nc bnc" id="L764" title="All 2 branches missed.">                if (totalCreditAmount.intValue() == 0)</span>
+<span class="nc" id="L765">                    throw new ApplicationRuntimeException(</span>
+<span class="nc" id="L766">                            &quot;Apportioning Failed at the Billing System: &quot; + receiptHeader.getService()</span>
+<span class="nc" id="L767">                                    + &quot;, for bill number: &quot; + receiptHeader.getReferencenumber());</span>
+                else
+<span class="nc" id="L769">                    receiptHeader.setReceiptDetails(new HashSet(receiptDetailList));</span>
+            }
+        }
+<span class="nc" id="L772">        int noOfNewlyCreatedReceipts = 0;</span>
+<span class="nc" id="L773">        boolean setInstrument = true;</span>
+
+        // only newly created receipts need to be initialised with the
+        // data.
+        // The cancelled receipt can be excluded from this processing.
+<span class="nc bnc" id="L778" title="All 2 branches missed.">        if (receiptHeader.getStatus() == null) {</span>
+<span class="nc" id="L779">            noOfNewlyCreatedReceipts++;</span>
+            // Set created by Date as this required to generate receipt
+            // number before persist
+<span class="nc bnc" id="L782" title="All 2 branches missed.">            if (manualReceiptDate == null)</span>
+                //receiptHeader.setReceiptdate(new Date());
+<span class="nc" id="L784">            	receiptHeader.setReceiptdate(voucherDate); // change by abhishek on 28022022 by reciptdate datepicker</span>
+            else {
+                // If the receipt has been manually created, the receipt
+                // date is same as the date of manual creation.
+                // set Createdby, in MySavelistner if createdBy is null
+                // it set both createdBy and createdDate with
+                // currentDate.
+                // Thus overridding the manualReceiptDate set above
+<span class="nc" id="L792">                receiptHeader.setCreatedBy(collectionsUtil.getLoggedInUser().getId());</span>
+<span class="nc" id="L793">                receiptHeader.setManualreceiptdate(manualReceiptDate);</span>
+<span class="nc" id="L794">                receiptHeader.setReceiptdate(manualReceiptDate);</span>
+<span class="nc" id="L795">                receiptHeader.setVoucherDate(manualReceiptDate);</span>
+            }
+<span class="nc bnc" id="L797" title="All 2 branches missed.">            if (StringUtils.isNotBlank(manualReceiptNumber))</span>
+<span class="nc" id="L798">                receiptHeader.setManualreceiptnumber(manualReceiptNumber);</span>
+<span class="nc bnc" id="L799" title="All 2 branches missed.">            if (isBillSourcemisc()) {</span>
+<span class="nc" id="L800">                receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_ADHOC);</span>
+<span class="nc" id="L801">                receiptHeader.setVoucherDate(voucherDate);</span>
+<span class="nc" id="L802">                receiptHeader.setReceiptdate(voucherDate);</span>
+<span class="nc" id="L803">                receiptHeader.setVoucherNum(voucherNum);</span>
+<span class="nc" id="L804">                receiptHeader.setIsReconciled(Boolean.TRUE);</span>
+<span class="nc" id="L805">                receiptHeader.setManualreceiptdate(manualReceiptDate);</span>
+<span class="nc" id="L806">                receiptHeader.setPayeeName(StringEscapeUtils.unescapeHtml(paidBy));</span>
+
+            } else {
+<span class="nc" id="L809">                receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_BILL);</span>
+<span class="nc" id="L810">                receiptHeader.setIsModifiable(Boolean.TRUE);</span>
+<span class="nc" id="L811">                receiptHeader.setIsReconciled(Boolean.FALSE);</span>
+            }
+            // serviceType =
+            // receiptHeader.getService().getServiceType();
+<span class="nc" id="L815">            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_COUNTER);</span>
+            // Bank Collection Operator location is not captured.
+            /*
+             * if (!collectionsUtil.isBankCollectionOperator( receiptCreatedByCounterOperator) &amp;&amp; receiptHeader.getLocation() ==
+             * null) receiptHeader.setLocation(collectionsUtil. getLocationOfUser(getSession()));
+             */
+<span class="nc" id="L821">            receiptHeader.setStatus(</span>
+<span class="nc" id="L822">                    collectionsUtil.getStatusForModuleAndCode(CollectionConstants.MODULE_NAME_RECEIPTHEADER,</span>
+                            CollectionConstants.RECEIPT_STATUS_CODE_TO_BE_SUBMITTED));
+<span class="nc" id="L824">            receiptHeader.setPaidBy(StringEscapeUtils.unescapeHtml(paidBy));</span>
+            //receiptHeader.setPayeeName(StringEscapeUtils.unescapeHtml(paidBy));
+<span class="nc" id="L826">            LOGGER.info(&quot;payeeAddress ::::&quot;+payeeAddress);</span>
+<span class="nc" id="L827">            receiptHeader.setPayeeAddress(payeeAddress);</span>
+<span class="nc" id="L828">            receiptHeader.setReferenceDesc(referenceDesc);</span>
+<span class="nc" id="L829">            receiptHeader.setSource(Source.SYSTEM.toString());</span>
+<span class="nc" id="L830">            LOGGER.info(&quot;instrumentType ::&quot;+instrumentType);</span>
+<span class="nc" id="L831">            receiptHeader.setModOfPayment(instrumentType);</span>
+<span class="nc" id="L832">            LOGGER.info(&quot;subdivison ::&quot;+subdivison);</span>
+<span class="nc" id="L833">            receiptHeader.setSubdivison(subdivison);</span>
+<span class="nc" id="L834">            LOGGER.info(&quot;gstno ::&quot;+gstno);</span>
+<span class="nc" id="L835">            receiptHeader.setGstno(gstno);</span>
+
+            // If this is a new receipt in lieu of cancelling old
+            // receipt, update
+            // old receipt id to the reference collection header id
+            // field of this new receipt.
+            /*
+             * if (getOldReceiptId() != null) receiptHeader.setReceiptHeader(receiptHeaderService.findById(getOldReceiptId(),
+             * false));
+             */
+<span class="nc bnc" id="L845" title="All 2 branches missed.">            if (setInstrument) {</span>
+<span class="nc" id="L846">                receiptInstrList = populateInstrumentDetails();</span>
+<span class="nc" id="L847">                setInstrument = false;</span>
+            }
+
+<span class="nc" id="L850">            receiptHeader.setReceiptInstrument(new HashSet(receiptInstrList));</span>
+
+<span class="nc" id="L852">            BigDecimal debitAmount = BigDecimal.ZERO;</span>
+
+<span class="nc bnc" id="L854" title="All 2 branches missed.">            for (final ReceiptDetail creditChangeReceiptDetail : receiptDetailList)</span>
+<span class="nc bnc" id="L855" title="All 2 branches missed.">                for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails())</span>
+<span class="nc" id="L856">                    if (creditChangeReceiptDetail.getReceiptHeader().getReferencenumber()</span>
+<span class="nc bnc" id="L857" title="All 2 branches missed.">                            .equals(receiptDetail.getReceiptHeader().getReferencenumber())</span>
+<span class="nc" id="L858">                            &amp;&amp; receiptDetail.getOrdernumber()</span>
+<span class="nc bnc" id="L859" title="All 2 branches missed.">                                    .equals(creditChangeReceiptDetail.getOrdernumber())) {</span>
+
+<span class="nc" id="L861">                        receiptDetail.setCramount(creditChangeReceiptDetail.getCramount());</span>
+<span class="nc" id="L862">                        receiptDetail.setDramount(creditChangeReceiptDetail.getDramount());</span>
+                        // calculate sum of creditamounts as a debit
+                        // value to create a
+                        // debit account head and add to receipt details
+<span class="nc" id="L866">                        debitAmount = debitAmount.add(creditChangeReceiptDetail.getCramount());</span>
+<span class="nc" id="L867">                        debitAmount = debitAmount.subtract(creditChangeReceiptDetail.getDramount());</span>
+                    }
+
+<span class="nc bnc" id="L870" title="All 4 branches missed.">            if (chequeInstrumenttotal != null &amp;&amp; chequeInstrumenttotal.compareTo(BigDecimal.ZERO) != 0)</span>
+<span class="nc" id="L871">                receiptHeader.setTotalAmount(chequeInstrumenttotal);</span>
+
+<span class="nc bnc" id="L873" title="All 4 branches missed.">            if (cashOrCardInstrumenttotal != null &amp;&amp; cashOrCardInstrumenttotal.compareTo(BigDecimal.ZERO) != 0)</span>
+<span class="nc" id="L874">                receiptHeader.setTotalAmount(cashOrCardInstrumenttotal);</span>
+            /*
+             * DebitAccountHeadDetailsService debitAccountHeadService = (DebitAccountHeadDetailsService) beanProvider
+             * .getBean(collectionsUtil.getBeanNameForDebitAccountHead()); if (isBillSourcemisc()) receiptHeader.addReceiptDetail(
+             * debitAccountHeadService.addDebitAccountHeadDetails(totalDebitAmount, receiptHeader, chequeInstrumenttotal,
+             * cashOrCardInstrumenttotal, instrumentTypeCashOrCard)); else receiptHeader.addReceiptDetail(
+             * debitAccountHeadService.addDebitAccountHeadDetails(debitAmount, receiptHeader, chequeInstrumenttotal,
+             * cashOrCardInstrumenttotal, instrumentTypeCashOrCard));
+             */
+
+        }
+        // }// end of looping through receipt headers
+        // }// end of looping through model receipt payee list
+
+<span class="nc" id="L888">        LOGGER.info(&quot;Call back for apportioning is completed&quot;);</span>
+        // billing system
+<span class="nc" id="L890">        receiptResponse = receiptHeaderService.populateAndPersistReceipts(receiptHeader, receiptInstrList);</span>
+
+<span class="nc" id="L892">        message = &quot;Receipt created with receipt number: &quot;</span>
+<span class="nc" id="L893">                + receiptResponse.getReceipts().get(0).getBill().get(0).getBillDetails().get(0).getReceiptNumber();</span>
+        
+<span class="nc" id="L895">        reciptNumber=receiptResponse.getReceipts().get(0).getBill().get(0).getBillDetails().get(0).getReceiptNumber();</span>
+        
+<span class="nc" id="L897">        paymentId=receiptResponse.getReceipts().get(0).getPaymentId();</span>
+<span class="nc" id="L898">        vouchermissourcepath=paymentId;</span>
+        // populate all receipt header ids except the cancelled receipt
+        // (in effect the newly created receipts)
+<span class="nc" id="L901">        selectedReceipts = new String[noOfNewlyCreatedReceipts];</span>
+<span class="nc" id="L902">        int i = 0;</span>
+<span class="nc bnc" id="L903" title="All 4 branches missed.">        if (receiptHeader.getId() != null &amp;&amp; !receiptHeader.getId().equals(oldReceiptId)) {</span>
+<span class="nc" id="L904">            selectedReceipts[i] = receiptHeader.getReceiptnumber();</span>
+<span class="nc" id="L905">            i++;</span>
+        }
+
+<span class="nc" id="L908">        final long elapsedTimeMillis = System.currentTimeMillis() - startTimeMillis;</span>
+<span class="nc" id="L909">        LOGGER.info(&quot;$$$$$$ Receipt Persisted with Receipt Number: &quot; + receiptHeader.getReceiptnumber()</span>
+<span class="nc bnc" id="L910" title="All 2 branches missed.">                + (receiptHeader.getConsumerCode() != null</span>
+<span class="nc" id="L911">                        ? &quot; and consumer code: &quot; + receiptHeader.getConsumerCode() : &quot;&quot;)</span>
+                + &quot;; Time taken(ms) = &quot; + elapsedTimeMillis);
+        // Do not invoke print receipt in case of bulk upload.
+        /*
+         * if (!receiptBulkUpload) returnValue = printReceipts(); else
+         */
+<span class="nc" id="L917">        returnValue = SUCCESS;</span>
+        /*
+         * } else { if (rhForValidation.getService().equals(CollectionConstants.SERVICECODE_PROPERTYTAX)) addActionError(
+         * &quot;Entered Manual receipt number already exists for the index number&quot; + rhForValidation.getConsumerCode() +
+         * &quot;.Please enter a valid manual receipt number and create the receipt.&quot;); else addActionError(
+         * &quot;Receipt already exists for the service &quot;); returnValue = NEW; }
+         */
+<span class="nc" id="L924">        return returnValue;</span>
+    }
+
+    public void createMisc() {
+<span class="nc" id="L928">        headerFields = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L929">        mandatoryFields = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L930">        getHeaderMandateFields();</span>
+<span class="nc" id="L931">        setupDropdownDataExcluding();</span>
+
+        // headerFields.remove(CollectionConstants.FUNDSOURCE);
+        // headerFields.remove(CollectionConstants.SCHEME);
+        // headerFields.remove(CollectionConstants.SUBSCHEME);
+<span class="nc bnc" id="L936" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.DEPARTMENT))</span>
+<span class="nc" id="L937">            addDropdownData(&quot;departmentList&quot;, masterDataCache.get(&quot;egi-department&quot;));</span>
+<span class="nc bnc" id="L938" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNCTIONARY))</span>
+<span class="nc" id="L939">            addDropdownData(&quot;functionaryList&quot;,</span>
+<span class="nc" id="L940">                    persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUNCTIONARY));</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUND))</span>
+<span class="nc" id="L942">            addDropdownData(&quot;fundList&quot;, collectionsUtil.getAllFunds());</span>
+<span class="nc bnc" id="L943" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNCTION))</span>
+<span class="nc" id="L944">            addDropdownData(&quot;functionList&quot;, functionDAO.getAllActiveFunctions());</span>
+<span class="nc bnc" id="L945" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FIELD))</span>
+<span class="nc" id="L946">            addDropdownData(&quot;fieldList&quot;, persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FIELD));</span>
+<span class="nc bnc" id="L947" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNDSOURCE))</span>
+<span class="nc" id="L948">            addDropdownData(&quot;fundsourceList&quot;,</span>
+<span class="nc" id="L949">                    persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUNDSOURCE));</span>
+<span class="nc bnc" id="L950" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.SCHEME))</span>
+<span class="nc bnc" id="L951" title="All 4 branches missed.">            if (receiptMisc.getFund() == null || receiptMisc.getFund().getId() == null)</span>
+<span class="nc" id="L952">                addDropdownData(&quot;schemeList&quot;, Collections.emptyList());</span>
+            else
+<span class="nc" id="L954">                addDropdownData(&quot;schemeList&quot;, persistenceService.findAllByNamedQuery(</span>
+<span class="nc" id="L955">                        CollectionConstants.QUERY_SCHEME_BY_FUNDID, receiptMisc.getFund().getId()));</span>
+<span class="nc bnc" id="L956" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.SUBSCHEME))</span>
+<span class="nc bnc" id="L957" title="All 4 branches missed.">            if (receiptMisc.getScheme() == null || receiptMisc.getScheme().getId() == null)</span>
+<span class="nc" id="L958">                addDropdownData(&quot;subschemeList&quot;, Collections.emptyList());</span>
+            else
+<span class="nc" id="L960">                addDropdownData(&quot;subschemeList&quot;, persistenceService.findAllByNamedQuery(</span>
+<span class="nc" id="L961">                        CollectionConstants.QUERY_SUBSCHEME_BY_SCHEMEID, receiptMisc.getScheme().getId()));</span>
+
+<span class="nc bnc" id="L963" title="All 2 branches missed.">        if (billCreditDetailslist == null) {</span>
+<span class="nc" id="L964">            billCreditDetailslist = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L965">            billRebateDetailslist = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L966">            subLedgerlist = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L967">            billRebateDetailslist.add(new ReceiptDetailInfo());</span>
+<span class="nc" id="L968">            billCreditDetailslist.add(new ReceiptDetailInfo());</span>
+<span class="nc" id="L969">            subLedgerlist.add(new ReceiptDetailInfo());</span>
+        }
+<span class="nc" id="L971">        billSource = &quot;misc&quot;;</span>
+<span class="nc" id="L972">        receiptHeader.setPartPaymentAllowed(false);</span>
+<span class="nc" id="L973">        setHeaderFields(headerFields);</span>
+<span class="nc" id="L974">        setMandatoryFields(mandatoryFields);</span>
+<span class="nc" id="L975">        final Department dept = collectionsUtil.getDepartmentOfLoggedInUser();</span>
+        /*
+         * if (dept == null) throw new ValidationException(Arrays.asList( new ValidationError(&quot;Department does not exists&quot;,
+         * &quot;viewchallan.validation.error.user.notexists&quot;)));
+         */
+        /*
+         * if (getDeptId() == null) setDeptId(dept.getId().toString());
+         */
+<span class="nc" id="L983">        populateBankBranchList(false);</span>
+<span class="nc" id="L984">    }</span>
+
+    public boolean isBillSourcemisc() {
+<span class="nc" id="L987">        boolean flag = false;</span>
+<span class="nc bnc" id="L988" title="All 2 branches missed.">        if (&quot;misc&quot;.equalsIgnoreCase(getBillSource()))</span>
+<span class="nc" id="L989">            flag = true;</span>
+<span class="nc" id="L990">        return flag;</span>
+    }
+
+    public boolean isFieldMandatory(final String field) {
+<span class="nc" id="L994">        return mandatoryFields.contains(field);</span>
+    }
+
+    public boolean shouldShowHeaderField(final String field) {
+<span class="nc" id="L998">        return headerFields.contains(field);</span>
+    }
+
+    protected void getHeaderMandateFields() {
+<span class="nc" id="L1002">        final List&lt;AppConfigValues&gt; appConfigValuesList = collectionsUtil.getAppConfigValues(</span>
+                CollectionConstants.MISMandatoryAttributesModule, CollectionConstants.MISMandatoryAttributesKey);
+
+<span class="nc bnc" id="L1005" title="All 2 branches missed.">        for (final AppConfigValues appConfigVal : appConfigValuesList) {</span>
+<span class="nc" id="L1006">            final String value = appConfigVal.getValue();</span>
+<span class="nc" id="L1007">            final String header = value.substring(0, value.indexOf('|'));</span>
+<span class="nc" id="L1008">            headerFields.add(header);</span>
+<span class="nc" id="L1009">            final String mandate = value.substring(value.indexOf('|') + 1);</span>
+<span class="nc bnc" id="L1010" title="All 2 branches missed.">            if (&quot;M&quot;.equalsIgnoreCase(mandate))</span>
+<span class="nc" id="L1011">                mandatoryFields.add(header);</span>
+<span class="nc" id="L1012">        }</span>
+        /*
+         * if (!&quot;Auto&quot;.equalsIgnoreCase(new VoucherTypeForULB().readVoucherTypes(&quot;Receipt&quot;))) { headerFields.add(&quot;vouchernumber&quot;);
+         * mandatoryFields.add(&quot;vouchernumber&quot;); }
+         */
+<span class="nc" id="L1017">        mandatoryFields.add(&quot;voucherdate&quot;);</span>
+<span class="nc" id="L1018">    }</span>
+
+    private List&lt;InstrumentHeader&gt; populateInstrumentDetails() {
+<span class="nc" id="L1021">        List&lt;InstrumentHeader&gt; instrumentHeaderList = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L1022">        LOGGER.info(&quot;instrumentTypeCashOrCard ::::&quot;+instrumentTypeCashOrCard);</span>
+<span class="nc bnc" id="L1023" title="All 2 branches missed.">        if (CollectionConstants.INSTRUMENTTYPE_CASH.equals(instrumentTypeCashOrCard)) {</span>
+<span class="nc" id="L1024">            instrHeaderCash</span>
+<span class="nc" id="L1025">                    .setInstrumentType(financialsUtil.getInstrumentTypeByType(CollectionConstants.INSTRUMENTTYPE_CASH));</span>
+
+<span class="nc" id="L1027">            instrHeaderCash.setIsPayCheque(CollectionConstants.ZERO_INT);</span>
+            // the cash amount is set into the object through binding
+            // this total is needed for creating debit account head
+
+<span class="nc" id="L1031">            cashOrCardInstrumenttotal = cashOrCardInstrumenttotal.add(instrHeaderCash.getInstrumentAmount());</span>
+
+<span class="nc" id="L1033">            instrumentHeaderList.add(instrHeaderCash);</span>
+        }
+<span class="nc bnc" id="L1035" title="All 2 branches missed.">        if (CollectionConstants.INSTRUMENTTYPE_CARD.equals(instrumentTypeCashOrCard)) {</span>
+<span class="nc" id="L1036">            instrHeaderCard</span>
+<span class="nc" id="L1037">                    .setInstrumentType(financialsUtil.getInstrumentTypeByType(CollectionConstants.INSTRUMENTTYPE_CARD));</span>
+<span class="nc bnc" id="L1038" title="All 2 branches missed.">            if (instrHeaderCard.getTransactionDate() == null)</span>
+<span class="nc" id="L1039">                instrHeaderCard.setTransactionDate(new Date());</span>
+<span class="nc" id="L1040">            instrHeaderCard.setIsPayCheque(CollectionConstants.ZERO_INT);</span>
+
+            // the instrumentNumber, transactionNumber, instrumentAmount are
+            // set into the object directly through binding
+<span class="nc" id="L1044">            cashOrCardInstrumenttotal = cashOrCardInstrumenttotal.add(instrHeaderCard.getInstrumentAmount());</span>
+
+<span class="nc" id="L1046">            instrumentHeaderList.add(instrHeaderCard);</span>
+        }
+
+<span class="nc bnc" id="L1049" title="All 2 branches missed.">        if (CollectionConstants.INSTRUMENTTYPE_BANK.equals(instrumentTypeCashOrCard)) {</span>
+<span class="nc" id="L1050">            instrHeaderBank</span>
+<span class="nc" id="L1051">                    .setInstrumentType(financialsUtil.getInstrumentTypeByType(CollectionConstants.INSTRUMENTTYPE_BANK));</span>
+<span class="nc bnc" id="L1052" title="All 2 branches missed.">            if (instrHeaderBank.getTransactionDate() == null)</span>
+<span class="nc" id="L1053">                instrHeaderBank.setTransactionDate(new Date());</span>
+<span class="nc" id="L1054">            instrHeaderBank.setIsPayCheque(CollectionConstants.ZERO_INT);</span>
+
+<span class="nc" id="L1056">            final Bankaccount account = bankAccountDAO.findById(bankAccountId, false);</span>
+
+<span class="nc" id="L1058">            instrHeaderBank.setBankAccountId(account);</span>
+<span class="nc" id="L1059">            instrHeaderBank.setBankBranchName(account.getBankbranch().getBranchname());</span>
+
+            // the instrumentNumber, transactionNumber, instrumentAmount are
+            // set into the object directly through binding
+<span class="nc" id="L1063">            cashOrCardInstrumenttotal = cashOrCardInstrumenttotal.add(instrHeaderBank.getInstrumentAmount());</span>
+
+<span class="nc" id="L1065">            instrumentHeaderList.add(instrHeaderBank);</span>
+        }
+<span class="nc bnc" id="L1067" title="All 2 branches missed.">        if (CollectionConstants.INSTRUMENTTYPE_ONLINE.equals(instrumentTypeCashOrCard)) {</span>
+<span class="nc" id="L1068">            instrHeaderOnline.setInstrumentType(</span>
+<span class="nc" id="L1069">                    financialsUtil.getInstrumentTypeByType(CollectionConstants.INSTRUMENTTYPE_ONLINE));</span>
+
+<span class="nc" id="L1071">            instrHeaderOnline.setIsPayCheque(CollectionConstants.ZERO_INT);</span>
+            // the cash amount is set into the object through binding
+            // this total is needed for creating debit account head
+
+<span class="nc" id="L1075">            cashOrCardInstrumenttotal = cashOrCardInstrumenttotal.add(instrHeaderOnline.getInstrumentAmount());</span>
+
+<span class="nc" id="L1077">            instrumentHeaderList.add(instrHeaderOnline);</span>
+        }
+
+        // cheque/DD types
+<span class="nc bnc" id="L1081" title="All 4 branches missed.">        if (instrumentProxyList != null &amp;&amp; !CollectionConstants.INSTRUMENTTYPE_CASH.equals(instrumentTypeCashOrCard)</span>
+<span class="nc bnc" id="L1082" title="All 2 branches missed.">                &amp;&amp; !CollectionConstants.INSTRUMENTTYPE_CARD.equals(instrumentTypeCashOrCard)</span>
+<span class="nc bnc" id="L1083" title="All 2 branches missed.">                &amp;&amp; !CollectionConstants.INSTRUMENTTYPE_BANK.equals(instrumentTypeCashOrCard))</span>
+<span class="nc bnc" id="L1084" title="All 2 branches missed.">            if (getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_CHEQUE)</span>
+<span class="nc bnc" id="L1085" title="All 2 branches missed.">                    || getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_DD))</span>
+<span class="nc" id="L1086">                instrumentHeaderList = populateInstrumentHeaderForChequeDD(instrumentHeaderList,instrumentProxyList);</span>
+        // instrumentHeaderList = receiptHeaderService.createInstrument(instrumentHeaderList);
+<span class="nc" id="L1088">        return instrumentHeaderList;</span>
+    }
+
+    /**
+     * This instrument creates instrument header instances for the receipt, when the instrument type is Cheque or DD. The created
+     * &lt;code&gt;InstrumentHeader&lt;/code&gt; instance is persisted
+     *
+     * @param k an int value representing the index of the instrument type as chosen from the front end
+     * @return an &lt;code&gt;InstrumentHeader&lt;/code&gt; instance populated with the instrument details
+     */
+    private List&lt;InstrumentHeader&gt; populateInstrumentHeaderForChequeDD(
+            final List&lt;InstrumentHeader&gt; instrumentHeaderList, final List&lt;InstrumentHeader&gt; instrumentProxyList) {
+
+<span class="nc bnc" id="L1101" title="All 2 branches missed.">        for (final InstrumentHeader instrumentHeader : instrumentProxyList) {</span>
+<span class="nc" id="L1102">            InstrumentType instrumentType = new InstrumentType();</span>
+<span class="nc bnc" id="L1103" title="All 2 branches missed.">            if (getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_CHEQUE)){</span>
+<span class="nc" id="L1104">                instrumentType.setType(CollectionConstants.INSTRUMENTTYPE_CHEQUE);</span>
+<span class="nc" id="L1105">                instrumentHeader.setInstrumentType(instrumentType);</span>
+            }
+<span class="nc bnc" id="L1107" title="All 2 branches missed.">            else if (getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_DD)){</span>
+<span class="nc" id="L1108">                instrumentType.setType(CollectionConstants.INSTRUMENTTYPE_DD);</span>
+<span class="nc" id="L1109">                instrumentHeader.setInstrumentType(instrumentType);</span>
+            }
+            
+<span class="nc bnc" id="L1112" title="All 4 branches missed.">            if (instrumentHeader.getBankId() != null &amp;&amp; instrumentHeader.getBankId().getCode() == null) {</span>
+<span class="nc" id="L1113">                addActionError(&quot;Bank is not exist&quot;);</span>
+<span class="nc" id="L1114">                throw new ApplicationRuntimeException(&quot;Bank is not exist&quot;);</span>
+            }
+//            else if (instrumentHeader.getBankId() != null &amp;&amp; instrumentHeader.getBankId().getId() != null)
+//                instrumentHeader
+//                        .setBankId(bankDAO.findById(Integer.valueOf(instrumentHeader.getBankId().getId()), false));
+<span class="nc" id="L1119">            chequeInstrumenttotal = chequeInstrumenttotal.add(instrumentHeader.getInstrumentAmount());</span>
+<span class="nc" id="L1120">            instrumentHeader.setIsPayCheque(CollectionConstants.ZERO_INT);</span>
+<span class="nc" id="L1121">            instrumentHeaderList.add(instrumentHeader);</span>
+<span class="nc" id="L1122">        }</span>
+<span class="nc" id="L1123">        return instrumentHeaderList;</span>
+    }
+
+    /**
+     * This method create a new receipt header object with details contained in given receipt header object.
+     * 
+     * @param oldReceiptHeader the instance of &lt;code&gt;ReceiptHeader&lt;/code&gt; whose data is to be copied
+     */
+    private void populateReceiptModelWithExistingReceiptInfo(final ReceiptHeader oldReceiptHeader) {
+<span class="nc" id="L1132">        totalAmntToBeCollected = BigDecimal.ZERO;</span>
+
+<span class="nc" id="L1134">        receiptHeader = new ReceiptHeader(oldReceiptHeader.getReferencenumber(), oldReceiptHeader.getReferencedate(),</span>
+<span class="nc" id="L1135">                oldReceiptHeader.getConsumerCode(), oldReceiptHeader.getReferenceDesc(),</span>
+<span class="nc" id="L1136">                oldReceiptHeader.getTotalAmount(), oldReceiptHeader.getMinimumAmount(),</span>
+<span class="nc" id="L1137">                oldReceiptHeader.getPartPaymentAllowed(), oldReceiptHeader.getOverrideAccountHeads(),</span>
+<span class="nc" id="L1138">                oldReceiptHeader.getCallbackForApportioning(), oldReceiptHeader.getDisplayMsg(),</span>
+<span class="nc" id="L1139">                oldReceiptHeader.getService(), oldReceiptHeader.getCollModesNotAllwd(), oldReceiptHeader.getPayeeName(),</span>
+<span class="nc" id="L1140">                oldReceiptHeader.getPayeeAddress(), oldReceiptHeader.getPayeeEmail(),</span>
+<span class="nc" id="L1141">                oldReceiptHeader.getConsumerType());</span>
+<span class="nc bnc" id="L1142" title="All 2 branches missed.">        if (oldReceiptHeader.getCollModesNotAllwd() != null)</span>
+<span class="nc" id="L1143">            setCollectionModesNotAllowed(Arrays.asList(oldReceiptHeader.getCollModesNotAllwd().split(&quot;,&quot;)));</span>
+<span class="nc" id="L1144">        setOverrideAccountHeads(oldReceiptHeader.getOverrideAccountHeads());</span>
+<span class="nc" id="L1145">        setPartPaymentAllowed(oldReceiptHeader.getPartPaymentAllowed());</span>
+<span class="nc" id="L1146">        List&lt;BusinessDetails&gt; bsList = microserviceUtils.getBusinessDetailsByCode(oldReceiptHeader.getService());</span>
+<span class="nc bnc" id="L1147" title="All 4 branches missed.">        BusinessDetails bd = bsList != null &amp;&amp; !bsList.isEmpty() ? bsList.get(0) : null;</span>
+<span class="nc bnc" id="L1148" title="All 2 branches missed.">        setServiceName(bd != null ? bd.getName() : &quot;&quot;);</span>
+
+<span class="nc" id="L1150">        receiptHeader.setReceiptMisc(new ReceiptMisc(oldReceiptHeader.getReceiptMisc().getBoundary(),</span>
+<span class="nc" id="L1151">                oldReceiptHeader.getReceiptMisc().getFund(), oldReceiptHeader.getReceiptMisc().getIdFunctionary(),</span>
+<span class="nc" id="L1152">                oldReceiptHeader.getReceiptMisc().getFundsource(), oldReceiptHeader.getReceiptMisc().getDepartment(),</span>
+<span class="nc" id="L1153">                receiptHeader, oldReceiptHeader.getReceiptMisc().getScheme(),</span>
+<span class="nc" id="L1154">                oldReceiptHeader.getReceiptMisc().getSubscheme(), null));</span>
+<span class="nc" id="L1155">        receiptHeader.setLocation(oldReceiptHeader.getLocation());</span>
+<span class="nc" id="L1156">        bankCOAList = chartOfAccountsDAO.getBankChartofAccountCodeList();</span>
+<span class="nc bnc" id="L1157" title="All 2 branches missed.">        for (final ReceiptDetail oldDetail : oldReceiptHeader.getReceiptDetails())</span>
+            // debit account heads for revenue accounts should not be considered
+<span class="nc bnc" id="L1159" title="All 4 branches missed.">            if (oldDetail.getOrdernumber() != null &amp;&amp; !FinancialsUtil.isRevenueAccountHead(oldDetail.getAccounthead(),</span>
+                    bankCOAList, persistenceService)) {
+<span class="nc" id="L1161">                final ReceiptDetail receiptDetail = new ReceiptDetail(oldDetail.getAccounthead(),</span>
+<span class="nc" id="L1162">                        oldDetail.getFunction(), oldDetail.getCramount(), oldDetail.getDramount(),</span>
+<span class="nc" id="L1163">                        oldDetail.getCramount(), oldDetail.getOrdernumber(), oldDetail.getDescription(),</span>
+<span class="nc" id="L1164">                        oldDetail.getIsActualDemand(), receiptHeader, oldDetail.getPurpose(), oldDetail.getGroupId());</span>
+<span class="nc" id="L1165">                receiptDetail.setCramountToBePaid(oldDetail.getCramountToBePaid());</span>
+<span class="nc" id="L1166">                receiptDetail.setCramount(oldDetail.getCramount());</span>
+<span class="nc bnc" id="L1167" title="All 2 branches missed.">                if (oldDetail.getAccountPayeeDetails() != null)</span>
+<span class="nc bnc" id="L1168" title="All 2 branches missed.">                    for (final AccountPayeeDetail oldAccountPayeeDetail : oldDetail.getAccountPayeeDetails()) {</span>
+<span class="nc" id="L1169">                        final AccountPayeeDetail accountPayeeDetail = new AccountPayeeDetail(</span>
+<span class="nc" id="L1170">                                oldAccountPayeeDetail.getAccountDetailType(),</span>
+<span class="nc" id="L1171">                                oldAccountPayeeDetail.getAccountDetailKey(), oldAccountPayeeDetail.getAmount(),</span>
+                                receiptDetail);
+<span class="nc" id="L1173">                        receiptDetail.addAccountPayeeDetail(accountPayeeDetail);</span>
+<span class="nc" id="L1174">                    }</span>
+
+<span class="nc bnc" id="L1176" title="All 2 branches missed.">                if (oldDetail.getIsActualDemand())</span>
+<span class="nc" id="L1177">                    totalAmntToBeCollected = totalAmntToBeCollected.add(oldDetail.getCramountToBePaid())</span>
+<span class="nc" id="L1178">                            .subtract(oldDetail.getDramount())</span>
+<span class="nc" id="L1179">                            .setScale(CollectionConstants.AMOUNT_PRECISION_DEFAULT, BigDecimal.ROUND_UP);</span>
+<span class="nc" id="L1180">                setTotalAmntToBeCollected(totalAmntToBeCollected);</span>
+<span class="nc" id="L1181">                receiptHeader.addReceiptDetail(receiptDetail);</span>
+            }
+
+<span class="nc bnc" id="L1184" title="All 2 branches missed.">        if (oldReceiptHeader.getReceipttype() == CollectionConstants.RECEIPT_TYPE_ADHOC) {</span>
+<span class="nc" id="L1185">            loadReceiptDetails(receiptHeader);</span>
+<span class="nc" id="L1186">            createMisc();</span>
+<span class="nc bnc" id="L1187" title="All 2 branches missed.">            if (oldReceiptHeader.getVoucherNum() != null)</span>
+<span class="nc" id="L1188">                setVoucherNum(voucherNum);</span>
+        }
+<span class="nc" id="L1190">        setReceiptDetailList(new ArrayList&lt;ReceiptDetail&gt;(receiptHeader.getReceiptDetails()));</span>
+<span class="nc" id="L1191">        setCollModesNotAllowedForRemitReceipt(oldReceiptHeader.getCollModesNotAllwd());</span>
+<span class="nc" id="L1192">    }</span>
+
+    private void loadReceiptDetails(final ReceiptHeader receiptHeader) {
+<span class="nc" id="L1195">        setReceiptMisc(receiptHeader.getReceiptMisc());</span>
+<span class="nc" id="L1196">        setBillCreditDetailslist(</span>
+<span class="nc" id="L1197">                collectionCommon.setReceiptDetailsList(receiptHeader, CollectionConstants.COLLECTIONSAMOUNTTPE_CREDIT));</span>
+<span class="nc" id="L1198">        setBillRebateDetailslist(</span>
+<span class="nc" id="L1199">                collectionCommon.setReceiptDetailsList(receiptHeader, CollectionConstants.COLLECTIONSAMOUNTTPE_DEBIT));</span>
+<span class="nc" id="L1200">        setSubLedgerlist(collectionCommon.setAccountPayeeList(receiptHeader));</span>
+<span class="nc" id="L1201">    }</span>
+
+    private String changeStatus() {
+<span class="nc bnc" id="L1204" title="All 4 branches missed.">    	if (selectedReceipts == null || selectedReceipts.length == 0)</span>
+<span class="nc" id="L1205">            throw new ApplicationRuntimeException(&quot;No receipts selected to view!&quot;);</span>
+
+<span class="nc" id="L1207">        receipts = new ReceiptHeader[selectedReceipts.length];</span>
+<span class="nc" id="L1208">        List&lt;Receipt&gt; receiptlist=null;</span>
+        
+<span class="nc bnc" id="L1210" title="All 2 branches missed.">        if(selectedReceipts.length == 1) {</span>
+<span class="nc" id="L1211">        	 receiptlist = this.microserviceUtils.searchReciepts(null, null, null, null,</span>
+<span class="nc" id="L1212">                     Arrays.asList(selectedReceipts));</span>
+        }else {
+<span class="nc" id="L1214">        	throw new ApplicationRuntimeException(&quot;Please Select Only One Receipt!&quot;);</span>
+        }
+<span class="nc" id="L1216">        receiptlist.stream().forEach(receipt -&gt; {</span>
+<span class="nc" id="L1217">        	receiptHeader.setCurretnStatus(receipt.getPaymentStatus());</span>
+<span class="nc" id="L1218">            receipt.getBill().forEach(bill -&gt; {</span>
+<span class="nc" id="L1219">                bill.getBillDetails().forEach(billDetail -&gt; {</span>
+<span class="nc" id="L1220">                    ReceiptHeader header = new ReceiptHeader();</span>
+<span class="nc" id="L1221">                    receiptHeader.setReceiptnumber(billDetail.getReceiptNumber());</span>
+<span class="nc" id="L1222">                    receiptHeader.setReceiptdate(new Date(billDetail.getReceiptDate()));</span>
+<span class="nc" id="L1223">                    String businessServiceCode = billDetail.getBusinessService();</span>
+<span class="nc" id="L1224">                    receiptHeader.setService(microserviceUtils.getBusinessServiceNameByCode(businessServiceCode));</span>
+<span class="nc" id="L1225">                    receiptHeader.setReferencenumber(billDetail.getBillNumber());</span>
+<span class="nc" id="L1226">                    receiptHeader.setReferenceDesc(bill.getNarration());</span>
+<span class="nc" id="L1227">                    receiptHeader.setPaidBy(bill.getPaidBy());</span>
+<span class="nc" id="L1228">                    receiptHeader.setPayeeName(bill.getPayerName());</span>
+<span class="nc" id="L1229">                    receiptHeader.setPayeeAddress(bill.getPayerAddress());</span>
+<span class="nc" id="L1230">                    receiptHeader.setTotalAmount(billDetail.getTotalAmount());</span>
+<span class="nc" id="L1231">                    receiptHeader.setCurretnStatus(receipt.getPaymentStatus());</span>
+<span class="nc" id="L1232">                    receiptHeader.setCurrentreceipttype(billDetail.getReceiptType());</span>
+<span class="nc" id="L1233">                    receiptHeader.setManualreceiptnumber(billDetail.getManualReceiptNumber());</span>
+<span class="nc" id="L1234">                    receiptHeader.setModOfPayment(receipt.getInstrument().getInstrumentType().getName());</span>
+<span class="nc" id="L1235">                    receiptHeader.setConsumerCode(billDetail.getConsumerCode());</span>
+<span class="nc" id="L1236">                    receiptHeader.setManualreceiptnumber(billDetail.getManualReceiptNumber());</span>
+<span class="nc bnc" id="L1237" title="All 2 branches missed.">                    if (billDetail.getManualReceiptDate() != 0)</span>
+<span class="nc" id="L1238">                        receiptHeader.setManualreceiptdate(new Date(billDetail.getManualReceiptDate()));</span>
+<span class="nc" id="L1239">                    JsonNode jsonNode = billDetail.getAdditionalDetails();</span>
+<span class="nc" id="L1240">                    BillDetailAdditional additional = null;</span>
+                    try {
+<span class="nc bnc" id="L1242" title="All 2 branches missed.">                        if (null != jsonNode)</span>
+<span class="nc" id="L1243">                            additional = (BillDetailAdditional) new ObjectMapper().readValue(jsonNode.toString(),</span>
+                                    BillDetailAdditional.class);
+<span class="nc" id="L1245">                    } catch (Exception e) {</span>
+<span class="nc" id="L1246">                        e.printStackTrace();</span>
+<span class="nc" id="L1247">                    }</span>
+
+<span class="nc bnc" id="L1249" title="All 2 branches missed.">                    if (null != additional) {</span>
+<span class="nc" id="L1250">                        ReceiptMisc receiptMisc = new ReceiptMisc();</span>
+<span class="nc bnc" id="L1251" title="All 2 branches missed.">                        if (null != additional.getScheme()) {</span>
+<span class="nc" id="L1252">                            Scheme scheme = this.schemeDAO.getSchemeByCode(additional.getScheme());</span>
+<span class="nc" id="L1253">                            receiptMisc.setScheme(scheme);</span>
+                        }
+
+<span class="nc bnc" id="L1256" title="All 2 branches missed.">                        if (null != additional.getSubScheme()) {</span>
+<span class="nc" id="L1257">                            SubScheme subScheme = this.subSchemeDAO.getSubSchemeByCode(additional.getSubScheme());</span>
+<span class="nc" id="L1258">                            receiptMisc.setSubscheme(subScheme);</span>
+                        }
+
+
+<span class="nc" id="L1262">                        receiptHeader.setReceiptMisc(receiptMisc);</span>
+<span class="nc bnc" id="L1263" title="All 2 branches missed.">                        if (null != additional.getNarration())</span>
+<span class="nc" id="L1264">                            receiptHeader.setReferenceDesc(additional.getNarration());</span>
+<span class="nc bnc" id="L1265" title="All 2 branches missed.">                        if (null != additional.getPayeeaddress())</span>
+<span class="nc" id="L1266">                            receiptHeader.setPayeeAddress(additional.getPayeeaddress());</span>
+                    }
+
+<span class="nc bnc" id="L1269" title="All 2 branches missed.">                    if(ApplicationThreadLocals.getCollectionVersion().toUpperCase().equalsIgnoreCase(&quot;V1&quot;)){</span>
+<span class="nc bnc" id="L1270" title="All 2 branches missed.">                        if (billDetail.getCollectionType().equals(CollectionType.COUNTER))</span>
+<span class="nc" id="L1271">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_COUNTER);</span>
+<span class="nc bnc" id="L1272" title="All 2 branches missed.">                        else if (billDetail.getCollectionType().equals(CollectionType.FIELD))</span>
+<span class="nc" id="L1273">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_FIELDCOLLECTION);</span>
+<span class="nc bnc" id="L1274" title="All 2 branches missed.">                        else if (billDetail.getCollectionType().equals(CollectionType.ONLINE))</span>
+<span class="nc" id="L1275">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_ONLINECOLLECTION);</span>
+                    }
+                    
+<span class="nc bnc" id="L1278" title="All 2 branches missed.">                    if (billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_MISCELLANEOUS) ||</span>
+<span class="nc bnc" id="L1279" title="All 2 branches missed.">                            billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_ADHOC))</span>
+<span class="nc" id="L1280">                        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_ADHOC);</span>
+<span class="nc bnc" id="L1281" title="All 2 branches missed.">                    else if (billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_BILLBASED))</span>
+<span class="nc" id="L1282">                        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_BILL);</span>
+
+<span class="nc" id="L1284">                    Set&lt;ReceiptDetail&gt; receiptdetailslist = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L1285">                    billDetail.getBillAccountDetails().forEach(billAccountDetail -&gt; {</span>
+<span class="nc" id="L1286">                        ReceiptDetail receiptDetail = new ReceiptDetail();</span>
+<span class="nc" id="L1287">                        receiptDetail.setAccounthead(new CChartOfAccounts());</span>
+
+<span class="nc bnc" id="L1289" title="All 9 branches missed.">                        switch (ApplicationThreadLocals.getCollectionVersion().toUpperCase()) {</span>
+                        case &quot;V2&quot;:
+                        case &quot;VERSION2&quot;:
+<span class="nc bnc" id="L1292" title="All 2 branches missed.">                            receiptDetail.setDramount(billAccountDetail.getAmount().compareTo(BigDecimal.ZERO) &gt; 0 ? BigDecimal.ZERO : billAccountDetail.getAmount());</span>
+<span class="nc bnc" id="L1293" title="All 2 branches missed.">                            receiptDetail.setCramount(billAccountDetail.getAmount().compareTo(BigDecimal.ZERO) &lt; 0 ? BigDecimal.ZERO : billAccountDetail.getAmount());</span>
+<span class="nc" id="L1294">                            break;</span>
+
+                        default:
+<span class="nc" id="L1297">                            receiptDetail.setDramount(billAccountDetail.getDebitAmount());</span>
+<span class="nc" id="L1298">                            receiptDetail.setCramount(billAccountDetail.getCreditAmount());</span>
+                            break;
+                        }
+<span class="nc" id="L1301">                        receiptDetail.setOrdernumber(billAccountDetail.getOrder().longValue());</span>
+<span class="nc bnc" id="L1302" title="All 2 branches missed.">                        receiptDetail.setPurpose(billAccountDetail.getPurpose()!=null?billAccountDetail.getPurpose().toString():&quot;&quot;);</span>
+<span class="nc" id="L1303">                        receiptdetailslist.add(receiptDetail);</span>
+<span class="nc" id="L1304">                    });</span>
+<span class="nc" id="L1305">                    receiptHeader.setReceiptDetails(receiptdetailslist);</span>
+<span class="nc" id="L1306">                    receiptHeader.setReceiptHeader(header);</span>
+<span class="nc" id="L1307">                    InstrumentHeader instrumentHeader = new InstrumentHeader();</span>
+
+<span class="nc" id="L1309">                    Instrument _instrument = receipt.getInstrument();</span>
+<span class="nc bnc" id="L1310" title="All 2 branches missed.">                    instrumentHeader.setInstrumentNumber(_instrument.getInstrumentNumber() != null ? _instrument.getInstrumentNumber() : _instrument.getTransactionNumber());</span>
+<span class="nc bnc" id="L1311" title="All 2 branches missed.">                    instrumentHeader.setInstrumentDate(new Date(_instrument.getTransactionDateInput() != null ? _instrument.getTransactionDateInput() : _instrument.getInstrumentDate()));</span>
+
+<span class="nc" id="L1313">                    InstrumentType instrumentType = new InstrumentType();</span>
+<span class="nc" id="L1314">                    instrumentType.setType(_instrument.getInstrumentType().getName().toLowerCase());</span>
+<span class="nc" id="L1315">                    instrumentHeader.setInstrumentType(instrumentType);</span>
+
+<span class="nc" id="L1317">                    instrumentHeader.setInstrumentAmount(_instrument.getAmount());</span>
+                    // instrumentHe instrument.getFinancialStatus();
+
+<span class="nc bnc" id="L1320" title="All 2 branches missed.">                    if (instrumentType.getType().equalsIgnoreCase(CollectionConstants.INSTRUMENTTYPE_CHEQUE) ||</span>
+<span class="nc bnc" id="L1321" title="All 2 branches missed.">                            instrumentType.getType().equalsIgnoreCase(CollectionConstants.INSTRUMENTTYPE_DD)) {</span>
+<span class="nc" id="L1322">                        Bankaccount account = new Bankaccount();</span>
+<span class="nc bnc" id="L1323" title="All 2 branches missed.">                        if (null != _instrument.getBankAccount())</span>
+<span class="nc" id="L1324">                            account.setAccountnumber(_instrument.getBankAccount().getAccountNumber());</span>
+                        // account.setAccountt
+<span class="nc" id="L1326">                        instrumentHeader.setBankAccountId(account);</span>
+
+<span class="nc bnc" id="L1328" title="All 2 branches missed.">                        if(_instrument.getBank() != null){</span>
+//                            Bank bank = this.bankDAO.findById(_instrument.getBank().getId().intValue(), false);
+                           // Todo : Have to handle the Bank Details 
+<span class="nc" id="L1331">                            Bank bank = new Bank();</span>
+<span class="nc" id="L1332">                            bank.setName(_instrument.getBank().getName());</span>
+<span class="nc" id="L1333">                            instrumentHeader.setBankId(bank);                            </span>
+                        }
+<span class="nc" id="L1335">                        instrumentHeader.setIfscCode(_instrument.getIfscCode());</span>
+<span class="nc" id="L1336">                        instrumentHeader.setBankBranchName(_instrument.getBranchName());</span>
+<span class="nc" id="L1337">                        instrumentHeader.setIfscCode(_instrument.getIfscCode());</span>
+<span class="nc bnc" id="L1338" title="All 6 branches missed.">                        if(instrumentHeader != null &amp;&amp; instrumentHeader.getIfscCode() != null &amp;&amp; !instrumentHeader.getIfscCode().isEmpty())</span>
+                        {
+<span class="nc" id="L1340">                        	instrumentHeader.setBankBranchName(getBankdetails(instrumentHeader.getIfscCode()));</span>
+                        }
+                        
+                        //String bank=getBankDetails();
+                    }
+
+<span class="nc" id="L1346">                    receiptHeader.addInstrument(instrumentHeader);</span>
+                    //EmployeeInfo empInfo = this.microserviceUtils.getEmployeeById(Long.parseLong(receipt.getAuditDetails().getCreatedBy()));
+<span class="nc" id="L1348">                    EmployeeInfo empInfo =microserviceUtils.getEmployee(Long.parseLong(receipt.getAuditDetails().getCreatedBy()), null, null, null).get(0);</span>
+<span class="nc bnc" id="L1349" title="All 4 branches missed.">                    if (null != empInfo &amp;&amp; empInfo.getUser().getUserName() != null)</span>
+<span class="nc" id="L1350">                        receiptHeader.setCreatedUser(empInfo.getUser().getName());</span>
+                    // receiptHeaderList.add(receiptHeader);
+<span class="nc" id="L1352">                    receipts[0] = receiptHeader;</span>
+
+<span class="nc" id="L1354">                });</span>
+<span class="nc" id="L1355">            });</span>
+
+<span class="nc" id="L1357">        });</span>
+//        for(ReceiptHeader rh : receipts) {
+//        	System.out.println(&quot;Receipt Data::..&quot;+rh.getCurretnStatus() +&quot;.....&quot;+rh.getReceiptnumber());
+//        }
+<span class="nc" id="L1361">        System.out.println(&quot;Receipt Number.....&quot;+receipts[0].getReceiptnumber());</span>
+<span class="nc" id="L1362">        Set&lt;String&gt; receiptNumbers=new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L1363">        receiptNumbers.add(receipts[0].getReceiptnumber());</span>
+<span class="nc" id="L1364">        Vouchermis voucherMis = new Vouchermis();</span>
+        try {
+<span class="nc" id="L1366">        voucherMis= voucherService.getVouchermisByReceiptNumber(receipts[0].getReceiptnumber());</span>
+<span class="nc" id="L1367">        }catch(Exception e) {</span>
+<span class="nc" id="L1368">        	e.printStackTrace();</span>
+<span class="nc" id="L1369">        }</span>
+        // voucherId from Vouchermis Table
+<span class="nc" id="L1371">        Long voucherHeaderId = voucherMis.getVoucherheaderid().getId();</span>
+<span class="nc" id="L1372">        String status = receipts[0].getCurretnStatus();</span>
+<span class="nc" id="L1373">        System.out.println(&quot;Voucher MIS:&gt;&gt;&gt;&quot;+voucherHeaderId );</span>
+<span class="nc" id="L1374">        System.out.println(&quot;Voucher MIS:&gt;&gt;&gt;&quot;+ voucherMis.getServiceName());</span>
+<span class="nc" id="L1375">        System.out.println(&quot;Voucher Status&gt;&gt;&quot;+status);</span>
+        
+<span class="nc" id="L1377">       final int statusActiveValue = 0;</span>
+<span class="nc" id="L1378">       final int statusInActiveValue = 4;</span>
+<span class="nc" id="L1379">       int returnValue = 0;</span>
+<span class="nc" id="L1380">       System.out.println(&quot;current date:::&quot;+new Date());</span>
+<span class="nc" id="L1381">       Date currDate= new Date();</span>
+<span class="nc" id="L1382">       LocalDate today = convertToLocalDateViaInstant(currDate);</span>
+<span class="nc" id="L1383">       System.out.println(&quot;today  ::::&quot;+today);</span>
+<span class="nc" id="L1384">       System.out.println(&quot;receipt date :::&quot;+receipts[0].getReceiptdate());</span>
+<span class="nc" id="L1385">       LocalDate compDate = convertToLocalDateViaInstant(receipts[0].getReceiptdate());</span>
+<span class="nc" id="L1386">       System.out.println(&quot;compDate  ::::&quot;+compDate);</span>
+<span class="nc" id="L1387">       int dateDiff=today.compareTo(compDate);</span>
+<span class="nc" id="L1388">       System.out.println(&quot;date diff :: &quot;+dateDiff);</span>
+<span class="nc" id="L1389">       User user = securityUtils.getCurrentUser();</span>
+<span class="nc" id="L1390">       EmployeeInfo empInfo =microserviceUtils.getEmployee(user.getId(), null, null, null).get(0);</span>
+<span class="nc" id="L1391">       String dept=&quot;&quot;;</span>
+<span class="nc" id="L1392">       String desig=&quot;&quot;;</span>
+<span class="nc bnc" id="L1393" title="All 2 branches missed.">       for(Assignment row :empInfo.getAssignments())</span>
+       {
+<span class="nc" id="L1395">    	   dept=row.getDepartment();</span>
+<span class="nc" id="L1396">    	   desig=row.getDesignation();</span>
+<span class="nc" id="L1397">       }</span>
+<span class="nc" id="L1398">       System.out.println(&quot;dept :::&quot;+dept);</span>
+<span class="nc" id="L1399">       System.out.println(&quot;desig :::&quot;+desig);</span>
+       try {
+<span class="nc bnc" id="L1401" title="All 2 branches missed.">    	   if(!status.equalsIgnoreCase(&quot;CANCELLED&quot;)) {</span>
+<span class="nc bnc" id="L1402" title="All 2 branches missed.">    		   if(dateDiff == 0)</span>
+    		   {
+<span class="nc" id="L1404">    			   returnValue= voucherHeaderDao.updateStatusInVoucherHeader (statusInActiveValue,voucherHeaderId);</span>
+<span class="nc" id="L1405">        		   microserviceUtils.cancelReceipts(receiptNumbers);</span>
+    		   }
+    		   else
+    		   {
+<span class="nc bnc" id="L1409" title="All 2 branches missed.">    			   if(dept.equalsIgnoreCase(&quot;390&quot;))</span>
+    			   {
+<span class="nc bnc" id="L1411" title="All 6 branches missed.">    				   if(desig.equalsIgnoreCase(&quot;14&quot;) || desig.equalsIgnoreCase(&quot;225&quot;) || desig.equalsIgnoreCase(&quot;226&quot;))</span>
+    				   {
+<span class="nc" id="L1413">    					   returnValue= voucherHeaderDao.updateStatusInVoucherHeader (statusInActiveValue,voucherHeaderId);</span>
+<span class="nc" id="L1414">    	        		   microserviceUtils.cancelReceipts(receiptNumbers);</span>
+    				   }
+    				   else
+    				   {
+<span class="nc" id="L1418">    					   target=&quot;noAccess&quot;;</span>
+    				   }
+    			   }
+    			   else
+    			   {
+<span class="nc" id="L1423">    				   target=&quot;noAccess&quot;;</span>
+    			   }
+    		   }
+    		   
+    	   }else {
+<span class="nc" id="L1428">    		   target=&quot;alreadyCancelled&quot;;</span>
+<span class="nc" id="L1429">    		   returnValue=voucherHeaderDao.updateStatusInVoucherHeader (statusActiveValue,voucherHeaderId);</span>
+    	   }
+<span class="nc" id="L1431">       }catch(Exception e) {</span>
+<span class="nc" id="L1432">    	   e.printStackTrace();</span>
+<span class="nc" id="L1433">       }</span>
+<span class="nc" id="L1434">        System.out.println(&quot;Return Value: &gt;&gt;&quot;+ returnValue);</span>
+         //voucherHeaderDao  = new VoucherHeaderHibernateDAO();
+        
+        
+        
+<span class="nc" id="L1439">    	return INDEX;</span>
+    }
+
+    /**
+     * Same method handles both view and print modes. If print receipts flag is passed as true, the PDF receipt will be generated
+     * in such a way that it will show the print dialog box whenever it is opened.
+     *
+     * @param printReceipts Flag indicating whether the receipts are to be printed
+     * @return Result page (&quot;view&quot;)
+     */
+    private String viewReceipts(final boolean printReceipts) {
+<span class="nc bnc" id="L1450" title="All 4 branches missed.">        if (selectedReceipts == null || selectedReceipts.length == 0)</span>
+<span class="nc" id="L1451">            throw new ApplicationRuntimeException(&quot;No receipts selected to view!&quot;);</span>
+
+<span class="nc" id="L1453">        receipts = new ReceiptHeader[selectedReceipts.length];</span>
+        // receipts = new ReceiptHeader[1];
+        // for (int i = 0; i &lt; selectedReceipts.length; i++)
+        // try {
+        // receipts[i] = receiptHeaderService.findById(selectedReceipts[i], false);
+        // } catch (final Exception e) {
+        // LOGGER.error(&quot;Error in printReceipts&quot;, e);
+        // }
+
+<span class="nc" id="L1462">        List&lt;Receipt&gt; receiptlist=null;</span>
+        
+<span class="nc bnc" id="L1464" title="All 2 branches missed.">        if(currentState.equals(&quot;created&quot;)) {</span>
+<span class="nc" id="L1465">        	System.out.println(&quot;created&quot;);</span>
+<span class="nc" id="L1466">        	 receiptlist = this.microserviceUtils.searchReciepts(null, null, null, null,</span>
+<span class="nc" id="L1467">                     Arrays.asList(selectedReceipts));</span>
+        }
+        else {
+<span class="nc" id="L1470">        String type=&quot;view&quot;;</span>
+<span class="nc" id="L1471">        System.out.println(&quot;view&quot;);</span>
+<span class="nc" id="L1472">         receiptlist = this.microserviceUtils.searchRecieptsFinNew(null, null, null, null,</span>
+<span class="nc" id="L1473">                Arrays.asList(selectedReceipts),type);</span>
+        } 
+       
+<span class="nc" id="L1476">        System.out.println(&quot;asdsadsadsa&quot;);</span>
+<span class="nc" id="L1477">        receiptlist.stream().forEach(receipt -&gt; {</span>
+<span class="nc" id="L1478">        	System.out.println(&quot;1&quot;);</span>
+<span class="nc" id="L1479">            receiptHeader.setSubdivison(receipt.getSubdivison());</span>
+<span class="nc" id="L1480">            receiptHeader.setGstno(receipt.getGstNo());</span>
+<span class="nc" id="L1481">            receipt.getBill().forEach(bill -&gt; {</span>
+<span class="nc" id="L1482">                bill.getBillDetails().forEach(billDetail -&gt; {</span>
+<span class="nc" id="L1483">                    ReceiptHeader header = new ReceiptHeader();</span>
+<span class="nc" id="L1484">                    receiptHeader.setReceiptnumber(billDetail.getReceiptNumber());</span>
+<span class="nc" id="L1485">                    receiptHeader.setReceiptdate(new Date(billDetail.getReceiptDate()));</span>
+<span class="nc" id="L1486">                    String businessServiceCode = billDetail.getBusinessService();</span>
+<span class="nc" id="L1487">                    receiptHeader.setService(microserviceUtils.getBusinessServiceNameByCode(businessServiceCode));</span>
+<span class="nc" id="L1488">                    receiptHeader.setReferencenumber(billDetail.getBillNumber());</span>
+<span class="nc" id="L1489">                    receiptHeader.setReferenceDesc(bill.getNarration());</span>
+<span class="nc" id="L1490">                    receiptHeader.setPaidBy((bill.getPaidBy()).split(&quot;&amp;&quot;)[0]+ &quot;  &quot;+bill.getPayerAddress());</span>
+<span class="nc" id="L1491">                    receiptHeader.setPayeeName(bill.getPayerName());</span>
+<span class="nc" id="L1492">                    receiptHeader.setPayeeAddress(bill.getPayerAddress());</span>
+<span class="nc" id="L1493">                    receiptHeader.setTotalAmount(billDetail.getTotalAmount());</span>
+<span class="nc" id="L1494">                    receiptHeader.setCurretnStatus(billDetail.getStatus());</span>
+<span class="nc" id="L1495">                    receiptHeader.setCurrentreceipttype(billDetail.getReceiptType());</span>
+<span class="nc" id="L1496">                    receiptHeader.setManualreceiptnumber(billDetail.getManualReceiptNumber());</span>
+<span class="nc" id="L1497">                    receiptHeader.setModOfPayment(receipt.getInstrument().getInstrumentType().getName());</span>
+<span class="nc" id="L1498">                    receiptHeader.setConsumerCode(billDetail.getConsumerCode());</span>
+<span class="nc" id="L1499">                    receiptHeader.setManualreceiptnumber(billDetail.getManualReceiptNumber());</span>
+<span class="nc bnc" id="L1500" title="All 2 branches missed.">                    if (billDetail.getManualReceiptDate() != 0)</span>
+<span class="nc" id="L1501">                        receiptHeader.setManualreceiptdate(new Date(billDetail.getManualReceiptDate()));</span>
+<span class="nc" id="L1502">                    JsonNode jsonNode = billDetail.getAdditionalDetails();</span>
+<span class="nc" id="L1503">                    BillDetailAdditional additional = null;</span>
+                    try {
+<span class="nc bnc" id="L1505" title="All 2 branches missed.">                        if (null != jsonNode)</span>
+<span class="nc" id="L1506">                            additional = (BillDetailAdditional) new ObjectMapper().readValue(jsonNode.toString(),</span>
+                                    BillDetailAdditional.class);
+<span class="nc" id="L1508">                    } catch (Exception e) {</span>
+<span class="nc" id="L1509">                        e.printStackTrace();</span>
+<span class="nc" id="L1510">                    }</span>
+
+<span class="nc bnc" id="L1512" title="All 2 branches missed.">                    if (null != additional) {</span>
+<span class="nc" id="L1513">                        ReceiptMisc receiptMisc = new ReceiptMisc();</span>
+<span class="nc bnc" id="L1514" title="All 2 branches missed.">                        if (null != additional.getScheme()) {</span>
+<span class="nc" id="L1515">                            Scheme scheme = this.schemeDAO.getSchemeByCode(additional.getScheme());</span>
+<span class="nc" id="L1516">                            receiptMisc.setScheme(scheme);</span>
+                        }
+
+<span class="nc bnc" id="L1519" title="All 2 branches missed.">                        if (null != additional.getSubScheme()) {</span>
+<span class="nc" id="L1520">                            SubScheme subScheme = this.subSchemeDAO.getSubSchemeByCode(additional.getSubScheme());</span>
+<span class="nc" id="L1521">                            receiptMisc.setSubscheme(subScheme);</span>
+                        }
+
+//                        if (null != additional.getBusinessReason()) {
+//                            if (additional.getBusinessReason().contains(&quot;-&quot;)) {
+//                                receiptHeader.setService(additional.getBusinessReason().split(&quot;-&quot;)[0]);
+//                            } else {
+//                                receiptHeader.setService(additional.getBusinessReason());
+//                            }
+//                        }
+
+<span class="nc" id="L1532">                        receiptHeader.setReceiptMisc(receiptMisc);</span>
+<span class="nc bnc" id="L1533" title="All 2 branches missed.">                        if (null != additional.getNarration())</span>
+<span class="nc" id="L1534">                            receiptHeader.setReferenceDesc(additional.getNarration());</span>
+<span class="nc bnc" id="L1535" title="All 2 branches missed.">                        if (null != additional.getPayeeaddress())</span>
+<span class="nc" id="L1536">                            receiptHeader.setPayeeAddress(additional.getPayeeaddress());</span>
+                    }
+
+<span class="nc bnc" id="L1539" title="All 2 branches missed.">                    if(ApplicationThreadLocals.getCollectionVersion().toUpperCase().equalsIgnoreCase(&quot;V1&quot;)){</span>
+<span class="nc bnc" id="L1540" title="All 2 branches missed.">                        if (billDetail.getCollectionType().equals(CollectionType.COUNTER))</span>
+<span class="nc" id="L1541">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_COUNTER);</span>
+<span class="nc bnc" id="L1542" title="All 2 branches missed.">                        else if (billDetail.getCollectionType().equals(CollectionType.FIELD))</span>
+<span class="nc" id="L1543">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_FIELDCOLLECTION);</span>
+<span class="nc bnc" id="L1544" title="All 2 branches missed.">                        else if (billDetail.getCollectionType().equals(CollectionType.ONLINE))</span>
+<span class="nc" id="L1545">                            receiptHeader.setCollectiontype(CollectionConstants.COLLECTION_TYPE_ONLINECOLLECTION);</span>
+                    }
+                    
+<span class="nc bnc" id="L1548" title="All 2 branches missed.">                    if (billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_MISCELLANEOUS) ||</span>
+<span class="nc bnc" id="L1549" title="All 2 branches missed.">                            billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_ADHOC))</span>
+<span class="nc" id="L1550">                        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_ADHOC);</span>
+<span class="nc bnc" id="L1551" title="All 2 branches missed.">                    else if (billDetail.getReceiptType().equalsIgnoreCase(CollectionConstants.RECEIPT_M_TYPE_BILLBASED))</span>
+<span class="nc" id="L1552">                        receiptHeader.setReceipttype(CollectionConstants.RECEIPT_TYPE_BILL);</span>
+
+<span class="nc" id="L1554">                    Set&lt;ReceiptDetail&gt; receiptdetailslist = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L1555">                    billDetail.getBillAccountDetails().forEach(billAccountDetail -&gt; {</span>
+<span class="nc" id="L1556">                        ReceiptDetail receiptDetail = new ReceiptDetail();</span>
+<span class="nc" id="L1557">                        receiptDetail.setAccounthead(new CChartOfAccounts());</span>
+
+<span class="nc bnc" id="L1559" title="All 9 branches missed.">                        switch (ApplicationThreadLocals.getCollectionVersion().toUpperCase()) {</span>
+                        case &quot;V2&quot;:
+                        case &quot;VERSION2&quot;:
+<span class="nc bnc" id="L1562" title="All 2 branches missed.">                            receiptDetail.setDramount(billAccountDetail.getAmount().compareTo(BigDecimal.ZERO) &gt; 0 ? BigDecimal.ZERO : billAccountDetail.getAmount());</span>
+<span class="nc bnc" id="L1563" title="All 2 branches missed.">                            receiptDetail.setCramount(billAccountDetail.getAmount().compareTo(BigDecimal.ZERO) &lt; 0 ? BigDecimal.ZERO : billAccountDetail.getAmount());</span>
+<span class="nc" id="L1564">                            break;</span>
+
+                        default:
+<span class="nc" id="L1567">                            receiptDetail.setDramount(billAccountDetail.getDebitAmount());</span>
+<span class="nc" id="L1568">                            receiptDetail.setCramount(billAccountDetail.getCreditAmount());</span>
+                            break;
+                        }
+<span class="nc" id="L1571">                        receiptDetail.setOrdernumber(billAccountDetail.getOrder().longValue());</span>
+<span class="nc bnc" id="L1572" title="All 2 branches missed.">                        receiptDetail.setPurpose(billAccountDetail.getPurpose()!=null?billAccountDetail.getPurpose().toString():&quot;&quot;);</span>
+<span class="nc" id="L1573">                        receiptdetailslist.add(receiptDetail);</span>
+<span class="nc" id="L1574">                    });</span>
+<span class="nc" id="L1575">                    receiptHeader.setReceiptDetails(receiptdetailslist);</span>
+<span class="nc" id="L1576">                    receiptHeader.setReceiptHeader(header);</span>
+<span class="nc" id="L1577">                    InstrumentHeader instrumentHeader = new InstrumentHeader();</span>
+
+<span class="nc" id="L1579">                    Instrument _instrument = receipt.getInstrument();</span>
+<span class="nc bnc" id="L1580" title="All 2 branches missed.">                    instrumentHeader.setInstrumentNumber(_instrument.getInstrumentNumber() != null ? _instrument.getInstrumentNumber() : _instrument.getTransactionNumber());</span>
+<span class="nc bnc" id="L1581" title="All 2 branches missed.">                    instrumentHeader.setInstrumentDate(new Date(_instrument.getTransactionDateInput() != null ? _instrument.getTransactionDateInput() : _instrument.getInstrumentDate()));</span>
+
+<span class="nc" id="L1583">                    InstrumentType instrumentType = new InstrumentType();</span>
+<span class="nc" id="L1584">                    instrumentType.setType(_instrument.getInstrumentType().getName().toLowerCase());</span>
+<span class="nc" id="L1585">                    instrumentHeader.setInstrumentType(instrumentType);</span>
+
+<span class="nc" id="L1587">                    instrumentHeader.setInstrumentAmount(_instrument.getAmount());</span>
+                    // instrumentHe instrument.getFinancialStatus();
+
+<span class="nc bnc" id="L1590" title="All 2 branches missed.">                    if (instrumentType.getType().equalsIgnoreCase(CollectionConstants.INSTRUMENTTYPE_CHEQUE) ||</span>
+<span class="nc bnc" id="L1591" title="All 2 branches missed.">                            instrumentType.getType().equalsIgnoreCase(CollectionConstants.INSTRUMENTTYPE_DD)) {</span>
+<span class="nc" id="L1592">                        Bankaccount account = new Bankaccount();</span>
+<span class="nc bnc" id="L1593" title="All 2 branches missed.">                        if (null != _instrument.getBankAccount())</span>
+<span class="nc" id="L1594">                            account.setAccountnumber(_instrument.getBankAccount().getAccountNumber());</span>
+                        // account.setAccountt
+<span class="nc" id="L1596">                        instrumentHeader.setBankAccountId(account);</span>
+
+<span class="nc bnc" id="L1598" title="All 2 branches missed.">                        if(_instrument.getBank() != null){</span>
+//                            Bank bank = this.bankDAO.findById(_instrument.getBank().getId().intValue(), false);
+                           // Todo : Have to handle the Bank Details 
+<span class="nc" id="L1601">                            Bank bank = new Bank();</span>
+<span class="nc" id="L1602">                            bank.setName(_instrument.getBank().getName());</span>
+<span class="nc" id="L1603">                            instrumentHeader.setBankId(bank);                            </span>
+                        }
+<span class="nc" id="L1605">                        instrumentHeader.setIfscCode(_instrument.getIfscCode());</span>
+<span class="nc" id="L1606">                        instrumentHeader.setBankBranchName(_instrument.getBranchName());</span>
+<span class="nc" id="L1607">                        instrumentHeader.setIfscCode(_instrument.getIfscCode());</span>
+<span class="nc bnc" id="L1608" title="All 6 branches missed.">                        if(instrumentHeader != null &amp;&amp; instrumentHeader.getIfscCode() != null &amp;&amp; !instrumentHeader.getIfscCode().isEmpty())</span>
+                        {
+<span class="nc" id="L1610">                        	instrumentHeader.setBankBranchName(getBankdetails(instrumentHeader.getIfscCode()));</span>
+                        }
+                        else
+                        {
+<span class="nc" id="L1614">                        	LOGGER.info(&quot;bank branch :: &quot;+_instrument.getBank().getName() +&quot; - &quot;+_instrument.getBranchName());</span>
+<span class="nc" id="L1615">                        	instrumentHeader.setBankBranchName(_instrument.getBank().getName() +&quot; - &quot;+_instrument.getBranchName());</span>
+                        }
+                        
+                        //String bank=getBankDetails();
+                    }
+
+<span class="nc" id="L1621">                    receiptHeader.addInstrument(instrumentHeader);</span>
+                    //EmployeeInfo empInfo = this.microserviceUtils.getEmployeeById(Long.parseLong(receipt.getAuditDetails().getCreatedBy()));
+<span class="nc" id="L1623">                    EmployeeInfo empInfo =microserviceUtils.getEmployee(Long.parseLong(receipt.getAuditDetails().getCreatedBy()), null, null, null).get(0);</span>
+<span class="nc bnc" id="L1624" title="All 4 branches missed.">                    if (null != empInfo &amp;&amp; empInfo.getUser().getUserName() != null)</span>
+<span class="nc" id="L1625">                        receiptHeader.setCreatedUser(empInfo.getUser().getName());</span>
+                    // receiptHeaderList.add(receiptHeader);
+<span class="nc" id="L1627">                    receipts[0] = receiptHeader;</span>
+
+<span class="nc" id="L1629">                });</span>
+<span class="nc" id="L1630">            });</span>
+
+<span class="nc" id="L1632">        });</span>
+
+        try {
+<span class="nc" id="L1635">            reportId = collectionCommon.generateReport(receipts, printReceipts);</span>
+<span class="nc" id="L1636">        } catch (final Exception e) {</span>
+<span class="nc" id="L1637">            final String errMsg = &quot;Error during report generation!&quot;;</span>
+<span class="nc" id="L1638">            LOGGER.error(errMsg, e);</span>
+<span class="nc" id="L1639">            throw new ApplicationRuntimeException(errMsg, e);</span>
+<span class="nc" id="L1640">        }</span>
+
+<span class="nc" id="L1642">        return CollectionConstants.REPORT;</span>
+    }
+
+    @Action(value = &quot;/receipts/receipt-viewReceiptsChangeStatus&quot;)
+    public String viewReceiptsChangeStatus() {
+<span class="nc" id="L1647">    	System.out.println(&quot;In side viewReceiptsChangeStatus function&quot;);</span>
+<span class="nc" id="L1648">    	return changeStatus();</span>
+    }
+
+    @Action(value = &quot;/receipts/receipt-viewReceipts&quot;)
+    public String viewReceipts() {
+<span class="nc" id="L1653">        return viewReceipts(false);</span>
+    }
+
+    @Action(value = &quot;/receipts/receipt-printReceipts&quot;)
+    public String printReceipts() {
+<span class="nc" id="L1658">        return viewReceipts(true);</span>
+    }
+
+    @ValidationErrorPage(value = &quot;error&quot;)
+    @Action(value = &quot;/receipts/receipt-cancel&quot;)
+    public String cancel() {
+<span class="nc" id="L1664">        final List&lt;AppConfigValues&gt; appConfigValuesList = collectionsUtil.getAppConfigValues(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.APPCONFIG_VALUE_COLLECTIONCREATORRECEIPTCANCELROLE);
+        String value;
+<span class="nc" id="L1668">        Boolean isRoleToCheckCreator = Boolean.FALSE;</span>
+<span class="nc" id="L1669">        User user = collectionsUtil.getLoggedInUser();</span>
+<span class="nc bnc" id="L1670" title="All 2 branches missed.">        for (final AppConfigValues appConfigVal : appConfigValuesList) {</span>
+<span class="nc" id="L1671">            value = appConfigVal.getValue();</span>
+<span class="nc bnc" id="L1672" title="All 2 branches missed.">            for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L1673" title="All 4 branches missed.">                if (role != null &amp;&amp; role.getName().equals(value))</span>
+<span class="nc" id="L1674">                    isRoleToCheckCreator = true;</span>
+<span class="nc" id="L1675">        }</span>
+
+<span class="nc bnc" id="L1677" title="All 4 branches missed.">        if (getSelectedReceipts() != null &amp;&amp; getSelectedReceipts().length &gt; 0) {</span>
+<span class="nc" id="L1678">            receipts = new ReceiptHeader[selectedReceipts.length];</span>
+<span class="nc bnc" id="L1679" title="All 2 branches missed.">            for (int i = 0; i &lt; selectedReceipts.length; i++) {</span>
+<span class="nc" id="L1680">                receipts[i] = (ReceiptHeader) getPersistenceService().findByNamedQuery(&quot;getReceiptHeaderById&quot;,</span>
+<span class="nc" id="L1681">                        Long.valueOf(selectedReceipts[i]));</span>
+<span class="nc bnc" id="L1682" title="All 2 branches missed.">                if (isRoleToCheckCreator)</span>
+<span class="nc bnc" id="L1683" title="All 2 branches missed.">                    isReceiptCancelEnable = (receipts[i].getCreatedBy().compareTo(user.getId()) == 0) ? true : false;</span>
+            }
+        }
+<span class="nc" id="L1686">        return CANCEL;</span>
+    }
+
+    /**
+     * This method is invoked when receipt is cancelled
+     *
+     * @return
+     */
+    @ValidationErrorPage(value = &quot;error&quot;)
+    @Action(value = &quot;/receipts/receipt-saveOnCancel&quot;)
+    public String saveOnCancel() {
+<span class="nc" id="L1697">        boolean isInstrumentDeposited = false;</span>
+
+<span class="nc" id="L1699">        final ReceiptHeader receiptHeaderToBeCancelled = receiptHeaderService.findById(oldReceiptId, false);</span>
+<span class="nc bnc" id="L1700" title="All 2 branches missed.">        if (receiptHeaderToBeCancelled.getReceipttype() == CollectionConstants.RECEIPT_TYPE_BILL)</span>
+<span class="nc" id="L1701">            receiptHeaderService.validateReceiptCancellation(receiptHeaderToBeCancelled.getReceiptnumber(),</span>
+<span class="nc" id="L1702">                    receiptHeaderToBeCancelled.getService(), receiptHeaderToBeCancelled.getConsumerCode());</span>
+<span class="nc" id="L1703">        LOGGER.info(&quot;Receipt Header to be Cancelled : &quot; + receiptHeaderToBeCancelled.getReceiptnumber());</span>
+
+<span class="nc bnc" id="L1705" title="All 2 branches missed.">        for (final InstrumentHeader instrumentHeader : receiptHeaderToBeCancelled.getReceiptInstrument())</span>
+<span class="nc bnc" id="L1706" title="All 2 branches missed.">            if (instrumentHeader.getInstrumentType().getType().equals(CollectionConstants.INSTRUMENTTYPE_CASH)) {</span>
+<span class="nc" id="L1707">                if (instrumentHeader.getStatusId().getDescription()</span>
+<span class="nc bnc" id="L1708" title="All 2 branches missed.">                        .equals(CollectionConstants.INSTRUMENT_RECONCILED_STATUS)) {</span>
+<span class="nc" id="L1709">                    isInstrumentDeposited = true;</span>
+<span class="nc" id="L1710">                    break;</span>
+                }
+<span class="nc" id="L1712">            } else if (instrumentHeader.getStatusId().getDescription()</span>
+<span class="nc bnc" id="L1713" title="All 2 branches missed.">                    .equals(CollectionConstants.INSTRUMENT_DEPOSITED_STATUS)) {</span>
+<span class="nc" id="L1714">                isInstrumentDeposited = true;</span>
+<span class="nc" id="L1715">                break;</span>
+            }
+
+<span class="nc bnc" id="L1718" title="All 2 branches missed.">        if (isInstrumentDeposited) {</span>
+            // if instrument has been deposited create a new receipt in place of
+            // the cancelled
+
+<span class="nc" id="L1722">            populateReceiptModelWithExistingReceiptInfo(receiptHeaderToBeCancelled);</span>
+<span class="nc" id="L1723">            setFundName(receiptHeaderToBeCancelled.getReceiptMisc().getFund().getName());</span>
+<span class="nc" id="L1724">            List&lt;BusinessDetails&gt; bsList = microserviceUtils.getBusinessDetailsByCode(receiptHeaderToBeCancelled.getService());</span>
+<span class="nc bnc" id="L1725" title="All 4 branches missed.">            BusinessDetails bd = bsList != null &amp;&amp; !bsList.isEmpty() ? bsList.get(0) : null;</span>
+<span class="nc bnc" id="L1726" title="All 2 branches missed.">            setServiceName(bd != null ? bd.getName() : &quot;&quot;);</span>
+<span class="nc bnc" id="L1727" title="All 2 branches missed.">            setServiceId(bd != null ? bd.getCode() : &quot;&quot;);</span>
+<span class="nc" id="L1728">            addDropdownData(&quot;serviceList&quot;,</span>
+<span class="nc bnc" id="L1729" title="All 2 branches missed.">                    receiptHeaderToBeCancelled.getService() != null ? getPersistenceService().findAllByNamedQuery(</span>
+<span class="nc" id="L1730">                            CollectionConstants.QUERY_SERVICE_DETAIL_BY_CATEGORY, bd.getBusinessCategory(),</span>
+<span class="nc" id="L1731">                            Boolean.TRUE) : Collections.emptyList());</span>
+<span class="nc" id="L1732">            populateBankBranchList(true);</span>
+<span class="nc" id="L1733">            return NEW;</span>
+        } else {
+            // if instrument has not been deposited, cancel the old instrument,
+            // reverse the
+            // voucher and persist
+<span class="nc" id="L1738">            receiptHeaderToBeCancelled.setStatus(statusDAO.getStatusByModuleAndCode(</span>
+                    CollectionConstants.MODULE_NAME_RECEIPTHEADER, CollectionConstants.RECEIPT_STATUS_CODE_CANCELLED));
+<span class="nc" id="L1740">            receiptHeaderToBeCancelled.setIsReconciled(false);</span>
+<span class="nc" id="L1741">            receiptHeaderToBeCancelled.setReasonForCancellation(reasonForCancellation);</span>
+
+<span class="nc bnc" id="L1743" title="All 2 branches missed.">            for (final InstrumentHeader instrumentHeader : receiptHeaderToBeCancelled.getReceiptInstrument())</span>
+<span class="nc" id="L1744">                instrumentHeader.setStatusId(</span>
+<span class="nc" id="L1745">                        statusDAO.getStatusByModuleAndCode(CollectionConstants.MODULE_NAME_INSTRUMENTHEADER,</span>
+                                CollectionConstants.INSTRUMENTHEADER_STATUS_CANCELLED));
+<span class="nc bnc" id="L1747" title="All 2 branches missed.">            for (final ReceiptVoucher receiptVoucher : receiptHeaderToBeCancelled.getReceiptVoucher())</span>
+<span class="nc" id="L1748">                receiptHeaderService.createReversalVoucher(receiptVoucher);</span>
+
+<span class="nc" id="L1750">            receiptHeaderService.persist(receiptHeaderToBeCancelled);</span>
+
+<span class="nc" id="L1752">            receiptHeaderValues.clear();</span>
+<span class="nc" id="L1753">            receiptHeaderValues.add(receiptHeaderToBeCancelled);</span>
+<span class="nc" id="L1754">            LOGGER.info(&quot;Receipt Cancelled with Receipt Number(saveOnCancel): &quot;</span>
+<span class="nc" id="L1755">                    + receiptHeaderToBeCancelled.getReceiptnumber() + &quot;; Consumer Code: &quot;</span>
+<span class="nc" id="L1756">                    + receiptHeaderToBeCancelled.getConsumerCode());</span>
+        }
+<span class="nc" id="L1758">        target = &quot;cancel&quot;;</span>
+<span class="nc" id="L1759">        return INDEX;</span>
+    }
+
+    public String amountInWords(final BigDecimal amount) {
+<span class="nc" id="L1763">        return NumberUtil.amountInWords(amount);</span>
+    }
+
+    /**
+     * @return the receiptHeaderValues
+     */
+    public List&lt;ReceiptHeader&gt; getReceiptHeaderValues() {
+<span class="nc" id="L1770">        return receiptHeaderValues;</span>
+    }
+
+    /**
+     * @param receiptHeaderValues the receiptHeaderValues to set
+     */
+    public void setReceiptHeaderValues(final List&lt;ReceiptHeader&gt; receiptHeaderValues) {
+<span class="nc" id="L1777">        this.receiptHeaderValues = receiptHeaderValues;</span>
+<span class="nc" id="L1778">    }</span>
+
+    public String getReasonForCancellation() {
+<span class="nc" id="L1781">        return reasonForCancellation;</span>
+    }
+
+    public void setReasonForCancellation(final String reasonForCancellation) {
+<span class="nc" id="L1785">        this.reasonForCancellation = reasonForCancellation;</span>
+<span class="nc" id="L1786">    }</span>
+
+    /**
+     * @return the target
+     */
+    public String getTarget() {
+<span class="nc" id="L1792">        return target;</span>
+    }
+
+    /**
+     * @return the paidBy
+     */
+    public String getPaidBy() {
+<span class="nc" id="L1799">        return StringUtils.escapeJavaScript(paidBy);</span>
+    }
+
+    /**
+     * @param paidBy the paidBy to set
+     */
+    public void setPaidBy(final String paidBy) {
+<span class="nc" id="L1806">        this.paidBy = paidBy;</span>
+<span class="nc" id="L1807">    }</span>
+
+    /**
+     * @return the oldReceiptId
+     */
+    public Long getOldReceiptId() {
+<span class="nc" id="L1813">        return oldReceiptId;</span>
+    }
+
+    /**
+     * @param oldReceiptId the oldReceiptId to set
+     */
+    public void setOldReceiptId(final Long oldReceiptId) {
+<span class="nc" id="L1820">        this.oldReceiptId = oldReceiptId;</span>
+<span class="nc" id="L1821">    }</span>
+
+    public Long getBankAccountId() {
+<span class="nc" id="L1824">        return bankAccountId;</span>
+    }
+
+    public void setBankAccountId(final Long bankAccountId) {
+<span class="nc" id="L1828">        this.bankAccountId = bankAccountId;</span>
+<span class="nc" id="L1829">    }</span>
+
+    public BigDecimal getTotalAmntToBeCollected() {
+<span class="nc" id="L1832">        return totalAmntToBeCollected;</span>
+    }
+
+    public void setTotalAmntToBeCollected(final BigDecimal totalAmntToBeCollected) {
+<span class="nc" id="L1836">        this.totalAmntToBeCollected = totalAmntToBeCollected;</span>
+<span class="nc" id="L1837">    }</span>
+
+    public InstrumentHeader getInstrHeaderCash() {
+<span class="nc" id="L1840">        return instrHeaderCash;</span>
+    }
+
+    public void setInstrHeaderCash(final InstrumentHeader instrHeaderCash) {
+<span class="nc" id="L1844">        this.instrHeaderCash = instrHeaderCash;</span>
+<span class="nc" id="L1845">    }</span>
+
+    public InstrumentHeader getInstrHeaderCard() {
+<span class="nc" id="L1848">        return instrHeaderCard;</span>
+    }
+
+    public void setInstrHeaderCard(final InstrumentHeader instrHeaderCard) {
+<span class="nc" id="L1852">        this.instrHeaderCard = instrHeaderCard;</span>
+<span class="nc" id="L1853">    }</span>
+
+    public InstrumentHeader getInstrHeaderBank() {
+<span class="nc" id="L1856">        return instrHeaderBank;</span>
+    }
+
+    public void setInstrHeaderBank(final InstrumentHeader instrHeaderBank) {
+<span class="nc" id="L1860">        this.instrHeaderBank = instrHeaderBank;</span>
+<span class="nc" id="L1861">    }</span>
+
+    public InstrumentHeader getInstrHeaderOnline() {
+<span class="nc" id="L1864">        return instrHeaderOnline;</span>
+    }
+
+    public void setInstrHeaderOnline(final InstrumentHeader instrHeaderOnline) {
+<span class="nc" id="L1868">        this.instrHeaderOnline = instrHeaderOnline;</span>
+<span class="nc" id="L1869">    }</span>
+
+    public List&lt;String&gt; getCollectionModesNotAllowed() {
+<span class="nc" id="L1872">        return collectionModesNotAllowed;</span>
+    }
+
+    public void setCollectionModesNotAllowed(final List&lt;String&gt; collectionModesNotAllowed) {
+<span class="nc" id="L1876">        this.collectionModesNotAllowed = collectionModesNotAllowed;</span>
+<span class="nc" id="L1877">    }</span>
+
+    /*
+     * public User getReceiptCreatedByCounterOperator() { return receiptCreatedByCounterOperator; } public void
+     * setReceiptCreatedByCounterOperator(final User receiptCreatedByCounterOperator) { this.receiptCreatedByCounterOperator =
+     * receiptCreatedByCounterOperator; }
+     */
+
+    public List&lt;ReceiptDetail&gt; getReceiptDetailList() {
+<span class="nc" id="L1886">        return receiptDetailList;</span>
+    }
+
+    public void setReceiptDetailList(final List&lt;ReceiptDetail&gt; receiptDetailList) {
+<span class="nc" id="L1890">        this.receiptDetailList = receiptDetailList;</span>
+<span class="nc" id="L1891">    }</span>
+
+    public String getInstrumentTypeCashOrCard() {
+<span class="nc" id="L1894">        return instrumentTypeCashOrCard;</span>
+    }
+
+    public void setInstrumentTypeCashOrCard(final String instrumentTypeCashOrCard) {
+<span class="nc" id="L1898">        this.instrumentTypeCashOrCard = instrumentTypeCashOrCard;</span>
+<span class="nc" id="L1899">    }</span>
+
+    /**
+     * This getter will be invoked by framework from UI. It returns the total number of bill accounts that are present in the XML
+     * arriving from the billing system
+     *
+     * @return
+     */
+    public Integer getTotalNoOfAccounts() {
+<span class="nc" id="L1908">        Integer totalNoOfAccounts = 0;</span>
+<span class="nc" id="L1909">        totalNoOfAccounts += receiptHeader.getReceiptDetails().size();</span>
+<span class="nc" id="L1910">        return totalNoOfAccounts;</span>
+    }
+
+    /**
+     * This getter will be invoked by framework from UI. This value will be used during bill apportioning.
+     *
+     * @return
+     */
+    public BigDecimal getMinimumAmount() {
+<span class="nc" id="L1919">        return null;</span>
+    }
+
+    public Boolean getOverrideAccountHeads() {
+<span class="nc" id="L1923">        return overrideAccountHeads;</span>
+    }
+
+    public void setOverrideAccountHeads(final Boolean overrideAccountHeads) {
+<span class="nc" id="L1927">        this.overrideAccountHeads = overrideAccountHeads;</span>
+<span class="nc" id="L1928">    }</span>
+
+    public Boolean getCallbackForApportioning() {
+<span class="nc" id="L1931">        return callbackForApportioning;</span>
+    }
+
+    public void setCallbackForApportioning(final Boolean callbackForApportioning) {
+<span class="nc" id="L1935">        this.callbackForApportioning = callbackForApportioning;</span>
+<span class="nc" id="L1936">    }</span>
+
+    public Boolean getPartPaymentAllowed() {
+<span class="nc" id="L1939">        return partPaymentAllowed;</span>
+    }
+
+    public void setPartPaymentAllowed(final Boolean partPaymentAllowed) {
+<span class="nc" id="L1943">        this.partPaymentAllowed = partPaymentAllowed;</span>
+<span class="nc" id="L1944">    }</span>
+
+    public BigDecimal getCashOrCardInstrumenttotal() {
+<span class="nc" id="L1947">        return cashOrCardInstrumenttotal;</span>
+    }
+
+    public void setCashOrCardInstrumenttotal(final BigDecimal cashOrCardInstrumenttotal) {
+<span class="nc" id="L1951">        this.cashOrCardInstrumenttotal = cashOrCardInstrumenttotal;</span>
+<span class="nc" id="L1952">    }</span>
+
+    public String getServiceName() {
+<span class="nc" id="L1955">        return serviceName;</span>
+    }
+
+    public void setServiceName(final String serviceName) {
+<span class="nc" id="L1959">        this.serviceName = serviceName;</span>
+<span class="nc" id="L1960">    }</span>
+
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L1963">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L1964">    }</span>
+
+    public Boolean getCashAllowed() {
+<span class="nc" id="L1967">        return cashAllowed;</span>
+    }
+
+    public void setCashAllowed(final Boolean cashAllowed) {
+<span class="nc" id="L1971">        this.cashAllowed = cashAllowed;</span>
+<span class="nc" id="L1972">    }</span>
+
+    public Boolean getCardAllowed() {
+<span class="nc" id="L1975">        return cardAllowed;</span>
+    }
+
+    public void setCardAllowed(final Boolean cardAllowed) {
+<span class="nc" id="L1979">        this.cardAllowed = cardAllowed;</span>
+<span class="nc" id="L1980">    }</span>
+
+    public Boolean getChequeAllowed() {
+<span class="nc" id="L1983">        return chequeAllowed;</span>
+    }
+
+    public void setChequeAllowed(final Boolean chequeAllowed) {
+<span class="nc" id="L1987">        this.chequeAllowed = chequeAllowed;</span>
+<span class="nc" id="L1988">    }</span>
+
+    public Boolean getDdAllowed() {
+<span class="nc" id="L1991">        return ddAllowed;</span>
+    }
+
+    public void setDdAllowed(final Boolean ddAllowed) {
+<span class="nc" id="L1995">        this.ddAllowed = ddAllowed;</span>
+<span class="nc" id="L1996">    }</span>
+
+    public Boolean getBankAllowed() {
+<span class="nc" id="L1999">        return bankAllowed;</span>
+    }
+
+    public void setBankAllowed(final Boolean bankAllowed) {
+<span class="nc" id="L2003">        this.bankAllowed = bankAllowed;</span>
+<span class="nc" id="L2004">    }</span>
+
+    /**
+     * @return the voucherDate
+     */
+    public Date getVoucherDate() {
+<span class="nc" id="L2010">        return voucherDate;</span>
+    }
+
+    /**
+     * @param voucherDate the voucherDate to set
+     */
+    public void setVoucherDate(final Date voucherDate) {
+<span class="nc" id="L2017">        this.voucherDate = voucherDate;</span>
+<span class="nc" id="L2018">    }</span>
+
+    /**
+     * @return the voucherNumber
+     */
+    public String getVoucherNum() {
+<span class="nc" id="L2024">        return voucherNum;</span>
+    }
+
+    /**
+     * @param voucherNumber the voucherNumber to set
+     */
+    public void setVoucherNum(final String voucherNum) {
+<span class="nc" id="L2031">        this.voucherNum = voucherNum;</span>
+<span class="nc" id="L2032">    }</span>
+
+    /**
+     * This getter will be invoked by framework from UI. This value will be used during misc receipts for account details
+     *
+     * @return
+     */
+    public List&lt;ReceiptDetailInfo&gt; getBillCreditDetailslist() {
+<span class="nc" id="L2040">        return billCreditDetailslist;</span>
+    }
+
+    public void setBillCreditDetailslist(final List&lt;ReceiptDetailInfo&gt; billCreditDetailslist) {
+<span class="nc" id="L2044">        this.billCreditDetailslist = billCreditDetailslist;</span>
+<span class="nc" id="L2045">    }</span>
+
+    public List&lt;ReceiptDetailInfo&gt; getBillRebateDetailslist() {
+<span class="nc" id="L2048">        return billRebateDetailslist;</span>
+    }
+
+    public void setBillRebateDetailslist(final List&lt;ReceiptDetailInfo&gt; billRebateDetailslist) {
+<span class="nc" id="L2052">        this.billRebateDetailslist = billRebateDetailslist;</span>
+<span class="nc" id="L2053">    }</span>
+
+    public List&lt;ReceiptDetailInfo&gt; getSubLedgerlist() {
+<span class="nc" id="L2056">        return subLedgerlist;</span>
+    }
+
+    public void setSubLedgerlist(final List&lt;ReceiptDetailInfo&gt; subLedgerlist) {
+<span class="nc" id="L2060">        this.subLedgerlist = subLedgerlist;</span>
+<span class="nc" id="L2061">    }</span>
+
+    public String getBillSource() {
+<span class="nc" id="L2064">        return billSource;</span>
+    }
+
+    public void setBillSource(final String billSource) {
+<span class="nc" id="L2068">        this.billSource = billSource;</span>
+<span class="nc" id="L2069">    }</span>
+
+    /**
+     * @return the receiptPayeeDetailsService
+     */
+    public ReceiptMisc getReceiptMisc() {
+<span class="nc" id="L2075">        return receiptMisc;</span>
+    }
+
+    public void setReceiptMisc(final ReceiptMisc receiptMisc) {
+<span class="nc" id="L2079">        this.receiptMisc = receiptMisc;</span>
+<span class="nc" id="L2080">    }</span>
+
+    /**
+     * @return the reportId
+     */
+    public String getReportId() {
+<span class="nc" id="L2086">        return reportId;</span>
+    }
+
+    public String getDeptId() {
+<span class="nc" id="L2090">        return deptId;</span>
+    }
+
+    public void setDeptId(final String deptId) {
+<span class="nc" id="L2094">        this.deptId = deptId;</span>
+<span class="nc" id="L2095">    }</span>
+
+    public BigDecimal getTotalDebitAmount() {
+<span class="nc" id="L2098">        return totalDebitAmount;</span>
+    }
+
+    public void setTotalDebitAmount(final BigDecimal totalDebitAmount) {
+<span class="nc" id="L2102">        this.totalDebitAmount = totalDebitAmount;</span>
+<span class="nc" id="L2103">    }</span>
+
+    protected boolean validateData(final List&lt;ReceiptDetailInfo&gt; billDetailslistd,
+            final List&lt;ReceiptDetailInfo&gt; subLedgerList) {
+<span class="nc" id="L2107">        BigDecimal totalDrAmt = BigDecimal.ZERO;</span>
+<span class="nc" id="L2108">        BigDecimal totalCrAmt = BigDecimal.ZERO;</span>
+<span class="nc" id="L2109">        Integer index = 0;</span>
+<span class="nc" id="L2110">        boolean isDataValid = true;</span>
+<span class="nc bnc" id="L2111" title="All 2 branches missed.">        for (final ReceiptDetailInfo rDetails : billDetailslistd) {</span>
+<span class="nc" id="L2112">            index = index + 1;</span>
+<span class="nc" id="L2113">            totalDrAmt = totalDrAmt.add(rDetails.getDebitAmountDetail());</span>
+<span class="nc" id="L2114">            totalCrAmt = totalCrAmt.add(rDetails.getCreditAmountDetail());</span>
+<span class="nc bnc" id="L2115" title="All 2 branches missed.">            if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) == 0</span>
+<span class="nc bnc" id="L2116" title="All 2 branches missed.">                    &amp;&amp; rDetails.getCreditAmountDetail().compareTo(BigDecimal.ZERO) == 0</span>
+<span class="nc bnc" id="L2117" title="All 2 branches missed.">                    &amp;&amp; rDetails.getGlcodeDetail().trim().length() == 0) {</span>
+
+<span class="nc" id="L2119">                addActionError(getText(&quot;miscreceipt.accdetail.emptyaccrow&quot;, new String[] { index.toString() }));</span>
+<span class="nc" id="L2120">                isDataValid = false;</span>
+<span class="nc bnc" id="L2121" title="All 2 branches missed.">            } else if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) == 0</span>
+<span class="nc bnc" id="L2122" title="All 2 branches missed.">                    &amp;&amp; rDetails.getCreditAmountDetail().compareTo(BigDecimal.ZERO) == 0</span>
+<span class="nc bnc" id="L2123" title="All 2 branches missed.">                    &amp;&amp; rDetails.getGlcodeDetail().trim().length() != 0) {</span>
+<span class="nc" id="L2124">                addActionError(</span>
+<span class="nc" id="L2125">                        getText(&quot;miscreceipt.accdetail.amountZero&quot;, new String[] { rDetails.getGlcodeDetail() }));</span>
+<span class="nc" id="L2126">                isDataValid = false;</span>
+<span class="nc bnc" id="L2127" title="All 2 branches missed.">            } else if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) &gt; 0</span>
+<span class="nc bnc" id="L2128" title="All 2 branches missed.">                    &amp;&amp; rDetails.getCreditAmountDetail().compareTo(BigDecimal.ZERO) &gt; 0) {</span>
+<span class="nc" id="L2129">                addActionError(getText(&quot;miscreceipt.accdetail.amount&quot;, new String[] { rDetails.getGlcodeDetail() }));</span>
+<span class="nc" id="L2130">                isDataValid = false;</span>
+<span class="nc bnc" id="L2131" title="All 2 branches missed.">            } else if ((rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) &gt; 0</span>
+<span class="nc bnc" id="L2132" title="All 2 branches missed.">                    || rDetails.getCreditAmountDetail().compareTo(BigDecimal.ZERO) &gt; 0)</span>
+<span class="nc bnc" id="L2133" title="All 2 branches missed.">                    &amp;&amp; rDetails.getGlcodeDetail().trim().length() == 0) {</span>
+<span class="nc" id="L2134">                addActionError(getText(&quot;miscreceipt.accdetail.accmissing&quot;, new String[] { index.toString() }));</span>
+<span class="nc" id="L2135">                isDataValid = false;</span>
+            }
+
+<span class="nc" id="L2138">        }</span>
+<span class="nc bnc" id="L2139" title="All 2 branches missed.">        if (isDataValid)</span>
+<span class="nc" id="L2140">            isDataValid = validateSubledgerDetails(billCreditDetailslist, subLedgerList);</span>
+<span class="nc" id="L2141">        return isDataValid;</span>
+    }
+
+    protected boolean validateRebateData(final List&lt;ReceiptDetailInfo&gt; billDetailslistd,
+            final List&lt;ReceiptDetailInfo&gt; subLedgerList) {
+<span class="nc" id="L2146">        Integer index = 0;</span>
+<span class="nc" id="L2147">        boolean isDataValid = true;</span>
+<span class="nc bnc" id="L2148" title="All 2 branches missed.">        for (final ReceiptDetailInfo rDetails : billDetailslistd) {</span>
+<span class="nc" id="L2149">            index = index + 1;</span>
+<span class="nc bnc" id="L2150" title="All 2 branches missed.">            if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) == 0</span>
+<span class="nc bnc" id="L2151" title="All 2 branches missed.">                    &amp;&amp; rDetails.getGlcodeDetail().trim().length() != 0) {</span>
+<span class="nc" id="L2152">                addActionError(</span>
+<span class="nc" id="L2153">                        getText(&quot;miscreceipt.accdetail.amountZero&quot;, new String[] { rDetails.getGlcodeDetail() }));</span>
+<span class="nc" id="L2154">                isDataValid = false;</span>
+<span class="nc bnc" id="L2155" title="All 2 branches missed.">            } else if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) &gt; 0</span>
+<span class="nc bnc" id="L2156" title="All 2 branches missed.">                    &amp;&amp; rDetails.getGlcodeDetail().trim().length() == 0) {</span>
+<span class="nc" id="L2157">                addActionError(getText(&quot;miscreceipt.accdetail.accmissing&quot;, new String[] { index.toString() }));</span>
+<span class="nc" id="L2158">                isDataValid = false;</span>
+            }
+
+<span class="nc" id="L2161">        }</span>
+<span class="nc bnc" id="L2162" title="All 2 branches missed.">        if (isDataValid)</span>
+<span class="nc" id="L2163">            isDataValid = validateSubledgerDetails(billRebateDetailslist, subLedgerList);</span>
+<span class="nc" id="L2164">        return isDataValid;</span>
+    }
+
+    protected boolean validateSubledgerDetails(final List&lt;ReceiptDetailInfo&gt; billRebateDetailslist,
+            final List&lt;ReceiptDetailInfo&gt; subLedgerlist) {
+        Map&lt;String, Object&gt; accountDetailMap;
+<span class="nc" id="L2170">        final Map&lt;String, BigDecimal&gt; subledAmtmap = new HashMap&lt;&gt;(0);</span>
+<span class="nc" id="L2171">        List&lt;Map&lt;String, Object&gt;&gt; subLegAccMap = null; // this list will contain</span>
+        // the details about the
+        // account coe those are
+        // detail codes.
+<span class="nc bnc" id="L2175" title="All 2 branches missed.">        for (final ReceiptDetailInfo rDetails : billRebateDetailslist) {</span>
+<span class="nc" id="L2176">            final CChartOfAccountDetail chartOfAccountDetail = (CChartOfAccountDetail) getPersistenceService().find(</span>
+                    &quot; from CChartOfAccountDetail&quot; + &quot; where glCodeId=(select id from CChartOfAccounts where glcode=?)&quot;,
+<span class="nc" id="L2178">                    rDetails.getGlcodeDetail());</span>
+<span class="nc bnc" id="L2179" title="All 2 branches missed.">            if (null != chartOfAccountDetail) {</span>
+<span class="nc" id="L2180">                accountDetailMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L2181">                accountDetailMap.put(&quot;glcodeId&quot;, rDetails.getGlcodeIdDetail());</span>
+<span class="nc" id="L2182">                accountDetailMap.put(&quot;glcode&quot;, rDetails.getGlcodeDetail());</span>
+<span class="nc bnc" id="L2183" title="All 2 branches missed.">                if (rDetails.getDebitAmountDetail().compareTo(BigDecimal.ZERO) == 0)</span>
+<span class="nc" id="L2184">                    accountDetailMap.put(&quot;amount&quot;, rDetails.getCreditAmountDetail());</span>
+<span class="nc bnc" id="L2185" title="All 2 branches missed.">                else if (rDetails.getCreditAmountDetail().compareTo(BigDecimal.ZERO) == 0)</span>
+<span class="nc" id="L2186">                    accountDetailMap.put(&quot;amount&quot;, rDetails.getDebitAmountDetail());</span>
+<span class="nc bnc" id="L2187" title="All 2 branches missed.">                if (null == subLegAccMap) {</span>
+<span class="nc" id="L2188">                    subLegAccMap = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L2189">                    subLegAccMap.add(accountDetailMap);</span>
+                } else
+<span class="nc" id="L2191">                    subLegAccMap.add(accountDetailMap);</span>
+
+            }
+<span class="nc" id="L2194">        }</span>
+<span class="nc bnc" id="L2195" title="All 2 branches missed.">        if (null != subLegAccMap) {</span>
+<span class="nc" id="L2196">            final Map&lt;String, String&gt; subLedgerMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L2197" title="All 2 branches missed.">            for (final ReceiptDetailInfo rDetails : subLedgerlist)</span>
+<span class="nc bnc" id="L2198" title="All 2 branches missed.">                if (rDetails.getGlcode().getId() != 0) {</span>
+<span class="nc bnc" id="L2199" title="All 2 branches missed.">                    if (null == subledAmtmap.get(rDetails.getGlcode().getId().toString()))</span>
+<span class="nc" id="L2200">                        subledAmtmap.put(rDetails.getGlcode().getId().toString(), rDetails.getAmount());</span>
+                    else {
+<span class="nc" id="L2202">                        final BigDecimal debitTotalAmount = subledAmtmap.get(rDetails.getGlcode().getId().toString())</span>
+<span class="nc" id="L2203">                                .add(rDetails.getAmount());</span>
+<span class="nc" id="L2204">                        subledAmtmap.put(rDetails.getGlcode().getId().toString(), debitTotalAmount);</span>
+                    }
+<span class="nc" id="L2206">                    final StringBuilder subledgerDetailRow = new StringBuilder();</span>
+<span class="nc" id="L2207">                    subledgerDetailRow.append(rDetails.getGlcode().getId().toString())</span>
+<span class="nc" id="L2208">                            .append(rDetails.getDetailType().getId().toString())</span>
+<span class="nc" id="L2209">                            .append(rDetails.getDetailKeyId().toString());</span>
+<span class="nc bnc" id="L2210" title="All 2 branches missed.">                    if (null == subLedgerMap.get(subledgerDetailRow.toString()))</span>
+<span class="nc" id="L2211">                        subLedgerMap.put(subledgerDetailRow.toString(), subledgerDetailRow.toString());</span>
+                    else {
+<span class="nc" id="L2213">                        addActionError(getText(&quot;miscreciept.samesubledger.repeated&quot;));</span>
+<span class="nc" id="L2214">                        return false;</span>
+                    }
+
+                }
+<span class="nc bnc" id="L2218" title="All 2 branches missed.">            for (final Map&lt;String, Object&gt; map : subLegAccMap) {</span>
+<span class="nc" id="L2219">                final String glcodeId = map.get(&quot;glcodeId&quot;).toString();</span>
+<span class="nc bnc" id="L2220" title="All 2 branches missed.">                if (null == subledAmtmap.get(glcodeId)) {</span>
+<span class="nc" id="L2221">                    addActionError(getText(&quot;miscreciept.subledger.entrymissing&quot;,</span>
+<span class="nc" id="L2222">                            new String[] { map.get(&quot;glcode&quot;).toString() }));</span>
+<span class="nc" id="L2223">                    return false;</span>
+<span class="nc bnc" id="L2224" title="All 2 branches missed.">                } else if (subledAmtmap.get(glcodeId).compareTo(new BigDecimal(map.get(&quot;amount&quot;).toString())) != 0) {</span>
+<span class="nc" id="L2225">                    addActionError(getText(&quot;miscreciept.subledger.amtnotmatchinng&quot;,</span>
+<span class="nc" id="L2226">                            new String[] { map.get(&quot;glcode&quot;).toString() }));</span>
+<span class="nc" id="L2227">                    return false;</span>
+                }
+<span class="nc" id="L2229">            }</span>
+        }
+<span class="nc" id="L2231">        final List&lt;CFinancialYear&gt; list = persistenceService.findAllBy(</span>
+                &quot;from CFinancialYear where isActiveForPosting=true and startingDate &lt;= ? and endingDate &gt;= ?&quot;,
+<span class="nc" id="L2233">                getVoucherDate(), getVoucherDate());</span>
+<span class="nc bnc" id="L2234" title="All 2 branches missed.">        if (list.isEmpty()) {</span>
+<span class="nc" id="L2235">            addActionError(getText(&quot;miscreciept.fYear.notActive&quot;));</span>
+<span class="nc" id="L2236">            return false;</span>
+        }
+<span class="nc" id="L2238">        return true;</span>
+    }
+
+    public void apportionBillAmount() {
+<span class="nc" id="L2242">        receiptDetailList = collectionCommon.apportionBillAmount(instrumenttotal, (ArrayList) getReceiptDetailList());</span>
+<span class="nc" id="L2243">    }</span>
+
+    void removeEmptyRows(final List&lt;ReceiptDetailInfo&gt; list) {
+<span class="nc bnc" id="L2246" title="All 2 branches missed.">        for (final Iterator&lt;ReceiptDetailInfo&gt; detail = list.iterator(); detail.hasNext();)</span>
+<span class="nc bnc" id="L2247" title="All 2 branches missed.">            if (detail.next() == null)</span>
+<span class="nc" id="L2248">                detail.remove();</span>
+<span class="nc" id="L2249">    }</span>
+
+    public void setFinancialsUtil(final FinancialsUtil financialsUtil) {
+<span class="nc" id="L2252">        this.financialsUtil = financialsUtil;</span>
+<span class="nc" id="L2253">    }</span>
+
+    public List&lt;String&gt; getHeaderFields() {
+<span class="nc" id="L2256">        return headerFields;</span>
+    }
+
+    public void setHeaderFields(final List&lt;String&gt; headerFields) {
+<span class="nc" id="L2260">        this.headerFields = headerFields;</span>
+<span class="nc" id="L2261">    }</span>
+
+    public List&lt;String&gt; getMandatoryFields() {
+<span class="nc" id="L2264">        return mandatoryFields;</span>
+    }
+
+    public void setMandatoryFields(final List&lt;String&gt; mandatoryFields) {
+<span class="nc" id="L2268">        this.mandatoryFields = mandatoryFields;</span>
+<span class="nc" id="L2269">    }</span>
+
+    public Integer getBankBranchId() {
+<span class="nc" id="L2272">        return bankBranchId;</span>
+    }
+
+    public void setBankBranchId(final Integer bankBranchId) {
+<span class="nc" id="L2276">        this.bankBranchId = bankBranchId;</span>
+<span class="nc" id="L2277">    }</span>
+
+    public String getFundName() {
+<span class="nc" id="L2280">        return fundName;</span>
+    }
+
+    public void setFundName(final String fundName) {
+<span class="nc" id="L2284">        this.fundName = fundName;</span>
+<span class="nc" id="L2285">    }</span>
+
+    /**
+     * @param collectionCommon the collectionCommon to set
+     */
+    public void setCollectionCommon(final CollectionCommon collectionCommon) {
+<span class="nc" id="L2291">        this.collectionCommon = collectionCommon;</span>
+<span class="nc" id="L2292">    }</span>
+
+    /**
+     * @param receiptHeaderService The receipt header service to set
+     */
+    public void setReceiptHeaderService(final ReceiptHeaderService receiptHeaderService) {
+<span class="nc" id="L2298">        this.receiptHeaderService = receiptHeaderService;</span>
+<span class="nc" id="L2299">    }</span>
+
+    public String getCollectXML() {
+<span class="nc" id="L2302">        return collectXML;</span>
+    }
+
+    public void setCollectXML(final String collectXML) {
+<span class="nc" id="L2306">        this.collectXML = collectXML;</span>
+<span class="nc" id="L2307">    }</span>
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L2311">        return receiptHeader;</span>
+    }
+
+    public ReceiptHeader[] getReceipts() {
+<span class="nc" id="L2315">        return receipts;</span>
+    }
+
+    public void setReceipts(final ReceiptHeader[] receipts) {
+<span class="nc" id="L2319">        this.receipts = receipts;</span>
+<span class="nc" id="L2320">    }</span>
+
+    public String[] getSelectedReceipts() {
+<span class="nc" id="L2323">        return selectedReceipts;</span>
+    }
+
+    public void setSelectedReceipts(final String[] selectedReceipts) {
+<span class="nc" id="L2327">        this.selectedReceipts = selectedReceipts;</span>
+<span class="nc" id="L2328">    }</span>
+
+    public void setPayeename(final String payeename) {
+<span class="nc" id="L2331">        this.payeename = payeename;</span>
+<span class="nc" id="L2332">    }</span>
+
+    public Date getManualReceiptDate() {
+<span class="nc" id="L2335">        return manualReceiptDate;</span>
+    }
+
+    public void setManualReceiptDate(final Date manualReceiptDate) {
+<span class="nc" id="L2339">        this.manualReceiptDate = manualReceiptDate;</span>
+<span class="nc" id="L2340">    }</span>
+
+    public Boolean getReceiptBulkUpload() {
+<span class="nc" id="L2343">        return receiptBulkUpload;</span>
+    }
+
+    public void setReceiptBulkUpload(final Boolean receiptBulkUpload) {
+<span class="nc" id="L2347">        this.receiptBulkUpload = receiptBulkUpload;</span>
+<span class="nc" id="L2348">    }</span>
+
+    public BigDecimal getInstrumenttotal() {
+<span class="nc" id="L2351">        return instrumenttotal;</span>
+    }
+
+    public void setInstrumenttotal(final BigDecimal instrumenttotal) {
+<span class="nc" id="L2355">        this.instrumenttotal = instrumenttotal;</span>
+<span class="nc" id="L2356">    }</span>
+
+    public void setServiceDetailsService(final PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService) {
+<span class="nc" id="L2359">        this.serviceDetailsService = serviceDetailsService;</span>
+<span class="nc" id="L2360">    }</span>
+
+    public List&lt;InstrumentHeader&gt; getInstrumentProxyList() {
+<span class="nc" id="L2363">        return instrumentProxyList;</span>
+    }
+
+    public void setInstrumentProxyList(final List&lt;InstrumentHeader&gt; instrumentProxyList) {
+<span class="nc" id="L2367">        this.instrumentProxyList = instrumentProxyList;</span>
+<span class="nc" id="L2368">    }</span>
+
+    public int getInstrumentCount() {
+<span class="nc" id="L2371">        return instrumentCount;</span>
+    }
+
+    public void setInstrumentCount(final int instrumentCount) {
+<span class="nc" id="L2375">        this.instrumentCount = instrumentCount;</span>
+<span class="nc" id="L2376">    }</span>
+
+    /**
+     * @return the manualReceiptNumber
+     */
+    public String getManualReceiptNumber() {
+<span class="nc" id="L2382">        return manualReceiptNumber;</span>
+    }
+
+    /**
+     * @param manualReceiptNumber the manualReceiptNumber to set
+     */
+    public void setManualReceiptNumber(final String manualReceiptNumber) {
+<span class="nc" id="L2389">        this.manualReceiptNumber = manualReceiptNumber;</span>
+<span class="nc" id="L2390">    }</span>
+
+    /**
+     * @return the manualReceiptNumberAndDateReq
+     */
+    public Boolean getManualReceiptNumberAndDateReq() {
+<span class="nc" id="L2396">        return manualReceiptNumberAndDateReq;</span>
+    }
+
+    /**
+     * @param manualReceiptNumberAndDateReq the manualReceiptNumberAndDateReq to set
+     */
+    public void setManualReceiptNumberAndDateReq(final Boolean manualReceiptNumberAndDateReq) {
+<span class="nc" id="L2403">        this.manualReceiptNumberAndDateReq = manualReceiptNumberAndDateReq;</span>
+<span class="nc" id="L2404">    }</span>
+
+    public ReceiptHeader getReceiptHeader() {
+<span class="nc" id="L2407">        return receiptHeader;</span>
+    }
+
+    public void setReceiptHeader(final ReceiptHeader receiptHeader) {
+<span class="nc" id="L2411">        this.receiptHeader = receiptHeader;</span>
+<span class="nc" id="L2412">    }</span>
+
+    public void setServiceCategoryService(final PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService) {
+<span class="nc" id="L2415">        this.serviceCategoryService = serviceCategoryService;</span>
+<span class="nc" id="L2416">    }</span>
+
+    public String getFunctionId() {
+<span class="nc" id="L2419">        return functionId;</span>
+    }
+
+    public void setFunctionId(final String functionId) {
+<span class="nc" id="L2423">        this.functionId = functionId;</span>
+<span class="nc" id="L2424">    }</span>
+
+    public String getServiceId() {
+<span class="nc" id="L2427">        return serviceId;</span>
+    }
+
+    public void setServiceId(final String serviceId) {
+<span class="nc" id="L2431">        this.serviceId = serviceId;</span>
+<span class="nc" id="L2432">    }</span>
+
+    public String getInstrumentType() {
+<span class="nc" id="L2435">        return instrumentType;</span>
+    }
+
+    public void setInstrumentType(final String instrumentType) {
+<span class="nc" id="L2439">        this.instrumentType = instrumentType;</span>
+<span class="nc" id="L2440">    }</span>
+
+    public Boolean getOnlineAllowed() {
+<span class="nc" id="L2443">        return onlineAllowed;</span>
+    }
+
+    public void setOnlineAllowed(final Boolean onlineAllowed) {
+<span class="nc" id="L2447">        this.onlineAllowed = onlineAllowed;</span>
+<span class="nc" id="L2448">    }</span>
+
+    public CollectionService getCollectionService() {
+<span class="nc" id="L2451">        return collectionService;</span>
+    }
+
+    public void setCollectionService(final CollectionService collectionService) {
+<span class="nc" id="L2455">        this.collectionService = collectionService;</span>
+<span class="nc" id="L2456">    }</span>
+
+    public PaymentRequest getPaymentRequest() {
+<span class="nc" id="L2459">        return paymentRequest;</span>
+    }
+
+    public void setPaymentRequest(final PaymentRequest paymentRequest) {
+<span class="nc" id="L2463">        this.paymentRequest = paymentRequest;</span>
+<span class="nc" id="L2464">    }</span>
+
+    public Boolean getIsReceiptCancelEnable() {
+<span class="nc" id="L2467">        return isReceiptCancelEnable;</span>
+    }
+
+    public void setIsReceiptCancelEnable(Boolean isReceiptCancelEnable) {
+<span class="nc" id="L2471">        this.isReceiptCancelEnable = isReceiptCancelEnable;</span>
+<span class="nc" id="L2472">    }</span>
+
+    public String getReceipt() {
+<span class="nc" id="L2475">        return receipt;</span>
+    }
+
+    public void setReceipt(String receipt) {
+<span class="nc" id="L2479">        this.receipt = receipt;</span>
+<span class="nc" id="L2480">    }</span>
+
+    public String getMessage() {
+<span class="nc" id="L2483">        return message;</span>
+    }
+
+    public void setMessage(String message) {
+<span class="nc" id="L2487">        this.message = message;</span>
+<span class="nc" id="L2488">    }</span>
+
+    public String getServiceIdText() {
+<span class="nc" id="L2491">        return serviceIdText;</span>
+    }
+
+    public void setServiceIdText(String serviceIdText) {
+<span class="nc" id="L2495">        this.serviceIdText = serviceIdText;</span>
+<span class="nc" id="L2496">    }</span>
+
+    public Map&lt;String, String&gt; getServiceCategoryNames() {
+<span class="nc" id="L2499">        return serviceCategoryNames;</span>
+    }
+
+    public void setServiceCategoryNames(Map&lt;String, String&gt; serviceCategoryNames) {
+<span class="nc" id="L2503">        this.serviceCategoryNames = serviceCategoryNames;</span>
+<span class="nc" id="L2504">    }</span>
+
+    public Map&lt;String, Map&lt;String, String&gt;&gt; getServiceTypeMap() {
+<span class="nc" id="L2507">        return serviceTypeMap;</span>
+    }
+    public void setServiceTypeMap(Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap) {
+<span class="nc" id="L2510">        this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L2511">    }</span>
+
+    public void setServiceCategory(String serviceCategory) {
+<span class="nc" id="L2514">        this.serviceCategory = serviceCategory;</span>
+<span class="nc" id="L2515">    }</span>
+    
+    public String getServiceCategory() {
+<span class="nc" id="L2518">        return this.serviceCategory;</span>
+    }
+    
+    public String[] getSelectedPayments() {
+<span class="nc" id="L2522">        return selectedPayments;</span>
+    }
+    
+    public void setSelectedPayments(String[] selectedPayments) {
+<span class="nc" id="L2526">        this.selectedPayments = selectedPayments;</span>
+<span class="nc" id="L2527">    }</span>
+
+
+
+	public String getReciptNumber() {
+<span class="nc" id="L2532">		return reciptNumber;</span>
+	}
+
+
+
+	public void setReciptNumber(String reciptNumber) {
+<span class="nc" id="L2538">		this.reciptNumber = reciptNumber;</span>
+<span class="nc" id="L2539">	}</span>
+
+
+
+	public String getCurrentState() {
+<span class="nc" id="L2544">		return currentState;</span>
+	}
+
+
+
+	public void setCurrentState(String currentState) {
+<span class="nc" id="L2550">		this.currentState = currentState;</span>
+<span class="nc" id="L2551">	}</span>
+
+
+
+	public String getPaymentId() {
+<span class="nc" id="L2556">		return paymentId;</span>
+	}
+
+
+
+	public void setPaymentId(String paymentId) {
+<span class="nc" id="L2562">		this.paymentId = paymentId;</span>
+<span class="nc" id="L2563">	}</span>
+
+
+
+	public String getPayeeAddress() {
+<span class="nc" id="L2568">		return payeeAddress;</span>
+	}
+
+
+
+	public void setPayeeAddress(String payeeAddress) {
+<span class="nc" id="L2574">		this.payeeAddress = payeeAddress;</span>
+<span class="nc" id="L2575">	}</span>
+
+
+
+	public String getReferenceDesc() {
+<span class="nc" id="L2580">		return referenceDesc;</span>
+	}
+
+
+
+	public void setReferenceDesc(String referenceDesc) {
+<span class="nc" id="L2586">		this.referenceDesc = referenceDesc;</span>
+<span class="nc" id="L2587">	}</span>
+
+
+
+	public String getVouchermissourcepath() {
+<span class="nc" id="L2592">		return vouchermissourcepath;</span>
+	}
+
+
+
+	public void setVouchermissourcepath(String vouchermissourcepath) {
+<span class="nc" id="L2598">		this.vouchermissourcepath = vouchermissourcepath;</span>
+<span class="nc" id="L2599">	}</span>
+	
+	private String getSourcePath(String receiptNumber) {
+<span class="nc" id="L2602">    	SQLQuery query =  null;</span>
+<span class="nc" id="L2603">    	List&lt;Object[]&gt; rows = null;</span>
+<span class="nc" id="L2604">    	String sourcepath=&quot;&quot;;</span>
+    	try
+    	{
+<span class="nc" id="L2607">    		 query = this.persistenceService.getSession().createSQLQuery(&quot;select id,sourcepath from vouchermis v where v.reciept_number = :receiptNumber&quot;);</span>
+<span class="nc" id="L2608">    	    query.setString(&quot;receiptNumber&quot;, receiptNumber);</span>
+<span class="nc" id="L2609">    	    rows = query.list();</span>
+    	    
+<span class="nc bnc" id="L2611" title="All 4 branches missed.">    	    if(rows != null &amp;&amp; !rows.isEmpty())</span>
+    	    {
+<span class="nc" id="L2613">    	    	System.out.println(&quot;list :&quot;+rows.get(1));</span>
+<span class="nc bnc" id="L2614" title="All 2 branches missed.">    	    	for(Object[] element : rows)</span>
+    	    	{
+<span class="nc" id="L2616">    	    		sourcepath= element[1].toString();</span>
+<span class="nc" id="L2617">    	    	}</span>
+    	    }
+<span class="nc" id="L2619">    	}catch (Exception e) {</span>
+<span class="nc" id="L2620">			e.printStackTrace();</span>
+<span class="nc" id="L2621">		}</span>
+<span class="nc" id="L2622">	    return sourcepath;</span>
+    }
+	
+	private String getBankdetails(String ifsc)
+	{
+<span class="nc" id="L2627">		JSONParser parser = new JSONParser();</span>
+<span class="nc" id="L2628">		String bank=&quot;&quot;;</span>
+<span class="nc" id="L2629">		String branch=&quot;&quot;;</span>
+        try {        
+<span class="nc" id="L2631">            URL oracle = new URL(&quot;https://ifsc.razorpay.com/&quot;+ifsc); // URL to Parse</span>
+<span class="nc" id="L2632">            HttpURLConnection conn = (HttpURLConnection)oracle.openConnection();</span>
+<span class="nc" id="L2633">            conn.setRequestMethod(&quot;GET&quot;);</span>
+<span class="nc" id="L2634">            conn.connect();</span>
+<span class="nc" id="L2635">            int responsecode = conn.getResponseCode(); </span>
+<span class="nc" id="L2636">            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));</span>
+           
+            String inputLine;
+<span class="nc bnc" id="L2639" title="All 2 branches missed.">            while ((inputLine = in.readLine()) != null) {              </span>
+<span class="nc" id="L2640">            	JSONObject jobj = (JSONObject)parser.parse(inputLine); </span>
+<span class="nc" id="L2641">                     bank=(String)jobj.get(&quot;BANK&quot;);</span>
+<span class="nc" id="L2642">                     branch=(String)jobj.get(&quot;BRANCH&quot;);</span>
+<span class="nc" id="L2643">            }</span>
+<span class="nc" id="L2644">            in.close();</span>
+<span class="nc" id="L2645">        } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L2646">            e.printStackTrace();</span>
+<span class="nc" id="L2647">        } catch (IOException e) {</span>
+<span class="nc" id="L2648">            e.printStackTrace();</span>
+<span class="nc" id="L2649">        } catch (org.json.simple.parser.ParseException e) {</span>
+<span class="nc" id="L2650">			e.printStackTrace();</span>
+<span class="nc" id="L2651">		}</span>
+<span class="nc" id="L2652">        return bank+&quot; - &quot;+branch;</span>
+	}
+
+
+
+
+
+
+	public String getGstno() {
+<span class="nc" id="L2661">		return gstno;</span>
+	}
+
+
+
+	public void setGstno(String gstno) {
+<span class="nc" id="L2667">		this.gstno = gstno;</span>
+<span class="nc" id="L2668">	}</span>
+
+
+
+	public String getSubdivison() {
+<span class="nc" id="L2673">		return subdivison;</span>
+	}
+
+
+
+	public void setSubdivison(String subdivison) {
+<span class="nc" id="L2679">		this.subdivison = subdivison;</span>
+<span class="nc" id="L2680">	}</span>
+	
+	public LocalDate convertToLocalDateViaInstant(Date dateToConvert) {
+<span class="nc" id="L2683">	    return dateToConvert.toInstant()</span>
+<span class="nc" id="L2684">	      .atZone(ZoneId.systemDefault())</span>
+<span class="nc" id="L2685">	      .toLocalDate();</span>
+	}
+	
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

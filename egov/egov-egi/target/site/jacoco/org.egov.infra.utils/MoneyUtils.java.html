@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MoneyUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.utils</a> &gt; <span class="el_source">MoneyUtils.java</span></div><h1>MoneyUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.utils;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+
+import java.math.BigDecimal;
+
+/**
+ * Utility methods for money manipulation.
+ *
+ * @author Sunil D'Monte
+ */
+public final class MoneyUtils {
+
+<span class="nc" id="L62">    private static final BigDecimal HUNDRED = new BigDecimal(&quot;100&quot;);</span>
+    private static final int DECIMALS = 0;
+    private static final int DECIMALS2 = 2;
+    private static final int ROUNDING_MODE = BigDecimal.ROUND_HALF_UP;
+
+<span class="nc" id="L67">    private MoneyUtils() {</span>
+        //All static util api's
+<span class="nc" id="L69">    }</span>
+
+    /**
+     * Splits up an amount into multiple amounts according to the specified
+     * weightage.
+     * &lt;p&gt;
+     * E.g. An amount of 100 and weights (3, 7) will give (30, 70).
+     * &lt;p&gt;
+     * The algorithm used is the one described at
+     * http://nida.se/patterns/poeaa/money.html. It guarantees that the sum of
+     * the splits will exactly equal the input amount, even for fractional
+     * cases:
+     * &lt;p&gt;
+     * E.g. An amount of 100 and weights (3, 8) will give (28, 72).
+     * &lt;p&gt;
+     * In such cases, the individual split amounts might not exactly match the
+     * number you'd get from floating-point calculation (27.272 and 72.727 in
+     * the example above). With the input amount in paise, the individual split
+     * amounts will be at most 1 paisa off.
+     * &lt;p&gt;
+     * It is the job of the caller to do the &quot;massaging&quot; of rupee amounts into
+     * paise amounts, and vice-versa for the output.
+     * &lt;p&gt;
+     * See the unit tests for more examples.
+     *
+     * @param amountInPaise Has to be whole number, so if your amount is Rs. 100.342,
+     *                      you'll have to convert that to 10034 paise.
+     * @param weights       Numbers that specify the weight given to each split. They need
+     *                      not add up to 100% (e.g. 3, 3, 4) - any arbitrary weights will
+     *                      do. Also note that (2, 10, 16) is identical to (1, 5, 8).
+     * @return The split amounts. If no weights or a single weight is input, the
+     * input amount will be returned.
+     */
+    public static long[] allocate(final long amountInPaise, final long[] weights) {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (weights.length == 0)</span>
+<span class="nc" id="L104">            return new long[]{amountInPaise};</span>
+<span class="nc" id="L105">        final long[] splits = new long[weights.length];</span>
+
+<span class="nc" id="L107">        long totalWeight = 0;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        for (final long weight : weights)</span>
+<span class="nc" id="L109">            totalWeight += weight;</span>
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (totalWeight == 0)</span>
+<span class="nc" id="L112">            throw new ApplicationRuntimeException(&quot;Total of weight can not be zero&quot;);</span>
+
+<span class="nc" id="L114">        long remainder = amountInPaise;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        for (int i = 0; i &lt; splits.length; i++) {</span>
+            // Compute the allocation using long arithmetic - e.g.
+            // 100 * 3 / 7 will give 42, not 42.857
+<span class="nc" id="L118">            splits[i] = amountInPaise * weights[i] / totalWeight;</span>
+<span class="nc" id="L119">            remainder = remainder - splits[i];</span>
+        }
+
+        // Distribute the remainder amongst the splits, one paisa at a time.
+        // Note that the
+        // remainder will always be in the range [0, number-of-splits]. This is
+        // because of the long
+        // arithmetic - each allocation computed above will be &lt; 1 off the real
+        // value,
+        // and there are (number-of-splits) allocations.
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        for (int i = 0; i &lt; remainder; i++)</span>
+<span class="nc" id="L130">            splits[i] = splits[i] + 1;</span>
+
+<span class="nc" id="L132">        return splits;</span>
+    }
+
+    /**
+     * This variant of the allocate method allows the original amount to be
+     * input as a rupee amount i.e. as a BigDecimal, and receive the output
+     * splits as BigDecimal amounts too. If the input amount is more than 2
+     * decimal places e.g. Rs. 150.632, it gets rounded to 2 decimal places
+     * (using &quot;half-up&quot; rounding) and it is the rounded amount that gets
+     * allocated.
+     *
+     * @param amountInRupees
+     * @param weights
+     * @return The splits, also as BigDecimals i.e. rupee amounts. Returns null
+     * if the input amount is null. If no weights or a single weight is
+     * input, the input amount will be returned.
+     */
+    public static BigDecimal[] allocate(final BigDecimal amountInRupees, final long[] weights) {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (amountInRupees == null)</span>
+<span class="nc" id="L151">            return new BigDecimal[0];</span>
+
+<span class="nc" id="L153">        final BigDecimal[] resultInRupees = new BigDecimal[weights.length];</span>
+
+<span class="nc" id="L155">        final long amountInPaise = roundAndConvertToPaise(amountInRupees);</span>
+<span class="nc" id="L156">        final long[] resultsInPaise = allocate(amountInPaise, weights);</span>
+
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        for (int i = 0; i &lt; resultsInPaise.length; i++)</span>
+<span class="nc" id="L159">            resultInRupees[i] = BigDecimal.valueOf(resultsInPaise[i]).divide(HUNDRED);</span>
+<span class="nc" id="L160">        return resultInRupees;</span>
+    }
+
+    /**
+     * Converts a rupee amount in BigDecimal to a paise amount as an integer
+     * (long). E.g. 150 -&gt; 15000 150.23 -&gt; 15023 150.234 -&gt; 15023 150.235 -&gt;
+     * 15024 150.236 -&gt; 15024
+     *
+     * @param rupees
+     * @return
+     */
+    public static long roundAndConvertToPaise(BigDecimal rupees) {
+<span class="nc" id="L172">        return roundOffTwo(rupees).multiply(HUNDRED).longValueExact();</span>
+    }
+
+    /**
+     * Round off to two decimal big decimal value.
+     *
+     * @param amount the amount
+     * @return the big decimal
+     */
+    public static BigDecimal roundOffTwo(final BigDecimal amount) {
+<span class="nc" id="L182">        return amount.setScale(DECIMALS2, ROUNDING_MODE);</span>
+    }
+
+    /**
+     * This method is a utility method, which takes a BigDecimal and rounds that
+     * to 0 places.
+     *
+     * @param amount the amount
+     * @return BigDecimal rounded off to 0 places
+     */
+    public static BigDecimal roundOff(final BigDecimal amount) {
+<span class="nc" id="L193">        return amount.setScale(DECIMALS, ROUNDING_MODE);</span>
+    }
+
+    public static boolean isInteger(final String str) {
+        try {
+<span class="nc" id="L198">            Integer.parseInt(str);</span>
+<span class="nc" id="L199">            return true;</span>
+<span class="nc" id="L200">        } catch (final NumberFormatException nfe) {</span>
+<span class="nc" id="L201">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

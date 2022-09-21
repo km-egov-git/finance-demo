@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChallanInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">ChallanInfo.java</span></div><h1>ChallanInfo.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.integration.models.ReceiptAccountInfo;
+import org.egov.collection.integration.models.ReceiptAccountInfoImpl;
+import org.egov.collection.integration.models.ReceiptInstrumentInfo;
+import org.egov.collection.integration.models.ReceiptInstrumentInfoImpl;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.egf.commons.EgovCommon;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.model.instrument.InstrumentHeader;
+
+/**
+ * The challan information class. Provides details of a challan.
+ */
+
+public class ChallanInfo {
+	/**
+	 * The private receipt header object. This is used by the getters to provide
+	 * challan information
+	 */
+<span class="nc" id="L75">	private ReceiptHeader receiptHeader = null;</span>
+<span class="nc" id="L76">	private final Set&lt;ReceiptAccountInfo&gt; accountDetails = new HashSet&lt;ReceiptAccountInfo&gt;();</span>
+<span class="nc" id="L77">	private final Set&lt;AccountPayeeDetailInfo&gt; accountPayeeDetails = new HashSet&lt;AccountPayeeDetailInfo&gt;();</span>
+<span class="nc" id="L78">	private final Set&lt;ReceiptInstrumentInfo&gt; instrumentDetails = new HashSet&lt;ReceiptInstrumentInfo&gt;();</span>
+<span class="nc" id="L79">	private ReceiptHeader receipHeaderReferenceObj = new ReceiptHeader();</span>
+
+	/**
+	 * Creates challan information object for given receipt header
+	 *
+	 * @param receiptHeader
+	 *            the receipt header object
+	 * @param chartOfAccountsHibernateDAO
+	 *            TODO
+	 */
+	public ChallanInfo(final ReceiptHeader receiptHeader, final EgovCommon egovCommon,
+			final ReceiptHeader receiptHeaderRefObj, final ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO,
+<span class="nc" id="L91">			final PersistenceService persistenceService) {</span>
+<span class="nc" id="L92">		this.receiptHeader = receiptHeader;</span>
+<span class="nc bnc" id="L93" title="All 4 branches missed.">		if (receiptHeaderRefObj != null &amp;&amp; receiptHeaderRefObj.getChallan() != null)</span>
+<span class="nc" id="L94">			receipHeaderReferenceObj = receiptHeaderRefObj;</span>
+		// Populate set of account info objects using receipt details
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		for (final ReceiptDetail receiptDetail : receiptHeader.getReceiptDetails()) {</span>
+
+<span class="nc" id="L98">			accountDetails</span>
+<span class="nc" id="L99">					.add(new ReceiptAccountInfoImpl(receiptDetail, chartOfAccountsHibernateDAO, persistenceService));</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">			for (final AccountPayeeDetail accountPayeeDetail : receiptDetail.getAccountPayeeDetails())</span>
+<span class="nc" id="L101">				accountPayeeDetails.add(new AccountPayeeDetailInfo(accountPayeeDetail, egovCommon));</span>
+<span class="nc" id="L102">		}</span>
+		// Populate set of instrument headers that belong to this receipt
+<span class="nc bnc" id="L104" title="All 2 branches missed.">		for (final InstrumentHeader instrumentHeader : receiptHeader.getReceiptInstrument())</span>
+<span class="nc" id="L105">			instrumentDetails.add(new ReceiptInstrumentInfoImpl(instrumentHeader));</span>
+
+<span class="nc" id="L107">	}</span>
+
+	/**
+	 * @return the challan number
+	 */
+	public String getChallanNumber() {
+<span class="nc" id="L113">		String challanNumberStr = &quot;&quot;;</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc" id="L115">			challanNumberStr = receipHeaderReferenceObj.getChallan().getChallanNumber();</span>
+		else
+<span class="nc" id="L117">			challanNumberStr = receiptHeader.getChallan().getChallanNumber();</span>
+<span class="nc" id="L118">		return challanNumberStr;</span>
+	}
+
+	/**
+	 * @return the challan date
+	 */
+	public Date getChallanDate() {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc" id="L126">			return receipHeaderReferenceObj.getChallan().getChallanDate();</span>
+		else
+<span class="nc" id="L128">			return receiptHeader.getChallan().getChallanDate();</span>
+	}
+
+	/**
+	 * @return the challan status
+	 */
+	public EgwStatus getChallanStatus() {
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc" id="L136">			return receipHeaderReferenceObj.getChallan().getStatus();</span>
+		else
+<span class="nc" id="L138">			return receiptHeader.getChallan().getStatus();</span>
+	}
+
+	/**
+	 * @return the reference number
+	 */
+	public String getBillReferenceNum() {
+<span class="nc" id="L145">		return receiptHeader.getReferencenumber();</span>
+	}
+
+	/**
+	 * @return the payee name
+	 */
+	public String getPayeeName() {
+<span class="nc" id="L152">		return receiptHeader.getPayeeName();</span>
+	}
+
+	/**
+	 * @return the payee address
+	 */
+	public String getDescription() {
+<span class="nc" id="L159">		return receiptHeader.getReferenceDesc();</span>
+	}
+
+	/**
+	 * @return the narration
+	 */
+	public String getPayeeAddress() {
+<span class="nc" id="L166">		return receiptHeader.getPayeeAddress();</span>
+	}
+
+	/**
+	 * @return the account details for the challan
+	 */
+	public Set&lt;ReceiptAccountInfo&gt; getAccountDetails() {
+<span class="nc" id="L173">		return accountDetails;</span>
+	}
+
+	/**
+	 * @return ReceiptMisc data for the challan
+	 */
+	public ReceiptMisc getReceiptMisc() {
+<span class="nc" id="L180">		return receiptHeader.getReceiptMisc();</span>
+	}
+
+	/**
+	 * @return User who has created the challan
+	 */
+	public Long getCreatedBy() {
+<span class="nc bnc" id="L187" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc" id="L188">			return receipHeaderReferenceObj.getChallan().getCreatedBy();</span>
+		else
+<span class="nc" id="L190">			return receiptHeader.getChallan().getCreatedBy();</span>
+	}
+
+	/**
+	 * @return Total amount of the receipt
+	 */
+	public BigDecimal getTotalAmount() {
+<span class="nc" id="L197">		return receiptHeader.getTotalAmount();</span>
+	}
+
+	/**
+	 * @return The service name for this receipt
+	 */
+	public String getServiceName() {
+<span class="nc" id="L204">		return receiptHeader.getService();</span>
+	}
+
+	/**
+	 * @return The function name for this receipt
+	 */
+	public String getFunctionName() {
+<span class="nc" id="L211">		String functionName = null;</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">		for (final ReceiptDetail rDetails : receiptHeader.getReceiptDetails())</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">			if (rDetails.getFunction() != null)</span>
+<span class="nc" id="L214">				functionName = rDetails.getFunction().getName();</span>
+<span class="nc" id="L215">		return functionName;</span>
+	}
+
+	/**
+	 * @return the account details for the challan
+	 */
+	public Set&lt;AccountPayeeDetailInfo&gt; getAccountPayeeDetails() {
+<span class="nc" id="L222">		return accountPayeeDetails;</span>
+	}
+
+	/**
+	 * @return the instrument details for the receipt
+	 */
+	public Set&lt;ReceiptInstrumentInfo&gt; getInstrumentDetails() {
+<span class="nc" id="L229">		return instrumentDetails;</span>
+	}
+
+	public String getChallanVoucherNum() {
+<span class="nc bnc" id="L233" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">			return receipHeaderReferenceObj.getChallan().getVoucherHeader() == null ? null</span>
+<span class="nc" id="L235">					: receipHeaderReferenceObj.getChallan().getVoucherHeader().getVoucherNumber();</span>
+		else
+<span class="nc bnc" id="L237" title="All 2 branches missed.">			return receiptHeader.getChallan().getVoucherHeader() == null ? null</span>
+<span class="nc" id="L238">					: receiptHeader.getChallan().getVoucherHeader().getVoucherNumber();</span>
+
+	}
+
+	/**
+	 * @return The service name for this receipt
+	 */
+	public String getChallanServiceName() {
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		if (receiptHeader.getChallan() == null)</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">			return receipHeaderReferenceObj.getChallan().getService() == null ? null</span>
+<span class="nc" id="L248">					: receipHeaderReferenceObj.getChallan().getService();</span>
+		else
+<span class="nc bnc" id="L250" title="All 2 branches missed.">			return receiptHeader.getChallan().getService() == null ? null</span>
+<span class="nc" id="L251">					: receiptHeader.getChallan().getService();</span>
+
+	}
+
+	/**
+	 * @return receipt instrument type
+	 */
+	public String getReceiptInstrumentType() {
+<span class="nc" id="L259">		String instrumentType = &quot;&quot;;</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">		for (final ReceiptInstrumentInfo instrumentInfo : instrumentDetails)</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			if (instrumentInfo.getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_CHEQUE)</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">					|| instrumentInfo.getInstrumentType().equals(CollectionConstants.INSTRUMENTTYPE_DD)) {</span>
+<span class="nc" id="L263">				instrumentType = CollectionConstants.INSTRUMENTTYPE_CHEQUEORDD;</span>
+<span class="nc" id="L264">				break;</span>
+			} else
+<span class="nc" id="L266">				instrumentType = instrumentInfo.getInstrumentType();</span>
+<span class="nc" id="L267">		return instrumentType;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

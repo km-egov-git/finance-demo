@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AjaxBankRemittanceAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.receipts</a> &gt; <span class="el_source">AjaxBankRemittanceAction.java</span></div><h1>AjaxBankRemittanceAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.receipts;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.Bankbranch;
+import org.egov.commons.Fund;
+import org.egov.commons.dao.BankBranchHibernateDAO;
+import org.egov.commons.dao.BankaccountHibernateDAO;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.commons.service.FundService;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infstr.models.ServiceDetails;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.pims.commons.Designation;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({
+        @Result(name = AjaxBankRemittanceAction.BANKBRANCHLIST, location = &quot;ajaxBankRemittance-bankBranchList.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.ACCOUNTLIST, location = &quot;ajaxBankRemittance-accountList.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.USERLIST, location = &quot;ajaxBankRemittance-userList.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.DESIGNATIONLIST, location = &quot;ajaxBankRemittance-designationList.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.SERVICENAMELIST, location = &quot;ajaxBankRemittance-serviceListOfAccount.jsp&quot;),
+        @Result(name = AjaxBankRemittanceAction.BANKACCOUNTLIST, location = &quot;ajaxBankRemittance-bankAccountList.jsp&quot;) })
+<span class="nc" id="L88">public class AjaxBankRemittanceAction extends BaseFormAction {</span>
+    private static final long serialVersionUID = 1L;
+    protected static final String BANKBRANCHLIST = &quot;bankBranchList&quot;;
+    protected static final String ACCOUNTLIST = &quot;accountList&quot;;
+    protected static final String BANKACCOUNTLIST = &quot;bankAccountList&quot;;
+    private String serviceName;
+    private String fundName;
+    protected static final String USERLIST = &quot;userList&quot;;
+    protected static final String DESIGNATIONLIST = &quot;designationList&quot;;
+    private Long designationId;
+    private Long approverDeptId;
+<span class="nc" id="L99">    private List&lt;EmployeeView&gt; postionUserList = new ArrayList&lt;EmployeeView&gt;(0);</span>
+<span class="nc" id="L100">    private final List&lt;Designation&gt; designationMasterList = new ArrayList&lt;Designation&gt;(0);</span>
+    private CollectionsUtil collectionsUtil;
+    protected static final String SERVICENAMELIST = &quot;serviceNameList&quot;;
+    @Autowired
+    private BankBranchHibernateDAO bankBranchHibernateDAO;
+    @Autowired
+    private BankaccountHibernateDAO bankaccountHibernateDAO;
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    @Autowired
+    private FundService fundService;
+    private PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService;
+
+    /**
+     * A &lt;code&gt;Long&lt;/code&gt; representing the fund id. The fund id is arriving from the miscellanoeus receipt screen
+     */
+    private Integer fundId;
+    private Integer branchId;
+    private Integer bankAccountId;
+    private String serviceId;
+    private Integer bankId;
+<span class="nc" id="L121">    private List&lt;Bankbranch&gt; bankBranchArrayList = new ArrayList&lt;Bankbranch&gt;(0);</span>
+    private List&lt;Bankaccount&gt; bankAccountArrayList;
+    private List&lt;ServiceDetails&gt; serviceNameList;
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-bankBranchList&quot;)
+    public String bankBranchList() {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (getFundId() != null) {</span>
+<span class="nc" id="L128">            final Fund fund = (Fund) persistenceService.find(&quot;from Fund where id=?&quot;, fundId);</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            if (fund == null)</span>
+<span class="nc" id="L130">                throw new ValidationException(Arrays.asList(new ValidationError(&quot;fund.not.found&quot;,</span>
+                        &quot;Fund information not available&quot;)));
+<span class="nc" id="L132">            setFundName(fund.getName());</span>
+        }
+<span class="nc bnc" id="L134" title="All 8 branches missed.">        if (serviceName == null &amp;&amp; serviceId != null &amp;&amp; !serviceId.isEmpty() &amp;&amp; !serviceId.equalsIgnoreCase(&quot;-1&quot;)) {</span>
+<span class="nc" id="L135">            List&lt;BusinessDetails&gt; bds = microserviceUtils.getBusinessDetailsByCode(serviceId);</span>
+<span class="nc" id="L136">            setServiceName(bds.get(0).getName());</span>
+        }
+<span class="nc" id="L138">        final String bankBranchQueryString = &quot;select distinct(bb.id) as branchid,b.NAME||'-'||bb.BRANCHNAME as branchname from BANK b,BANKBRANCH bb, BANKACCOUNT ba,&quot;</span>
+                + &quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd,FUND fd where asm.bankaccount=ba.ID and asm.servicedetails=sd.ID and &quot;
+                + &quot;ba.BRANCHID=bb.ID and bb.BANKID=b.ID and fd.ID=ba.FUNDID and sd.NAME='&quot;
+                + serviceName
+<span class="nc" id="L142">                + &quot;' and fd.NAME='&quot; + getFundName() + &quot;'&quot;;</span>
+
+<span class="nc" id="L144">        final Query bankBranchQuery = persistenceService.getSession().createSQLQuery(bankBranchQueryString);</span>
+<span class="nc" id="L145">        final List&lt;Object[]&gt; queryResults = bankBranchQuery.list();</span>
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResults.size(); i++) {</span>
+<span class="nc" id="L148">            final Object[] arrayObjectInitialIndex = queryResults.get(i);</span>
+<span class="nc" id="L149">            final Bankbranch newBankbranch = new Bankbranch();</span>
+<span class="nc" id="L150">            newBankbranch.setId(Integer.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L151">            newBankbranch.setBranchname(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L152">            bankBranchArrayList.add(newBankbranch);</span>
+        }
+<span class="nc" id="L154">        return BANKBRANCHLIST;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-bankBranchListOfService&quot;)
+    public String bankBranchListOfService() {
+        String bankBranchQueryString;
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (collectionsUtil.isBankCollectionRemitter(collectionsUtil.getLoggedInUser()))</span>
+<span class="nc" id="L161">            bankBranchQueryString = &quot;select distinct(bb.id) as branchid,b.NAME||'-'||bb.BRANCHNAME as branchname from BANK b,BANKBRANCH bb, BANKACCOUNT ba,&quot;</span>
+                    + &quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd,FUND fd,EGCL_BRANCHUSER_MAP bu where asm.bankaccount=ba.ID and asm.servicedetails=sd.ID and &quot;
+                    + &quot;ba.BRANCHID=bb.ID and bb.BANKID=b.ID and  bu.isActive=true and bb.id=bu.bankbranch and bu.bankuser=&quot;
+<span class="nc" id="L164">                    + collectionsUtil.getLoggedInUser().getId();</span>
+        else
+<span class="nc" id="L166">            bankBranchQueryString = &quot;select distinct(bb.id) as branchid,b.NAME||'-'||bb.BRANCHNAME as branchname from BANK b,BANKBRANCH bb, BANKACCOUNT ba,&quot;</span>
+                    + &quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd,FUND fd where asm.bankaccount=ba.ID and asm.servicedetails=sd.ID and &quot;
+                    + &quot;ba.BRANCHID=bb.ID and bb.BANKID=b.ID&quot;;
+
+<span class="nc" id="L170">        final Query bankBranchQuery = persistenceService.getSession().createSQLQuery(bankBranchQueryString);</span>
+<span class="nc" id="L171">        final List&lt;Object[]&gt; queryResults = bankBranchQuery.list();</span>
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResults.size(); i++) {</span>
+<span class="nc" id="L174">            final Object[] arrayObjectInitialIndex = queryResults.get(i);</span>
+<span class="nc" id="L175">            final Bankbranch newBankbranch = new Bankbranch();</span>
+<span class="nc" id="L176">            newBankbranch.setId(Integer.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L177">            newBankbranch.setBranchname(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L178">            bankBranchArrayList.add(newBankbranch);</span>
+        }
+<span class="nc" id="L180">        return BANKBRANCHLIST;</span>
+    }
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L185">        return null;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-accountList&quot;)
+    public String accountList() {
+<span class="nc bnc" id="L190" title="All 4 branches missed.">        if (fundId != null &amp;&amp; fundId != -1) {</span>
+<span class="nc" id="L191">            final Fund fund = (Fund) persistenceService.find(&quot;from Fund where id=?&quot;, fundId);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            if (fund == null)</span>
+<span class="nc" id="L193">                throw new ValidationException(Arrays.asList(new ValidationError(&quot;fund.not.found&quot;,</span>
+                        &quot;Fund information not available&quot;)));
+<span class="nc" id="L195">            setFundName(fund.getName());</span>
+        }
+<span class="nc bnc" id="L197" title="All 8 branches missed.">        if (serviceName == null &amp;&amp; serviceId != null &amp;&amp; !serviceId.isEmpty() &amp;&amp; !serviceId.equalsIgnoreCase(&quot;-1&quot;)) {</span>
+<span class="nc" id="L198">            final ServiceDetails serviceDetails = (ServiceDetails) persistenceService.find(</span>
+                    &quot;from ServiceDetails where id=?&quot;, serviceId);
+<span class="nc" id="L200">            setServiceName(serviceDetails.getName());</span>
+        }
+<span class="nc" id="L202">        final String bankAccountQueryString = &quot;select ba.id as accountid,ba.accountnumber as accountnumber from BANKACCOUNT ba,&quot;</span>
+                + &quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd,FUND fd where asm.BANKACCOUNT=ba.ID and asm.servicedetails=sd.ID and fd.ID=ba.FUNDID and &quot;
+                + &quot;ba.BRANCHID=&quot; + branchId + &quot; and sd.NAME='&quot; + serviceName + &quot;' and fd.NAME='&quot; + fundName + &quot;'&quot;;
+
+<span class="nc" id="L206">        final Query bankAccountQuery = persistenceService.getSession().createSQLQuery(bankAccountQueryString);</span>
+<span class="nc" id="L207">        final List&lt;Object[]&gt; queryResults = bankAccountQuery.list();</span>
+
+<span class="nc" id="L209">        bankAccountArrayList = new ArrayList&lt;Bankaccount&gt;();</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResults.size(); i++) {</span>
+<span class="nc" id="L211">            final Object[] arrayObjectInitialIndex = queryResults.get(i);</span>
+<span class="nc" id="L212">            final Bankaccount newBankaccount = new Bankaccount();</span>
+<span class="nc" id="L213">            newBankaccount.setId(Long.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L214">            newBankaccount.setAccountnumber(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L215">            getBankAccountArrayList().add(newBankaccount);</span>
+        }
+
+<span class="nc" id="L218">        return ACCOUNTLIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-accountListOfService&quot;)
+    public String accountListOfService() {
+<span class="nc" id="L224">        final String bankAccountQueryString = &quot;select distinct ba.id as accountid,ba.accountnumber as accountnumber from BANKACCOUNT ba,&quot;</span>
+                + &quot;EGCL_BANKACCOUNTSERVICEMAPPING asm,EGCL_SERVICEDETAILS sd,FUND fd where asm.BANKACCOUNT=ba.ID and asm.servicedetails=sd.ID and fd.ID=ba.FUNDID and &quot;
+                + &quot;ba.BRANCHID=&quot; + branchId;
+
+<span class="nc" id="L228">        final Query bankAccountQuery = persistenceService.getSession().createSQLQuery(bankAccountQueryString);</span>
+<span class="nc" id="L229">        final List&lt;Object[]&gt; queryResults = bankAccountQuery.list();</span>
+
+<span class="nc" id="L231">        bankAccountArrayList = new ArrayList&lt;Bankaccount&gt;();</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResults.size(); i++) {</span>
+<span class="nc" id="L233">            final Object[] arrayObjectInitialIndex = queryResults.get(i);</span>
+<span class="nc" id="L234">            final Bankaccount newBankaccount = new Bankaccount();</span>
+<span class="nc" id="L235">            newBankaccount.setId(Long.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L236">            newBankaccount.setAccountnumber(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L237">            getBankAccountArrayList().add(newBankaccount);</span>
+        }
+
+<span class="nc" id="L240">        return ACCOUNTLIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-serviceListOfAccount&quot;)
+    public String serviceListOfAccount() {
+<span class="nc" id="L246">        final String serviceAccountQueryString = &quot;select sd.id as serviceid,sd.name as servicename from EGCL_SERVICEDETAILS sd,EGCL_BANKACCOUNTSERVICEMAPPING asm where sd.id=asm.servicedetails and asm.bankaccount=&quot;</span>
+                + bankAccountId;
+<span class="nc" id="L248">        final Query serviceListQuery = persistenceService.getSession().createSQLQuery(serviceAccountQueryString);</span>
+<span class="nc" id="L249">        final List&lt;Object[]&gt; queryResults = serviceListQuery.list();</span>
+
+<span class="nc" id="L251">        serviceNameList = new ArrayList&lt;ServiceDetails&gt;();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResults.size(); i++) {</span>
+<span class="nc" id="L253">            final Object[] arrayObjectInitialIndex = queryResults.get(i);</span>
+<span class="nc" id="L254">            final ServiceDetails newServiceNameList = new ServiceDetails();</span>
+<span class="nc" id="L255">            newServiceNameList.setId(Long.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L256">            newServiceNameList.setName(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L257">            getServiceNameList().add(newServiceNameList);</span>
+        }
+
+<span class="nc" id="L260">        return SERVICENAMELIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-positionUserList&quot;)
+    public String positionUserList() {
+<span class="nc bnc" id="L266" title="All 4 branches missed.">        if (designationId != null &amp;&amp; approverDeptId != null)</span>
+            try {
+<span class="nc" id="L268">                postionUserList = collectionsUtil.getPositionBySearchParameters(null, designationId.intValue(),</span>
+<span class="nc" id="L269">                        approverDeptId.intValue(), null, null, new Date(), 0);</span>
+<span class="nc" id="L270">            } catch (final NoSuchObjectException e) {</span>
+<span class="nc" id="L271">                throw new ApplicationRuntimeException(&quot;Designation Postion not found&quot;, e);</span>
+<span class="nc" id="L272">            }</span>
+<span class="nc" id="L273">        return USERLIST;</span>
+
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-serviceListNotMappedToAccount&quot;)
+    public String serviceListNotMappedToAccount() {
+<span class="nc" id="L279">        final String serviceAccountQueryString = &quot;select distinct sd from ServiceDetails sd where sd.isEnabled='true' and sd.serviceCategory.id=? &quot;;</span>
+<span class="nc" id="L280">        final Query serviceListQuery = persistenceService.getSession().createQuery(serviceAccountQueryString);</span>
+<span class="nc" id="L281">        serviceListQuery.setParameter(0, serviceId);</span>
+<span class="nc" id="L282">        serviceNameList = serviceListQuery.list();</span>
+<span class="nc" id="L283">        return SERVICENAMELIST;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-bankBranchsByBankForReceiptPayments&quot;)
+    public String bankBranchsByBankForReceiptPayments() {
+<span class="nc" id="L288">        bankBranchArrayList = bankBranchHibernateDAO.getAllBankBranchsByBankForReceiptPayments(bankId);</span>
+<span class="nc" id="L289">        return BANKBRANCHLIST;</span>
+    }
+
+    @Action(value = &quot;/receipts/ajaxBankRemittance-bankAccountByBankBranch&quot;)
+    public String bankAccountByBankBranch() {
+        //TODO : We need to filter out the account based on fund which is mapped to the service
+//        if (serviceId != null &amp;&amp; !serviceId.isEmpty() &amp;&amp; !serviceId.equalsIgnoreCase(&quot;-1&quot;)) {
+//            List&lt;BusinessDetails&gt; bds = microserviceUtils.getBusinessDetailsByCode(serviceId);
+//            Fund fund = null;
+//            if (bds.get(0).getFund() != null) {
+//                fund = fundService.findByCode(bds.get(0).getFund());
+//            }
+//            fundId = fund != null ? fund.getId() : null;
+//        }
+<span class="nc" id="L303">        bankAccountArrayList = bankaccountHibernateDAO.getBankAccountByBankBranchForReceiptsPayments(branchId, fundId);</span>
+<span class="nc" id="L304">        return BANKACCOUNTLIST;</span>
+    }
+
+    /**
+     * @param serviceName the serviceName to set
+     */
+    public void setServiceName(final String serviceName) {
+<span class="nc" id="L311">        this.serviceName = serviceName;</span>
+<span class="nc" id="L312">    }</span>
+
+    /**
+     * @param branchId the branchId to set
+     */
+    public void setBranchId(final Integer branchId) {
+<span class="nc" id="L318">        this.branchId = branchId;</span>
+<span class="nc" id="L319">    }</span>
+
+    /**
+     * @return the bankBranchArrayListList
+     */
+    public List getBankBranchArrayList() {
+<span class="nc" id="L325">        return bankBranchArrayList;</span>
+    }
+
+    /**
+     * @return the serviceName
+     */
+    public String getServiceName() {
+<span class="nc" id="L332">        return serviceName;</span>
+    }
+
+    /**
+     * @return the bankAccountArrayList
+     */
+    public List&lt;Bankaccount&gt; getBankAccountArrayList() {
+<span class="nc" id="L339">        return bankAccountArrayList;</span>
+    }
+
+    public List&lt;ServiceDetails&gt; getServiceNameList() {
+<span class="nc" id="L343">        return serviceNameList;</span>
+    }
+
+    public void setServiceNameList(final List&lt;ServiceDetails&gt; serviceNameList) {
+<span class="nc" id="L347">        this.serviceNameList = serviceNameList;</span>
+<span class="nc" id="L348">    }</span>
+
+    /**
+     * @return the fundName
+     */
+    public String getFundName() {
+<span class="nc" id="L354">        return fundName;</span>
+    }
+
+    /**
+     * @param fundName the fundName to set
+     */
+    public void setFundName(final String fundName) {
+<span class="nc" id="L361">        this.fundName = fundName;</span>
+<span class="nc" id="L362">    }</span>
+
+    public Integer getFundId() {
+<span class="nc" id="L365">        return fundId;</span>
+    }
+
+    public void setFundId(final Integer fundId) {
+<span class="nc" id="L369">        this.fundId = fundId;</span>
+<span class="nc" id="L370">    }</span>
+
+    /**
+     * @param designationId the designationId to set
+     */
+    public void setDesignationId(final Long designationId) {
+<span class="nc" id="L376">        this.designationId = designationId;</span>
+<span class="nc" id="L377">    }</span>
+
+    /**
+     * @return the approverDeptId
+     */
+    public Long getApproverDeptId() {
+<span class="nc" id="L383">        return approverDeptId;</span>
+    }
+
+    /**
+     * @param approverDeptId the approverDeptId to set
+     */
+    public void setApproverDeptId(final Long approverDeptId) {
+<span class="nc" id="L390">        this.approverDeptId = approverDeptId;</span>
+<span class="nc" id="L391">    }</span>
+
+    /**
+     * @return the postionUserList
+     */
+    public List&lt;EmployeeView&gt; getPostionUserList() {
+<span class="nc" id="L397">        return postionUserList;</span>
+    }
+
+    /**
+     * @return the designationMasterList
+     */
+    public List&lt;Designation&gt; getDesignationMasterList() {
+<span class="nc" id="L404">        return designationMasterList;</span>
+    }
+
+    /**
+     * @param collectionsUtil the collectionsUtil to set
+     */
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L411">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L412">    }</span>
+
+    public Integer getBankAccountId() {
+<span class="nc" id="L415">        return bankAccountId;</span>
+    }
+
+    public void setBankAccountId(final Integer bankAccountId) {
+<span class="nc" id="L419">        this.bankAccountId = bankAccountId;</span>
+<span class="nc" id="L420">    }</span>
+
+    public String getServiceId() {
+<span class="nc" id="L423">        return serviceId;</span>
+    }
+
+    public void setServiceId(final String serviceId) {
+<span class="nc" id="L427">        this.serviceId = serviceId;</span>
+<span class="nc" id="L428">    }</span>
+
+    public Integer getBankId() {
+<span class="nc" id="L431">        return bankId;</span>
+    }
+
+    public void setBankId(final Integer bankId) {
+<span class="nc" id="L435">        this.bankId = bankId;</span>
+<span class="nc" id="L436">    }</span>
+
+    public void setServiceDetailsService(PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService) {
+<span class="nc" id="L439">        this.serviceDetailsService = serviceDetailsService;</span>
+<span class="nc" id="L440">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

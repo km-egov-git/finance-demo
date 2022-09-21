@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersonalInformationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.service</a> &gt; <span class="el_source">PersonalInformationService.java</span></div><h1>PersonalInformationService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.service;
+
+import org.egov.commons.EgwStatus;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.service.EntityTypeService;
+import org.egov.commons.utils.EntityType;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.persistence.utils.Page;
+import org.egov.infra.script.service.ScriptService;
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.pims.model.PersonalInformation;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 
+ * @author DivyaShree
+ *
+ */
+public class PersonalInformationService extends PersistenceService&lt;PersonalInformation, Integer&gt; implements EntityTypeService 
+{
+	//named query tags
+	private static final String ACTIVEEMPSBYLOGGEDINUSER=&quot;EMPVIEW-ACTIVE-EMPS-BYLOGGEDINUSER&quot;;
+<span class="nc" id="L91">	private final String PERSONALINFOBYIDS=&quot;PERSONALINFO-BYIDS&quot;;</span>
+<span class="nc" id="L92">	private final String PERSONALINFOEMPCODESTARTSWITH=&quot;PERSONALINFO-EMPCODE-STARTSWITH&quot;;</span>
+<span class="nc" id="L93">	private final String EMPVIEWBYLOGGEDINUSER=&quot;EMPVIEW-EMPS-BYLOGGEDINUSER&quot;;</span>
+<span class="nc" id="L94">	private final String EMPVIEWDEPTIDSLOGGEDINUSER=&quot;EMPVIEW-DEPTIDS-LOGGEDINUSER&quot;;</span>
+	private static final String EMPVIEWACTIVEEMPS=&quot;EMPVIEW-ACTIVE-EMPS&quot;; 
+	private static final String EMPVIEWEMPSLASTASSPRD=&quot;EMPVIEW-EMPS-LASTASSPRD&quot;;
+
+	public PersonalInformationService() {
+<span class="nc" id="L99">		super(PersonalInformation.class);</span>
+<span class="nc" id="L100">	}</span>
+
+	public PersonalInformationService(Class&lt;PersonalInformation&gt; type) {
+<span class="nc" id="L103">		super(type);</span>
+<span class="nc" id="L104">	}</span>
+
+	@PersistenceContext
+	private EntityManager entityManager;
+	
+	@Autowired
+	private AppConfigValueService appConfigValuesService;
+
+	@Autowired
+	private EgwStatusHibernateDAO egwStatusHibernateDAO;
+    
+	public Session  getCurrentSession() {
+<span class="nc" id="L116">		return entityManager.unwrap(Session.class);</span>
+	}
+	private ScriptService scriptService;
+
+	public ScriptService getScriptService() {
+<span class="nc" id="L121">		return scriptService;</span>
+	}
+
+	public void setScriptService(ScriptService scriptService) {
+<span class="nc" id="L125">		this.scriptService = scriptService;</span>
+<span class="nc" id="L126">	}</span>
+
+
+	/**
+	 * since it is mapped to only one AccountDetailType -creditor it ignores the input parameter
+	 */
+	public List&lt;EntityType&gt; getAllActiveEntities(Integer employeeId) {
+<span class="nc" id="L133">		List&lt;EntityType&gt; entities=new ArrayList&lt;EntityType&gt;();</span>
+<span class="nc" id="L134">		entities.addAll(findAllByNamedQuery(&quot;ACTIVE_EMPLOYEES&quot;));</span>
+<span class="nc" id="L135">		return entities;</span>
+	}
+
+	public List&lt;EntityType&gt; filterActiveEntities(String filterKey, int maxRecords, Integer accountDetailTypeId) {
+<span class="nc bnc" id="L139" title="All 2 branches missed.">		Integer pageSize = (maxRecords &gt; 0 ? maxRecords : null);</span>
+<span class="nc" id="L140">		List&lt;EntityType&gt; entities=new ArrayList&lt;EntityType&gt;();</span>
+<span class="nc" id="L141">		Page pg = findPageByNamedQuery(&quot;ACTIVE_EMPLOYEES_STARTSWITH&quot;, 0, pageSize,filterKey + &quot;%&quot; ,filterKey + &quot;%&quot;);</span>
+<span class="nc" id="L142">		entities.addAll(pg.getList());</span>
+<span class="nc" id="L143">		return entities;</span>
+	}
+
+	/**
+	 * when filterbydept set to yes return employee list based on the login user who has the current assignment  
+	 * when filterbydept set to no return all employee list  who has the assignment in the current/last assignment 
+	 * @param userid
+	 * @param autoValue
+	 * @param maxRecords 
+	 * @return employee list
+	 */
+	public List&lt;PersonalInformation&gt; getActiveEmpListByUserLogin(Integer userid,String autoValue,int maxRecords)
+	{
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		Integer pageSize = (maxRecords &gt; 0 ? maxRecords : null);</span>
+<span class="nc" id="L157">		autoValue=(autoValue+&quot;%&quot;);</span>
+<span class="nc" id="L158">		String filterByDept = appConfigValuesService.getAppConfigValue(&quot;EIS-PAYROLL&quot;,&quot;FILTERBYDEPT&quot;,&quot;false&quot;);</span>
+
+<span class="nc bnc" id="L160" title="All 4 branches missed.">		if(filterByDept!=null &amp;&amp; filterByDept.toUpperCase().equals(&quot;YES&quot;))</span>
+		{    	
+<span class="nc" id="L162">			List deptIdList=getDeptsForLoggedInUser(userid);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">			if(deptIdList.isEmpty())</span>
+<span class="nc" id="L164">				return Collections.emptyList();</span>
+<span class="nc" id="L165">			List&lt;PersonalInformation&gt; personalinfoIdList=findPageByNamedQuery(ACTIVEEMPSBYLOGGEDINUSER, 0, maxRecords,autoValue,deptIdList).getList();</span>
+<span class="nc" id="L166">			return personalinfoIdList;</span>
+		}
+		else
+		{
+<span class="nc" id="L170">			return findPageByNamedQuery(EMPVIEWACTIVEEMPS, 0,pageSize,autoValue).getList();</span>
+			//return findAllByNamedQuery(PERSONALINFOEMPCODESTARTSWITH,autoValue);
+		}	
+
+
+	}
+	/**
+	 * return employee list based on the login user who has the assignment in the current period/MaxFromdate
+	 * @param userid
+	 * @param autoValue
+	 * @param maxRecords 
+	 * @return employee list
+	 */
+	public List&lt;PersonalInformation&gt; getEmpListByUserLogin(Integer userid,String autoValue,int maxRecords)
+	{
+<span class="nc bnc" id="L185" title="All 2 branches missed.">		Integer pageSize = (maxRecords &gt; 0 ? maxRecords : null);</span>
+<span class="nc" id="L186">		autoValue=(autoValue+&quot;%&quot;);</span>
+<span class="nc" id="L187">		String filterByDept = appConfigValuesService.getAppConfigValue(&quot;EIS-PAYROLL&quot;,&quot;FILTERBYDEPT&quot;,&quot;false&quot;);</span>
+
+<span class="nc bnc" id="L189" title="All 4 branches missed.">		if(filterByDept!=null &amp;&amp; filterByDept.toUpperCase().equals(&quot;YES&quot;))</span>
+		{   
+<span class="nc" id="L191">			List deptIdList=getDeptsForLoggedInUser(userid);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">			if(deptIdList.isEmpty())</span>
+<span class="nc" id="L193">				return Collections.emptyList();</span>
+
+<span class="nc" id="L195">			List personalinfoIdList=findPageByNamedQuery(EMPVIEWBYLOGGEDINUSER, 0, pageSize,autoValue,autoValue,deptIdList).getList();</span>
+<span class="nc" id="L196">			return personalinfoIdList;</span>
+		}
+		else
+		{
+<span class="nc" id="L200">			return findPageByNamedQuery(EMPVIEWEMPSLASTASSPRD,0,pageSize,autoValue,autoValue).getList();</span>
+		}	
+
+
+	}
+	/**
+	 * Its applicable only when 'isfiltebydept' is set to yes 
+	 * returns the departments for the logged in user dept ,if he/she is HOD then includes those departments as well
+	 * @param userId
+	 * @return DepartmentLsit of ids
+	 */
+	private List getDeptsForLoggedInUser(Integer userId){
+<span class="nc" id="L212">		List&lt;BigDecimal&gt; deptList=	findPageByNamedQuery(EMPVIEWDEPTIDSLOGGEDINUSER, 0,null,userId,userId).getList();</span>
+<span class="nc" id="L213">		List&lt;Integer&gt; deptListInt=new ArrayList&lt;Integer&gt;();</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">		for(BigDecimal deptId:deptList)</span>
+		{ 
+<span class="nc bnc" id="L216" title="All 2 branches missed.">			if(deptId!=null)</span>
+			{
+<span class="nc" id="L218">				deptListInt.add(deptId.intValue());</span>
+			}
+<span class="nc" id="L220">		}</span>
+<span class="nc" id="L221">		return deptListInt;</span>
+	}
+
+
+	public List&lt;EmployeeView&gt; getAllActiveEmployeesEmpViewByPrimaryAssignment(String filterKey, int maxRecords)
+	{
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		Integer pageSize = (maxRecords &gt; 0 ? maxRecords : null);</span>
+<span class="nc" id="L228">		List&lt;EmployeeView&gt; personalInfEntities=new ArrayList&lt;EmployeeView&gt;();</span>
+<span class="nc" id="L229">		Page pg = findPageByNamedQuery(&quot;ALLACTIVE-EMPS-EMPVIEW&quot;, 0,pageSize,filterKey + &quot;%&quot;);</span>
+<span class="nc" id="L230">		personalInfEntities.addAll(pg.getList());</span>
+<span class="nc" id="L231">		return personalInfEntities;</span>
+	}
+
+
+	/**
+	 * Returns List of Employees for the given status  and
+	 * Date range considered for the status['Retired','Deceased'] and as of toDate for the status[ 'Employed','Suspended' ]
+	 * @param statusid 
+	 * @param fromDate
+	 * @param toDate
+	 * @return
+	 */
+	public  List&lt;PersonalInformation&gt; getEmployeesByStatus(Integer statusid ,Date fromDate,Date toDate){
+		List&lt;PersonalInformation&gt; employeeList ; 
+<span class="nc" id="L245">		Criteria criteria=null;</span>
+
+		try
+		{
+<span class="nc" id="L249">			criteria=getCriteriaForEmpSearchByStatus(statusid,fromDate,toDate);	</span>
+<span class="nc" id="L250">			employeeList= criteria.list();</span>
+
+<span class="nc" id="L252">		} catch (HibernateException he) {</span>
+<span class="nc" id="L253">			throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he);</span>
+<span class="nc" id="L254">		} catch (Exception he) {</span>
+<span class="nc" id="L255">			throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he);</span>
+
+<span class="nc" id="L257">		}</span>
+<span class="nc" id="L258">		return employeeList;</span>
+	}
+	/**
+	 * Returns Page  for the given status  and
+	 * Date range considered for the status['Retired','Deceased'] and as of toDate for the status[ 'Employed','Suspended' ]
+	 * @param statusid 
+	 * @param fromDate
+	 * @param toDate
+	 * @param pageNumber
+	 * @param pageSize
+	 * @return
+	 */
+	public  Page getEmployeesByStatus(Integer statusid ,Date fromDate,Date toDate,Integer pageNumber,Integer pageSize){
+
+<span class="nc" id="L272">		Criteria criteria=null;			</span>
+<span class="nc" id="L273">		criteria=getCriteriaForEmpSearchByStatus(statusid,fromDate,toDate);				</span>
+<span class="nc" id="L274">		return new Page(criteria,pageNumber,pageSize);</span>
+
+	}
+	/**
+	 * Returns total record count  for the given status  and
+	 * Date range considered for the status['Retired','Deceased'] and as of toDate for the status[ 'Employed','Suspended' ]
+	 * @param statusid 
+	 * @param fromDate
+	 * @param toDate
+	 * @return
+	 */
+	public  int getTotalCountOfEmployeesByStatus(Integer statusid ,Date fromDate,Date toDate){
+<span class="nc" id="L286">		Criteria criteria=null;</span>
+<span class="nc" id="L287">		int totalSize=0;</span>
+		try
+		{
+
+<span class="nc" id="L291">			criteria=getCriteriaForEmpSearchByStatus(statusid,fromDate,toDate);	</span>
+
+<span class="nc" id="L293">			criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY); </span>
+<span class="nc" id="L294">			criteria.setProjection(Projections.rowCount());</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">			if(criteria.uniqueResult()!=null)</span>
+			{
+<span class="nc" id="L297">				totalSize=((Long)criteria.uniqueResult()).intValue();</span>
+			}
+<span class="nc" id="L299">		} catch (HibernateException he) {</span>
+<span class="nc" id="L300">			throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he);</span>
+<span class="nc" id="L301">		} catch (Exception he) {</span>
+<span class="nc" id="L302">			throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he);</span>
+
+<span class="nc" id="L304">		}</span>
+<span class="nc" id="L305">		return totalSize;</span>
+	}
+
+	private Criteria getCriteriaForEmpSearchByStatus(Integer statusid ,Date fromDate,Date toDate)
+	{
+<span class="nc" id="L310">		EgwStatus egwStatus=egwStatusHibernateDAO.findById(statusid,false);</span>
+<span class="nc" id="L311">		DetachedCriteria detachCriteriaPersonalInfo=DetachedCriteria.forClass(PersonalInformation.class,&quot;emp&quot;);</span>
+<span class="nc bnc" id="L312" title="All 4 branches missed.">		if(egwStatus.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; egwStatus.getDescription().equalsIgnoreCase(&quot;Employed&quot;))</span>
+		{
+<span class="nc" id="L314">			detachCriteriaPersonalInfo.createAlias(&quot;emp.egpimsAssignment&quot;, &quot;assPrd&quot;).</span>
+<span class="nc" id="L315">			add(Restrictions.and(Restrictions.le(&quot;assPrd.fromDate&quot;, toDate), Restrictions.or(Restrictions.ge(&quot;assPrd.toDate&quot;, toDate), Restrictions.isNull(&quot;assPrd.toDate&quot;)) ));</span>
+
+
+		}
+<span class="nc bnc" id="L319" title="All 4 branches missed.">		else if(egwStatus.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; egwStatus.getDescription().equalsIgnoreCase(&quot;Retired&quot;))</span>
+		{
+<span class="nc" id="L321">			detachCriteriaPersonalInfo.add(Restrictions.between(&quot;emp.retirementDate&quot;, fromDate, toDate));				</span>
+
+		}
+<span class="nc bnc" id="L324" title="All 4 branches missed.">		else if(egwStatus.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; egwStatus.getDescription().equalsIgnoreCase(&quot;Deceased&quot;))</span>
+		{
+<span class="nc" id="L326">			detachCriteriaPersonalInfo.add(Restrictions.between(&quot;emp.deathDate&quot;, fromDate, toDate));</span>
+		}
+<span class="nc" id="L328">		return detachCriteriaPersonalInfo.getExecutableCriteria(getCurrentSession());	</span>
+	}
+	
+	/**
+	 * This API returns the list of EmployeeView objects which have a current assignment or
+	 * assignment as on date based on the parameters in the map.
+	 * @param criteriaParams - HashMap&lt;String,Object&gt; where the following keys are supported:-
+	 * &quot;departmentId&quot; 	- Pass the id of the department to restrict the employees to
+	 * &quot;designationId&quot;  - Pass the id of the designation to restrict the resultset
+	 * &quot;isPrimary&quot;      - Possible values &quot;Y&quot; or &quot;N&quot;. If &quot;Y&quot;, then only employees with 
+	 * 					Primary assignment will be returned. If &quot;N&quot; only employees with 
+	 * 					temporary assignment is returned. If this key is not present in the map,
+	 * 					employees with both temporary as well as primary assignments are returned.
+	 * &quot;asOnDate&quot;		- Value should be the date for which the employees need to have an
+	 * 					assignment. If this key is not passed, employeed that have an assignment
+	 * 					as of today will be returned.
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	public List&lt;EmployeeView&gt; getListOfEmployeeViewBasedOnCriteria(HashMap&lt;String,Object&gt; criteriaParams, Integer pageNo, Integer pageSize) {
+		
+<span class="nc" id="L350">		List&lt;EmployeeView&gt; employeeList = new ArrayList&lt;EmployeeView&gt;();</span>
+		try {
+<span class="nc" id="L352">			Criteria criteria=getCurrentSession().createCriteria(EmployeeView.class);</span>
+			Date asOnDate;
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			for (Map.Entry&lt;String, Object&gt; entry : criteriaParams.entrySet())</span>
+			{
+<span class="nc bnc" id="L356" title="All 2 branches missed.">				if (&quot;departmentId&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L357">					criteria.createAlias(&quot;deptId&quot;,&quot;department&quot;)</span>
+<span class="nc" id="L358">					.add(Restrictions.eq(&quot;department.id&quot;,entry.getValue() ));</span>
+				}
+<span class="nc bnc" id="L360" title="All 2 branches missed.">				if (&quot;designationId&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L361">					criteria.createAlias(&quot;desigId&quot;,&quot;designation&quot;)</span>
+<span class="nc" id="L362">					.add(Restrictions.eq(&quot;designation.designationId&quot;,entry.getValue() ));</span>
+				}
+<span class="nc bnc" id="L364" title="All 2 branches missed.">				if (&quot;isPrimary&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L365">					criteria.add(Restrictions.eq(&quot;isPrimary&quot;,entry.getValue() ));</span>
+				}
+<span class="nc bnc" id="L367" title="All 2 branches missed.">				if (&quot;asOnDate&quot;.equals(entry.getKey())) </span>
+<span class="nc" id="L368">					asOnDate = (Date)entry.getValue();</span>
+				else
+<span class="nc" id="L370">					asOnDate = DateUtils.today();</span>
+<span class="nc" id="L371">				criteria.add(Restrictions.and(Restrictions.le(&quot;fromDate&quot;,asOnDate), Restrictions.ge(&quot;toDate&quot;,asOnDate)));</span>
+
+				
+<span class="nc" id="L374">			}</span>
+<span class="nc" id="L375">			criteria.addOrder(Order.asc(&quot;id&quot;));</span>
+<span class="nc" id="L376">			employeeList = new Page(criteria, pageNo, pageSize).getList();</span>
+<span class="nc" id="L377">		} catch (Exception e) {</span>
+<span class="nc" id="L378">			throw new ApplicationRuntimeException(&quot;Error occured in searching for employees&quot;,e);</span>
+<span class="nc" id="L379">		}</span>
+		
+<span class="nc" id="L381">		return employeeList;</span>
+	}
+	/**
+	 * This API returns the list of EmployeeView objects which have a current assignment or
+	 * assignment as on date based on the parameters in the map.
+	 * @param criteriaParams - HashMap&lt;String,Object&gt; where the following keys are supported:-
+	 * &quot;departmentId&quot; 	- Pass the List of id of the department to restrict the employees to
+	 * &quot;designationId&quot;  - Pass the id of the designation to restrict the resultset
+	 * &quot;isPrimary&quot;      - Possible values &quot;Y&quot; or &quot;N&quot;. If &quot;Y&quot;, then only employees with 
+	 * 					Primary assignment will be returned. If &quot;N&quot; only employees with 
+	 * 					temporary assignment is returned. If this key is not present in the map,
+	 * 					employees with both temporary as well as primary assignments are returned.
+	 * &quot;employeeName&quot; 	- Pass employee name.
+	 * &quot;employeeCode&quot; 	- Pass employee codes as list.		 
+	 * &quot;isActive&quot; 	    - Pass Integer Value either 0 or 1.	 * 
+	 * &quot;asOnDate&quot;		- Value should be the date for which the employees need to have an
+	 * 					assignment. If this key is not passed, employeed that have an assignment
+	 * 					as of today will be returned.
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	
+public List&lt;EmployeeView&gt; getListOfEmployeeViewBasedOnListOfDesignationAndOtherCriteria(HashMap&lt;String,Object&gt; criteriaParams, Integer pageNo, Integer pageSize) {
+		
+<span class="nc" id="L406">		List&lt;EmployeeView&gt; employeeList = new ArrayList&lt;EmployeeView&gt;();</span>
+		try {
+<span class="nc" id="L408">			Criteria criteria=getCurrentSession().createCriteria(EmployeeView.class);</span>
+			Date asOnDate;
+<span class="nc bnc" id="L410" title="All 2 branches missed.">			for (Map.Entry&lt;String, Object&gt; entry : criteriaParams.entrySet())</span>
+			{
+<span class="nc bnc" id="L412" title="All 2 branches missed.">				if (&quot;departmentId&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L413">					criteria.createAlias(&quot;deptId&quot;,&quot;department&quot;)</span>
+<span class="nc" id="L414">					.add(Restrictions.eq(&quot;department.id&quot;,entry.getValue() ));</span>
+				}
+<span class="nc bnc" id="L416" title="All 2 branches missed.">				if (&quot;designationId&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L417">					criteria.createAlias(&quot;desigId&quot;,&quot;designation&quot;)</span>
+<span class="nc" id="L418">					.add(Restrictions.in(&quot;designation.designationId&quot;,(List&lt;Integer&gt;) entry.getValue()));</span>
+				}
+<span class="nc bnc" id="L420" title="All 2 branches missed.">				if (&quot;isPrimary&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L421">					criteria.add(Restrictions.eq(&quot;isPrimary&quot;,entry.getValue() ));</span>
+				}
+<span class="nc bnc" id="L423" title="All 6 branches missed.">				if(&quot;employeeName&quot;.equals(entry.getKey()) &amp;&amp; entry.getValue()!=null &amp;&amp; !&quot;&quot;.equals(entry.getValue()))</span>
+				{
+<span class="nc" id="L425">					criteria.add(Restrictions.ilike(&quot;employeeName&quot;,entry.getValue().toString() ,org.hibernate.criterion.MatchMode.ANYWHERE));</span>
+				}
+<span class="nc bnc" id="L427" title="All 6 branches missed.">				if(&quot;isActive&quot;.equals(entry.getKey()) &amp;&amp; entry.getValue()!=null &amp;&amp; !&quot;&quot;.equals(entry.getValue()))</span>
+				{
+<span class="nc" id="L429">					criteria.add(Restrictions.eq(&quot;isActive&quot;,Integer.valueOf(entry.getValue().toString())));</span>
+				}
+<span class="nc bnc" id="L431" title="All 2 branches missed.">				if (&quot;employeeCode&quot;.equals(entry.getKey())) {</span>
+<span class="nc" id="L432">					criteria.add(Restrictions.in(&quot;employeeCode&quot;,(List&lt;String&gt;) entry.getValue()));</span>
+				}
+				
+<span class="nc bnc" id="L435" title="All 2 branches missed.">				if (&quot;asOnDate&quot;.equals(entry.getKey())) </span>
+<span class="nc" id="L436">					asOnDate = (Date)entry.getValue();</span>
+				else
+<span class="nc" id="L438">					asOnDate = DateUtils.today();</span>
+<span class="nc" id="L439">				criteria.add(Restrictions.and(Restrictions.le(&quot;fromDate&quot;,asOnDate), Restrictions.ge(&quot;toDate&quot;,asOnDate)));</span>
+
+				
+<span class="nc" id="L442">			}</span>
+<span class="nc" id="L443">			criteria.addOrder(Order.asc(&quot;id&quot;));</span>
+<span class="nc" id="L444">			employeeList = new Page(criteria, pageNo, pageSize).getList();</span>
+<span class="nc" id="L445">		} catch (Exception e) {</span>
+<span class="nc" id="L446">			throw new ApplicationRuntimeException(&quot;Error occured in searching for employees&quot;,e);</span>
+<span class="nc" id="L447">		}</span>
+		
+<span class="nc" id="L449">		return employeeList;</span>
+	}
+	@Override
+	public List getAssetCodesForProjectCode(Integer accountdetailkey)
+			throws ValidationException {
+
+<span class="nc" id="L455">		return null;</span>
+	}
+	@Override
+	public List&lt;? extends EntityType&gt; validateEntityForRTGS(List&lt;Long&gt; idsList)
+			throws ValidationException {
+
+<span class="nc" id="L461">		return null;</span>
+	}
+	@Override
+	public List&lt;? extends EntityType&gt; getEntitiesById(List&lt;Long&gt; idsList)
+			throws ValidationException {
+
+<span class="nc" id="L467">		return null;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

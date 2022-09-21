@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EisCommonsServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.commons.service</a> &gt; <span class="el_source">EisCommonsServiceImpl.java</span></div><h1>EisCommonsServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.commons.service;
+
+import org.apache.log4j.Logger;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.egov.pims.commons.dao.PositionMasterDAO;
+import org.egov.pims.dao.PersonalInformationHibernateDAO;
+import org.egov.pims.model.PersonalInformation;
+import org.egov.pims.utils.EisManagersUtill;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.type.IntegerType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+/**
+ * @author Venkatesh.M.J
+ * @version 1.2
+ * @since 1.2
+ */
+@Service(&quot;eisCommonsService&quot;)
+<span class="nc" id="L81">public class EisCommonsServiceImpl implements EisCommonsService {</span>
+
+
+<span class="nc" id="L84">	private static final Logger logger = Logger.getLogger(EisCommonsServiceImpl.class);</span>
+	@Autowired
+	private UserService userService;
+	
+	@Autowired
+	private PositionMasterDAO positionMasterDAO;
+	
+	@Autowired
+	private PersonalInformationHibernateDAO pimsDao;
+	
+	@Autowired
+        private AppConfigValueService appConfigValuesService;
+    
+    @PersistenceContext
+	private EntityManager entityManager;
+    
+	public Session  getCurrentSession() {
+<span class="nc" id="L101">		return entityManager.unwrap(Session.class);</span>
+	}
+
+	public  void updatePosition(Position position)
+	{
+		try
+		{
+<span class="nc" id="L108">			positionMasterDAO.updatePosition(position);</span>
+		}
+<span class="nc" id="L110">		catch(Exception e)</span>
+		{
+			
+<span class="nc" id="L113">			throw new ApplicationRuntimeException(&quot;Exception in deleting Installment.&quot;+e.getMessage(),e);</span>
+<span class="nc" id="L114">		}</span>
+
+<span class="nc" id="L116">	}</span>
+	public  Position getPositionById(Integer positionId)
+
+	{
+<span class="nc" id="L120">		Position pos = null;</span>
+<span class="nc" id="L121">		logger.info(&quot;InsidegetPositionById :  positionId=&quot;+positionId);</span>
+		try
+		{
+<span class="nc bnc" id="L124" title="All 2 branches missed.">			if(positionId != null)</span>
+			{
+<span class="nc" id="L126">				pos = positionMasterDAO.getPosition(positionId);</span>
+			}
+<span class="nc" id="L128">			return pos;</span>
+		}
+<span class="nc" id="L130">		catch(Exception e)</span>
+		{
+			
+<span class="nc" id="L133">			throw new ApplicationRuntimeException(&quot;Exception in deleting Installment.&quot;+e.getMessage(),e);</span>
+		}
+
+	}
+
+    public  Position getPositionByUserId(Long userId)
+    {
+
+<span class="nc" id="L141">		Position userPosition = null;</span>
+		
+<span class="nc" id="L143">		Date currentDate = new Date();</span>
+		try
+		{
+
+<span class="nc" id="L147">			String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L148">			mainStr = &quot; select POS_ID from EG_EIS_EMPLOYEEINFO ev where ev.USER_ID = :userid and ((ev.to_Date is null and ev.from_Date &lt;= :thisDate ) &quot; +</span>
+					&quot; OR (ev.from_Date &lt;= :thisDate AND ev.to_Date &gt;= :thisDate)) and ev.IS_PRIMARY ='Y'&quot;;
+<span class="nc" id="L150">			Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;POS_ID&quot;, IntegerType.INSTANCE);</span>
+<span class="nc" id="L151">			qry.setLong(&quot;userid&quot;, userId);</span>
+<span class="nc" id="L152">			qry.setDate(&quot;thisDate&quot;, currentDate);</span>
+<span class="nc" id="L153">			List retList = qry.list();</span>
+<span class="nc bnc" id="L154" title="All 4 branches missed.">			if(retList!=null &amp;&amp; !retList.isEmpty())</span>
+			{
+<span class="nc" id="L156">				Integer posId = null;</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">				for(Iterator iter = retList.iterator();iter.hasNext();)</span>
+				{
+<span class="nc" id="L159">					posId = (Integer)iter.next();</span>
+				}
+<span class="nc bnc" id="L161" title="All 2 branches missed.">				if (posId != null)</span>
+				{
+<span class="nc" id="L163">					userPosition = getPositionById(posId);</span>
+				}
+			}
+		}
+<span class="nc" id="L167">		catch (HibernateException he) {</span>
+				
+<span class="nc" id="L169">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L170">			} catch (Exception he)</span>
+			{
+<span class="nc" id="L172">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L173">			}</span>
+<span class="nc" id="L174">			return userPosition;</span>
+ 
+    }
+
+	public Position getPositionForUserByIdAndDate(Integer userId, Date assignDate)
+	{
+<span class="nc" id="L180">		Position userPosition = null;</span>
+		//PersonalInformation personalInformation = new PersonalInformation();
+		try
+		{
+
+<span class="nc" id="L185">			String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L186">			mainStr = &quot; select POS_ID from EG_EIS_EMPLOYEEINFO ev where ev.USER_ID = :userid and ((ev.to_Date is null and ev.from_Date &lt;= :thisDate ) OR (ev.from_Date &lt;= :thisDate AND ev.to_Date &gt; :thisDate))&quot;;</span>
+<span class="nc" id="L187">			Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;POS_ID&quot;, IntegerType.INSTANCE);</span>
+<span class="nc" id="L188">			qry.setInteger (&quot;userid&quot;, userId);</span>
+<span class="nc" id="L189">			qry.setDate(&quot;thisDate&quot;, assignDate);</span>
+<span class="nc" id="L190">			List retList = qry.list();</span>
+<span class="nc bnc" id="L191" title="All 4 branches missed.">			if(retList!=null &amp;&amp; !retList.isEmpty())</span>
+			{
+<span class="nc" id="L193">				Integer posId = null;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">				for(Iterator iter = retList.iterator();iter.hasNext();)</span>
+				{
+<span class="nc" id="L196">					posId = (Integer)iter.next();</span>
+				}
+<span class="nc bnc" id="L198" title="All 2 branches missed.">				if (posId != null)</span>
+				{
+<span class="nc" id="L200">					userPosition = getPositionById(posId);</span>
+				}
+			}
+		}
+<span class="nc" id="L204">		catch (HibernateException he) {</span>
+<span class="nc" id="L205">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L206">			} catch (Exception he)</span>
+			{
+<span class="nc" id="L208">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L209">			}</span>
+<span class="nc" id="L210">			return userPosition;</span>
+
+	}
+
+	public User getUserforPosition(Position pos)
+	{
+<span class="nc" id="L216">		User uerImpl= null;</span>
+		
+		try
+		{
+			
+<span class="nc" id="L221">		    String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L222">			mainStr = &quot; select 	USER_ID  from EG_EIS_EMPLOYEEINFO ev  where ev.POS_ID = :pos and ((ev.to_Date is null and ev.from_Date &lt;= SYSDATE ) OR (ev.from_Date &lt;= SYSDATE AND ev.to_Date &gt; SYSDATE))&quot;;</span>
+<span class="nc" id="L223">			Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;USER_ID&quot;, IntegerType.INSTANCE);</span>
+
+<span class="nc bnc" id="L225" title="All 2 branches missed.">			if(pos != null)</span>
+			{
+<span class="nc" id="L227">				qry.setEntity(&quot;pos&quot;, pos);</span>
+			}
+<span class="nc bnc" id="L229" title="All 4 branches missed.">			if(qry.list()!=null&amp;&amp;!qry.list().isEmpty())</span>
+			{
+<span class="nc bnc" id="L231" title="All 2 branches missed.">				for(Iterator iter = qry.list().iterator();iter.hasNext();)</span>
+				{
+<span class="nc" id="L233">				    Long userId = (Long)iter.next();</span>
+<span class="nc" id="L234">					uerImpl = userService.getUserById(userId);</span>
+<span class="nc" id="L235">				}</span>
+			}
+		}
+<span class="nc" id="L238">		catch (HibernateException he) {</span>
+<span class="nc" id="L239">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L240">			} catch (Exception he)</span>
+			{
+<span class="nc" id="L242">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L243">			}</span>
+<span class="nc" id="L244">			return uerImpl;</span>
+
+	}
+	
+	public Boolean isEmployeeAutoGenerateCodeYesOrNo()
+	{
+<span class="nc" id="L250">		String employeeAutoGenCodeYesOrNo=appConfigValuesService.getAppConfigValue(&quot;Employee&quot;,&quot;EMPAUTOGENERATECODE&quot;,&quot;no&quot;);</span>
+<span class="nc" id="L251">		boolean autoGenCode = false;</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">		if(&quot;yes&quot;.equalsIgnoreCase(employeeAutoGenCodeYesOrNo))</span>
+		{
+<span class="nc" id="L254">			autoGenCode=true;</span>
+		}
+		
+<span class="nc" id="L257">		return autoGenCode;</span>
+	}
+	 public Boolean checkEmpCode(String empCode)
+	 {
+<span class="nc" id="L261">		 boolean checkEmpCode = false;</span>
+<span class="nc" id="L262">		 Query qry = null;</span>
+		 
+		 try
+		 {
+<span class="nc" id="L266">			String main=&quot;from PersonalInformation where employeeCode=:employeeCode&quot;;</span>
+<span class="nc" id="L267">			qry=getCurrentSession().createQuery(main);</span>
+<span class="nc" id="L268">			qry.setString(&quot;employeeCode&quot;, empCode);</span>
+<span class="nc bnc" id="L269" title="All 4 branches missed.">			if(qry.list()!=null &amp;&amp; !qry.list().isEmpty())</span>
+			{
+<span class="nc" id="L271">				checkEmpCode = true;</span>
+			}
+		 }
+<span class="nc" id="L274">		 catch (HibernateException he) {</span>
+				
+<span class="nc" id="L276">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L277">			} catch (Exception he)</span>
+			{
+				
+<span class="nc" id="L280">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L281">			}</span>
+<span class="nc" id="L282">		 return checkEmpCode;</span>
+	 }
+	 
+	 public  Position getPositionByName(String positionName){
+		 
+		    
+<span class="nc" id="L288">			Query qry = null;</span>
+			try
+			 {
+<span class="nc" id="L291">				String main= &quot;from Position where name=:positionName&quot;;</span>
+<span class="nc" id="L292">				qry=getCurrentSession().createQuery(main);</span>
+<span class="nc bnc" id="L293" title="All 4 branches missed.">				if(positionName!=null &amp;&amp; !positionName.equals(&quot;&quot;))</span>
+				{
+<span class="nc" id="L295">					qry.setString(&quot;positionName&quot;, positionName);</span>
+				}
+				
+<span class="nc" id="L298">				return (Position)qry.uniqueResult();</span>
+				
+			 }
+<span class="nc" id="L301">			 catch (HibernateException he) {</span>
+<span class="nc" id="L302">					throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L303">				} catch (Exception he)</span>
+				{
+<span class="nc" id="L305">					throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+				}
+				
+		 }
+		
+	 /**
+		 * This method returns the current position id  of the user
+		 * 
+		 * @param user the user whose designation is needed.
+		 * 
+		 * 
+		 * @return the position id as integer 
+		 */
+	public Position getCurrentPositionByUser(User user)
+	{
+<span class="nc" id="L320">		Position position = null;</span>
+		try{
+<span class="nc bnc" id="L322" title="All 2 branches missed.">		if (null != user){</span>
+<span class="nc" id="L323">			PersonalInformation personalInfo = EisManagersUtill.getEmployeeService().getEmpForUserId(user.getId());</span>
+<span class="nc" id="L324">			position = EisManagersUtill.getEmployeeService().getPositionforEmp(personalInfo.getIdPersonalInformation());</span>
+			
+		}
+<span class="nc" id="L327">		}catch(Exception e)</span>
+		{
+			
+<span class="nc" id="L330">			throw new ApplicationRuntimeException(&quot;Exception in getCurrentPositionByUser :&quot;+e.getMessage(),e);</span>
+<span class="nc" id="L331">		}</span>
+<span class="nc" id="L332">		return position;</span>
+	}
+	
+	public  User getUserForPosition(Integer posId, Date date)
+	{
+<span class="nc" id="L337">		User user = null;</span>
+		
+		try
+		{
+			
+			
+<span class="nc" id="L343">			String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L344">			mainStr = &quot; select USER_ID from EG_EIS_EMPLOYEEINFO ev where ev.pos_id = :posId and ((ev.to_Date is null and ev.from_Date &lt;= :thisDate ) OR (ev.from_Date &lt;= :thisDate AND ev.to_Date &gt; :thisDate))&quot;;</span>
+<span class="nc" id="L345">			Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;USER_ID&quot;, IntegerType.INSTANCE);</span>
+<span class="nc" id="L346">			qry.setInteger (&quot;posId&quot;, posId);</span>
+<span class="nc" id="L347">			qry.setDate(&quot;thisDate&quot;, date);</span>
+<span class="nc" id="L348">			List retList = qry.list();</span>
+<span class="nc bnc" id="L349" title="All 4 branches missed.">			if(retList!=null &amp;&amp; !retList.isEmpty())</span>
+			{
+<span class="nc" id="L351">			    Long userId = null;</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">				for(Iterator iter = retList.iterator();iter.hasNext();)</span>
+				{
+<span class="nc" id="L354">					userId = (Long)iter.next();</span>
+				}
+<span class="nc bnc" id="L356" title="All 2 branches missed.">				if (userId != null)</span>
+				{
+<span class="nc" id="L358">					user = userService.getUserById(userId);</span>
+				}
+			}
+		}
+<span class="nc" id="L362">		catch (HibernateException he) {</span>
+<span class="nc" id="L363">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L364">			} catch (Exception he)</span>
+			{
+<span class="nc" id="L366">				throw new ApplicationRuntimeException(STR_EXCEPTION + he.getMessage(),he);</span>
+<span class="nc" id="L367">			}</span>
+<span class="nc" id="L368">			return user;</span>
+		
+	}
+	/**
+	 * Api to get unique designation based on dept and functionary
+	 * @param deptId
+	 * @param functionaryId
+	 * @return unique designation from view if dept and functionary is 0
+	 * else based on dept and functionary
+	 * @throws Exception
+	 */
+	 public List&lt;Designation&gt; getDesigantionBasedOnFuncDept(Integer deptId,Integer functionaryId) throws Exception
+		{
+		 	
+			
+<span class="nc" id="L383">			List&lt;EmployeeView&gt; employeeList = null;</span>
+<span class="nc" id="L384">			List&lt;Designation&gt; desgMstr = new ArrayList&lt;Designation&gt;();</span>
+			try
+			{				
+<span class="nc" id="L387">				String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L388">				String subQry = &quot; from EmployeeView ev &quot;;</span>
+<span class="nc bnc" id="L389" title="All 6 branches missed.">				if( ((deptId!=null &amp;&amp; deptId!=0) &amp;&amp; functionaryId==0 ))</span>
+				{
+<span class="nc" id="L391">					subQry+=&quot; where ev.deptId = :deptId &quot;;</span>
+				}
+<span class="nc bnc" id="L393" title="All 6 branches missed.">				else if(( (functionaryId!=null &amp;&amp; functionaryId!=0) &amp;&amp; deptId==0))</span>
+				{
+<span class="nc" id="L395">					subQry+= &quot; where ev.functionary =:functionaryId&quot;;</span>
+				}
+<span class="nc bnc" id="L397" title="All 8 branches missed.">				else if(deptId!=null &amp;&amp; deptId!=0 &amp;&amp; functionaryId!=null &amp;&amp; functionaryId!=0 )</span>
+				{
+<span class="nc" id="L399">					subQry+= &quot; where ev.deptId = :deptId and ev.functionary =:functionaryId&quot;;</span>
+				}
+				
+<span class="nc" id="L402">				subQry=	&quot;select distinct ev.desigId.designationId &quot;+subQry;</span>
+<span class="nc" id="L403">				mainStr =&quot;from Designation dm   where dm.id in( &quot;+subQry+&quot;  ) &quot;; </span>
+					
+<span class="nc" id="L405">				Query query = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L406" title="All 4 branches missed.">				if(deptId!=null &amp;&amp; deptId!=0)</span>
+				{
+<span class="nc" id="L408">					query.setInteger(&quot;deptId&quot;, deptId);</span>
+				}
+				
+<span class="nc bnc" id="L411" title="All 4 branches missed.">				if(functionaryId!=null &amp;&amp; functionaryId!=0)</span>
+				{
+<span class="nc" id="L413">					query.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+				}
+				
+<span class="nc" id="L416">				desgMstr=(List&lt;Designation&gt;)query.list();</span>
+				
+			}
+<span class="nc" id="L419">			catch(Exception e){</span>
+				
+<span class="nc" id="L421">				throw new ApplicationRuntimeException(e.getMessage(),e);</span>
+<span class="nc" id="L422">			}</span>
+<span class="nc" id="L423">			return desgMstr;</span>
+			
+		}
+	 
+	 
+	 
+	/**
+	  * Returning temporary  assigned employee object by department,designation,functionary,date 
+	  * @param deptId
+	  * @param DesigId
+	  * @param functionaryId
+	  * @param onDate
+	  * @return Employee
+	  * @throws Exception 
+	  */
+	 public PersonalInformation getTempAssignedEmployeeByDeptDesigFunctionaryDate(Integer deptId, Integer desigId, Integer functionaryId, Date onDate) throws Exception{
+<span class="nc" id="L439">		 return pimsDao.getTempAssignedEmployeeByDeptDesigFunctionaryDate(deptId, desigId, functionaryId, onDate);</span>
+	 }
+	 
+	 private final static String STR_EXCEPTION=&quot;Exception:&quot;;
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

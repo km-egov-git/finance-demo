@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericMasterDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.dao</a> &gt; <span class="el_source">GenericMasterDAO.java</span></div><h1>GenericMasterDAO.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.dao;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.pims.model.GenericMaster;
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.Serializable;
+/**
+ * @author deepak
+ *
+ */
+@Service
+@Transactional
+<span class="nc" id="L66">public class GenericMasterDAO implements Serializable</span>
+{
+	@PersistenceContext
+	private EntityManager entityManager;
+    
+	public Session  getCurrentSession() {
+<span class="nc" id="L72">		return entityManager.unwrap(Session.class);</span>
+	}
+
+	public void create(GenericMaster genericMaster) 
+	{
+		try
+		{
+<span class="nc" id="L79">			getCurrentSession().save(genericMaster);</span>
+
+		}
+<span class="nc" id="L82">		catch (HibernateException e)</span>
+		{
+			
+<span class="nc" id="L85">			throw  new ApplicationRuntimeException(STR_HIB_EXP+e.getMessage(),e);</span>
+<span class="nc" id="L86">		}</span>
+
+<span class="nc" id="L88">	}</span>
+
+	public void update(GenericMaster genericMaster)
+	{
+		try
+		{
+<span class="nc" id="L94">			getCurrentSession().saveOrUpdate(genericMaster);</span>
+		}
+<span class="nc" id="L96">		catch (HibernateException e)</span>
+		{
+<span class="nc" id="L98">			throw  new ApplicationRuntimeException(STR_HIB_EXP+e.getMessage(),e);</span>
+
+<span class="nc" id="L100">		}</span>
+
+<span class="nc" id="L102">	}</span>
+
+	public void remove(GenericMaster genericMaster)
+	{
+		try
+		{
+<span class="nc" id="L108">			getCurrentSession().delete(genericMaster);</span>
+		}
+<span class="nc" id="L110">		catch (HibernateException e)</span>
+		{
+			
+<span class="nc" id="L113">			throw  new ApplicationRuntimeException(STR_HIB_EXP+e.getMessage(),e);</span>
+
+<span class="nc" id="L115">		}</span>
+
+<span class="nc" id="L117">	}</span>
+
+	public GenericMaster getGenericMaster(int Id,String className)
+	{
+		try
+		{
+<span class="nc" id="L123">			String srt = &quot;org.egov.pims.model.&quot;+className;</span>
+<span class="nc" id="L124">			GenericMaster imp = (GenericMaster)getCurrentSession().get(Class.forName(srt), Integer.valueOf(Id));</span>
+
+<span class="nc" id="L126">			return imp ;</span>
+<span class="nc" id="L127">		}catch (HibernateException e)</span>
+		{
+<span class="nc" id="L129">			throw  new ApplicationRuntimeException(STR_HIB_EXP+e.getMessage(),e);</span>
+
+		}
+<span class="nc" id="L132">		catch (ClassNotFoundException e)</span>
+		{
+				
+<span class="nc" id="L135">			throw  new ApplicationRuntimeException(STR_HIB_EXP+e.getMessage(),e);</span>
+
+		}
+
+
+	}
+	
+	private final static String STR_HIB_EXP = &quot;Hibernate Exception : &quot;;
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

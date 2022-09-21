@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RemittanceSchedulerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.services</a> &gt; <span class="el_source">RemittanceSchedulerService.java</span></div><h1>RemittanceSchedulerService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.services;
+
+import java.util.List;
+import java.util.Map;
+
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.RemittanceInstrument;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.collection.utils.FinancialsUtil;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.CVoucherHeader;
+import org.egov.infra.microservice.models.Instrument;
+import org.egov.infra.microservice.models.TransactionType;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional(readOnly = true)
+@Service
+<span class="nc" id="L71">public class RemittanceSchedulerService {</span>
+
+    @Autowired
+    @Qualifier(&quot;persistenceService&quot;)
+    private PersistenceService persistenceService;
+
+    @Autowired
+    @Qualifier(&quot;remittanceInstrumentService&quot;)
+    private PersistenceService&lt;RemittanceInstrument, Long&gt; remittanceInstrumentService;
+
+    @Autowired
+    private FinancialsUtil financialsUtil;
+
+    @Autowired
+    private CollectionsUtil collectionsUtil;
+
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Transactional
+    public void remittanceInstrumentProcess(final String instrumentType, Integer modulo) {
+<span class="nc" id="L93">        StringBuilder queryString = new StringBuilder(200);</span>
+<span class="nc" id="L94">        queryString</span>
+<span class="nc" id="L95">                .append(&quot;select rt from org.egov.collection.entity.RemittanceInstrument rt where rt.reconciled=false and rt.instrumentHeader.instrumentType.type=:instType&quot;)</span>
+<span class="nc" id="L96">                .append(&quot; and MOD(rt.id, &quot;).append(CollectionConstants.QUARTZ_BULKBILL_JOBS).append(&quot;) = :modulo &quot;);</span>
+<span class="nc" id="L97">        final Query qry = persistenceService.getSession().createQuery(queryString.toString()).setMaxResults(500);</span>
+<span class="nc" id="L98">        qry.setParameter(&quot;instType&quot;, instrumentType);</span>
+<span class="nc" id="L99">        qry.setParameter(&quot;modulo&quot;, modulo);</span>
+<span class="nc" id="L100">        final List&lt;RemittanceInstrument&gt; reconcileList = qry.list();</span>
+<span class="nc" id="L101">        Boolean voucherTypeForChequeDDCard = false;</span>
+<span class="nc" id="L102">        if (collectionsUtil.getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                CollectionConstants.APPCONFIG_VALUE_REMITTANCEVOUCHERTYPEFORCHEQUEDDCARD).equals(</span>
+                        CollectionConstants.FINANCIAL_RECEIPTS_VOUCHERTYPE))
+<span class="nc" id="L105">            voucherTypeForChequeDDCard = true;</span>
+<span class="nc" id="L106">        final Map&lt;String, Object&gt; instrumentDepositMap = financialsUtil.prepareForUpdateInstrumentDepositSQL();</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (!reconcileList.isEmpty())</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">            if (instrumentType.equals(CollectionConstants.INSTRUMENTTYPE_CASH))</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                for (final RemittanceInstrument remittanceInstrument : reconcileList) {</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">                    if (remittanceInstrument.getRemittance().getVoucherHeader().getId() != null) {</span>
+<span class="nc" id="L111">                        final Map&lt;String, Object&gt; cashMap = constructInstrumentMap(instrumentDepositMap,</span>
+<span class="nc" id="L112">                                remittanceInstrument.getRemittance().getBankAccount(),</span>
+<span class="nc" id="L113">                                remittanceInstrument.getInstrument(), remittanceInstrument.getRemittance()</span>
+<span class="nc" id="L114">                                        .getVoucherHeader());</span>
+<span class="nc" id="L115">                        financialsUtil.updateCashDeposit(cashMap, remittanceInstrument.getRemittance()</span>
+<span class="nc" id="L116">                                .getVoucherHeader(), remittanceInstrument.getInstrumentHeader(), remittanceInstrument</span>
+<span class="nc" id="L117">                                        .getRemittance().getBankAccount());</span>
+                    }
+<span class="nc" id="L119">                    remittanceInstrument.setReconciled(Boolean.TRUE);</span>
+<span class="nc" id="L120">                    remittanceInstrumentService.persist(remittanceInstrument);</span>
+<span class="nc" id="L121">                }</span>
+            else
+<span class="nc bnc" id="L123" title="All 2 branches missed.">                for (final RemittanceInstrument bankRemit : reconcileList) {</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                    if (bankRemit.getRemittance().getVoucherHeader().getId() != null) {</span>
+<span class="nc" id="L125">                        final Map&lt;String, Object&gt; chequeMap = constructInstrumentMap(instrumentDepositMap, bankRemit</span>
+<span class="nc" id="L126">                                .getRemittance().getBankAccount(), bankRemit.getInstrument(), bankRemit</span>
+<span class="nc" id="L127">                                        .getRemittance().getVoucherHeader());</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">                        if (voucherTypeForChequeDDCard)</span>
+<span class="nc" id="L129">                            financialsUtil.updateCheque_DD_Card_Deposit_Receipt(chequeMap);</span>
+                        else
+<span class="nc" id="L131">                            financialsUtil.updateCheque_DD_Card_Deposit(chequeMap, bankRemit.getRemittance()</span>
+<span class="nc" id="L132">                                    .getVoucherHeader(), bankRemit.getInstrumentHeader(), bankRemit.getRemittance()</span>
+<span class="nc" id="L133">                                            .getBankAccount());</span>
+                    }
+<span class="nc" id="L135">                    bankRemit.setReconciled(Boolean.TRUE);</span>
+<span class="nc" id="L136">                    remittanceInstrumentService.persist(bankRemit);</span>
+<span class="nc" id="L137">                }</span>
+<span class="nc" id="L138">    }</span>
+
+    public Map&lt;String, Object&gt; constructInstrumentMap(final Map&lt;String, Object&gt; instrumentDepositMap,
+            final Bankaccount bankaccount, final Instrument instrumentHeader, final CVoucherHeader voucherHeader) {
+
+<span class="nc" id="L143">        List&lt;Instrument&gt; instruments = microserviceUtils.getInstruments(instrumentHeader.getId().toString());</span>
+
+<span class="nc" id="L145">        instrumentDepositMap.put(&quot;instrumentheader&quot;, instrumentHeader.getId());</span>
+<span class="nc" id="L146">        instrumentDepositMap.put(&quot;bankaccountid&quot;, bankaccount.getId());</span>
+<span class="nc" id="L147">        instrumentDepositMap.put(&quot;bankaccountNumber&quot;, bankaccount.getAccountnumber());</span>
+<span class="nc" id="L148">        instrumentDepositMap.put(&quot;instrumentamount&quot;, instrumentHeader.getAmount());</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        instrumentDepositMap.put(&quot;instrumenttype&quot;,</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                (instruments != null &amp;&amp; !instruments.isEmpty()) ? instruments.get(0).getInstrumentType().getName() : &quot;&quot;);</span>
+<span class="nc" id="L151">        instrumentDepositMap.put(&quot;depositdate&quot;, voucherHeader.getVoucherDate());</span>
+<span class="nc" id="L152">        instrumentDepositMap.put(&quot;createdby&quot;, voucherHeader.getCreatedBy());</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        instrumentDepositMap.put(&quot;ispaycheque&quot;, (instrumentHeader.getTransactionType() != null</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                &amp;&amp; TransactionType.Debit.equals(instrumentHeader.getTransactionType())) ? &quot;0&quot; : &quot;1&quot;);</span>
+<span class="nc" id="L155">        instrumentDepositMap.put(&quot;payinid&quot;, voucherHeader.getId());</span>
+<span class="nc" id="L156">        return instrumentDepositMap;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

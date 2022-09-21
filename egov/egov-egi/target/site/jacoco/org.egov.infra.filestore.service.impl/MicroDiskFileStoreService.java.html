@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MicroDiskFileStoreService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.filestore.service.impl</a> &gt; <span class="el_source">MicroDiskFileStoreService.java</span></div><h1>MicroDiskFileStoreService.java</h1><pre class="source lang-java linenums">package org.egov.infra.filestore.service.impl;
+
+import static java.io.File.separator;
+import static java.util.UUID.randomUUID;
+import static org.apache.commons.io.FileUtils.getUserDirectoryPath;
+import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getCityCode;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.filestore.entity.FileStoreMapper;
+import org.egov.infra.filestore.service.FileStoreService;
+import org.egov.infra.microservice.models.FileReq;
+import org.egov.infra.microservice.models.StorageResponse;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+@Component(&quot;microDiskFileStoreService&quot;)
+public class MicroDiskFileStoreService implements FileStoreService {
+
+<span class="nc" id="L41">    private static final Logger LOG = getLogger(MicroDiskFileStoreService.class);</span>
+    private static final String FILE_STORE_ERROR = &quot;Error occurred while storing files at %s/%s/%s&quot;;
+
+    private String fileStoreBaseDir;
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+
+    @Autowired
+<span class="nc" id="L49">    public MicroDiskFileStoreService(@Value(&quot;${filestore.base.dir}&quot;) String fileStoreBaseDir) {</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (fileStoreBaseDir.isEmpty())</span>
+<span class="nc" id="L51">            this.fileStoreBaseDir = getUserDirectoryPath() + separator + &quot;egovfilestore&quot;;</span>
+        else
+<span class="nc" id="L53">            this.fileStoreBaseDir = fileStoreBaseDir;</span>
+<span class="nc" id="L54">    }</span>
+
+    @Override
+    public FileStoreMapper store(File sourceFile, String fileName, String mimeType, String moduleName) {
+<span class="nc" id="L58">        return store(sourceFile, fileName, mimeType, moduleName, true);</span>
+    }
+
+    public FileStoreMapper store(List&lt;MultipartFile&gt; files, String fileName, String mimeType, String moduleName) {
+<span class="nc" id="L62">        return storeFiles(files, fileName, mimeType, moduleName, true);</span>
+    }
+
+    public FileStoreMapper storeFiles(List&lt;MultipartFile&gt; files, InputStream sourceFileStream, String fileName,
+            String mimeType, String moduleName) {
+<span class="nc" id="L67">        return storeFiles(files, sourceFileStream, fileName, mimeType, moduleName, true);</span>
+    }
+
+    @Override
+    public FileStoreMapper store(InputStream sourceFileStream, String fileName, String mimeType, String moduleName) {
+<span class="nc" id="L72">        return store(sourceFileStream, fileName, mimeType, moduleName, true);</span>
+    }
+
+    @Override
+    public FileStoreMapper store(byte[] fileBytes, String fileName, String mimeType, String moduleName) {
+        try {
+<span class="nc" id="L78">            FileStoreMapper fileMapper = new FileStoreMapper(randomUUID().toString(), fileName);</span>
+<span class="nc" id="L79">            fileMapper.setContentType(mimeType);</span>
+<span class="nc" id="L80">            Path newFilePath = this.createNewFilePath(fileMapper, moduleName);</span>
+<span class="nc" id="L81">            Files.write(newFilePath, fileBytes);</span>
+<span class="nc" id="L82">            return fileMapper;</span>
+<span class="nc" id="L83">        } catch (IOException e) {</span>
+<span class="nc" id="L84">            throw new ApplicationRuntimeException(</span>
+<span class="nc" id="L85">                    String.format(FILE_STORE_ERROR, fileStoreBaseDir, getCityCode(), moduleName), e);</span>
+        }
+    }
+
+    public FileStoreMapper storeFiles(List&lt;MultipartFile&gt; files, InputStream fileStream, String fileName,
+            String mimeType, String moduleName, boolean closeStream) {
+        try {
+<span class="nc" id="L92">            StorageResponse storageRes = microserviceUtils.getFileStorageService(files, moduleName);</span>
+<span class="nc" id="L93">            FileStoreMapper fileMapper = null;</span>
+<span class="nc" id="L94">            List&lt;FileReq&gt; filesList = storageRes.getFiles();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            for (FileReq filesId : filesList) {</span>
+<span class="nc" id="L96">                fileMapper = new FileStoreMapper(filesId.getFileStoreId(), fileName);</span>
+<span class="nc" id="L97">                fileMapper.setContentType(mimeType);</span>
+<span class="nc" id="L98">            }</span>
+
+<span class="nc" id="L100">            return fileMapper;</span>
+<span class="nc" id="L101">        } catch (IOException e) {</span>
+<span class="nc" id="L102">            throw new ApplicationRuntimeException(String.format(FILE_STORE_ERROR, getCityCode(), moduleName), e);</span>
+        }
+
+    }
+
+    @Override
+    public FileStoreMapper store(File file, String fileName, String mimeType, String moduleName, boolean deleteFile) {
+        try {
+<span class="nc" id="L110">            String probeContentType = mimeType;</span>
+<span class="nc" id="L111">            String name = fileName;</span>
+<span class="nc" id="L112">            int length = (int) file.length();</span>
+<span class="nc" id="L113">            File parentFile = file.getParentFile();</span>
+    
+<span class="nc" id="L115">            DiskFileItem fileItem = new DiskFileItem(&quot;budgetInXls&quot;,probeContentType, false, name, length, parentFile);</span>
+<span class="nc" id="L116">            InputStream inputs =  new FileInputStream(file);</span>
+<span class="nc" id="L117">            OutputStream os = fileItem.getOutputStream();</span>
+<span class="nc" id="L118">            int ret = inputs.read();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            while ( ret != -1 )</span>
+            {
+<span class="nc" id="L121">                os.write(ret);</span>
+<span class="nc" id="L122">                ret = inputs.read();</span>
+            }
+<span class="nc" id="L124">            os.flush();</span>
+<span class="nc" id="L125">            MultipartFile multipartFile = new CommonsMultipartFile(fileItem);</span>
+<span class="nc" id="L126">            FileStoreMapper fileStoreMapper = storeFiles(Arrays.asList(multipartFile),</span>
+                    name,
+                    mimeType, moduleName,false);
+<span class="nc" id="L129">            return fileStoreMapper;</span>
+<span class="nc" id="L130">        } catch (IOException e) {</span>
+<span class="nc" id="L131">            throw new ApplicationRuntimeException(</span>
+<span class="nc" id="L132">                    String.format(FILE_STORE_ERROR, this.fileStoreBaseDir, getCityCode(), moduleName), e);</span>
+        }
+    }
+
+    public FileStoreMapper storeFiles(List&lt;MultipartFile&gt; files, String fileName, String mimeType, String moduleName,
+            boolean deleteFile) {
+        try {
+<span class="nc" id="L139">            StorageResponse storageRes = microserviceUtils.getFileStorageService(files, moduleName);</span>
+<span class="nc" id="L140">            FileStoreMapper fileMapper = null;</span>
+
+<span class="nc" id="L142">            List&lt;FileReq&gt; filesList = storageRes.getFiles();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            for (FileReq filesId : filesList) {</span>
+<span class="nc" id="L144">                fileMapper = new FileStoreMapper(filesId.getFileStoreId(), fileName);</span>
+<span class="nc" id="L145">                fileMapper.setContentType(mimeType);</span>
+<span class="nc" id="L146">            }</span>
+            
+<span class="nc" id="L148">            return fileMapper;</span>
+<span class="nc" id="L149">        } catch (IOException e) {</span>
+<span class="nc" id="L150">            throw new ApplicationRuntimeException(String.format(FILE_STORE_ERROR, getCityCode(), moduleName), e);</span>
+        }
+    }
+
+    @Override
+    public FileStoreMapper store(InputStream fileStream, String fileName, String mimeType, String moduleName,
+            boolean closeStream) {
+        try {          
+<span class="nc" id="L158">            byte[] fileSize = fileName.getBytes();</span>
+<span class="nc" id="L159">            DiskFileItem fileItem = new DiskFileItem(&quot;file&quot;,mimeType, false, fileName, fileSize.length, null);</span>
+<span class="nc" id="L160">            OutputStream os = fileItem.getOutputStream();</span>
+<span class="nc" id="L161">            int ret = fileStream.read();</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            while ( ret != -1 )</span>
+            {
+<span class="nc" id="L164">                os.write(ret);</span>
+<span class="nc" id="L165">                ret = fileStream.read();</span>
+            }
+<span class="nc" id="L167">            os.flush();</span>
+<span class="nc" id="L168">            MultipartFile multipartFile = new CommonsMultipartFile(fileItem);</span>
+<span class="nc" id="L169">            FileStoreMapper fileStoreMapper = storeFiles(Arrays.asList(multipartFile),</span>
+                    fileName,
+                    mimeType, moduleName,false);
+            
+<span class="nc" id="L173">            return fileStoreMapper;</span>
+<span class="nc" id="L174">        } catch (IOException e) {</span>
+<span class="nc" id="L175">            throw new ApplicationRuntimeException(</span>
+<span class="nc" id="L176">                    String.format(FILE_STORE_ERROR, this.fileStoreBaseDir, getCityCode(), moduleName), e);</span>
+        }
+    }
+
+    @Override
+    public File fetch(FileStoreMapper fileMapper, String moduleName) {
+<span class="nc" id="L182">        return this.fetch(fileMapper.getFileStoreId(), moduleName);</span>
+    }
+
+    @Override
+    public Set&lt;File&gt; fetchAll(Set&lt;FileStoreMapper&gt; fileMappers, String moduleName) {
+<span class="nc" id="L187">        return fileMappers.stream().map(fileMapper -&gt; this.fetch(fileMapper.getFileStoreId(), moduleName))</span>
+<span class="nc" id="L188">                .collect(Collectors.toSet());</span>
+    }
+
+    @Override
+    public File fetch(String fileStoreId, String moduleName) {
+<span class="nc" id="L193">        return fetchAsPath(fileStoreId, moduleName).toFile();</span>
+    }
+
+    public File fetchFromDigitFileStoreApi(String fileStoreId) throws IOException {
+<span class="nc" id="L197">        return fetchDigitFilestore(fileStoreId);</span>
+    }
+
+    @Override
+    public Path fetchAsPath(String fileStoreId, String moduleName) {
+//        Path fileDirPath = this.getFileDirectoryPath(moduleName);
+//        if (!fileDirPath.toFile().exists())
+//            throw new ApplicationRuntimeException(String.format(&quot;File Store does not exist at Path : %s/%s/%s&quot;,
+//                    this.fileStoreBaseDir, getCityCode(), moduleName));
+<span class="nc" id="L206">        return this.fetchAsDigitPath(fileStoreId,moduleName);</span>
+    }
+
+    public Path fetchAsDigitPath(String fileStoreId,String moduleName) {
+<span class="nc" id="L210">        ResponseEntity&lt;byte[]&gt; responseEntity = microserviceUtils.fetchFilesFromDigitService(fileStoreId);</span>
+<span class="nc" id="L211">        Path fileDirPath = Paths.get(fileStoreId);</span>
+<span class="nc" id="L212">        Path path = null;</span>
+        try {
+<span class="nc" id="L214">            path = Files.write(fileDirPath, responseEntity.getBody());</span>
+<span class="nc" id="L215">        } catch (IOException e) {</span>
+<span class="nc" id="L216">            e.printStackTrace();</span>
+<span class="nc" id="L217">        }</span>
+<span class="nc" id="L218">        return path;</span>
+
+    }
+
+    public File fetchDigitFilestore(String fileStoreId) throws IOException {
+<span class="nc" id="L223">        ResponseEntity&lt;byte[]&gt; responseEntity = microserviceUtils.fetchFilesFromDigitService(fileStoreId);</span>
+<span class="nc" id="L224">        Path fileDirPath = this.getFileDirectoryPath(&quot;EGF&quot;);</span>
+<span class="nc" id="L225">        Path path = Files.write(Paths.get(fileDirPath + separator + fileStoreId), responseEntity.getBody());</span>
+
+<span class="nc" id="L227">        return path.toFile();</span>
+    }
+
+    @Override
+    public void delete(String fileStoreId, String moduleName) {
+<span class="nc" id="L232">        Path fileDirPath = this.getFileDirectoryPath(moduleName);</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        if (!fileDirPath.toFile().exists()) {</span>
+<span class="nc" id="L234">            Path filePath = this.getFilePath(fileDirPath, fileStoreId);</span>
+            try {
+<span class="nc" id="L236">                Files.deleteIfExists(filePath);</span>
+<span class="nc" id="L237">            } catch (IOException e) {</span>
+<span class="nc" id="L238">                throw new ApplicationRuntimeException(</span>
+<span class="nc" id="L239">                        String.format(&quot;Could not remove document %s&quot;, filePath.getFileName()), e);</span>
+<span class="nc" id="L240">            }</span>
+        }
+<span class="nc" id="L242">    }</span>
+
+    private Path createNewFilePath(FileStoreMapper fileMapper, String moduleName) throws IOException {
+<span class="nc" id="L245">        Path fileDirPath = this.getFileDirectoryPath(moduleName);</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (!fileDirPath.toFile().exists()) {</span>
+<span class="nc" id="L247">            LOG.info(&quot;File Store Directory {}/{}/{} not found, creating one&quot;, this.fileStoreBaseDir, getCityCode(),</span>
+                    moduleName);
+<span class="nc" id="L249">            Files.createDirectories(fileDirPath);</span>
+<span class="nc" id="L250">            LOG.info(&quot;Created File Store Directory {}/{}/{}&quot;, this.fileStoreBaseDir, getCityCode(), moduleName);</span>
+        }
+<span class="nc" id="L252">        return this.getFilePath(fileDirPath, fileMapper.getFileStoreId());</span>
+    }
+
+    private Path getFileDirectoryPath(String moduleName) {
+<span class="nc" id="L256">        return Paths.get(new StringBuilder().append(this.fileStoreBaseDir).append(separator).append(getCityCode())</span>
+<span class="nc" id="L257">                .append(separator).append(moduleName).toString());</span>
+    }
+
+    private Path getFilePath(Path fileDirPath, String fileStoreId) {
+<span class="nc" id="L261">        return Paths.get(fileDirPath + separator + fileStoreId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

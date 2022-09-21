@@ -1,0 +1,4 @@
+org.egov.asset.model
+org.egov.asset.repository
+org.egov.asset.service
+org.egov.asset.utils

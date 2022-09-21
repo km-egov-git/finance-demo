@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PositionMasterService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service</a> &gt; <span class="el_source">PositionMasterService.java</span></div><h1>PositionMasterService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.service;
+
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.repository.PositionHierarchyRepository;
+import org.egov.eis.repository.PositionMasterRepository;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.persistence.utils.PersistenceUtils;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @author Vaibhav.K
+ */
+@Service
+@Transactional(readOnly = true)
+public class PositionMasterService {
+
+    private final PositionMasterRepository positionMasterRepository;
+
+    @Autowired
+    private AssignmentService assignmentService;
+
+    @Autowired
+    private PositionHierarchyRepository positionHierarchyRepository;
+
+    @Autowired
+<span class="nc" id="L84">    public PositionMasterService(final PositionMasterRepository positionMasterRepository) {</span>
+<span class="nc" id="L85">        this.positionMasterRepository = positionMasterRepository;</span>
+<span class="nc" id="L86">    }</span>
+
+    @Transactional
+    public void createPosition(final Position position) {
+<span class="nc" id="L90">        positionMasterRepository.save(position);</span>
+<span class="nc" id="L91">    }</span>
+
+    @Transactional
+    public void updatePosition(final Position position) {
+<span class="nc" id="L95">        positionMasterRepository.save(position);</span>
+<span class="nc" id="L96">    }</span>
+
+    @Transactional
+    public void deletePosition(final Position position) {
+<span class="nc" id="L100">        positionMasterRepository.delete(position);</span>
+<span class="nc" id="L101">    }</span>
+
+    public Position getPositionByName(final String name) {
+<span class="nc" id="L104">        return positionMasterRepository.findByName(name);</span>
+    }
+
+    public Position getPositionById(final Long posId) {
+<span class="nc" id="L108">        return positionMasterRepository.findOne(posId);</span>
+    }
+
+    public List&lt;Position&gt; getAllPositions() {
+<span class="nc" id="L112">        return positionMasterRepository.findAll();</span>
+    }
+
+    public List&lt;Position&gt; getAllPositionsByNameLike(final String name) {
+<span class="nc" id="L116">        return positionMasterRepository.findByNameContainingIgnoreCase(name);</span>
+    }
+
+    public List&lt;Position&gt; getAllPositionsByDeptDesigId(final Long deptDesigId) {
+<span class="nc" id="L120">        return positionMasterRepository.findAllByDeptDesig_Id(deptDesigId);</span>
+    }
+
+    public List&lt;Position&gt; getPositionsForDeptDesigAndName(final Long departmentId, final Long designationId,
+                                                          final Date fromDate, final Date toDate, final String posName) {
+        List&lt;Position&gt; posList;
+<span class="nc" id="L126">        final List&lt;Assignment&gt; assignList = assignmentService.getAssignmentsByDeptDesigAndDates(departmentId,</span>
+                designationId, fromDate, toDate);
+<span class="nc" id="L128">        posList = positionMasterRepository</span>
+<span class="nc" id="L129">                .findByDeptDesig_Department_IdAndDeptDesig_Designation_IdAndNameContainingIgnoreCase(departmentId,</span>
+                        designationId, posName);
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (final Assignment assign : assignList)</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            posList.removeIf(m -&gt; m.getId() == assign.getPosition().getId());</span>
+<span class="nc" id="L133">        return posList;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsForDeptDesigAndNameLike(final Long departmentId, final Long designationId,
+                                                              final String posName) {
+<span class="nc" id="L138">        return positionMasterRepository</span>
+<span class="nc" id="L139">                .findByDeptDesig_Department_IdAndDeptDesig_Designation_IdAndNameContainingIgnoreCase(departmentId,</span>
+                        designationId, posName);
+    }
+
+    public boolean validatePosition(final Position position) {
+<span class="nc bnc" id="L144" title="All 4 branches missed.">        if (position != null &amp;&amp; position.getName() != null) {</span>
+<span class="nc" id="L145">            final List&lt;Position&gt; positionList = positionMasterRepository</span>
+<span class="nc" id="L146">                    .findByNameContainingIgnoreCase(position.getName());</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">            if (!positionList.isEmpty())</span>
+<span class="nc" id="L148">                return false;</span>
+        }
+<span class="nc" id="L150">        return true;</span>
+    }
+
+    public List&lt;Position&gt; getPageOfPositions(final Long departmentId, final Long designationId) {
+
+<span class="nc bnc" id="L155" title="All 4 branches missed.">        if (departmentId != 0 &amp;&amp; designationId != 0)</span>
+<span class="nc" id="L156">            return positionMasterRepository.findPositionBydepartmentAndDesignation(departmentId, designationId);</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        else if (departmentId != 0)</span>
+<span class="nc" id="L158">            return positionMasterRepository.findPositionBydepartment(departmentId);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        else if (designationId != 0)</span>
+<span class="nc" id="L160">            return positionMasterRepository.findPositionByDesignation(designationId);</span>
+        else
+<span class="nc" id="L162">            return positionMasterRepository.findPositionByAll();</span>
+    }
+
+    public List&lt;Position&gt; findByNameContainingIgnoreCase(final String positionName) {
+<span class="nc" id="L166">        return positionMasterRepository.findByNameContainingIgnoreCase(positionName);</span>
+    }
+
+    public Integer getTotalOutSourcedPosts(final Long departmentId, final Long designationId) {
+
+<span class="nc bnc" id="L171" title="All 4 branches missed.">        if (departmentId != 0 &amp;&amp; designationId != 0)</span>
+<span class="nc" id="L172">            return positionMasterRepository.getTotalOutSourcedPostsByDepartmentAndDesignation(departmentId,</span>
+                    designationId);
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        else if (designationId != 0)</span>
+<span class="nc" id="L175">            return positionMasterRepository.getTotalOutSourcedPostsByDesignation(designationId);</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        else if (departmentId != 0)</span>
+<span class="nc" id="L177">            return positionMasterRepository.getTotalOutSourcedPostsByDepartment(departmentId);</span>
+        else
+<span class="nc" id="L179">            return positionMasterRepository.getTotalOutSourcedPosts();</span>
+
+    }
+
+    public Integer getTotalSanctionedPosts(final Long departmentId, final Long designationId) {
+
+<span class="nc bnc" id="L185" title="All 4 branches missed.">        if (departmentId != 0 &amp;&amp; designationId != 0)</span>
+<span class="nc" id="L186">            return positionMasterRepository.getTotalSanctionedPostsByDepartmentAndDesignation(departmentId,</span>
+                    designationId);
+<span class="nc bnc" id="L188" title="All 2 branches missed.">        else if (designationId != 0)</span>
+<span class="nc" id="L189">            return positionMasterRepository.getTotalSanctionedPostsByDesignation(designationId);</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        else if (departmentId != 0)</span>
+<span class="nc" id="L191">            return positionMasterRepository.getTotalSanctionedPostsByDepartment(departmentId);</span>
+        else
+<span class="nc" id="L193">            return positionMasterRepository.getTotalSanctionedPosts();</span>
+
+    }
+
+    public List&lt;Position&gt; getPositionsByDepartmentAndDesignationForGivenRange(final Long departmentId,
+                                                                              final Long designationId, final Date givenDate) {
+
+<span class="nc" id="L200">        final List&lt;Position&gt; positionList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L202">        final List&lt;Assignment&gt; assignmentList = assignmentService</span>
+<span class="nc" id="L203">                .getPositionsByDepartmentAndDesignationForGivenRange(departmentId, designationId, givenDate);</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        for (final Assignment assignmentObj : assignmentList) {</span>
+            //Unproxing position due lazy initialization
+<span class="nc" id="L207">            positionList.add(PersistenceUtils.unproxy(assignmentObj.getPosition()));</span>
+<span class="nc" id="L208">        }</span>
+
+<span class="nc" id="L210">        return positionList;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsByDepartmentAndDesignationId(Long departmentId, Long designationId) {
+<span class="nc" id="L214">        return getPositionsByDepartmentAndDesignationForGivenRange(departmentId, designationId, new Date());</span>
+    }
+
+    public Position getCurrentPositionForUser(final Long userId) {
+<span class="nc" id="L218">        final Assignment assign = assignmentService.getPrimaryAssignmentForEmployee(userId);</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (assign != null)</span>
+<span class="nc" id="L220">            return assign.getPosition();</span>
+<span class="nc" id="L221">        return null;</span>
+    }
+
+    /**
+     * Returns the superior employee position
+     *
+     * @param objectId
+     * @param posId
+     * @return returns position object
+     */
+    public Position getSuperiorPositionByObjectTypeAndPositionFrom(final Integer objectId, final Long posId) {
+<span class="nc" id="L232">        return positionHierarchyRepository.getPositionHierarchyByPosAndObjectType(posId, objectId).getToPosition();</span>
+    }
+
+    /**
+     * Returns the superior employee position
+     *
+     * @param objectId
+     * @param objectSubType
+     * @param posId
+     * @return returns position object
+     */
+    public Position getSuperiorPositionByObjectAndObjectSubTypeAndPositionFrom(final Integer objectId,
+                                                                               final String objectSubType, final Long posId) {
+<span class="nc" id="L245">        return positionHierarchyRepository.getPosHirByPosAndObjectTypeAndObjectSubType(posId, objectId, objectSubType)</span>
+<span class="nc" id="L246">                .getToPosition();</span>
+    }
+
+    /**
+     * Return list of positions of an employee for employee id and given date, if null is passed to given date then it is replaced
+     * with current date
+     *
+     * @param employeeId
+     * @param forDate
+     * @return list of position object
+     */
+    public List&lt;Position&gt; getPositionsForEmployee(final Long employeeId, final Date forDate) {
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        final Date userGivenDate = null == forDate ? new Date() : forDate;</span>
+<span class="nc" id="L259">        final Set&lt;Position&gt; positions = new HashSet&lt;Position&gt;();</span>
+<span class="nc" id="L260">        final List&lt;Assignment&gt; assignments = assignmentService.findByEmployeeAndGivenDate(employeeId, userGivenDate);</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">        for (final Assignment assign : assignments)</span>
+<span class="nc" id="L262">            positions.add(assign.getPosition());</span>
+<span class="nc" id="L263">        return new ArrayList&lt;Position&gt;(positions);</span>
+    }
+
+    /**
+     * Returns list of positions for an employee irrespective of assignment date
+     *
+     * @param empId
+     * @return List of position objects
+     */
+    public List&lt;Position&gt; getPositionsForEmployee(final Long employeeId) {
+<span class="nc" id="L273">        final Set&lt;Position&gt; positions = new HashSet&lt;Position&gt;();</span>
+<span class="nc" id="L274">        final List&lt;Assignment&gt; assignList = assignmentService.getAllAssignmentsByEmpId(employeeId);</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        for (final Assignment assign : assignList)</span>
+<span class="nc" id="L276">            positions.add(assign.getPosition());</span>
+<span class="nc" id="L277">        return new ArrayList&lt;&gt;(positions);</span>
+    }
+
+    public List&lt;Position&gt; getCurrentUserPositions() {
+<span class="nc" id="L281">        return getPositionsForEmployee(ApplicationThreadLocals.getUserId());</span>
+    }
+
+    /**
+     * Returns employee position for user
+     *
+     * @param userId
+     * @return Position object
+     */
+    public Position getPositionByUserId(final Long userId) {
+        Assignment assignment;
+<span class="nc" id="L292">        assignment = assignmentService.getPrimaryAssignmentForUser(userId);</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        if (assignment != null)</span>
+<span class="nc" id="L294">            return assignment.getPosition();</span>
+<span class="nc" id="L295">        return null;</span>
+    }
+
+    /**
+     * Returns primary assignment position for employee id
+     *
+     * @param empId
+     * @return Position object
+     */
+    public Position getPrimaryAssignmentPositionForEmp(final Long empId) {
+<span class="nc" id="L305">        return assignmentService.getPrimaryAssignmentForEmployee(empId).getPosition();</span>
+    }
+
+    public String generatePositionByDeptDesig(final Department department, final Designation designation) {
+
+<span class="nc" id="L310">        String name = department.getCode() + &quot;_&quot; + designation.getCode() + &quot;_&quot;;</span>
+<span class="nc" id="L311">        name += positionMasterRepository.getPositionSerialNumberByName(name) + 1;</span>
+<span class="nc" id="L312">        return name;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsByDepartment(final Long deptId) {
+<span class="nc" id="L316">        final List&lt;Position&gt; positionList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L318">        final List&lt;Assignment&gt; assignmentList = assignmentService.findAssignmentForDepartmentId(deptId);</span>
+
+<span class="nc bnc" id="L320" title="All 2 branches missed.">        for (final Assignment assignmentObj : assignmentList)</span>
+<span class="nc" id="L321">            positionList.add(assignmentObj.getPosition());</span>
+
+<span class="nc" id="L323">        return positionList;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsByDesignation(final Long desigId) {
+<span class="nc" id="L327">        final List&lt;Position&gt; positionList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L329">        final List&lt;Assignment&gt; assignmentList = assignmentService.findAssignmentForDesignationId(desigId);</span>
+
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        for (final Assignment assignmentObj : assignmentList)</span>
+<span class="nc" id="L332">            positionList.add(assignmentObj.getPosition());</span>
+
+<span class="nc" id="L334">        return positionList;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsByDepartmentAndDesignation(final Long deptId, final Long desigId) {
+<span class="nc" id="L338">        final List&lt;Position&gt; positionList = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L340">        final List&lt;Assignment&gt; assignmentList = assignmentService.findByDepartmentAndDesignation(deptId, desigId);</span>
+
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        for (final Assignment assignmentObj : assignmentList)</span>
+<span class="nc" id="L343">            positionList.add(assignmentObj.getPosition());</span>
+
+<span class="nc" id="L345">        return positionList;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

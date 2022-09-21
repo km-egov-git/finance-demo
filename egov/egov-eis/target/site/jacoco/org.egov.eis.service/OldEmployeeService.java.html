@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OldEmployeeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.service</a> &gt; <span class="el_source">OldEmployeeService.java</span></div><h1>OldEmployeeService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.service;
+
+import org.apache.commons.lang3.StringUtils;
+import org.egov.commons.CFunction;
+import org.egov.commons.Functionary;
+import org.egov.commons.Fund;
+import org.egov.commons.service.EntityTypeService;
+import org.egov.commons.utils.EntityType;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.Employee;
+import org.egov.eis.entity.EmployeeSearchDTO;
+import org.egov.eis.entity.HeadOfDepartments;
+import org.egov.eis.entity.Jurisdiction;
+import org.egov.eis.entity.enums.EmployeeStatus;
+import org.egov.eis.repository.AssignmentRepository;
+import org.egov.eis.repository.EmployeeRepository;
+import org.egov.eis.utils.constants.EisConstants;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.repository.UserRepository;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.infra.admin.master.service.DepartmentService;
+import org.egov.infra.admin.master.service.RoleService;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.config.core.EnvironmentSettings;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infra.workflow.service.StateHistoryService;
+import org.egov.infra.workflow.service.StateService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional(readOnly = true)
+public class OldEmployeeService implements EntityTypeService {
+
+    private final EmployeeRepository employeeRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AssignmentRepository assignmentRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EnvironmentSettings environmentSettings;
+
+    @Autowired
+    private BoundaryService boundaryService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private DesignationService designationService;
+
+    @Autowired
+    private AssignmentService assignmentService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private StateService stateService;
+
+    @Autowired
+    private StateHistoryService stateHistoryService;
+
+    @Autowired
+    private PositionMasterService positionMasterService;
+
+    @Autowired
+    private DepartmentService departmentService;
+
+    @Autowired
+<span class="nc" id="L145">    public OldEmployeeService(final EmployeeRepository employeeRepository) {</span>
+<span class="nc" id="L146">        this.employeeRepository = employeeRepository;</span>
+<span class="nc" id="L147">    }</span>
+
+    public Session getCurrentSession() {
+<span class="nc" id="L150">        return entityManager.unwrap(Session.class);</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public List&lt;CFunction&gt; getAllFunctions() {
+<span class="nc" id="L155">        return getCurrentSession()</span>
+<span class="nc" id="L156">                .createQuery(&quot;from CFunction where isactive = true AND isnotleaf=false order by upper(name)&quot;).list();</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public List&lt;Functionary&gt; getAllFunctionaries() {
+<span class="nc" id="L161">        return getCurrentSession().createQuery(&quot;from Functionary where isactive=true order by upper(name)&quot;).list();</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public List&lt;Fund&gt; getAllFunds() {
+<span class="nc" id="L166">        return getCurrentSession()</span>
+<span class="nc" id="L167">                .createQuery(&quot;from Fund where isactive = true and isNotLeaf!=true order by upper(name)&quot;).list();</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public List&lt;Fund&gt; getAllGrades() {
+<span class="nc" id="L172">        return getCurrentSession().createQuery(&quot;from GradeMaster order by name&quot;).list();</span>
+    }
+
+    /**
+     * since it is mapped to only one AccountDetailType -creditor it ignores the input parameter
+     */
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public List&lt;EntityType&gt; getAllActiveEntities(final Integer employeeId) {
+<span class="nc" id="L181">        final List&lt;EntityType&gt; entities = new ArrayList&lt;EntityType&gt;();</span>
+<span class="nc" id="L182">        final List&lt;Employee&gt; employees = getAllEmployees();</span>
+<span class="nc" id="L183">        entities.addAll(employees);</span>
+<span class="nc" id="L184">        return entities;</span>
+    }
+
+    @Transactional
+    public void create(final Employee employee) {
+<span class="nc" id="L189">        employee.updateNextPwdExpiryDate(environmentSettings.userPasswordExpiryInDays());</span>
+
+<span class="nc" id="L191">        employee.setPassword(passwordEncoder.encode(EisConstants.DEFAULT_EMPLOYEE_PWD));</span>
+
+<span class="nc" id="L193">        List&lt;User&gt; user = new ArrayList&lt;User&gt;();</span>
+        // Following is added to prevent null values and empty assignment
+        // objects getting persisted
+<span class="nc" id="L196">        employee.setAssignments(employee.getAssignments().parallelStream()</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                .filter(assignment -&gt; assignment.getPosition() != null).collect(Collectors.toList()));</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        for (final Assignment assign : employee.getAssignments()) {</span>
+<span class="nc" id="L199">            assign.setEmployee(employee);</span>
+<span class="nc" id="L200">            assign.setDepartment(assign.getDepartment());</span>
+
+<span class="nc" id="L202">            final Set&lt;Role&gt; roles = designationService.getRolesByDesignation(assign.getDesignation().getName());</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">            for (final Role role : roles) {</span>
+<span class="nc" id="L204">                user = userService.getUsersByUsernameAndRolename(employee.getUsername(),</span>
+<span class="nc" id="L205">                        roleService.getRoleByName(role.getName()).getName());</span>
+<span class="nc bnc" id="L206" title="All 4 branches missed.">                if (assign.getFromDate().before(new Date()) &amp;&amp; assign.getToDate().after(new Date()))</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">                    if (user.isEmpty() || user == null)</span>
+<span class="nc" id="L208">                        employee.addRole(roleService.getRoleByName(role.getName()));</span>
+<span class="nc" id="L209">            }</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            for (final HeadOfDepartments hod : assign.getDeptSet())</span>
+<span class="nc" id="L211">                hod.setAssignment(assign);</span>
+<span class="nc" id="L212">        }</span>
+<span class="nc" id="L213">        employee.setJurisdictions(employee.getJurisdictions().parallelStream()</span>
+<span class="nc bnc" id="L214" title="All 4 branches missed.">                .filter(Jurisdictions -&gt; Jurisdictions.getBoundaryType() != null &amp;&amp; Jurisdictions.getBoundary() != null)</span>
+<span class="nc" id="L215">                .collect(Collectors.toList()));</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        for (final Jurisdiction jurisdiction : employee.getJurisdictions()) {</span>
+<span class="nc" id="L217">            jurisdiction.setEmployee(employee);</span>
+<span class="nc" id="L218">            jurisdiction.setBoundaryType(jurisdiction.getBoundaryType());</span>
+<span class="nc" id="L219">            jurisdiction.setBoundary(jurisdiction.getBoundary());</span>
+<span class="nc" id="L220">        }</span>
+<span class="nc" id="L221">        employee.getRoles().add(roleService.getRoleByName(EisConstants.ROLE_EMPLOYEE));</span>
+
+<span class="nc" id="L223">        employeeRepository.save(employee);</span>
+<span class="nc" id="L224">    }</span>
+
+    @Transactional
+    public void createEmployeeData(final Employee employee) {
+<span class="nc" id="L228">        employee.updateNextPwdExpiryDate(environmentSettings.userPasswordExpiryInDays());</span>
+<span class="nc" id="L229">        employee.setPassword(passwordEncoder.encode(EisConstants.DEFAULT_EMPLOYEE_PWD));</span>
+<span class="nc" id="L230">        employee.getRoles().add(roleService.getRoleByName(EisConstants.ROLE_EMPLOYEE));</span>
+<span class="nc" id="L231">        employeeRepository.save(employee);</span>
+<span class="nc" id="L232">    }</span>
+
+    @Transactional
+    public void update(final Employee employee) {
+        // Following is added to prevent null values and empty assignment
+        // objects getting persisted
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        for (final Assignment assign : employee.getAssignments()) {</span>
+
+<span class="nc" id="L241">            assign.getDeptSet().clear();</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            for (final HeadOfDepartments hod : assign.getHodList()) {</span>
+<span class="nc" id="L243">                hod.setAssignment(assign);</span>
+<span class="nc" id="L244">                hod.setHod(departmentService.getDepartmentById(hod.getHod().getId()));</span>
+<span class="nc" id="L245">                assign.getDeptSet().add(hod);</span>
+<span class="nc" id="L246">            }</span>
+<span class="nc" id="L247">            assign.setEmployee(employee);</span>
+<span class="nc" id="L248">            assign.setDepartment(assign.getDepartment());</span>
+<span class="nc" id="L249">        }</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        for (final Jurisdiction jurisdiction : employee.getJurisdictions()) {</span>
+<span class="nc" id="L251">            jurisdiction.setEmployee(employee);</span>
+<span class="nc" id="L252">            jurisdiction.setBoundaryType(jurisdiction.getBoundaryType());</span>
+<span class="nc" id="L253">            jurisdiction.setBoundary(jurisdiction.getBoundary());</span>
+<span class="nc" id="L254">        }</span>
+<span class="nc" id="L255">        employeeRepository.saveAndFlush(employee);</span>
+<span class="nc" id="L256">    }</span>
+
+    @Transactional
+    public void updateEmployeeDetails(final Employee employee) {
+<span class="nc" id="L260">        employeeRepository.saveAndFlush(employee);</span>
+<span class="nc" id="L261">    }</span>
+
+    @Transactional
+    public void addOrRemoveUserRole() {
+<span class="nc" id="L265">        final List&lt;Employee&gt; employee = getAllEmployees();</span>
+
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        for (final Employee emp : employee) {</span>
+<span class="nc" id="L268">            final Set&lt;Role&gt; userRole = userService.getRolesByUsername(emp.getUsername());</span>
+
+            // List Of Expired Roles
+<span class="nc" id="L271">            final Set&lt;Role&gt; expiredRoleList = assignmentService.getRolesForExpiredAssignmentsByEmpId(emp.getId());</span>
+            // List Of Active Roles
+<span class="nc" id="L273">            final Set&lt;Role&gt; activeRoleList = assignmentService.getRolesForActiveAssignmentsByEmpId(emp.getId());</span>
+
+            // Remove activeRoles from ExpiredRoles List
+<span class="nc" id="L276">            expiredRoleList.removeAll(activeRoleList);</span>
+
+            // Remove Expired Roles
+<span class="nc" id="L279">            userRole.removeAll(expiredRoleList);</span>
+
+            // Add Roles
+<span class="nc" id="L282">            userRole.addAll(activeRoleList);</span>
+
+<span class="nc" id="L284">            emp.setRoles(userRole);</span>
+<span class="nc" id="L285">            employeeRepository.save(emp);</span>
+<span class="nc" id="L286">        }</span>
+
+<span class="nc" id="L288">    }</span>
+
+    public List&lt;Employee&gt; searchEmployees(final EmployeeSearchDTO searchParams) {
+
+<span class="nc" id="L292">        final StringBuilder queryString = new StringBuilder();</span>
+<span class="nc" id="L293">        queryString.append(&quot;select distinct(assign.employee) from Assignment assign where assign.id is not null &quot;);</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getCode()))</span>
+<span class="nc" id="L295">            queryString.append(&quot; AND assign.employee.code =:code &quot;);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getName()))</span>
+<span class="nc" id="L297">            queryString.append(&quot; AND assign.employee.name like :name &quot;);</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getAadhaar()))</span>
+<span class="nc" id="L299">            queryString.append(&quot; AND assign.employee.aadhaar = :aadhaar&quot;);</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getMobileNumber()))</span>
+<span class="nc" id="L301">            queryString.append(&quot; AND assign.employee.mobileNumber = :mobileNumber&quot;);</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getPan()))</span>
+<span class="nc" id="L303">            queryString.append(&quot; AND assign.employee.pan = :pan&quot;);</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getEmail()))</span>
+<span class="nc" id="L305">            queryString.append(&quot; AND assign.employee.emailId = :email&quot;);</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getStatus()))</span>
+<span class="nc" id="L307">            queryString.append(&quot; AND assign.employee.employeeStatus = :status&quot;);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getEmployeeType()))</span>
+<span class="nc" id="L309">            queryString.append(&quot; AND assign.employee.employeeType.name = :type&quot;);</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (searchParams.getDepartment() != null)</span>
+<span class="nc" id="L311">            queryString.append(&quot; AND assign.department.name =:department &quot;);</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">        if (searchParams.getDesignation() != null)</span>
+<span class="nc" id="L313">            queryString.append(&quot; AND assign.designation.name =:designation &quot;);</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        if (searchParams.getFunctionary() != null)</span>
+<span class="nc" id="L315">            queryString.append(&quot; AND assign.functionary.name =:functionary &quot;);</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (searchParams.getFunction() != null)</span>
+<span class="nc" id="L317">            queryString.append(&quot; AND assign.function.name =:function &quot;);</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (searchParams.getIsHOD())</span>
+<span class="nc" id="L319">            queryString.append(&quot; and assign.id  in (select assignment.id from HeadOfDepartments )&quot;);</span>
+<span class="nc" id="L320">        queryString.append(&quot; Order by assign.employee.code, assign.employee.name &quot;);</span>
+<span class="nc" id="L321">        Query query = entityManager.unwrap(Session.class).createQuery(queryString.toString());</span>
+<span class="nc" id="L322">        query = setParametersToQuery(searchParams, query);</span>
+<span class="nc" id="L323">        final List&lt;Employee&gt; employees = query.list();</span>
+<span class="nc" id="L324">        return employees;</span>
+    }
+
+    public Query setParametersToQuery(final EmployeeSearchDTO searchParams, final Query query) {
+<span class="nc bnc" id="L328" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getCode()))</span>
+<span class="nc" id="L329">            query.setParameter(&quot;code&quot;, searchParams.getCode());</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getName()))</span>
+<span class="nc" id="L331">            query.setParameter(&quot;name&quot;, searchParams.getName());</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getAadhaar()))</span>
+<span class="nc" id="L333">            query.setParameter(&quot;aadhaar&quot;, searchParams.getAadhaar());</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getMobileNumber()))</span>
+<span class="nc" id="L335">            query.setParameter(&quot;mobileNumber&quot;, searchParams.getMobileNumber());</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getPan()))</span>
+<span class="nc" id="L337">            query.setParameter(&quot;pan&quot;, searchParams.getPan());</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getEmail()))</span>
+<span class="nc" id="L339">            query.setParameter(&quot;email&quot;, searchParams.getEmail());</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getStatus()))</span>
+<span class="nc" id="L341">            query.setParameter(&quot;status&quot;, searchParams.getStatus());</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        if (StringUtils.isNotBlank(searchParams.getEmployeeType()))</span>
+<span class="nc" id="L343">            query.setParameter(&quot;aadhaar&quot;, searchParams.getEmployeeType());</span>
+<span class="nc" id="L344">        return setAssignmentParameter(searchParams, query);</span>
+    }
+
+    public Query setAssignmentParameter(final EmployeeSearchDTO searchParams, final Query assignQuery) {
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (searchParams.getDepartment() != null)</span>
+<span class="nc" id="L349">            assignQuery.setParameter(&quot;department&quot;, searchParams.getDepartment());</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (searchParams.getDesignation() != null)</span>
+<span class="nc" id="L351">            assignQuery.setParameter(&quot;designation&quot;, searchParams.getDesignation());</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">        if (searchParams.getFunctionary() != null)</span>
+<span class="nc" id="L353">            assignQuery.setParameter(&quot;functionary&quot;, searchParams.getFunctionary());</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">        if (searchParams.getFunction() != null)</span>
+<span class="nc" id="L355">            assignQuery.setParameter(&quot;function&quot;, searchParams.getFunction());</span>
+<span class="nc" id="L356">        return assignQuery;</span>
+    }
+
+    @Transactional
+    public void delete(final Employee employee) {
+<span class="nc" id="L361">        employeeRepository.delete(employee);</span>
+<span class="nc" id="L362">    }</span>
+
+    /**
+     * Get employee object by id
+     *
+     * @param id
+     * @return Employee Object
+     */
+    public Employee getEmployeeById(final Long id) {
+<span class="nc" id="L371">        return employeeRepository.findOne(id);</span>
+    }
+
+    /**
+     * Get employee object by code
+     *
+     * @param code
+     * @return Employee Object
+     */
+    public Employee getEmployeeByCode(final String code) {
+<span class="nc" id="L381">        return employeeRepository.findByCode(code);</span>
+    }
+
+    /**
+     * Get list of employee objects by employee status
+     *
+     * @param status
+     * @return List of employee objects
+     */
+    public List&lt;Employee&gt; getEmployeesByStatus(final EmployeeStatus status) {
+<span class="nc" id="L391">        return employeeRepository.findByEmployeeStatus(status);</span>
+    }
+
+    /**
+     * Get list of employee objects by employee type
+     *
+     * @param id
+     * @return List of employee objects
+     */
+    public List&lt;Employee&gt; getEmployeesByType(final Long id) {
+<span class="nc" id="L401">        return employeeRepository.findByEmployeeType_Id(id);</span>
+    }
+
+    /**
+     * Get employee by user name
+     *
+     * @param userName
+     * @return Employee Object
+     */
+    public Employee getEmployeeByUserName(final String userName) {
+<span class="nc" id="L411">        return employeeRepository.findByUsername(userName);</span>
+    }
+
+    /**
+     * Get List of employee objects by department ,designation and boundary ids
+     *
+     * @param deptId
+     * @param desigId
+     * @param boundaryId
+     * @return List of employee objects
+     */
+    public List&lt;Employee&gt; findByDepartmentDesignationAndBoundary(final Long deptId, final Long desigId,
+                                                                 final Long boundaryId) {
+<span class="nc" id="L424">        final Set&lt;Long&gt; bndIds = new HashSet&lt;Long&gt;();</span>
+<span class="nc" id="L425">        final List&lt;Boundary&gt; boundaries = boundaryService.findActiveChildrenWithParent(boundaryId);</span>
+<span class="nc" id="L426">        boundaries.forEach((bndry) -&gt; bndIds.add(bndry.getId()));</span>
+<span class="nc" id="L427">        return employeeRepository.findByDepartmentDesignationAndBoundary(deptId, desigId, bndIds);</span>
+    }
+
+    /**
+     * Returns list of employee for a given position
+     *
+     * @param posId
+     * @return List of PersonalInformation
+     */
+    public List&lt;Employee&gt; getEmployeesForPosition(final Long posId) {
+<span class="nc" id="L437">        final Set&lt;Employee&gt; employees = new HashSet&lt;Employee&gt;();</span>
+<span class="nc" id="L438">        final List&lt;Assignment&gt; assignList = assignmentRepository.getAssignmentsForPosition(posId);</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">        for (final Assignment assign : assignList)</span>
+<span class="nc" id="L440">            employees.add(assign.getEmployee());</span>
+<span class="nc" id="L441">        return new ArrayList&lt;Employee&gt;(employees);</span>
+    }
+
+    /**
+     * Returns primary assignment's employee for position
+     *
+     * @param posId
+     * @return Employee object
+     */
+    public Employee getPrimaryAssignmentEmployeeForPos(final Long posId) {
+<span class="nc" id="L451">        return assignmentRepository.getPrimaryAssignmentForPosition(posId).getEmployee();</span>
+    }
+
+    /**
+     * Returns employee object for position id and given date
+     *
+     * @param posId
+     * @param givenDate
+     * @return Employee object
+     */
+    public Employee getEmployeeForPositionAndDate(final Long posId, final Date givenDate) {
+<span class="nc" id="L462">        return assignmentRepository.getPrimaryAssignmentForPositionAndDate(posId, givenDate).getEmployee();</span>
+    }
+
+    public List&lt;Employee&gt; getAllEmployees() {
+<span class="nc" id="L466">        return employeeRepository.findAll();</span>
+    }
+
+    @Override
+    public List&lt;? extends EntityType&gt; filterActiveEntities(final String filterKey, final int maxRecords,
+                                                           final Integer accountDetailTypeId) {
+<span class="nc" id="L472">        return employeeRepository.findByNameLikeOrCodeLike(filterKey + &quot;%&quot;, filterKey + &quot;%&quot;);</span>
+    }
+
+    @Override
+    public List getAssetCodesForProjectCode(final Integer accountdetailkey) throws ValidationException {
+<span class="nc" id="L477">        return null;</span>
+    }
+
+    @Override
+    public List&lt;? extends EntityType&gt; validateEntityForRTGS(final List&lt;Long&gt; idsList) throws ValidationException {
+<span class="nc" id="L482">        return null;</span>
+    }
+
+    @Override
+    public List&lt;? extends EntityType&gt; getEntitiesById(final List&lt;Long&gt; idsList) throws ValidationException {
+<span class="nc" id="L487">        return null;</span>
+    }
+
+    public String generateUserNameByDeptDesig(final Department department, final Designation designation) {
+<span class="nc" id="L491">        String name = department.getCode() + designation.getCode();</span>
+<span class="nc" id="L492">        name += userRepository.getUserSerialNumberByName(name) + 1;</span>
+<span class="nc" id="L493">        return name;</span>
+    }
+
+    public List&lt;Employee&gt; findEmployeeByCodeLike(final String code) {
+<span class="nc" id="L497">        return employeeRepository.findEmployeeByCodeLike(code);</span>
+    }
+
+    public List&lt;Employee&gt; findActiveEmployeeByCodeLike(final String code) {
+<span class="nc" id="L501">        return employeeRepository.findActiveEmployeeByCodeLike(code);</span>
+    }
+
+    public String validatePosition(final Employee employee, final String removedassignIds) {
+<span class="nc" id="L505">        boolean positionExistsInWF = false;</span>
+<span class="nc" id="L506">        boolean positionExistsInWFHistory = false;</span>
+<span class="nc" id="L507">        final List&lt;Position&gt; updatedPositionList = positionMasterService.getPositionsForEmployee(employee.getId());</span>
+
+<span class="nc bnc" id="L509" title="All 2 branches missed.">        if (StringUtils.isNotBlank(removedassignIds)) {</span>
+<span class="nc" id="L510">            final String[] deletedAssignIds = removedassignIds.split(&quot;,&quot;);</span>
+<span class="nc bnc" id="L511" title="All 2 branches missed.">            for (final String assignId : deletedAssignIds) {</span>
+<span class="nc" id="L512">                final Assignment assignment = assignmentService.getAssignmentById(Long.valueOf(assignId));</span>
+<span class="nc bnc" id="L513" title="All 4 branches missed.">                if (assignment != null &amp;&amp; !assignment.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L514">                    positionExistsInWF = stateService.isPositionUnderWorkflow(assignment.getPosition().getId(),</span>
+<span class="nc" id="L515">                            assignment.getFromDate());</span>
+<span class="nc" id="L516">                    positionExistsInWFHistory = stateHistoryService</span>
+<span class="nc" id="L517">                            .isPositionUnderWorkflowHistory(assignment.getPosition().getId(), assignment.getFromDate());</span>
+                }
+<span class="nc bnc" id="L519" title="All 4 branches missed.">                if (positionExistsInWF || positionExistsInWFHistory)</span>
+<span class="nc" id="L520">                    return assignment.getPosition().getName();</span>
+            }
+        }
+<span class="nc" id="L523">        assignmentService.removeDeletedAssignments(employee, removedassignIds);</span>
+<span class="nc" id="L524">        employee.setAssignments(employee.getAssignments().parallelStream()</span>
+<span class="nc bnc" id="L525" title="All 2 branches missed.">                .filter(assignment -&gt; assignment.getPosition() != null).collect(Collectors.toList()));</span>
+
+<span class="nc" id="L527">        employee.setJurisdictions(employee.getJurisdictions().parallelStream()</span>
+<span class="nc bnc" id="L528" title="All 4 branches missed.">                .filter(Jurisdictions -&gt; Jurisdictions.getBoundaryType() != null &amp;&amp; Jurisdictions.getBoundary() != null)</span>
+<span class="nc" id="L529">                .collect(Collectors.toList()));</span>
+
+<span class="nc" id="L531">        getCurrentSession().evict(employee);</span>
+<span class="nc" id="L532">        final Employee updatedEmployee = getEmployeeById(employee.getId());</span>
+<span class="nc" id="L533">        final List&lt;Assignment&gt; oldAssignmentList = assignmentService.getAllAssignmentsByEmpId(updatedEmployee.getId());</span>
+<span class="nc" id="L534">        final List&lt;Position&gt; oldPositionList = positionMasterService.getPositionsForEmployee(updatedEmployee.getId());</span>
+<span class="nc" id="L535">        oldPositionList.removeAll(updatedPositionList);</span>
+<span class="nc bnc" id="L536" title="All 2 branches missed.">        for (final Assignment assign : oldAssignmentList)</span>
+<span class="nc bnc" id="L537" title="All 2 branches missed.">            if (oldPositionList.contains(assign.getPosition())) {</span>
+<span class="nc" id="L538">                positionExistsInWF = stateService.isPositionUnderWorkflow(assign.getPosition().getId(), assign.getFromDate());</span>
+<span class="nc" id="L539">                positionExistsInWFHistory = stateHistoryService.isPositionUnderWorkflowHistory(assign.getPosition().getId(),</span>
+<span class="nc" id="L540">                        assign.getFromDate());</span>
+<span class="nc bnc" id="L541" title="All 4 branches missed.">                if (positionExistsInWF || positionExistsInWFHistory)</span>
+<span class="nc" id="L542">                    return assign.getPosition().getName();</span>
+            }
+<span class="nc" id="L544">        return StringUtils.EMPTY;</span>
+    }
+
+    public Boolean validateEmployeeCode(final Employee employee) {
+<span class="nc" id="L548">        final String employeeCode = employee.getCode().replaceFirst(&quot;^0+(?!$)&quot;, &quot;&quot;);</span>
+
+<span class="nc" id="L550">        final List&lt;Employee&gt; employeeList = findActiveEmployeeByCodeLike(employeeCode);</span>
+
+<span class="nc bnc" id="L552" title="All 2 branches missed.">        if (!employeeList.isEmpty())</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">            for (final Employee emp : employeeList) {</span>
+<span class="nc" id="L554">                final String empCode = emp.getCode().replaceFirst(&quot;^0+(?!$)&quot;, &quot;&quot;);</span>
+<span class="nc bnc" id="L555" title="All 4 branches missed.">                if (!emp.getCode().equals(employee.getCode()) &amp;&amp; employeeCode.equals(empCode)</span>
+<span class="nc bnc" id="L556" title="All 2 branches missed.">                        &amp;&amp; !emp.getId().equals(employee.getId()))</span>
+<span class="nc" id="L557">                    return true;</span>
+
+<span class="nc" id="L559">            }</span>
+<span class="nc" id="L560">        return false;</span>
+    }
+
+    public Boolean primaryAssignmentExists(final Employee employee) {
+<span class="nc bnc" id="L564" title="All 2 branches missed.">        for (final Assignment assignment : employee.getAssignments())</span>
+<span class="nc bnc" id="L565" title="All 2 branches missed.">            if (assignment.getPrimary())</span>
+<span class="nc" id="L566">                return true;</span>
+<span class="nc" id="L567">        return false;</span>
+    }
+
+    public Boolean primaryAssignExistsForSamePeriod(final Employee employee) {
+<span class="nc" id="L571">        int count = 0;</span>
+<span class="nc" id="L572">        Date currentDate = new Date();</span>
+<span class="nc bnc" id="L573" title="All 2 branches missed.">        for (Assignment assign : employee.getAssignments()) {</span>
+<span class="nc bnc" id="L574" title="All 6 branches missed.">            if (assign.getFromDate() != null &amp;&amp; currentDate.after(assign.getFromDate()) &amp;&amp; currentDate.before(assign.getToDate())</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">                    &amp;&amp; assign.getPrimary())</span>
+<span class="nc" id="L576">                count++;</span>
+<span class="nc" id="L577">        }</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">        return count &gt; 1 ? true : false;</span>
+    }
+
+
+    public Boolean isPositionExistsInWF(String positionName, Boolean isPositionChanged, Date fromDate, Date toDate) {
+<span class="nc" id="L583">        Position position = positionMasterService.getPositionByName(positionName);</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">        if (isPositionChanged) {</span>
+<span class="nc" id="L585">            return stateService.isPositionUnderWorkflow(position.getId(), fromDate);</span>
+        } else {
+<span class="nc" id="L587">            Date maxCreatedDate = stateService.getMaxCreatedDateByPositionId(position.getId());</span>
+<span class="nc bnc" id="L588" title="All 4 branches missed.">            return (maxCreatedDate != null &amp;&amp; maxCreatedDate.after(toDate)) ? true : false;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

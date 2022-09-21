@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillDetail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">BillDetail.java</span></div><h1>BillDetail.java</h1><pre class="source lang-java linenums">/*
+ * eGov suite of products aim to improve the internal efficiency,transparency,
+ * accountability and the service delivery of the government  organizations.
+ *
+ *  Copyright (C) 2016  eGovernments Foundation
+ *
+ *  The updated version of eGov suite of products as by eGovernments Foundation
+ *  is available at http://www.egovernments.org
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see http://www.gnu.org/licenses/ or
+ *  http://www.gnu.org/licenses/gpl.html .
+ *
+ *  In addition to the terms of the GPL license to be adhered to in using this
+ *  program, the following additional terms are to be complied with:
+ *
+ *      1) All versions of this program, verbatim or modified must carry this
+ *         Legal Notice.
+ *
+ *      2) Any misrepresentation of the origin of the material is prohibited. It
+ *         is required that all modified versions of this material be marked in
+ *         reasonable ways as different from the original version.
+ *
+ *      3) This license does not grant any rights to any user of the program
+ *         with regards to rights under trademark law for use of the trade names
+ *         or trademarks of eGovernments Foundation.
+ *
+ *  In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
+package org.egov.infra.microservice.models;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.constraints.NotNull;
+
+import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+
+<span class="nc" id="L53">public class BillDetail {</span>
+<span class="nc" id="L54">    @JsonProperty(&quot;id&quot;)</span>
+    private String id = null;
+
+<span class="nc" id="L57">    @JsonProperty(&quot;tenantId&quot;)</span>
+    private String tenantId = null;
+
+<span class="nc" id="L60">    @JsonProperty(&quot;demandId&quot;)</span>
+    private String demandId = null;
+
+<span class="nc" id="L63">    @JsonProperty(&quot;bill&quot;)</span>
+    private String bill = null;
+
+<span class="nc" id="L66">    @JsonProperty(&quot;businessService&quot;)</span>
+    private String businessService = null;
+
+<span class="nc" id="L69">    @JsonProperty(&quot;billNumber&quot;)</span>
+    private String billNumber = null;
+
+<span class="nc" id="L72">    @JsonProperty(&quot;billDate&quot;)</span>
+    private Long billDate = null;
+
+<span class="nc" id="L75">    @JsonProperty(&quot;consumerCode&quot;)</span>
+    private String consumerCode = null;
+
+<span class="nc" id="L78">    @JsonProperty(&quot;consumerType&quot;)</span>
+    private String consumerType = null;
+
+<span class="nc" id="L81">    @JsonProperty(&quot;minimumAmount&quot;)</span>
+    private BigDecimal minimumAmount = null;
+
+<span class="nc" id="L84">    @JsonProperty(&quot;totalAmount&quot;)</span>
+    @NotNull
+    private BigDecimal totalAmount = null;
+
+<span class="nc" id="L88">    @JsonProperty(&quot;amountPaid&quot;)</span>
+    private BigDecimal amountPaid = null;
+
+<span class="nc" id="L91">    @JsonProperty(&quot;fromPeriod&quot;)</span>
+    private Long fromPeriod = null;
+
+<span class="nc" id="L94">    @JsonProperty(&quot;toPeriod&quot;)</span>
+    private Long toPeriod = null;
+
+<span class="nc" id="L97">    @JsonProperty(&quot;collectedAmount&quot;)</span>
+    private BigDecimal collectedAmount = null;
+
+<span class="nc" id="L100">    @JsonProperty(&quot;collectionModesNotAllowed&quot;)</span>
+    private List&lt;String&gt; collectionModesNotAllowed = null;
+
+<span class="nc" id="L103">    @JsonProperty(&quot;partPaymentAllowed&quot;)</span>
+    private Boolean partPaymentAllowed = null;
+
+<span class="nc" id="L106">    @JsonProperty(&quot;additionalDetails&quot;)</span>
+    private JsonNode additionalDetails = null;
+
+<span class="nc" id="L109">    @JsonProperty(&quot;receiptNumber&quot;)</span>
+    private String receiptNumber = null;
+
+<span class="nc" id="L112">    @JsonProperty(&quot;receiptDate&quot;)</span>
+    private Long receiptDate = null;
+
+<span class="nc" id="L115">    @JsonProperty(&quot;receiptType&quot;)</span>
+    private String receiptType = null;
+
+<span class="nc" id="L118">    @JsonProperty(&quot;channel&quot;)</span>
+    private String channel = null;
+
+<span class="nc" id="L121">    @JsonProperty(&quot;voucherHeader&quot;)</span>
+    private String voucherHeader = null;
+
+<span class="nc" id="L124">    @JsonProperty(&quot;boundary&quot;)</span>
+    private String boundary = null;
+
+<span class="nc" id="L127">    @JsonProperty(&quot;reasonForCancellation&quot;)</span>
+    private String reasonForCancellation = null;
+
+<span class="nc" id="L130">    @JsonProperty(&quot;manualReceiptNumber&quot;)</span>
+    private String manualReceiptNumber = null;
+
+<span class="nc" id="L133">    @JsonProperty(&quot;manualReceiptDate&quot;)</span>
+    private Long manualReceiptDate = null;
+
+<span class="nc" id="L136">    @JsonProperty(&quot;stateId&quot;)</span>
+    private String stateId = null;
+
+<span class="nc" id="L139">    @JsonProperty(&quot;fund&quot;)</span>
+    private String fund = null;
+
+<span class="nc" id="L142">    @JsonProperty(&quot;function&quot;)</span>
+    private String function = null;
+
+<span class="nc" id="L145">    @JsonProperty(&quot;department&quot;)</span>
+    private String department = null;
+
+<span class="nc" id="L148">    @JsonProperty(&quot;billAccountDetails&quot;)</span>
+    private List&lt;BillAccountDetail&gt; billAccountDetails = null;
+
+<span class="nc" id="L151">    @JsonProperty(&quot;status&quot;)</span>
+    private String status = null;
+
+<span class="nc" id="L154">    @NotNull</span>
+    @JsonProperty(&quot;collectionType&quot;)
+    private CollectionType collectionType = null;
+
+    @JsonProperty(&quot;isAdvanceAllowed&quot;)
+    private Boolean isAdvanceAllowed;
+
+    private String billDescription;
+
+    private Long expiryDate;
+
+    private String displayMessage;
+
+    private Boolean callBackForApportioning;
+
+    private String cancellationRemarks;
+
+    public Boolean addBillAccountDetail(BillAccountDetail billAccountDetail) {
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            if (CollectionUtils.isEmpty(billAccountDetails)) {</span>
+
+<span class="nc" id="L175">                    billAccountDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L176">                    return billAccountDetails.add(billAccountDetail);</span>
+            } else {
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">                    if (!billAccountDetails.contains(billAccountDetail))</span>
+<span class="nc" id="L180">                            return billAccountDetails.add(billAccountDetail);</span>
+                    else
+<span class="nc" id="L182">                            return false;</span>
+            }
+    }
+
+    public String getId() {
+<span class="nc" id="L187">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L191">        this.id = id;</span>
+<span class="nc" id="L192">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L195">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L199">        this.tenantId = tenantId;</span>
+<span class="nc" id="L200">    }</span>
+
+    public String getDemandId() {
+<span class="nc" id="L203">        return demandId;</span>
+    }
+
+    public void setDemandId(String demandId) {
+<span class="nc" id="L207">        this.demandId = demandId;</span>
+<span class="nc" id="L208">    }</span>
+
+    public String getBill() {
+<span class="nc" id="L211">        return bill;</span>
+    }
+
+    public void setBill(String bill) {
+<span class="nc" id="L215">        this.bill = bill;</span>
+<span class="nc" id="L216">    }</span>
+
+    public String getBusinessService() {
+<span class="nc" id="L219">        return businessService;</span>
+    }
+
+    public void setBusinessService(String businessService) {
+<span class="nc" id="L223">        this.businessService = businessService;</span>
+<span class="nc" id="L224">    }</span>
+
+    public String getBillNumber() {
+<span class="nc" id="L227">        return billNumber;</span>
+    }
+
+    public void setBillNumber(String billNumber) {
+<span class="nc" id="L231">        this.billNumber = billNumber;</span>
+<span class="nc" id="L232">    }</span>
+
+    public Long getBillDate() {
+<span class="nc" id="L235">        return billDate;</span>
+    }
+
+    public void setBillDate(Long billDate) {
+<span class="nc" id="L239">        this.billDate = billDate;</span>
+<span class="nc" id="L240">    }</span>
+
+    public String getConsumerCode() {
+<span class="nc" id="L243">        return consumerCode;</span>
+    }
+
+    public void setConsumerCode(String consumerCode) {
+<span class="nc" id="L247">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L248">    }</span>
+
+    public String getConsumerType() {
+<span class="nc" id="L251">        return consumerType;</span>
+    }
+
+    public void setConsumerType(String consumerType) {
+<span class="nc" id="L255">        this.consumerType = consumerType;</span>
+<span class="nc" id="L256">    }</span>
+
+    public BigDecimal getMinimumAmount() {
+<span class="nc" id="L259">        return minimumAmount;</span>
+    }
+
+    public void setMinimumAmount(BigDecimal minimumAmount) {
+<span class="nc" id="L263">        this.minimumAmount = minimumAmount;</span>
+<span class="nc" id="L264">    }</span>
+
+    public BigDecimal getTotalAmount() {
+<span class="nc" id="L267">        return totalAmount;</span>
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+<span class="nc" id="L271">        this.totalAmount = totalAmount;</span>
+<span class="nc" id="L272">    }</span>
+
+    public BigDecimal getAmountPaid() {
+<span class="nc" id="L275">        return amountPaid;</span>
+    }
+
+    public void setAmountPaid(BigDecimal amountPaid) {
+<span class="nc" id="L279">        this.amountPaid = amountPaid;</span>
+<span class="nc" id="L280">    }</span>
+
+    public Long getFromPeriod() {
+<span class="nc" id="L283">        return fromPeriod;</span>
+    }
+
+    public void setFromPeriod(Long fromPeriod) {
+<span class="nc" id="L287">        this.fromPeriod = fromPeriod;</span>
+<span class="nc" id="L288">    }</span>
+
+    public Long getToPeriod() {
+<span class="nc" id="L291">        return toPeriod;</span>
+    }
+
+    public void setToPeriod(Long toPeriod) {
+<span class="nc" id="L295">        this.toPeriod = toPeriod;</span>
+<span class="nc" id="L296">    }</span>
+
+    public BigDecimal getCollectedAmount() {
+<span class="nc" id="L299">        return collectedAmount;</span>
+    }
+
+    public void setCollectedAmount(BigDecimal collectedAmount) {
+<span class="nc" id="L303">        this.collectedAmount = collectedAmount;</span>
+<span class="nc" id="L304">    }</span>
+
+    public List&lt;String&gt; getCollectionModesNotAllowed() {
+<span class="nc" id="L307">        return collectionModesNotAllowed;</span>
+    }
+
+    public void setCollectionModesNotAllowed(List&lt;String&gt; collectionModesNotAllowed) {
+<span class="nc" id="L311">        this.collectionModesNotAllowed = collectionModesNotAllowed;</span>
+<span class="nc" id="L312">    }</span>
+
+    public Boolean getPartPaymentAllowed() {
+<span class="nc" id="L315">        return partPaymentAllowed;</span>
+    }
+
+    public void setPartPaymentAllowed(Boolean partPaymentAllowed) {
+<span class="nc" id="L319">        this.partPaymentAllowed = partPaymentAllowed;</span>
+<span class="nc" id="L320">    }</span>
+
+    public JsonNode getAdditionalDetails() {
+<span class="nc" id="L323">        return additionalDetails;</span>
+    }
+
+    public void setAdditionalDetails(JsonNode additionalDetails) {
+<span class="nc" id="L327">        this.additionalDetails = additionalDetails;</span>
+<span class="nc" id="L328">    }</span>
+
+    public String getReceiptNumber() {
+<span class="nc" id="L331">        return receiptNumber;</span>
+    }
+
+    public void setReceiptNumber(String receiptNumber) {
+<span class="nc" id="L335">        this.receiptNumber = receiptNumber;</span>
+<span class="nc" id="L336">    }</span>
+
+    public Long getReceiptDate() {
+<span class="nc" id="L339">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(Long receiptDate) {
+<span class="nc" id="L343">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L344">    }</span>
+
+    public String getReceiptType() {
+<span class="nc" id="L347">        return receiptType;</span>
+    }
+
+    public void setReceiptType(String receiptType) {
+<span class="nc" id="L351">        this.receiptType = receiptType;</span>
+<span class="nc" id="L352">    }</span>
+
+    public String getChannel() {
+<span class="nc" id="L355">        return channel;</span>
+    }
+
+    public void setChannel(String channel) {
+<span class="nc" id="L359">        this.channel = channel;</span>
+<span class="nc" id="L360">    }</span>
+
+    public String getVoucherHeader() {
+<span class="nc" id="L363">        return voucherHeader;</span>
+    }
+
+    public void setVoucherHeader(String voucherHeader) {
+<span class="nc" id="L367">        this.voucherHeader = voucherHeader;</span>
+<span class="nc" id="L368">    }</span>
+
+    public String getBoundary() {
+<span class="nc" id="L371">        return boundary;</span>
+    }
+
+    public void setBoundary(String boundary) {
+<span class="nc" id="L375">        this.boundary = boundary;</span>
+<span class="nc" id="L376">    }</span>
+
+    public String getReasonForCancellation() {
+<span class="nc" id="L379">        return reasonForCancellation;</span>
+    }
+
+    public void setReasonForCancellation(String reasonForCancellation) {
+<span class="nc" id="L383">        this.reasonForCancellation = reasonForCancellation;</span>
+<span class="nc" id="L384">    }</span>
+
+    public String getManualReceiptNumber() {
+<span class="nc" id="L387">        return manualReceiptNumber;</span>
+    }
+
+    public void setManualReceiptNumber(String manualReceiptNumber) {
+<span class="nc" id="L391">        this.manualReceiptNumber = manualReceiptNumber;</span>
+<span class="nc" id="L392">    }</span>
+
+    public Long getManualReceiptDate() {
+<span class="nc" id="L395">        return manualReceiptDate;</span>
+    }
+
+    public void setManualReceiptDate(Long manualReceiptDate) {
+<span class="nc" id="L399">        this.manualReceiptDate = manualReceiptDate;</span>
+<span class="nc" id="L400">    }</span>
+
+    public String getStateId() {
+<span class="nc" id="L403">        return stateId;</span>
+    }
+
+    public void setStateId(String stateId) {
+<span class="nc" id="L407">        this.stateId = stateId;</span>
+<span class="nc" id="L408">    }</span>
+
+    public String getFund() {
+<span class="nc" id="L411">        return fund;</span>
+    }
+
+    public void setFund(String fund) {
+<span class="nc" id="L415">        this.fund = fund;</span>
+<span class="nc" id="L416">    }</span>
+
+    public String getFunction() {
+<span class="nc" id="L419">        return function;</span>
+    }
+
+    public void setFunction(String function) {
+<span class="nc" id="L423">        this.function = function;</span>
+<span class="nc" id="L424">    }</span>
+
+    public String getDepartment() {
+<span class="nc" id="L427">        return department;</span>
+    }
+
+    public void setDepartment(String department) {
+<span class="nc" id="L431">        this.department = department;</span>
+<span class="nc" id="L432">    }</span>
+
+    public List&lt;BillAccountDetail&gt; getBillAccountDetails() {
+<span class="nc" id="L435">        return billAccountDetails;</span>
+    }
+
+    public void setBillAccountDetails(List&lt;BillAccountDetail&gt; billAccountDetails) {
+<span class="nc" id="L439">        this.billAccountDetails = billAccountDetails;</span>
+<span class="nc" id="L440">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L443">        return status;</span>
+    }
+
+    public void setStatus(String status) {
+<span class="nc" id="L447">        this.status = status;</span>
+<span class="nc" id="L448">    }</span>
+
+    public CollectionType getCollectionType() {
+<span class="nc" id="L451">        return collectionType;</span>
+    }
+
+    public void setCollectionType(CollectionType collectionType) {
+<span class="nc" id="L455">        this.collectionType = collectionType;</span>
+<span class="nc" id="L456">    }</span>
+
+    public Boolean getIsAdvanceAllowed() {
+<span class="nc" id="L459">        return isAdvanceAllowed;</span>
+    }
+
+    public void setIsAdvanceAllowed(Boolean isAdvanceAllowed) {
+<span class="nc" id="L463">        this.isAdvanceAllowed = isAdvanceAllowed;</span>
+<span class="nc" id="L464">    }</span>
+
+    public String getBillDescription() {
+<span class="nc" id="L467">        return billDescription;</span>
+    }
+
+    public void setBillDescription(String billDescription) {
+<span class="nc" id="L471">        this.billDescription = billDescription;</span>
+<span class="nc" id="L472">    }</span>
+
+    public Long getExpiryDate() {
+<span class="nc" id="L475">        return expiryDate;</span>
+    }
+
+    public void setExpiryDate(Long expiryDate) {
+<span class="nc" id="L479">        this.expiryDate = expiryDate;</span>
+<span class="nc" id="L480">    }</span>
+
+    public String getDisplayMessage() {
+<span class="nc" id="L483">        return displayMessage;</span>
+    }
+
+    public void setDisplayMessage(String displayMessage) {
+<span class="nc" id="L487">        this.displayMessage = displayMessage;</span>
+<span class="nc" id="L488">    }</span>
+
+    public Boolean getCallBackForApportioning() {
+<span class="nc" id="L491">        return callBackForApportioning;</span>
+    }
+
+    public void setCallBackForApportioning(Boolean callBackForApportioning) {
+<span class="nc" id="L495">        this.callBackForApportioning = callBackForApportioning;</span>
+<span class="nc" id="L496">    }</span>
+
+    public String getCancellationRemarks() {
+<span class="nc" id="L499">        return cancellationRemarks;</span>
+    }
+
+    public void setCancellationRemarks(String cancellationRemarks) {
+<span class="nc" id="L503">        this.cancellationRemarks = cancellationRemarks;</span>
+<span class="nc" id="L504">    }</span>
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

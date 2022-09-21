@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeoLocationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.gis.service</a> &gt; <span class="el_source">GeoLocationService.java</span></div><h1>GeoLocationService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.gis.service;
+
+import org.apache.commons.lang.StringUtils;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.gis.model.GeoKmlInfo;
+import org.egov.infra.gis.model.GeoLocation;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+<span class="nc" id="L69">public class GeoLocationService {</span>
+	
+
+<span class="nc" id="L72">	private static final Logger	LOGGER	= LoggerFactory.getLogger(GeoLocationService.class);</span>
+	
+	/**
+	 * 
+	 * @param geoLocation - contains the latitude and longitude , and the info window text to be show on the click event of the marker.  
+	 * @return - the html code to display the static text in the marker info window.
+	 */
+	public static String getMarkerDesc(GeoLocation geoLocation){
+		
+<span class="nc" id="L81">		StringBuffer markerDesc = new StringBuffer(1000);</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		markerDesc.append(null!=geoLocation.getInfo1()?&quot;&lt;tr&gt;&lt;td&gt;&lt;b&gt;&quot;+geoLocation.getInfo1().substring(0,geoLocation.getInfo1().indexOf(&quot;=&quot;))+&quot;&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&quot;+geoLocation.getInfo1().substring(geoLocation.getInfo1().indexOf(&quot;=&quot;)+1)+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;:&quot;&quot;)</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">				  .append(null!=geoLocation.getInfo2()?&quot;&lt;tr&gt;&lt;td&gt;&lt;b&gt;&quot;+geoLocation.getInfo2().substring(0,geoLocation.getInfo2().indexOf(&quot;=&quot;))+&quot;&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&quot;+geoLocation.getInfo2().substring(geoLocation.getInfo2().indexOf(&quot;=&quot;)+1)+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;:&quot;&quot;)</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">				  .append(null!=geoLocation.getInfo3()?&quot;&lt;tr&gt;&lt;td&gt;&lt;b&gt;&quot;+geoLocation.getInfo3().substring(0,geoLocation.getInfo3().indexOf(&quot;=&quot;))+&quot;&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&quot;+geoLocation.getInfo3().substring(geoLocation.getInfo3().indexOf(&quot;=&quot;)+1)+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;:&quot;&quot;)</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">				  .append(null!=geoLocation.getInfo1()?&quot;&lt;tr&gt;&lt;td&gt;&lt;b&gt;&quot;+geoLocation.getInfo4().substring(0,geoLocation.getInfo4().indexOf(&quot;=&quot;))+&quot;&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&quot;+geoLocation.getInfo4().substring(geoLocation.getInfo4().indexOf(&quot;=&quot;)+1)+&quot;&lt;/td&gt;&lt;/tr&gt;&quot;:&quot;&quot;);</span>
+<span class="nc" id="L86">		return markerDesc.toString();</span>
+		
+	}
+	/**
+	 * 
+	 * @param geoLoc - the marker option object , which is going to be passed to the marker constructor 
+	 * @return - the marker option javascript object.
+	 */
+	
+	public static String getMarkerOption(GeoLocation geoLoc){
+<span class="nc" id="L96">		StringBuffer markerOption = new StringBuffer(1000);</span>
+<span class="nc" id="L97">		markerOption.append(&quot;{&quot;)</span>
+<span class="nc" id="L98">		.append(&quot;position: new google.maps.LatLng('&quot;).append(geoLoc.getGeoLatLong().getLatitude()).append(&quot;','&quot;)</span>
+<span class="nc" id="L99">		.append(geoLoc.getGeoLatLong().getLongitude()).append(&quot;'), map: map&quot;);</span>
+<span class="nc" id="L100">		Map&lt;String, Object&gt;  markerOptData = geoLoc.getMarkerOptionData() ;</span>
+<span class="nc bnc" id="L101" title="All 4 branches missed.">		if(null!=markerOptData &amp;&amp; markerOptData.size()&gt;0){</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">			for (Map.Entry&lt;String, Object&gt; entry :  markerOptData.entrySet()) {</span>
+<span class="nc" id="L103">				String value = entry.getValue().toString();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">			   if(entry.getKey().equalsIgnoreCase(GeoLocationConstants.MARKEROPTION_ICON)){</span>
+<span class="nc" id="L105">				   value = &quot;http://www.google.com/mapfiles/ms/icons/&quot;+value+&quot;-dot.png&quot;; </span>
+			   }
+<span class="nc" id="L107">			   markerOption.append(&quot;,&quot;).append(entry.getKey()).append(&quot;:'&quot;).append(value).append(&quot;'&quot;); </span>
+<span class="nc" id="L108">			}</span>
+		}
+		
+<span class="nc" id="L111">		markerOption.append(&quot;};&quot;);  </span>
+<span class="nc" id="L112">		return markerOption.toString();</span>
+	}
+	/**
+	 * puts the kml data model into the map and returns the random key which is used to fetch the exact kmldatamodel from the cache.
+	 * @param kmlDataMap - Kml data model map to store into the jboss cache, for the purpose generating the KML file by passing the kml file
+	 * and the data model map to the freemarker.
+	 * @return
+	 */
+	private static String  putKmlDataToCache(GeoKmlInfo geoKmlInfo){
+		
+<span class="nc" id="L122">		Map&lt;String, Object&gt; cacheDataModelMap= new HashMap&lt;String, Object&gt; ();</span>
+<span class="nc" id="L123">		String kmlDataModelKey = UUID.randomUUID().toString().substring(0, 10); </span>
+<span class="nc" id="L124">		cacheDataModelMap.put(kmlDataModelKey, geoKmlInfo);</span>
+		/*try {
+			//TODO CACHE
+			//che.put(GeoLocationConstants.KML_DATA_JBOSS_CACHE_NODE,cacheDataModelMap);
+		} catch (CacheException e) {
+			LOGGER.error(e.getMessage());
+		}*/
+<span class="nc" id="L131">		return kmlDataModelKey;</span>
+		
+	}
+	/**
+	 * 
+	 * @param kmlDataModelKey - 
+	 * @return 
+	 */
+	public static GeoKmlInfo getKmlDataFromCache(String kmlDataModelKey){
+<span class="nc" id="L140">		GeoKmlInfo geoKmlInfo = null;</span>
+		//TODO CACHE
+		/*try {
+			geoKmlInfo =  (GeoKmlInfo) cache.get(GeoLocationConstants.KML_DATA_JBOSS_CACHE_NODE,kmlDataModelKey);
+		} catch (CacheException e) {
+			LOGGER.error(e.getMessage());
+		}*/
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		if(null == geoKmlInfo){</span>
+<span class="nc" id="L148">			LOGGER.error(&quot;Could not able to retrive kml data  from cache for the key &quot;+kmlDataModelKey);</span>
+<span class="nc" id="L149">			throw new ApplicationRuntimeException(&quot;Could not able to retrive kml data  from cache for the key &quot;+kmlDataModelKey);</span>
+		}
+<span class="nc" id="L151">		return geoKmlInfo;  </span>
+	}
+	
+	/**
+	 * 
+	 * @param wardWiseData Map&lt;String, Integer&gt;- Map having the key as the ward number and value as the no of complaints/properties/assets
+	 * 	in that ward. e.g [&lt;Ward Number&gt;,&lt;no Of Complaints/assets/properties&gt; ]
+	 * 
+	 * @param colorCodes Map&lt;Integer,String&gt; - Map having colour codes , the key as the the colour priority and value as the colour 
+	 * code in RGB format. e.g - key = 1 , means the associated colour to represent the ward having  no of complaints/assets/properties
+	 * that falls in highest range , key = 2 means associated colour to represent ward having  no of complaints/assets/properties
+	 * that falls in the 2nd highest range and so on.
+	 * example :  (1, &quot;FF0000&quot;);
+	 *			  (2, &quot;8968CD&quot;);
+	 *		      (3, &quot;FFA500&quot;);
+	 *		      (4, &quot;4169E1&quot;);
+	 *		      (5, &quot;008B00&quot;);
+	 */
+	
+	public static void setKmlDataToCacheAndRequest(Map&lt;String, BigDecimal&gt;  wardWiseData,Map&lt;Integer, String&gt; colorCodes ,String kmlPath, HttpServletRequest request)
+	{
+		
+<span class="nc" id="L173">		LOGGER.debug(&quot;GeoLocationService | setKmlDataToCacheAndRequest | Start&quot;);</span>
+		
+<span class="nc" id="L175">		int totalNoOfColors = colorCodes.size();</span>
+<span class="nc" id="L176">		BigDecimal wardDataMinAmount = Collections.min(wardWiseData.values()).setScale(0, BigDecimal.ROUND_HALF_UP); // to hold the minimum amount in all the wards.</span>
+<span class="nc" id="L177">		BigDecimal wardDataMaxAmount = Collections.max(wardWiseData.values()).setScale(0, BigDecimal.ROUND_HALF_UP); // to hold the maximum amount in all the wards.</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">		if((wardDataMaxAmount.subtract(wardDataMinAmount)).compareTo(BigDecimal.valueOf(totalNoOfColors))==-1){</span>
+<span class="nc" id="L179">			throw new ValidationException(Arrays.asList(new ValidationError(&quot;colorrange&quot;,&quot;no of colors supplied is more than the range of data &quot; +</span>
+					&quot;in the wards&quot;)));
+		}
+	
+<span class="nc" id="L183">		BigDecimal rangeSize = getRangeSize(wardDataMinAmount,wardDataMaxAmount,totalNoOfColors);</span>
+		
+<span class="nc" id="L185">		GeoKmlInfo geoKmlInfo = new GeoKmlInfo();</span>
+<span class="nc" id="L186">		Map&lt;String, String&gt; wardWiseKmlColorStyle = new HashMap&lt;String, String&gt;();</span>
+		
+<span class="nc bnc" id="L188" title="All 2 branches missed.">		 for ( Map.Entry&lt;String, BigDecimal&gt; entry : wardWiseData.entrySet()) {</span>
+<span class="nc" id="L189">				wardWiseKmlColorStyle.put(&quot;style&quot;+entry.getKey(), getStyleColorName(entry.getValue(),wardDataMinAmount,totalNoOfColors,rangeSize));</span>
+<span class="nc" id="L190">		 }</span>
+		
+
+<span class="nc" id="L193">		geoKmlInfo.setWardWiseColor(wardWiseKmlColorStyle);</span>
+<span class="nc" id="L194">		geoKmlInfo.setColorCodes(convertToKmlColor(colorCodes));</span>
+		
+<span class="nc" id="L196">		request.setAttribute(GeoLocationConstants.KML_DATA_MODEL_JBOSS_CACHE_KEY_NAME , putKmlDataToCache(geoKmlInfo));</span>
+<span class="nc" id="L197">		request.setAttribute(GeoLocationConstants.COLOR_CODE_AND_RANGE_MAP_NAME , getColorRange(wardDataMinAmount,wardDataMaxAmount,</span>
+																									rangeSize,colorCodes));
+<span class="nc bnc" id="L199" title="All 4 branches missed.">		if(null != kmlPath &amp;&amp; StringUtils.isNotEmpty(kmlPath)){</span>
+<span class="nc" id="L200">			request.setAttribute(GeoLocationConstants.KML_URL_PATH_REQ_ATTR_NAME , kmlPath);</span>
+		}
+												
+		
+<span class="nc" id="L204">		LOGGER.debug(&quot;GeoLocationService | setKmlDataToCacheAndRequest | End&quot;);</span>
+		
+<span class="nc" id="L206">	}</span>
+	
+	private static Map&lt;String, String&gt; convertToKmlColor(Map&lt;Integer, String&gt; colorMap){
+		
+<span class="nc" id="L210">		 Map&lt;String, String&gt; kmlColorConvertedMap = new HashMap&lt;String, String&gt;();</span>
+		
+<span class="nc bnc" id="L212" title="All 2 branches missed.">		 for ( Map.Entry&lt;Integer, String&gt; entry : colorMap.entrySet()) {</span>
+<span class="nc" id="L213">			String color = entry.getValue();</span>
+<span class="nc" id="L214">			color =&quot;FF&quot;+color.substring(4,6)+color.substring(2,4)+color.substring(0,2); // FF appended for the opacity level.</span>
+<span class="nc" id="L215">			kmlColorConvertedMap.put(GeoLocationConstants.KML_STYLE_COLOR+entry.getKey(), color);</span>
+<span class="nc" id="L216">		 }</span>
+		 
+<span class="nc" id="L218">		 return kmlColorConvertedMap;</span>
+	}
+	/**
+	 * 
+	 * @param TotalNos e.g = 50
+	 * @param colorMap - the different colours to be shown in the kml.
+	 * @return = [0-10,11-20,21-30,31-40,41-50]
+	 */
+	private static Map&lt;String, String&gt; getColorRange( BigDecimal wardDataMinAmount,BigDecimal wardDataMaxAmount,BigDecimal rangeSize,
+																				Map&lt;Integer, String&gt; colorCodes){
+<span class="nc" id="L228">		int totalNoOfColors = colorCodes.size();</span>
+		
+<span class="nc" id="L230">		Map&lt;String, String&gt; colorRangeMap  = new LinkedHashMap&lt;String, String&gt;(); // map to hold the colour code and the range .</span>
+		
+<span class="nc" id="L232">		BigDecimal rangeStartVal = wardDataMinAmount;</span>
+<span class="nc" id="L233">		BigDecimal rangeEndVal = wardDataMinAmount;</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		for (int i = 0; i &lt;totalNoOfColors; i++) {</span>
+			
+<span class="nc bnc" id="L236" title="All 2 branches missed.">			if(totalNoOfColors != i+1){</span>
+<span class="nc" id="L237">				rangeEndVal = (rangeStartVal.add(rangeSize)).subtract(BigDecimal.ONE);</span>
+			}else{
+<span class="nc" id="L239">				rangeEndVal = wardDataMaxAmount;</span>
+			}
+				
+<span class="nc" id="L242">			String colorRange = rangeStartVal +&quot; - &quot;+rangeEndVal;</span>
+<span class="nc" id="L243">			colorRangeMap.put(colorCodes.get((totalNoOfColors-i)), colorRange);</span>
+<span class="nc" id="L244">			BigDecimal nextRangeStartVal = rangeEndVal.add(BigDecimal.ONE);</span>
+<span class="nc" id="L245">			rangeStartVal = nextRangeStartVal;</span>
+		
+		}
+<span class="nc" id="L248">		return colorRangeMap;</span>
+	}
+	private static String getStyleColorName(BigDecimal wardWiseNos,BigDecimal wardDataMinAmount,Integer totalNoOfColors,BigDecimal rangeSize){
+		
+<span class="nc" id="L252">		return &quot;#color&quot;+(BigDecimal.valueOf(totalNoOfColors).subtract((wardWiseNos.subtract(wardDataMinAmount).subtract(BigDecimal.ONE)).divide(rangeSize,0,BigDecimal.ROUND_DOWN))); </span>
+		
+	}
+	private static BigDecimal getRangeSize( BigDecimal wardDataMinAmount,BigDecimal wardDataMaxAmount,int totalNoOfColors){
+	 
+<span class="nc" id="L257">		BigDecimal rangeSize = (wardDataMaxAmount.subtract(wardDataMinAmount)).divide(BigDecimal.valueOf(totalNoOfColors),BigDecimal.ROUND_HALF_UP);</span>
+<span class="nc" id="L258">		return rangeSize;</span>
+	}
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

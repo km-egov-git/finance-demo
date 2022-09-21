@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StateHistory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.entity</a> &gt; <span class="el_source">StateHistory.java</span></div><h1>StateHistory.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.annotations.Immutable;
+
+@Entity
+@Immutable
+@Table(name = &quot;eg_wf_state_history&quot;)
+@SequenceGenerator(name = StateHistory.SEQ_STATEHISTORY, sequenceName = StateHistory.SEQ_STATEHISTORY, allocationSize = 1)
+public class StateHistory implements Serializable {
+	static final String SEQ_STATEHISTORY = &quot;SEQ_EG_WF_STATE_HISTORY&quot;;
+	private static final long serialVersionUID = -2286621991905578107L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = SEQ_STATEHISTORY)
+	private Long id;
+
+	// @ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = &quot;createdBy&quot;)
+	private long createdBy;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date createdDate;
+
+	// @ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = &quot;lastModifiedBy&quot;)
+	private long lastModifiedBy;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date lastModifiedDate;
+
+	@ManyToOne(targetEntity = State.class, fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = &quot;state_id&quot;)
+	private State state;
+
+	@NotNull
+	private String value;
+
+	// @ManyToOne(targetEntity = OwnerGroup.class, fetch = FetchType.LAZY)
+	@Column(name = &quot;OWNER_POS&quot;)
+	private Long ownerPosition;
+
+	@Column(name = &quot;OWNER_USER&quot;)
+	private Long ownerUser;
+
+	private String senderName;
+	private String nextAction;
+	private String comments;
+	private String natureOfTask;
+	private String extraInfo;
+	private Date dateInfo;
+	private Date extraDateInfo;
+
+	// @ManyToOne(targetEntity = OwnerGroup.class, fetch = FetchType.LAZY)
+	@Column(name = &quot;INITIATOR_POS&quot;)
+	private Long initiatorPosition;
+	private Long previousownerposition;// added abhishek on 1505021
+<span class="nc" id="L122">	StateHistory() {</span>
+<span class="nc" id="L123">	}</span>
+
+<span class="nc" id="L125">	public StateHistory(State state) {</span>
+<span class="nc" id="L126">		this.state = state;</span>
+<span class="nc" id="L127">		createdBy = state.getCreatedBy();</span>
+<span class="nc" id="L128">		createdDate = state.getCreatedDate();</span>
+<span class="nc" id="L129">		lastModifiedBy = state.getLastModifiedBy();</span>
+<span class="nc" id="L130">		lastModifiedDate = state.getLastModifiedDate();</span>
+<span class="nc" id="L131">		value = state.getValue();</span>
+<span class="nc" id="L132">		ownerPosition = state.getOwnerPosition();</span>
+<span class="nc" id="L133">		ownerUser = state.getOwnerUser();</span>
+<span class="nc" id="L134">		senderName = state.getSenderName();</span>
+<span class="nc" id="L135">		nextAction = state.getNextAction();</span>
+<span class="nc" id="L136">		comments = state.getComments();</span>
+<span class="nc" id="L137">		extraInfo = state.getExtraInfo();</span>
+<span class="nc" id="L138">		dateInfo = state.getDateInfo();</span>
+<span class="nc" id="L139">		extraDateInfo = state.getExtraDateInfo();</span>
+<span class="nc" id="L140">		natureOfTask = state.getNatureOfTask();</span>
+<span class="nc" id="L141">		initiatorPosition = state.getInitiatorPosition();</span>
+<span class="nc" id="L142">		previousownerposition=state.getPreviousOwner();</span>
+<span class="nc" id="L143">	}</span>
+
+	public State getState() {
+<span class="nc" id="L146">		return state;</span>
+	}
+
+	public void setState(State state) {
+<span class="nc" id="L150">		this.state = state;</span>
+<span class="nc" id="L151">	}</span>
+
+	public String getValue() {
+<span class="nc" id="L154">		return value;</span>
+	}
+
+	public void setValue(String value) {
+<span class="nc" id="L158">		this.value = value;</span>
+<span class="nc" id="L159">	}</span>
+
+	public Long getOwnerPosition() {
+<span class="nc" id="L162">		return ownerPosition;</span>
+	}
+
+	public void setOwnerPosition(Long ownerPosition) {
+<span class="nc" id="L166">		this.ownerPosition = ownerPosition;</span>
+<span class="nc" id="L167">	}</span>
+
+	public Long getOwnerUser() {
+<span class="nc" id="L170">		return ownerUser;</span>
+	}
+
+	public void setOwnerUser(Long ownerUser) {
+<span class="nc" id="L174">		this.ownerUser = ownerUser;</span>
+<span class="nc" id="L175">	}</span>
+
+	public String getSenderName() {
+<span class="nc" id="L178">		return senderName;</span>
+	}
+
+	public void setSenderName(String senderName) {
+<span class="nc" id="L182">		this.senderName = senderName;</span>
+<span class="nc" id="L183">	}</span>
+
+	public String getNextAction() {
+<span class="nc" id="L186">		return nextAction;</span>
+	}
+
+	public void setNextAction(String nextAction) {
+<span class="nc" id="L190">		this.nextAction = nextAction;</span>
+<span class="nc" id="L191">	}</span>
+
+	public String getComments() {
+<span class="nc" id="L194">		return comments;</span>
+	}
+
+	public void setComments(String comments) {
+<span class="nc" id="L198">		this.comments = comments;</span>
+<span class="nc" id="L199">	}</span>
+
+	public String getNatureOfTask() {
+<span class="nc" id="L202">		return natureOfTask;</span>
+	}
+
+	public void setNatureOfTask(String natureOfTask) {
+<span class="nc" id="L206">		this.natureOfTask = natureOfTask;</span>
+<span class="nc" id="L207">	}</span>
+
+	public String getExtraInfo() {
+<span class="nc" id="L210">		return extraInfo;</span>
+	}
+
+	public void setExtraInfo(String extraInfo) {
+<span class="nc" id="L214">		this.extraInfo = extraInfo;</span>
+<span class="nc" id="L215">	}</span>
+
+	public Date getDateInfo() {
+<span class="nc" id="L218">		return dateInfo;</span>
+	}
+
+	public void setDateInfo(Date dateInfo) {
+<span class="nc" id="L222">		this.dateInfo = dateInfo;</span>
+<span class="nc" id="L223">	}</span>
+
+	public Date getExtraDateInfo() {
+<span class="nc" id="L226">		return extraDateInfo;</span>
+	}
+
+	public void setExtraDateInfo(Date extraDateInfo) {
+<span class="nc" id="L230">		this.extraDateInfo = extraDateInfo;</span>
+<span class="nc" id="L231">	}</span>
+
+	public Long getId() {
+<span class="nc" id="L234">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L238">		this.id = id;</span>
+<span class="nc" id="L239">	}</span>
+
+	public Long getCreatedBy() {
+<span class="nc" id="L242">		return createdBy;</span>
+	}
+
+	public void setCreatedBy(long createdBy) {
+<span class="nc" id="L246">		this.createdBy = createdBy;</span>
+<span class="nc" id="L247">	}</span>
+
+	public Date getCreatedDate() {
+<span class="nc" id="L250">		return createdDate;</span>
+	}
+
+	public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L254">		this.createdDate = createdDate;</span>
+<span class="nc" id="L255">	}</span>
+
+	public Long getLastModifiedBy() {
+<span class="nc" id="L258">		return lastModifiedBy;</span>
+	}
+
+	public void setLastModifiedBy(long lastModifiedBy) {
+<span class="nc" id="L262">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L263">	}</span>
+
+	public Date getLastModifiedDate() {
+<span class="nc" id="L266">		return lastModifiedDate;</span>
+	}
+
+	public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L270">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L271">	}</span>
+
+	public Long getInitiatorPosition() {
+<span class="nc" id="L274">		return initiatorPosition;</span>
+	}
+
+	public void setInitiatorPosition(Long initiatorPosition) {
+<span class="nc" id="L278">		this.initiatorPosition = initiatorPosition;</span>
+<span class="nc" id="L279">	}</span>
+
+	public Long getPreviousownerposition() {
+<span class="nc" id="L282">		return previousownerposition;</span>
+	}
+
+	public void setPreviousownerposition(Long previousownerposition) {
+<span class="nc" id="L286">		this.previousownerposition = previousownerposition;</span>
+<span class="nc" id="L287">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

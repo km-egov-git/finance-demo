@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationIndexRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.elasticsearch.entity.bean</a> &gt; <span class="el_source">ApplicationIndexRequest.java</span></div><h1>ApplicationIndexRequest.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.elasticsearch.entity.bean;
+
+<span class="nc" id="L51">public class ApplicationIndexRequest {</span>
+
+    private String region;
+    private String district;
+    private String grade;
+    private String ulbCode;
+    private String revZone;
+    private String revWard;
+    private String revBlock;
+    private String admZone;
+    private String admWard;
+    private String locality;
+    private String serviceGroup;
+    private String service;
+    private String source;
+    private String functionaryCode;
+    private String aggregationLevel;
+    private String fromDate;
+    private String toDate;
+    private String ageing;
+    private String closed;
+    private String beyondSLA;
+    private String approved;
+
+    public String getRegion() {
+<span class="nc" id="L76">        return region;</span>
+    }
+
+    public void setRegion(String region) {
+<span class="nc" id="L80">        this.region = region;</span>
+<span class="nc" id="L81">    }</span>
+
+    public String getDistrict() {
+<span class="nc" id="L84">        return district;</span>
+    }
+
+    public void setDistrict(String district) {
+<span class="nc" id="L88">        this.district = district;</span>
+<span class="nc" id="L89">    }</span>
+
+    public String getGrade() {
+<span class="nc" id="L92">        return grade;</span>
+    }
+
+    public void setGrade(String grade) {
+<span class="nc" id="L96">        this.grade = grade;</span>
+<span class="nc" id="L97">    }</span>
+
+    public String getUlbCode() {
+<span class="nc" id="L100">        return ulbCode;</span>
+    }
+
+    public void setUlbCode(String ulbCode) {
+<span class="nc" id="L104">        this.ulbCode = ulbCode;</span>
+<span class="nc" id="L105">    }</span>
+
+    public String getRevZone() {
+<span class="nc" id="L108">        return revZone;</span>
+    }
+
+    public void setRevZone(String revZone) {
+<span class="nc" id="L112">        this.revZone = revZone;</span>
+<span class="nc" id="L113">    }</span>
+
+    public String getRevWard() {
+<span class="nc" id="L116">        return revWard;</span>
+    }
+
+    public void setRevWard(String revWard) {
+<span class="nc" id="L120">        this.revWard = revWard;</span>
+<span class="nc" id="L121">    }</span>
+
+    public String getRevBlock() {
+<span class="nc" id="L124">        return revBlock;</span>
+    }
+
+    public void setRevBlock(String revBlock) {
+<span class="nc" id="L128">        this.revBlock = revBlock;</span>
+<span class="nc" id="L129">    }</span>
+
+    public String getAdmZone() {
+<span class="nc" id="L132">        return admZone;</span>
+    }
+
+    public void setAdmZone(String admZone) {
+<span class="nc" id="L136">        this.admZone = admZone;</span>
+<span class="nc" id="L137">    }</span>
+
+    public String getAdmWard() {
+<span class="nc" id="L140">        return admWard;</span>
+    }
+
+    public void setAdmWard(String admWard) {
+<span class="nc" id="L144">        this.admWard = admWard;</span>
+<span class="nc" id="L145">    }</span>
+
+    public String getLocality() {
+<span class="nc" id="L148">        return locality;</span>
+    }
+
+    public void setLocality(String locality) {
+<span class="nc" id="L152">        this.locality = locality;</span>
+<span class="nc" id="L153">    }</span>
+
+    public String getServiceGroup() {
+<span class="nc" id="L156">        return serviceGroup;</span>
+    }
+
+    public void setServiceGroup(String serviceGroup) {
+<span class="nc" id="L160">        this.serviceGroup = serviceGroup;</span>
+<span class="nc" id="L161">    }</span>
+
+    public String getService() {
+<span class="nc" id="L164">        return service;</span>
+    }
+
+    public void setService(String service) {
+<span class="nc" id="L168">        this.service = service;</span>
+<span class="nc" id="L169">    }</span>
+
+    public String getSource() {
+<span class="nc" id="L172">        return source;</span>
+    }
+
+    public void setSource(String source) {
+<span class="nc" id="L176">        this.source = source;</span>
+<span class="nc" id="L177">    }</span>
+
+    public String getFunctionaryCode() {
+<span class="nc" id="L180">        return functionaryCode;</span>
+    }
+
+    public void setFunctionaryCode(String functionaryCode) {
+<span class="nc" id="L184">        this.functionaryCode = functionaryCode;</span>
+<span class="nc" id="L185">    }</span>
+
+    public String getAggregationLevel() {
+<span class="nc" id="L188">        return aggregationLevel;</span>
+    }
+
+    public void setAggregationLevel(String aggregationLevel) {
+<span class="nc" id="L192">        this.aggregationLevel = aggregationLevel;</span>
+<span class="nc" id="L193">    }</span>
+
+    public String getFromDate() {
+<span class="nc" id="L196">        return fromDate;</span>
+    }
+
+    public void setFromDate(String fromDate) {
+<span class="nc" id="L200">        this.fromDate = fromDate;</span>
+<span class="nc" id="L201">    }</span>
+
+    public String getToDate() {
+<span class="nc" id="L204">        return toDate;</span>
+    }
+
+    public void setToDate(String toDate) {
+<span class="nc" id="L208">        this.toDate = toDate;</span>
+<span class="nc" id="L209">    }</span>
+
+    public String getAgeing() {
+<span class="nc" id="L212">        return ageing;</span>
+    }
+
+    public void setAgeing(String ageing) {
+<span class="nc" id="L216">        this.ageing = ageing;</span>
+<span class="nc" id="L217">    }</span>
+
+    public String getClosed() {
+<span class="nc" id="L220">        return closed;</span>
+    }
+
+    public void setClosed(String closed) {
+<span class="nc" id="L224">        this.closed = closed;</span>
+<span class="nc" id="L225">    }</span>
+
+    public String getBeyondSLA() {
+<span class="nc" id="L228">        return beyondSLA;</span>
+    }
+
+    public void setBeyondSLA(String beyondSLA) {
+<span class="nc" id="L232">        this.beyondSLA = beyondSLA;</span>
+<span class="nc" id="L233">    }</span>
+
+    public String getApproved() {
+<span class="nc" id="L236">        return approved;</span>
+    }
+
+    public void setApproved(String approved) {
+<span class="nc" id="L240">        this.approved = approved;</span>
+<span class="nc" id="L241">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

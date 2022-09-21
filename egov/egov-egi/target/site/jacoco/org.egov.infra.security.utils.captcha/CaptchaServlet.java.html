@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CaptchaServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.security.utils.captcha</a> &gt; <span class="el_source">CaptchaServlet.java</span></div><h1>CaptchaServlet.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.security.utils.captcha;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.HttpRequestHandler;
+
+import javax.imageio.ImageIO;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static org.egov.infra.utils.ImageUtils.JPG_MIME_TYPE;
+
+@Component(&quot;jcaptcha&quot;)
+<span class="nc" id="L66">public class CaptchaServlet implements HttpRequestHandler {</span>
+
+    @Autowired
+    private DefaultCaptchaService defaultCaptchaService;
+
+    @Override
+    public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
+<span class="nc" id="L73">        try (ByteArrayOutputStream jpegOutputStream = new ByteArrayOutputStream()) {</span>
+<span class="nc" id="L74">            String captchaId = request.getParameter(&quot;key&quot;);</span>
+<span class="nc" id="L75">            BufferedImage challenge = defaultCaptchaService.getImageChallengeForID(captchaId, response.getLocale());</span>
+<span class="nc" id="L76">            ImageIO.write(challenge, &quot;jpg&quot;, jpegOutputStream);</span>
+<span class="nc" id="L77">            response.setHeader(&quot;Cache-Control&quot;, &quot;no-store&quot;);</span>
+<span class="nc" id="L78">            response.setHeader(&quot;Pragma&quot;, &quot;no-cache&quot;);</span>
+<span class="nc" id="L79">            response.setDateHeader(&quot;Expires&quot;, 0);</span>
+<span class="nc" id="L80">            response.setContentType(JPG_MIME_TYPE);</span>
+<span class="nc" id="L81">            ServletOutputStream responseStream = response.getOutputStream();</span>
+<span class="nc" id="L82">            responseStream.write(jpegOutputStream.toByteArray());</span>
+<span class="nc" id="L83">            responseStream.flush();</span>
+<span class="nc" id="L84">            responseStream.close();</span>
+<span class="nc bnc" id="L85" title="All 8 branches missed.">        } catch (IOException | RuntimeException e) {</span>
+<span class="nc" id="L86">            response.sendError(HttpServletResponse.SC_NOT_FOUND);</span>
+<span class="nc" id="L87">            return;</span>
+<span class="nc" id="L88">        }</span>
+<span class="nc" id="L89">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

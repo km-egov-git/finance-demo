@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InstrumentStatusEnum.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">InstrumentStatusEnum.java</span></div><h1>InstrumentStatusEnum.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+<span class="nc" id="L9">public enum InstrumentStatusEnum {</span>
+<span class="nc" id="L10">    APPROVED(&quot;APPROVED&quot;, InstrumentStatusEnum.Category.OPEN),</span>
+<span class="nc" id="L11">    APPROVAL_PENDING(&quot;APPROVAL_PENDING&quot;, InstrumentStatusEnum.Category.OPEN),</span>
+<span class="nc" id="L12">    TO_BE_SUBMITTED(&quot;TO_BE_SUBMITTED&quot;, InstrumentStatusEnum.Category.OPEN),</span>
+<span class="nc" id="L13">    REMITTED(&quot;REMITTED&quot;, InstrumentStatusEnum.Category.OPEN),</span>
+<span class="nc" id="L14">    REJECTED(&quot;REJECTED&quot;, InstrumentStatusEnum.Category.CLOSED),</span>
+<span class="nc" id="L15">    CANCELLED(&quot;CANCELLED&quot;, InstrumentStatusEnum.Category.CLOSED),</span>
+<span class="nc" id="L16">    DISHONOURED(&quot;DISHONOURED&quot;, InstrumentStatusEnum.Category.CLOSED);</span>
+
+
+    private String value;
+
+    private InstrumentStatusEnum.Category category;
+
+<span class="nc" id="L23">    InstrumentStatusEnum(String value, InstrumentStatusEnum.Category category) {</span>
+<span class="nc" id="L24">        this.value = value;</span>
+<span class="nc" id="L25">        this.category = category;</span>
+<span class="nc" id="L26">    }</span>
+
+    public boolean isCategory(InstrumentStatusEnum.Category category) {
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        return this.category == category;</span>
+    }
+
+    public static Set&lt;String&gt; statusesByCategory(InstrumentStatusEnum.Category category) {
+<span class="nc" id="L33">        Set&lt;String&gt; statuses = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        for (InstrumentStatusEnum b : InstrumentStatusEnum.values()) {</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">            if (b.category == category) {</span>
+<span class="nc" id="L36">                statuses.add(b.value);</span>
+            }
+        }
+
+<span class="nc" id="L40">        return statuses;</span>
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+<span class="nc" id="L46">        return String.valueOf(value);</span>
+    }
+
+    @JsonCreator
+    public static InstrumentStatusEnum fromValue(String text) {
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        for (InstrumentStatusEnum b : InstrumentStatusEnum.values()) {</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            if (String.valueOf(b.value).equalsIgnoreCase(text)) {</span>
+<span class="nc" id="L53">                return b;</span>
+            }
+        }
+<span class="nc" id="L56">        return null;</span>
+    }
+
+<span class="nc" id="L59">    public enum Category {</span>
+<span class="nc" id="L60">        OPEN,</span>
+<span class="nc" id="L61">        CLOSED;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WorkFlowMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.matrix.entity</a> &gt; <span class="el_source">WorkFlowMatrix.java</span></div><h1>WorkFlowMatrix.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2018  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.matrix.entity;
+
+import org.egov.infra.persistence.entity.AbstractPersistable;
+import org.hibernate.validator.constraints.SafeHtml;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.util.Date;
+
+import static org.egov.infra.workflow.matrix.entity.WorkFlowMatrix.SEQ_WF_MATRIX;
+
+@Entity
+@Table(name = &quot;EG_WF_MATRIX&quot;)
+@SequenceGenerator(name = SEQ_WF_MATRIX, sequenceName = SEQ_WF_MATRIX, allocationSize = 1)
+public class WorkFlowMatrix extends AbstractPersistable&lt;Long&gt; implements Cloneable {
+
+    public static final String SEQ_WF_MATRIX = &quot;SEQ_EG_WF_MATRIX&quot;;
+    private static final long serialVersionUID = 4954386159285858993L;
+    @Id
+    @GeneratedValue(generator = SEQ_WF_MATRIX, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @SafeHtml
+    private String department;
+
+    @NotNull
+    @SafeHtml
+    private String objectType;
+
+    @SafeHtml
+    private String currentState;
+
+    @SafeHtml
+    private String currentStatus;
+
+    @SafeHtml
+    private String pendingActions;
+
+    @SafeHtml
+    private String currentDesignation;
+
+    @SafeHtml
+    private String additionalRule;
+
+    @SafeHtml
+    private String nextState;
+
+    @SafeHtml
+    private String nextAction;
+
+    @SafeHtml
+    private String nextDesignation;
+
+    @SafeHtml
+    private String nextStatus;
+
+    @SafeHtml
+    private String validActions;
+
+    private BigDecimal fromQty;
+
+    private BigDecimal toQty;
+
+    @Temporal(TemporalType.DATE)
+    private Date fromDate;
+
+    @Temporal(TemporalType.DATE)
+    private Date toDate;
+
+    private String enableFields;
+
+    private Boolean forwardEnabled;
+
+    private Long nextref;
+
+    private Boolean rejectEnabled;
+
+    public WorkFlowMatrix(final String department, final String objectType, final String currentState,
+                          final String currentStatus, final String pendingActions, final String currentDesignation,
+                          final String additionalRule, final String nextState, final String nextAction, final String nextDesignation,
+                          final String nextStatus, final String validActions, final BigDecimal fromQty, final BigDecimal toQty,
+                          final Date fromDate, final Date toDate) {
+<span class="nc" id="L139">        super();</span>
+<span class="nc" id="L140">        this.department = department;</span>
+<span class="nc" id="L141">        this.objectType = objectType;</span>
+<span class="nc" id="L142">        this.currentState = currentState;</span>
+<span class="nc" id="L143">        this.currentStatus = currentStatus;</span>
+<span class="nc" id="L144">        this.pendingActions = pendingActions;</span>
+<span class="nc" id="L145">        this.currentDesignation = currentDesignation;</span>
+<span class="nc" id="L146">        this.additionalRule = additionalRule;</span>
+<span class="nc" id="L147">        this.nextState = nextState;</span>
+<span class="nc" id="L148">        this.nextAction = nextAction;</span>
+<span class="nc" id="L149">        this.nextDesignation = nextDesignation;</span>
+<span class="nc" id="L150">        this.nextStatus = nextStatus;</span>
+<span class="nc" id="L151">        this.validActions = validActions;</span>
+<span class="nc" id="L152">        this.fromQty = fromQty;</span>
+<span class="nc" id="L153">        this.toQty = toQty;</span>
+<span class="nc" id="L154">        this.fromDate = fromDate;</span>
+<span class="nc" id="L155">        this.toDate = toDate;</span>
+<span class="nc" id="L156">    }</span>
+
+<span class="nc" id="L158">    public WorkFlowMatrix() {</span>
+
+<span class="nc" id="L160">    }</span>
+
+    @Override
+    public WorkFlowMatrix clone() {
+<span class="nc" id="L164">        return new WorkFlowMatrix(department, objectType, currentState, currentStatus, pendingActions,</span>
+                currentDesignation, additionalRule, nextState, nextAction, nextDesignation, nextStatus, validActions,
+                fromQty, toQty, fromDate, toDate);
+    }
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L171">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L176">        this.id = id;</span>
+<span class="nc" id="L177">    }</span>
+
+    public String getDepartment() {
+<span class="nc" id="L180">        return department;</span>
+    }
+
+    public void setDepartment(final String department) {
+<span class="nc" id="L184">        this.department = department;</span>
+<span class="nc" id="L185">    }</span>
+
+    public String getObjectType() {
+<span class="nc" id="L188">        return objectType;</span>
+    }
+
+    public void setObjectType(final String objectType) {
+<span class="nc" id="L192">        this.objectType = objectType;</span>
+<span class="nc" id="L193">    }</span>
+
+    public String getCurrentState() {
+<span class="nc" id="L196">        return currentState;</span>
+    }
+
+    public void setCurrentState(final String currentState) {
+<span class="nc" id="L200">        this.currentState = currentState;</span>
+<span class="nc" id="L201">    }</span>
+
+    public String getCurrentStatus() {
+<span class="nc" id="L204">        return currentStatus;</span>
+    }
+
+    public void setCurrentStatus(final String currentStatus) {
+<span class="nc" id="L208">        this.currentStatus = currentStatus;</span>
+<span class="nc" id="L209">    }</span>
+
+    public String getPendingActions() {
+<span class="nc" id="L212">        return pendingActions;</span>
+    }
+
+    public void setPendingActions(final String pendingActions) {
+<span class="nc" id="L216">        this.pendingActions = pendingActions;</span>
+<span class="nc" id="L217">    }</span>
+
+    public String getCurrentDesignation() {
+<span class="nc" id="L220">        return currentDesignation;</span>
+    }
+
+    public void setCurrentDesignation(final String currentDesignation) {
+<span class="nc" id="L224">        this.currentDesignation = currentDesignation;</span>
+<span class="nc" id="L225">    }</span>
+
+    public String getAdditionalRule() {
+<span class="nc" id="L228">        return additionalRule;</span>
+    }
+
+    public void setAdditionalRule(final String additionalRule) {
+<span class="nc" id="L232">        this.additionalRule = additionalRule;</span>
+<span class="nc" id="L233">    }</span>
+
+    public String getNextState() {
+<span class="nc" id="L236">        return nextState;</span>
+    }
+
+    public void setNextState(final String nextState) {
+<span class="nc" id="L240">        this.nextState = nextState;</span>
+<span class="nc" id="L241">    }</span>
+
+    public String getNextAction() {
+<span class="nc" id="L244">        return nextAction;</span>
+    }
+
+    public void setNextAction(final String nextAction) {
+<span class="nc" id="L248">        this.nextAction = nextAction;</span>
+<span class="nc" id="L249">    }</span>
+
+    public String getNextDesignation() {
+<span class="nc" id="L252">        return nextDesignation;</span>
+    }
+
+    public void setNextDesignation(final String nextDesignation) {
+<span class="nc" id="L256">        this.nextDesignation = nextDesignation;</span>
+<span class="nc" id="L257">    }</span>
+
+    public String getNextStatus() {
+<span class="nc" id="L260">        return nextStatus;</span>
+    }
+
+    public void setNextStatus(final String nextStatus) {
+<span class="nc" id="L264">        this.nextStatus = nextStatus;</span>
+<span class="nc" id="L265">    }</span>
+
+    public String getValidActions() {
+<span class="nc" id="L268">        return validActions;</span>
+    }
+
+    public void setValidActions(final String validActions) {
+<span class="nc" id="L272">        this.validActions = validActions;</span>
+<span class="nc" id="L273">    }</span>
+
+    public BigDecimal getFromQty() {
+<span class="nc" id="L276">        return fromQty;</span>
+    }
+
+    public void setFromQty(final BigDecimal fromQty) {
+<span class="nc" id="L280">        this.fromQty = fromQty;</span>
+<span class="nc" id="L281">    }</span>
+
+    public BigDecimal getToQty() {
+<span class="nc" id="L284">        return toQty;</span>
+    }
+
+    public void setToQty(final BigDecimal toQty) {
+<span class="nc" id="L288">        this.toQty = toQty;</span>
+<span class="nc" id="L289">    }</span>
+
+    public Date getFromDate() {
+<span class="nc" id="L292">        return fromDate;</span>
+    }
+
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L296">        this.fromDate = fromDate;</span>
+<span class="nc" id="L297">    }</span>
+
+    public Date getToDate() {
+<span class="nc" id="L300">        return toDate;</span>
+    }
+
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L304">        this.toDate = toDate;</span>
+<span class="nc" id="L305">    }</span>
+
+    public String getEnableFields() {
+<span class="nc" id="L308">        return enableFields;</span>
+    }
+
+    public void setEnableFields(String enableFields) {
+<span class="nc" id="L312">        this.enableFields = enableFields;</span>
+<span class="nc" id="L313">    }</span>
+
+    public Boolean isForwardEnabled() {
+<span class="nc" id="L316">        return forwardEnabled;</span>
+    }
+
+    public void setForwardEnabled(Boolean forwardEnabled) {
+<span class="nc" id="L320">        this.forwardEnabled = forwardEnabled;</span>
+<span class="nc" id="L321">    }</span>
+
+    public Long getNextref() {
+<span class="nc" id="L324">        return nextref;</span>
+    }
+
+    public void setNextref(Long nextref) {
+<span class="nc" id="L328">        this.nextref = nextref;</span>
+<span class="nc" id="L329">    }</span>
+
+    public Boolean isRejectEnabled() {
+<span class="nc bnc" id="L332" title="All 4 branches missed.">        return rejectEnabled != null &amp;&amp; rejectEnabled;</span>
+    }
+
+    public void setRejectEnabled(Boolean rejectEnabled) {
+<span class="nc" id="L336">        this.rejectEnabled = rejectEnabled;</span>
+<span class="nc" id="L337">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

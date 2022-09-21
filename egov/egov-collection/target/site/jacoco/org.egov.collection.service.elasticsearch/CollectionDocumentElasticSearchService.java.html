@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionDocumentElasticSearchService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.service.elasticsearch</a> &gt; <span class="el_source">CollectionDocumentElasticSearchService.java</span></div><h1>CollectionDocumentElasticSearchService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.service.elasticsearch;
+
+import org.apache.commons.lang3.StringUtils;
+import org.egov.collection.bean.dashboard.CollectionDashBoardRequest;
+import org.egov.collection.bean.dashboard.CollectionDashBoardTrend;
+import org.egov.collection.bean.dashboard.CollectionDocumentDetails;
+import org.egov.collection.bean.dashboard.CollectionTableData;
+import org.egov.collection.bean.dashboard.TaxPayerDashBoardDetails;
+import org.egov.collection.bean.dashboard.TaxPayerDashBoardResponseDetails;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.es.CollectionDocument;
+import org.egov.commons.CFinancialYear;
+import org.egov.infra.utils.DateUtils;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import static org.egov.collection.constants.CollectionConstants.COLLECTION_INDEX_NAME;
+import static org.egov.collection.constants.CollectionConstants.DASHBOARD_GROUPING_DISTRICTWISE;
+import static org.egov.collection.constants.CollectionConstants.DASHBOARD_GROUPING_GRADEWISE;
+import static org.egov.collection.constants.CollectionConstants.DASHBOARD_GROUPING_REGIONWISE;
+import static org.egov.collection.constants.CollectionConstants.DASHBOARD_GROUPING_ULBWISE;
+import static org.egov.collection.constants.CollectionConstants.DASHBOARD_GROUPING_WARDWISE;
+import static org.egov.collection.constants.CollectionConstants.DATEFORMATTER_YYYY_MM_DD;
+import static org.egov.collection.constants.CollectionConstants.DATE_FORMAT_YYYYMMDD;
+
+@Service
+<span class="nc" id="L106">public class CollectionDocumentElasticSearchService {</span>
+
+    private static final String DATE_AGG = &quot;date_agg&quot;;
+    private static final String BY_CITY = &quot;by_city&quot;;
+    private static final String MILLISECS = &quot; (millisecs) &quot;;
+    private static final String REVENUE_WARD = &quot;revenueWard&quot;;
+    private static final String CITY_NAME = &quot;cityName&quot;;
+    private static final String CITY_CODE = &quot;cityCode&quot;;
+    private static final String CITY_GRADE = &quot;cityGrade&quot;;
+    private static final String DISTRICT_NAME = &quot;districtName&quot;;
+    private static final String REGION_NAME = &quot;regionName&quot;;
+    private static final String BILLING_SERVICE = &quot;billingService&quot;;
+    private static final String TOTAL_AMOUNT = &quot;totalAmount&quot;;
+    private static final String COLLECTIONTOTAL = &quot;collectiontotal&quot;;
+    private static final String CANCELLED = &quot;Cancelled&quot;;
+    private static final String STATUS = &quot;status&quot;;
+    private static final String RECEIPT_DATE = &quot;receiptDate&quot;;
+    private static final String TOTAL_COLLECTION = &quot;total_collection&quot;;
+    private static final String BY_AGGREGATION_FIELD = &quot;by_aggregationField&quot;;
+
+<span class="nc" id="L126">    private static final Logger LOGGER = LoggerFactory.getLogger(CollectionDocumentElasticSearchService.class);</span>
+
+    private ElasticsearchTemplate elasticsearchTemplate;
+
+    public Set&lt;String&gt; getServices() {
+
+<span class="nc" id="L132">        SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L133">                .addAggregation(AggregationBuilders.count(&quot;services_count&quot;).field(BILLING_SERVICE)).build();</span>
+<span class="nc" id="L134">        final Aggregations collCountAggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L135">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L137">        final ValueCount aggr = collCountAggr.get(&quot;services_count&quot;);</span>
+<span class="nc" id="L138">        searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME).withFields(BILLING_SERVICE)</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                .withPageable(new PageRequest(0, (int) (aggr.getValue() == 0 ? 1 : aggr.getValue()))).build();</span>
+<span class="nc" id="L140">        final List&lt;CollectionDocument&gt; list = elasticsearchTemplate.queryForList(searchQueryColl,</span>
+                CollectionDocument.class);
+<span class="nc" id="L142">        final Set&lt;String&gt; services = new TreeSet&lt;&gt;();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        for (final CollectionDocument colDoc : list)</span>
+<span class="nc" id="L144">            services.add(colDoc.getBillingService());</span>
+<span class="nc" id="L145">        return services;</span>
+    }
+
+    /**
+     * Gives the consolidated collection for the dates and billing service
+     *
+     * @param fromDate
+     * @param toDate
+     * @param serviceDetails
+     * @return BigDecimal
+     */
+    public BigDecimal getConsolidatedCollForYears(final Date fromDate, final Date toDate,
+            final List&lt;String&gt; serviceDetails) {
+        BoolQueryBuilder boolQuery = QueryBuilders
+<span class="nc" id="L159">                .boolQuery()</span>
+<span class="nc" id="L160">                .must(QueryBuilders.rangeQuery(RECEIPT_DATE).gte(DATEFORMATTER_YYYY_MM_DD.format(fromDate))</span>
+<span class="nc" id="L161">                        .lte(DATEFORMATTER_YYYY_MM_DD.format(toDate)).includeUpper(false))</span>
+<span class="nc" id="L162">                .mustNot(QueryBuilders.matchQuery(STATUS, CANCELLED));</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (!serviceDetails.isEmpty())</span>
+<span class="nc" id="L164">            boolQuery = boolQuery.must(QueryBuilders.termsQuery(BILLING_SERVICE, serviceDetails));</span>
+<span class="nc" id="L165">        final SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L166">                .withQuery(boolQuery).addAggregation(AggregationBuilders.sum(COLLECTIONTOTAL).field(TOTAL_AMOUNT))</span>
+<span class="nc" id="L167">                .build();</span>
+
+<span class="nc" id="L169">        final Aggregations collAggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L170">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L172">        final Sum aggr = collAggr.get(COLLECTIONTOTAL);</span>
+<span class="nc" id="L173">        return BigDecimal.valueOf(aggr.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP);</span>
+    }
+
+    /**
+     * Gives the consolidated collection for the current Fin year and last fin
+     * year
+     *
+     * @param serviceDetails
+     * @return Map
+     */
+    public Map&lt;String, BigDecimal&gt; getFinYearsCollByService(final List&lt;String&gt; serviceDetails,
+            final CFinancialYear currFinYear) {
+        /**
+         * As per Elastic Search functionality, to get the total collections
+         * between 2 dates, add a day to the endDate and fetch the results
+         */
+<span class="nc" id="L189">        final Map&lt;String, BigDecimal&gt; consolidatedCollValues = new HashMap&lt;&gt;();</span>
+        // For current year results
+<span class="nc" id="L191">        consolidatedCollValues.put(</span>
+                &quot;cytdColln&quot;,
+<span class="nc" id="L193">                getConsolidatedCollForYears(currFinYear.getStartingDate(),</span>
+<span class="nc" id="L194">                        org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1), serviceDetails));</span>
+        // For last year results
+<span class="nc" id="L196">        consolidatedCollValues.put(</span>
+                &quot;lytdColln&quot;,
+<span class="nc" id="L198">                getConsolidatedCollForYears(</span>
+<span class="nc" id="L199">                        org.apache.commons.lang3.time.DateUtils.addYears(currFinYear.getStartingDate(), -1),</span>
+<span class="nc" id="L200">                        org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L201">                                org.apache.commons.lang3.time.DateUtils.addYears(new Date(), -1), 1), serviceDetails));</span>
+<span class="nc" id="L202">        return consolidatedCollValues;</span>
+    }
+
+    /**
+     * Builds query based on the input parameters sent
+     *
+     * @param collectionDashBoardRequest
+     * @param indexName
+     * @param ulbCodeField
+     * @return BoolQueryBuilder
+     */
+    private BoolQueryBuilder prepareWhereClause(final CollectionDashBoardRequest collectionDashBoardRequest) {
+<span class="nc" id="L214">        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().filter(</span>
+<span class="nc" id="L215">                QueryBuilders.rangeQuery(TOTAL_AMOUNT).from(0).to(null));</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getRegionName()))</span>
+<span class="nc" id="L217">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(REGION_NAME,</span>
+<span class="nc" id="L218">                    collectionDashBoardRequest.getRegionName()));</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getDistrictName()))</span>
+<span class="nc" id="L220">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(DISTRICT_NAME,</span>
+<span class="nc" id="L221">                    collectionDashBoardRequest.getDistrictName()));</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getUlbGrade()))</span>
+<span class="nc" id="L223">            boolQuery = boolQuery</span>
+<span class="nc" id="L224">                    .filter(QueryBuilders.matchQuery(CITY_GRADE, collectionDashBoardRequest.getUlbGrade()));</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getUlbCode()))</span>
+<span class="nc" id="L226">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(CITY_CODE, collectionDashBoardRequest.getUlbCode()));</span>
+
+<span class="nc" id="L228">        return boolQuery;</span>
+    }
+
+    /**
+     * API sets the consolidated collections for single day and between the 2
+     * dates
+     *
+     * @param collectionDashBoardRequest
+     * @param collectionIndexDetails
+     */
+    public CollectionDocumentDetails getCompleteCollectionIndexDetails(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final List&lt;String&gt; serviceDetail,
+            final CFinancialYear financialYear) {
+        Date fromDate;
+        Date toDate;
+        BigDecimal todayColl;
+        BigDecimal tillDateColl;
+        BigDecimal variance;
+<span class="nc" id="L246">        final Long startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L247">        final CollectionDocumentDetails collectionDocumentDetails = new CollectionDocumentDetails();</span>
+        /**
+         * As per Elastic Search functionality, to get the total collections
+         * between 2 dates, add a day to the endDate and fetch the results For
+         * Current day's collection if dates are sent in the request, consider
+         * the toDate, else take date range between current date +1 day
+         */
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L256">            fromDate = DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L257">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L258">                    DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD), 1);</span>
+        } else {
+<span class="nc" id="L260">            fromDate = new Date();</span>
+<span class="nc" id="L261">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+        }
+        // Today’s collection
+<span class="nc" id="L264">        todayColl = getCollectionBetweenDates(collectionDashBoardRequest, fromDate, toDate, null, serviceDetail, false);</span>
+<span class="nc" id="L265">        collectionDocumentDetails.setTodayColl(todayColl);</span>
+
+        // Last year Today’s day collection
+<span class="nc" id="L268">        todayColl = getCollectionBetweenDates(collectionDashBoardRequest,</span>
+<span class="nc" id="L269">                org.apache.commons.lang3.time.DateUtils.addYears(fromDate, -1),</span>
+<span class="nc" id="L270">                org.apache.commons.lang3.time.DateUtils.addYears(toDate, -1), null, serviceDetail, false);</span>
+<span class="nc" id="L271">        collectionDocumentDetails.setLyTodayColl(todayColl);</span>
+
+        /**
+         * For collections between the date ranges if dates are sent in the
+         * request, consider the same, else calculate from current year start
+         * date till current date+1 day
+         */
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L280">            fromDate = DateUtils.getDate(collectionDashBoardRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L281">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L282">                    DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD), 1);</span>
+        } else {
+<span class="nc" id="L284">            fromDate = DateUtils.startOfDay(financialYear.getStartingDate());</span>
+<span class="nc" id="L285">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+        }
+        // Current Year till today collection
+<span class="nc" id="L288">        tillDateColl = getCollectionBetweenDates(collectionDashBoardRequest, fromDate, toDate, null, serviceDetail,</span>
+                false);
+<span class="nc" id="L290">        collectionDocumentDetails.setCytdColl(tillDateColl);</span>
+
+        // Last year till same date of today’s date collection
+<span class="nc" id="L293">        tillDateColl = getCollectionBetweenDates(collectionDashBoardRequest,</span>
+<span class="nc" id="L294">                org.apache.commons.lang3.time.DateUtils.addYears(fromDate, -1),</span>
+<span class="nc" id="L295">                org.apache.commons.lang3.time.DateUtils.addYears(toDate, -1), null, serviceDetail, false);</span>
+<span class="nc" id="L296">        collectionDocumentDetails.setLytdColl(tillDateColl);</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        if (collectionDocumentDetails.getLytdColl().compareTo(BigDecimal.ZERO) == 0)</span>
+<span class="nc" id="L298">            variance = CollectionConstants.BIGDECIMAL_100;</span>
+        else
+<span class="nc" id="L300">            variance = collectionDocumentDetails.getCytdColl().subtract(collectionDocumentDetails.getLytdColl())</span>
+<span class="nc" id="L301">                    .multiply(CollectionConstants.BIGDECIMAL_100)</span>
+<span class="nc" id="L302">                    .divide(collectionDocumentDetails.getLytdColl(), 1, BigDecimal.ROUND_HALF_UP);</span>
+<span class="nc" id="L303">        collectionDocumentDetails.setLyVar(variance);</span>
+<span class="nc" id="L304">        final Long timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L306">            LOGGER.debug(&quot;Time taken by getCompleteCollectionIndexDetails() is : &quot; + timeTaken + MILLISECS);</span>
+<span class="nc" id="L307">        return collectionDocumentDetails;</span>
+    }
+
+    /**
+     * Returns the consolidated collections for single day and between the 2
+     * dates
+     *
+     * @param collectionDashBoardRequest
+     * @param fromDate
+     * @param toDate
+     * @param cityName
+     * @return BigDecimal
+     */
+    public BigDecimal getCollectionBetweenDates(final CollectionDashBoardRequest collectionDashBoardRequest,
+            final Date fromDate, final Date toDate, final String cityName, final List&lt;String&gt; serviceDetails,
+            final boolean isWard) {
+<span class="nc" id="L323">        final Long startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L324">        BoolQueryBuilder boolQuery = prepareWhereClause(collectionDashBoardRequest);</span>
+<span class="nc" id="L325">        boolQuery = boolQuery.filter(</span>
+<span class="nc" id="L326">                QueryBuilders.rangeQuery(RECEIPT_DATE).gte(DATEFORMATTER_YYYY_MM_DD.format(fromDate))</span>
+<span class="nc" id="L327">                        .lte(DATEFORMATTER_YYYY_MM_DD.format(toDate)).includeUpper(false)).mustNot(</span>
+<span class="nc" id="L328">                QueryBuilders.matchQuery(STATUS, CANCELLED));</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        if (StringUtils.isNotBlank(cityName))</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">            if (!isWard)</span>
+<span class="nc" id="L331">                boolQuery = boolQuery.filter(QueryBuilders.matchQuery(CITY_NAME, cityName));</span>
+            else
+<span class="nc" id="L333">                boolQuery = boolQuery.filter(QueryBuilders.matchQuery(REVENUE_WARD, cityName));</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        if (!serviceDetails.isEmpty())</span>
+<span class="nc" id="L335">            boolQuery = boolQuery.filter(QueryBuilders.termsQuery(BILLING_SERVICE, serviceDetails));</span>
+
+<span class="nc" id="L337">        final SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L338">                .withQuery(boolQuery).addAggregation(AggregationBuilders.sum(COLLECTIONTOTAL).field(TOTAL_AMOUNT))</span>
+<span class="nc" id="L339">                .build();</span>
+
+<span class="nc" id="L341">        final Aggregations collAggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L342">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L344">        final Sum aggr = collAggr.get(COLLECTIONTOTAL);</span>
+<span class="nc" id="L345">        final Long timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L347">            LOGGER.debug(&quot;Time taken by getCollectionBetweenDates() is : &quot; + timeTaken + MILLISECS);</span>
+<span class="nc" id="L348">        return BigDecimal.valueOf(aggr.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP);</span>
+    }
+
+    /**
+     * Prepares Collection Table Data
+     *
+     * @param collectionDashBoardRequest
+     * @return List
+     */
+    public List&lt;CollectionTableData&gt; getResponseTableData(final CollectionDashBoardRequest collectionDashBoardRequest,
+            final List&lt;String&gt; serviceDetail, final CFinancialYear financialYear) {
+<span class="nc" id="L359">        final List&lt;CollectionTableData&gt; collIndDataList = new ArrayList&lt;&gt;();</span>
+        Date fromDate;
+        Date toDate;
+        String name;
+        CollectionTableData collTableData;
+<span class="nc" id="L364">        String aggregationField = REGION_NAME;</span>
+<span class="nc" id="L365">        Map detailsForAggregationField = Collections.emptyMap();</span>
+        /**
+         * Select the grouping based on the type parameter, by default the
+         * grouping is done based on Regions. If type is region, group by
+         * Region, if type is district, group by District, if type is ulb, group
+         * by ULB
+         */
+<span class="nc bnc" id="L372" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getType()))</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">            if (collectionDashBoardRequest.getType().equalsIgnoreCase(DASHBOARD_GROUPING_REGIONWISE))</span>
+<span class="nc" id="L374">                aggregationField = REGION_NAME;</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">            else if (collectionDashBoardRequest.getType().equalsIgnoreCase(DASHBOARD_GROUPING_DISTRICTWISE))</span>
+<span class="nc" id="L376">                aggregationField = DISTRICT_NAME;</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">            else if (collectionDashBoardRequest.getType().equalsIgnoreCase(DASHBOARD_GROUPING_ULBWISE))</span>
+<span class="nc" id="L378">                aggregationField = CITY_NAME;</span>
+<span class="nc bnc" id="L379" title="All 2 branches missed.">            else if (collectionDashBoardRequest.getType().equalsIgnoreCase(DASHBOARD_GROUPING_GRADEWISE))</span>
+<span class="nc" id="L380">                aggregationField = CITY_GRADE;</span>
+<span class="nc bnc" id="L381" title="All 2 branches missed.">            else if (collectionDashBoardRequest.getType().equalsIgnoreCase(DASHBOARD_GROUPING_WARDWISE))</span>
+<span class="nc" id="L382">                aggregationField = REVENUE_WARD;</span>
+       
+        /**
+         * As per Elastic Search functionality, to get the total collections
+         * between 2 dates, add a day to the endDate and fetch the results For
+         * Current day's collection if dates are sent in the request, consider
+         * the toDate, else take date range between current date +1 day
+         */
+<span class="nc bnc" id="L390" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L392">            fromDate = DateUtils.getDate(collectionDashBoardRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L393">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L394">                    DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD), 1);</span>
+        } else {
+<span class="nc" id="L396">            fromDate = DateUtils.startOfDay(financialYear.getStartingDate());</span>
+<span class="nc" id="L397">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+        }
+
+<span class="nc" id="L400">        Long startTime = System.currentTimeMillis();</span>
+        // total
+<span class="nc" id="L402">        final Map&lt;String, BigDecimal&gt; totalCollMap = getCollectionAndDemandValues(collectionDashBoardRequest, fromDate,</span>
+                toDate, TOTAL_AMOUNT, aggregationField, serviceDetail);
+        
+        /**
+         * As per Elastic Search functionality, to get the total collections
+         * between 2 dates, add a day to the endDate and fetch the results For
+         * Current day's collection if dates are sent in the request, consider
+         * the toDate, else take date range between current date +1 day
+         */
+<span class="nc bnc" id="L411" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L413">            fromDate = DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L414">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L415">                    DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD), 1);</span>
+        } else {
+<span class="nc" id="L417">            fromDate = new Date();</span>
+<span class="nc" id="L418">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+        }
+        
+<span class="nc" id="L421">        final Map&lt;String, BigDecimal&gt; todaysCollMap = getCollectionAndDemandValues(collectionDashBoardRequest, fromDate,</span>
+                toDate, TOTAL_AMOUNT, aggregationField, serviceDetail);
+        
+<span class="nc" id="L424">        Long timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L426">            LOGGER.debug(&quot;Time taken by getCollectionAndDemandValues() is : &quot; + timeTaken + MILLISECS);</span>
+
+<span class="nc" id="L428">        startTime = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">        for (final Map.Entry&lt;String, BigDecimal&gt; entry : totalCollMap.entrySet()) {</span>
+<span class="nc" id="L430">            collTableData = new CollectionTableData();</span>
+<span class="nc" id="L431">            name = entry.getKey();</span>
+<span class="nc bnc" id="L432" title="All 4 branches missed.">            if (DISTRICT_NAME.equalsIgnoreCase(aggregationField) || CITY_NAME.equalsIgnoreCase(aggregationField)</span>
+<span class="nc bnc" id="L433" title="All 4 branches missed.">                    || REGION_NAME.equalsIgnoreCase(aggregationField) || REVENUE_WARD.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L434">                detailsForAggregationField = getDetailsForAggregationType(collectionDashBoardRequest, name,</span>
+                        aggregationField);
+<span class="nc bnc" id="L436" title="All 2 branches missed.">            if (aggregationField.equals(REGION_NAME))</span>
+<span class="nc" id="L437">                collTableData.setRegionName(name);</span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">            else if (aggregationField.equals(DISTRICT_NAME)) {</span>
+<span class="nc" id="L439">                collTableData.setRegionName(collectionDashBoardRequest.getRegionName());</span>
+<span class="nc" id="L440">                collTableData.setDistrictName(name);</span>
+<span class="nc bnc" id="L441" title="All 2 branches missed.">            } else if (aggregationField.equals(CITY_NAME)) {</span>
+<span class="nc" id="L442">                collTableData.setUlbName(name);</span>
+<span class="nc" id="L443">                collTableData.setDistrictName(collectionDashBoardRequest.getDistrictName());</span>
+<span class="nc" id="L444">                collTableData.setUlbGrade(collectionDashBoardRequest.getUlbGrade());</span>
+<span class="nc bnc" id="L445" title="All 2 branches missed.">            } else if (aggregationField.equals(CITY_GRADE))</span>
+<span class="nc" id="L446">                collTableData.setUlbGrade(name);</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">            else if (aggregationField.equals(REVENUE_WARD)){</span>
+<span class="nc" id="L448">                collTableData.setWardName(name);</span>
+<span class="nc" id="L449">                collTableData.setRegionName(detailsForAggregationField.get(REGION_NAME).toString());</span>
+<span class="nc" id="L450">                collTableData.setDistrictName(detailsForAggregationField.get(DISTRICT_NAME).toString());</span>
+<span class="nc" id="L451">                collTableData.setUlbGrade(detailsForAggregationField.get(CITY_GRADE).toString());</span>
+<span class="nc" id="L452">                collTableData.setUlbName(detailsForAggregationField.get(CITY_NAME).toString());</span>
+            }
+<span class="nc bnc" id="L454" title="All 2 branches missed.">            collTableData.setTotalCollection(totalCollMap.get(name) == null ? BigDecimal.ZERO : totalCollMap.get(name));</span>
+<span class="nc bnc" id="L455" title="All 2 branches missed.">            collTableData.setTodaysCollection(todaysCollMap.get(name) == null ? BigDecimal.ZERO : todaysCollMap.get(name));</span>
+<span class="nc" id="L456">            collIndDataList.add(collTableData);</span>
+<span class="nc" id="L457">        }</span>
+<span class="nc" id="L458">        timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L460">            LOGGER.debug(&quot;Time taken for setting values in getResponseTableData() is : &quot; + timeTaken + MILLISECS);</span>
+<span class="nc" id="L461">        return collIndDataList;</span>
+    }
+    
+    private Map getDetailsForAggregationType(CollectionDashBoardRequest collectionDashBoardRequest, String name,
+            String aggregationField) {
+<span class="nc" id="L466">        String[] requiredFields = null;</span>
+<span class="nc" id="L467">        BoolQueryBuilder boolQuery = prepareBoolQuery(collectionDashBoardRequest);</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">        if (REVENUE_WARD.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L469">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(REVENUE_WARD, name));</span>
+<span class="nc" id="L470">            requiredFields = new String[4];</span>
+<span class="nc" id="L471">            requiredFields[0] = REGION_NAME;</span>
+<span class="nc" id="L472">            requiredFields[1] = DISTRICT_NAME;</span>
+<span class="nc" id="L473">            requiredFields[2] = CITY_GRADE;</span>
+<span class="nc" id="L474">            requiredFields[3] = CITY_NAME;</span>
+        }
+<span class="nc" id="L476">        Map collectionTypeDetails = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L477">        SearchResponse response = elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L478">                .prepareSearch(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L479">                .setQuery(boolQuery).setSize(1)</span>
+<span class="nc" id="L480">                .setFetchSource(requiredFields, null)</span>
+<span class="nc" id="L481">                .execute().actionGet();</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">        for (SearchHit hit : response.getHits())</span>
+<span class="nc" id="L483">            collectionTypeDetails = hit.sourceAsMap();</span>
+<span class="nc" id="L484">        return collectionTypeDetails;</span>
+    }
+
+    private BoolQueryBuilder prepareBoolQuery(CollectionDashBoardRequest collectionDashBoardRequest){
+<span class="nc" id="L488">        BoolQueryBuilder boolQuery=new BoolQueryBuilder();</span>
+<span class="nc bnc" id="L489" title="All 2 branches missed.">            if(StringUtils.isNotBlank(collectionDashBoardRequest.getRevenueWard()))</span>
+<span class="nc" id="L490">                boolQuery=boolQuery.filter(QueryBuilders.matchQuery(REVENUE_WARD, collectionDashBoardRequest.getRevenueWard()));</span>
+<span class="nc" id="L491">        return boolQuery;</span>
+    }
+
+    /**
+     * Provides collection and demand results
+     *
+     * @param collectionDashBoardRequest
+     * @param fromDate
+     * @param toDate
+     * @param indexName
+     * @param fieldName
+     * @param ulbCodeField
+     * @param aggregationField
+     * @return Map
+     */
+    public Map&lt;String, BigDecimal&gt; getCollectionAndDemandValues(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final Date fromDate, final Date toDate,
+            final String fieldName, final String aggregationField, final List&lt;String&gt; serviceDetails) {
+<span class="nc" id="L509">        BoolQueryBuilder boolQuery = prepareWhereClause(collectionDashBoardRequest);</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">        if (!serviceDetails.isEmpty())</span>
+<span class="nc" id="L511">            boolQuery = boolQuery.filter(QueryBuilders.termsQuery(BILLING_SERVICE, serviceDetails));</span>
+
+<span class="nc" id="L513">        boolQuery = boolQuery.filter(</span>
+<span class="nc" id="L514">                QueryBuilders.rangeQuery(RECEIPT_DATE).gte(DATEFORMATTER_YYYY_MM_DD.format(fromDate))</span>
+<span class="nc" id="L515">                        .lte(DATEFORMATTER_YYYY_MM_DD.format(toDate)).includeUpper(false)).mustNot(</span>
+<span class="nc" id="L516">                QueryBuilders.matchQuery(STATUS, CANCELLED));</span>
+
+<span class="nc" id="L518">        final AggregationBuilder aggregation = AggregationBuilders.terms(BY_CITY).field(aggregationField).size(120)</span>
+<span class="nc" id="L519">                .subAggregation(AggregationBuilders.sum(&quot;total&quot;).field(fieldName));</span>
+
+<span class="nc" id="L521">        final SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L522">                .withQuery(boolQuery).addAggregation(aggregation).build();</span>
+
+<span class="nc" id="L524">        final Aggregations collAggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L525">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L527">        final StringTerms cityAggr = collAggr.get(BY_CITY);</span>
+<span class="nc" id="L528">        final Map&lt;String, BigDecimal&gt; cytdCollMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">        for (final Terms.Bucket entry : cityAggr.getBuckets()) {</span>
+<span class="nc" id="L530">            final Sum aggr = entry.getAggregations().get(&quot;total&quot;);</span>
+<span class="nc" id="L531">            cytdCollMap.put(String.valueOf(entry.getKey()),</span>
+<span class="nc" id="L532">                    BigDecimal.valueOf(aggr.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));</span>
+<span class="nc" id="L533">        }</span>
+<span class="nc" id="L534">        return cytdCollMap;</span>
+    }
+
+    /**
+     * Prepares month-wise collections for 3 consecutive years - from current
+     * year
+     *
+     * @param collectionDashBoardRequest
+     * @return List
+     */
+    public List&lt;CollectionDashBoardTrend&gt; getMonthwiseCollectionDetails(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final List&lt;String&gt; serviceDetail,
+            final CFinancialYear financialYear) {
+<span class="nc" id="L547">        final List&lt;CollectionDashBoardTrend&gt; collTrendsList = new ArrayList&lt;&gt;();</span>
+        CollectionDashBoardTrend collTrend;
+        Date fromDate;
+        Date toDate;
+        Date dateForMonth;
+        String[] dateArr;
+        Integer month;
+        Sum aggregateSum;
+<span class="nc" id="L555">        Date finYearStartDate = financialYear.getStartingDate();</span>
+<span class="nc" id="L556">        Date finYearEndDate = financialYear.getEndingDate();</span>
+<span class="nc" id="L557">        final Map&lt;Integer, String&gt; monthValuesMap = DateUtils.getAllMonthsWithFullNames();</span>
+        String monthName;
+<span class="nc" id="L559">        final List&lt;Map&lt;String, BigDecimal&gt;&gt; yearwiseMonthlyCollList = new ArrayList&lt;&gt;();</span>
+        Map&lt;String, BigDecimal&gt; monthwiseColl;
+        /**
+         * For month-wise collections between the date ranges if dates are sent
+         * in the request, consider fromDate and toDate+1 , else calculate from
+         * current year start date till current date+1 day
+         */
+<span class="nc bnc" id="L566" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L567" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L568">            fromDate = DateUtils.getDate(collectionDashBoardRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L569">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L570">                    DateUtils.getDate(collectionDashBoardRequest.getToDate(), DATE_FORMAT_YYYYMMDD), 1);</span>
+        } else {
+<span class="nc" id="L572">            fromDate = DateUtils.startOfDay(financialYear.getStartingDate());</span>
+<span class="nc" id="L573">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+        }
+<span class="nc" id="L575">        Long startTime = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">        for (int count = 0; count &lt;= 2; count++) {</span>
+<span class="nc" id="L577">            monthwiseColl = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L578">            final Aggregations collAggr = getMonthwiseCollectionsForConsecutiveYears(collectionDashBoardRequest,</span>
+                    fromDate, toDate, serviceDetail);
+<span class="nc" id="L580">            final Histogram dateaggs = collAggr.get(DATE_AGG);</span>
+
+<span class="nc bnc" id="L582" title="All 2 branches missed.">            for (final Histogram.Bucket entry : dateaggs.getBuckets()) {</span>
+<span class="nc" id="L583">                dateArr = entry.getKeyAsString().split(&quot;T&quot;);</span>
+<span class="nc" id="L584">                dateForMonth = DateUtils.getDate(dateArr[0], DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L585">                month = Integer.valueOf(dateArr[0].split(&quot;-&quot;, 3)[1]);</span>
+<span class="nc" id="L586">                monthName = monthValuesMap.get(month);</span>
+<span class="nc" id="L587">                aggregateSum = entry.getAggregations().get(&quot;current_total&quot;);</span>
+                // If the total amount is greater than 0 and the month belongs
+                // to respective financial year, add values to the map
+<span class="nc bnc" id="L590" title="All 2 branches missed.">                if (DateUtils.between(dateForMonth, finYearStartDate, finYearEndDate)</span>
+<span class="nc" id="L591">                        &amp;&amp; BigDecimal.valueOf(aggregateSum.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP)</span>
+<span class="nc bnc" id="L592" title="All 2 branches missed.">                                .compareTo(BigDecimal.ZERO) &gt; 0)</span>
+<span class="nc" id="L593">                    monthwiseColl.put(monthName,</span>
+<span class="nc" id="L594">                            BigDecimal.valueOf(aggregateSum.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));</span>
+<span class="nc" id="L595">            }</span>
+<span class="nc" id="L596">            yearwiseMonthlyCollList.add(monthwiseColl);</span>
+
+            /**
+             * If dates are passed in request, get result for the date range,
+             * else get results for entire financial year
+             */
+<span class="nc bnc" id="L602" title="All 2 branches missed.">            if (StringUtils.isNotBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L603" title="All 2 branches missed.">                    &amp;&amp; StringUtils.isNotBlank(collectionDashBoardRequest.getToDate())) {</span>
+<span class="nc" id="L604">                fromDate = org.apache.commons.lang3.time.DateUtils.addYears(fromDate, -1);</span>
+<span class="nc" id="L605">                toDate = org.apache.commons.lang3.time.DateUtils.addYears(toDate, -1);</span>
+            } else {
+<span class="nc" id="L607">                fromDate = org.apache.commons.lang3.time.DateUtils.addYears(finYearStartDate, -1);</span>
+<span class="nc" id="L608">                toDate = org.apache.commons.lang3.time.DateUtils.addYears(finYearEndDate, -1);</span>
+            }
+<span class="nc" id="L610">            finYearStartDate = org.apache.commons.lang3.time.DateUtils.addYears(finYearStartDate, -1);</span>
+<span class="nc" id="L611">            finYearEndDate = org.apache.commons.lang3.time.DateUtils.addYears(finYearEndDate, -1);</span>
+        }
+<span class="nc" id="L613">        Long timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L615">            LOGGER.debug(&quot;Time taken by getMonthwiseCollectionsForConsecutiveYears() for 3 consecutive years is : &quot;</span>
+                    + timeTaken + MILLISECS);
+
+<span class="nc" id="L618">        startTime = System.currentTimeMillis();</span>
+        /**
+         * If dates are passed in request, get result for the date range, else
+         * get results for all 12 months
+         */
+<span class="nc bnc" id="L623" title="All 2 branches missed.">        if (StringUtils.isBlank(collectionDashBoardRequest.getFromDate())</span>
+<span class="nc bnc" id="L624" title="All 2 branches missed.">                &amp;&amp; StringUtils.isBlank(collectionDashBoardRequest.getToDate()))</span>
+<span class="nc bnc" id="L625" title="All 2 branches missed.">            for (final Map.Entry&lt;Integer, String&gt; entry : DateUtils.getAllFinancialYearMonthsWithFullNames().entrySet()) {</span>
+<span class="nc" id="L626">                collTrend = new CollectionDashBoardTrend();</span>
+<span class="nc" id="L627">                collTrend.setMonth(entry.getValue());</span>
+<span class="nc bnc" id="L628" title="All 2 branches missed.">                collTrend.setCyColl(yearwiseMonthlyCollList.get(0).get(collTrend.getMonth()) == null ? BigDecimal.ZERO</span>
+<span class="nc" id="L629">                        : yearwiseMonthlyCollList.get(0).get(collTrend.getMonth()));</span>
+<span class="nc bnc" id="L630" title="All 2 branches missed.">                collTrend.setLyColl(yearwiseMonthlyCollList.get(1).get(collTrend.getMonth()) == null ? BigDecimal.ZERO</span>
+<span class="nc" id="L631">                        : yearwiseMonthlyCollList.get(1).get(collTrend.getMonth()));</span>
+<span class="nc bnc" id="L632" title="All 2 branches missed.">                collTrend.setPyColl(yearwiseMonthlyCollList.get(2).get(collTrend.getMonth()) == null ? BigDecimal.ZERO</span>
+<span class="nc" id="L633">                        : yearwiseMonthlyCollList.get(2).get(collTrend.getMonth()));</span>
+<span class="nc" id="L634">                collTrendsList.add(collTrend);</span>
+<span class="nc" id="L635">            }</span>
+        else
+<span class="nc bnc" id="L637" title="All 2 branches missed.">            for (final Map.Entry&lt;String, BigDecimal&gt; entry : yearwiseMonthlyCollList.get(0).entrySet()) {</span>
+<span class="nc" id="L638">                collTrend = new CollectionDashBoardTrend();</span>
+<span class="nc" id="L639">                collTrend.setMonth(entry.getKey());</span>
+<span class="nc" id="L640">                collTrend.setCyColl(entry.getValue());</span>
+<span class="nc bnc" id="L641" title="All 2 branches missed.">                collTrend.setLyColl(yearwiseMonthlyCollList.get(1).get(collTrend.getMonth()) == null ? BigDecimal.ZERO</span>
+<span class="nc" id="L642">                        : yearwiseMonthlyCollList.get(1).get(collTrend.getMonth()));</span>
+<span class="nc bnc" id="L643" title="All 2 branches missed.">                collTrend.setPyColl(yearwiseMonthlyCollList.get(2).get(collTrend.getMonth()) == null ? BigDecimal.ZERO</span>
+<span class="nc" id="L644">                        : yearwiseMonthlyCollList.get(2).get(collTrend.getMonth()));</span>
+<span class="nc" id="L645">                collTrendsList.add(collTrend);</span>
+<span class="nc" id="L646">            }</span>
+<span class="nc" id="L647">        timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L648" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L649">            LOGGER.debug(&quot;Time taken setting values in getMonthwiseCollectionDetails() is : &quot; + timeTaken + MILLISECS);</span>
+<span class="nc" id="L650">        return collTrendsList;</span>
+    }
+
+    /**
+     * Provides month-wise collections for consecutive years
+     *
+     * @param collectionDashBoardRequest
+     * @param fromDate
+     * @param toDate
+     * @return SearchResponse
+     */
+    private Aggregations getMonthwiseCollectionsForConsecutiveYears(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final Date fromDate, final Date toDate,
+            final List&lt;String&gt; serviceDetail) {
+<span class="nc" id="L664">        BoolQueryBuilder boolQuery = prepareWhereClause(collectionDashBoardRequest);</span>
+<span class="nc" id="L665">        boolQuery = boolQuery.filter(</span>
+<span class="nc" id="L666">                QueryBuilders.rangeQuery(RECEIPT_DATE).gte(DATEFORMATTER_YYYY_MM_DD.format(fromDate))</span>
+<span class="nc" id="L667">                        .lte(DATEFORMATTER_YYYY_MM_DD.format(toDate)).includeUpper(false)).mustNot(</span>
+<span class="nc" id="L668">                QueryBuilders.matchQuery(STATUS, CANCELLED));</span>
+<span class="nc bnc" id="L669" title="All 2 branches missed.">        if (!serviceDetail.isEmpty())</span>
+<span class="nc" id="L670">            boolQuery = boolQuery.filter(QueryBuilders.termsQuery(BILLING_SERVICE, serviceDetail));</span>
+
+<span class="nc" id="L672">        final AggregationBuilder monthAggregation = AggregationBuilders.dateHistogram(DATE_AGG).field(RECEIPT_DATE)</span>
+<span class="nc" id="L673">                .interval(DateHistogramInterval.MONTH)</span>
+<span class="nc" id="L674">                .subAggregation(AggregationBuilders.sum(&quot;current_total&quot;).field(TOTAL_AMOUNT));</span>
+
+<span class="nc" id="L676">        final SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(COLLECTION_INDEX_NAME)</span>
+<span class="nc" id="L677">                .withQuery(boolQuery).addAggregation(monthAggregation).build();</span>
+
+<span class="nc" id="L679">        return elasticsearchTemplate.query(searchQueryColl, response -&gt; response.getAggregations());</span>
+    }
+
+    public List&lt;TaxPayerDashBoardDetails&gt; returnUlbWiseAggregationResults(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final String indexName, final Boolean order,
+            final String orderingAggregationName, final int size, final List&lt;String&gt; serviceDetails) {
+<span class="nc" id="L685">        final List&lt;TaxPayerDashBoardDetails&gt; taxPayers = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L686">        BoolQueryBuilder boolQuery = prepareWhereClause(collectionDashBoardRequest);</span>
+<span class="nc bnc" id="L687" title="All 2 branches missed.">        if (!serviceDetails.isEmpty())</span>
+<span class="nc" id="L688">            boolQuery = boolQuery.filter(QueryBuilders.termsQuery(BILLING_SERVICE, serviceDetails));</span>
+        String groupingField;
+<span class="nc bnc" id="L690" title="All 2 branches missed.">        if (StringUtils.isNotBlank(collectionDashBoardRequest.getUlbCode())</span>
+<span class="nc bnc" id="L691" title="All 2 branches missed.">                || StringUtils.isNotBlank(collectionDashBoardRequest.getType())</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">                &amp;&amp; collectionDashBoardRequest.getType().equals(DASHBOARD_GROUPING_WARDWISE))</span>
+<span class="nc" id="L693">            groupingField = REVENUE_WARD;</span>
+        else
+<span class="nc" id="L695">            groupingField = CITY_NAME;</span>
+
+<span class="nc" id="L697">        Long startTime = System.currentTimeMillis();</span>
+        AggregationBuilder aggregation;
+        SearchQuery searchQueryColl;
+<span class="nc" id="L700">        aggregation = AggregationBuilders.terms(BY_AGGREGATION_FIELD).field(groupingField).size(size)</span>
+<span class="nc" id="L701">                .order(Terms.Order.aggregation(orderingAggregationName, order))</span>
+<span class="nc" id="L702">                .subAggregation(AggregationBuilders.sum(TOTAL_COLLECTION).field(TOTAL_AMOUNT));</span>
+<span class="nc" id="L703">        searchQueryColl = new NativeSearchQueryBuilder().withIndices(indexName).withQuery(boolQuery)</span>
+<span class="nc" id="L704">                .addAggregation(aggregation).build();</span>
+<span class="nc" id="L705">        final Aggregations collAggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L706">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L708">        Long timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L709" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L710">            LOGGER.debug(&quot;Time taken by ulbWiseAggregations is : &quot; + timeTaken + MILLISECS);</span>
+
+        TaxPayerDashBoardDetails taxDetail;
+<span class="nc" id="L713">        boolean isWard = false;</span>
+<span class="nc" id="L714">        startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L715">        final Date fromDate = new DateTime().withMonthOfYear(4).dayOfMonth().withMinimumValue().toDate();</span>
+<span class="nc" id="L716">        final Date toDate = org.apache.commons.lang3.time.DateUtils.addDays(new Date(), 1);</span>
+<span class="nc" id="L717">        final Date lastYearFromDate = org.apache.commons.lang3.time.DateUtils.addYears(fromDate, -1);</span>
+<span class="nc" id="L718">        final Date lastYearToDate = org.apache.commons.lang3.time.DateUtils.addYears(toDate, -1);</span>
+<span class="nc" id="L719">        final StringTerms totalAmountAggr = collAggr.get(BY_AGGREGATION_FIELD);</span>
+<span class="nc bnc" id="L720" title="All 2 branches missed.">        for (final Terms.Bucket entry : totalAmountAggr.getBuckets()) {</span>
+<span class="nc" id="L721">            taxDetail = new TaxPayerDashBoardDetails();</span>
+<span class="nc" id="L722">            taxDetail.setRegionName(collectionDashBoardRequest.getRegionName());</span>
+<span class="nc" id="L723">            taxDetail.setDistrictName(collectionDashBoardRequest.getDistrictName());</span>
+<span class="nc" id="L724">            taxDetail.setUlbGrade(collectionDashBoardRequest.getUlbGrade());</span>
+<span class="nc" id="L725">            final String fieldName = String.valueOf(entry.getKey());</span>
+<span class="nc bnc" id="L726" title="All 2 branches missed.">            if (groupingField.equals(REVENUE_WARD)) {</span>
+<span class="nc" id="L727">                taxDetail.setWardName(fieldName);</span>
+<span class="nc" id="L728">                isWard = true;</span>
+            } else
+<span class="nc" id="L730">                taxDetail.setUlbName(fieldName);</span>
+<span class="nc" id="L731">            final Sum totalCollectionAggregation = entry.getAggregations().get(TOTAL_COLLECTION);</span>
+<span class="nc" id="L732">            final BigDecimal totalCollections = BigDecimal.valueOf(totalCollectionAggregation.getValue()).setScale(0,</span>
+                    BigDecimal.ROUND_HALF_UP);
+<span class="nc" id="L734">            taxDetail.setCytdColl(totalCollections);</span>
+<span class="nc" id="L735">            final BigDecimal lastYearCollection = getCollectionBetweenDates(collectionDashBoardRequest,</span>
+                    lastYearFromDate, lastYearToDate, fieldName, serviceDetails, isWard);
+<span class="nc" id="L737">            taxDetail.setLytdColl(lastYearCollection);</span>
+            BigDecimal variation;
+<span class="nc bnc" id="L739" title="All 2 branches missed.">            if (lastYearCollection.compareTo(BigDecimal.ZERO) == 0)</span>
+<span class="nc" id="L740">                variation = CollectionConstants.BIGDECIMAL_100;</span>
+            else
+<span class="nc" id="L742">                variation = totalCollections.subtract(lastYearCollection).multiply(CollectionConstants.BIGDECIMAL_100)</span>
+<span class="nc" id="L743">                        .divide(lastYearCollection, 1, BigDecimal.ROUND_HALF_UP);</span>
+<span class="nc" id="L744">            taxDetail.setLyVar(variation);</span>
+<span class="nc" id="L745">            taxPayers.add(taxDetail);</span>
+<span class="nc" id="L746">        }</span>
+<span class="nc" id="L747">        timeTaken = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L749">            LOGGER.debug(&quot;Time taken for setting values in returnUlbWiseAggregationResults() is : &quot; + timeTaken</span>
+                    + MILLISECS);
+<span class="nc" id="L751">        return returnTopResults(taxPayers, size, order);</span>
+    }
+
+    private List&lt;TaxPayerDashBoardDetails&gt; returnTopResults(final List&lt;TaxPayerDashBoardDetails&gt; taxPayers,
+            final int size, final Boolean order) {
+<span class="nc bnc" id="L756" title="All 2 branches missed.">        if (size &gt;= 10) {</span>
+<span class="nc bnc" id="L757" title="All 2 branches missed.">            if (order)</span>
+<span class="nc" id="L758">                Collections.sort(taxPayers);</span>
+            else
+<span class="nc" id="L760">                Collections.sort(taxPayers, Collections.reverseOrder());</span>
+
+<span class="nc bnc" id="L762" title="All 2 branches missed.">            return taxPayers.subList(0, taxPayers.size() &lt; 10 ? taxPayers.size() : 10);</span>
+        }
+<span class="nc" id="L764">        return taxPayers;</span>
+    }
+
+    public TaxPayerDashBoardResponseDetails getBottomTenTaxPerformers(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final List&lt;String&gt; serviceList) {
+<span class="nc" id="L769">        final TaxPayerDashBoardResponseDetails topTaxPerformers = new TaxPayerDashBoardResponseDetails();</span>
+        List&lt;TaxPayerDashBoardDetails&gt; taxProducers;
+
+<span class="nc" id="L772">        taxProducers = returnUlbWiseAggregationResults(collectionDashBoardRequest, COLLECTION_INDEX_NAME, true,</span>
+                TOTAL_COLLECTION, 10, serviceList);
+<span class="nc" id="L774">        topTaxPerformers.setProducers(taxProducers);</span>
+<span class="nc" id="L775">        return topTaxPerformers;</span>
+    }
+
+    public TaxPayerDashBoardResponseDetails getTopTenTaxPerformers(
+            final CollectionDashBoardRequest collectionDashBoardRequest, final List&lt;String&gt; serviceList) {
+
+<span class="nc" id="L781">        final TaxPayerDashBoardResponseDetails topTaxPerformers = new TaxPayerDashBoardResponseDetails();</span>
+        List&lt;TaxPayerDashBoardDetails&gt; taxProducers;
+
+<span class="nc" id="L784">        taxProducers = returnUlbWiseAggregationResults(collectionDashBoardRequest, COLLECTION_INDEX_NAME, false,</span>
+                TOTAL_COLLECTION, 10, serviceList);
+<span class="nc" id="L786">        topTaxPerformers.setProducers(taxProducers);</span>
+
+<span class="nc" id="L788">        return topTaxPerformers;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.utils</a> &gt; <span class="el_source">PaymentUtils.java</span></div><h1>PaymentUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.microservice.utils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.egov.infra.microservice.models.Bank;
+import org.egov.infra.microservice.models.Bill;
+import org.egov.infra.microservice.models.BillDetail;
+import org.egov.infra.microservice.models.BillDetailV2;
+import org.egov.infra.microservice.models.BillV2;
+import org.egov.infra.microservice.models.Instrument;
+import org.egov.infra.microservice.models.InstrumentType;
+import org.egov.infra.microservice.models.Payment;
+import org.egov.infra.microservice.models.PaymentDetail;
+import org.egov.infra.microservice.models.Receipt;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+@Service
+<span class="nc" id="L70">public class PaymentUtils {</span>
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    
+    public void getReceiptsFromPayments(List&lt;Payment&gt; payments, List&lt;Receipt&gt; receipts) {
+        // prepare instrument from payment
+        // prepare receipt from each paymentdetails
+<span class="nc" id="L77">        payments.stream().forEach(payment -&gt; {</span>
+<span class="nc" id="L78">            Instrument instrument = new Instrument();</span>
+<span class="nc" id="L79">            this.prepareInstrument(payment, instrument);</span>
+<span class="nc" id="L80">            payment.getPaymentDetails().stream().forEach(paymentDetail -&gt; {</span>
+<span class="nc" id="L81">                Receipt receipt = new Receipt();</span>
+<span class="nc" id="L82">                receipt.setInstrument(instrument);</span>
+<span class="nc" id="L83">                receipt.setPaymentId(payment.getId());</span>
+<span class="nc" id="L84">                this.prepareReceipt(payment, paymentDetail, receipt);</span>
+<span class="nc" id="L85">                receipts.add(receipt);</span>
+<span class="nc" id="L86">            });</span>
+<span class="nc" id="L87">        });</span>
+<span class="nc" id="L88">    }</span>
+
+    private void prepareReceipt(Payment payment, PaymentDetail paymentDetail, Receipt receipt) {
+<span class="nc" id="L91">        receipt.setAuditDetails(paymentDetail.getAuditDetails());</span>
+<span class="nc" id="L92">        receipt.setConsumerCode(paymentDetail.getBill().getConsumerCode());</span>
+<span class="nc" id="L93">        receipt.setReceiptDate(paymentDetail.getReceiptDate());</span>
+<span class="nc" id="L94">        receipt.setReceiptNumber(paymentDetail.getReceiptNumber());</span>
+<span class="nc" id="L95">        receipt.setTenantId(paymentDetail.getTenantId());</span>
+//        receipt.setBill(bill);
+<span class="nc" id="L97">        this.prepareBillData(payment, paymentDetail, receipt);</span>
+//        receipt.setTransactionId(transactionId);
+<span class="nc" id="L99">    }</span>
+
+    private void prepareBillData(Payment payment, PaymentDetail paymentDetail, Receipt receipt) {
+<span class="nc" id="L102">        BillV2 billv2 = paymentDetail.getBill();</span>
+<span class="nc" id="L103">        Bill bill = new Bill();</span>
+<span class="nc" id="L104">        bill.setAdditionalDetails(billv2.getAdditionalDetails());</span>
+<span class="nc" id="L105">        bill.setAuditDetails(billv2.getAuditDetails());</span>
+<span class="nc" id="L106">        bill.setId(billv2.getId());</span>
+//        bill.setIsActive(isActive);
+<span class="nc" id="L108">        bill.setIsCancelled(billv2.getIsCancelled());</span>
+<span class="nc" id="L109">        bill.setMobileNumber(billv2.getMobileNumber());</span>
+<span class="nc" id="L110">        bill.setPaidBy(StringUtils.defaultIfBlank(billv2.getPaidBy(), payment.getPaidBy()));</span>
+<span class="nc bnc" id="L111" title="All 4 branches missed.">        if(payment.getPayerAddress() != null &amp;&amp; !payment.getPayerAddress().isEmpty())</span>
+        {
+<span class="nc" id="L113">        	bill.setPayerAddress(payment.getPayerAddress());</span>
+        }
+        else
+        {
+<span class="nc" id="L117">        	bill.setPayerAddress(&quot;&quot;);</span>
+        }
+        
+<span class="nc" id="L120">        bill.setNarration(payment.getNarration());</span>
+        //bill.setPayerAddress(billv2.getPayerAddress());
+<span class="nc" id="L122">        bill.setPayerEmail(billv2.getPayerEmail());</span>
+<span class="nc" id="L123">        bill.setPayerId(billv2.getPayerId());</span>
+<span class="nc" id="L124">        bill.setPayerName(billv2.getPayerName());</span>
+//        bill.setTaxAndPayments(taxAndPayments);
+<span class="nc" id="L126">        bill.setTenantId(billv2.getTenantId());</span>
+<span class="nc" id="L127">        bill.setBillDetails(new ArrayList&lt;BillDetail&gt;());</span>
+//        bill.setBillDetails(billDetails);
+        //prepare billdetails
+<span class="nc" id="L130">        this.prepareBillDetailsData(paymentDetail,bill);</span>
+<span class="nc" id="L131">        receipt.getBill().add(bill);</span>
+<span class="nc" id="L132">        receipt.setSubdivison(payment.getSubdivison());</span>
+<span class="nc" id="L133">        receipt.setGstNo(payment.getGstno());</span>
+<span class="nc" id="L134">        receipt.setPaymentStatus(payment.getPaymentStatus().name());</span>
+<span class="nc" id="L135">    }</span>
+
+    private void prepareBillDetailsData(PaymentDetail paymentDetail, Bill bill) {
+        // TODO Auto-generated method stub
+<span class="nc" id="L139">        paymentDetail.getBill().getBillDetails().stream().forEach(bdv1 -&gt; {</span>
+<span class="nc" id="L140">            BillDetail bd = new BillDetail();</span>
+<span class="nc" id="L141">            bd.setAdditionalDetails(bdv1.getAdditionalDetails());</span>
+<span class="nc" id="L142">            bd.setAmountPaid(bdv1.getAmountPaid());</span>
+//            bd.setBill(bill);
+<span class="nc" id="L144">            bd.setBillDate(paymentDetail.getBill().getBillDate());</span>
+<span class="nc" id="L145">            bd.setBillDescription(bdv1.getBillDescription());</span>
+<span class="nc" id="L146">            bd.setBillNumber(paymentDetail.getBill().getBillNumber());</span>
+<span class="nc" id="L147">            bd.setBoundary(bdv1.getBoundary());</span>
+<span class="nc" id="L148">            bd.setBusinessService(paymentDetail.getBill().getBusinessService());</span>
+<span class="nc" id="L149">            bd.setCallBackForApportioning(bdv1.getCallBackForApportioning());</span>
+<span class="nc" id="L150">            bd.setCancellationRemarks(bdv1.getCancellationRemarks());</span>
+<span class="nc" id="L151">            bd.setChannel(bdv1.getChannel());</span>
+//            bd.setCollectedAmount(collectedAmount);
+<span class="nc" id="L153">            bd.setCollectionModesNotAllowed(paymentDetail.getBill().getCollectionModesNotAllowed());</span>
+<span class="nc" id="L154">            bd.setCollectionType(bdv1.getCollectionType());</span>
+<span class="nc" id="L155">            bd.setConsumerCode(paymentDetail.getBill().getConsumerCode());</span>
+<span class="nc" id="L156">            bd.setDemandId(bdv1.getDemandId());</span>
+<span class="nc" id="L157">            bd.setDisplayMessage(bdv1.getDisplayMessage());</span>
+<span class="nc" id="L158">            bd.setExpiryDate(bdv1.getExpiryDate());</span>
+<span class="nc" id="L159">            bd.setFromPeriod(bdv1.getFromPeriod());</span>
+<span class="nc" id="L160">            bd.setId(bdv1.getId());</span>
+<span class="nc" id="L161">            bd.setIsAdvanceAllowed(paymentDetail.getBill().getIsAdvanceAllowed());</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            bd.setManualReceiptDate(bdv1.getManualReceiptDate() != null ? bdv1.getManualReceiptDate() : paymentDetail.getManualReceiptDate());</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">            bd.setManualReceiptNumber(bdv1.getManualReceiptNumber() != null ? bdv1.getManualReceiptNumber() : paymentDetail.getManualReceiptNumber());</span>
+<span class="nc" id="L164">            bd.setMinimumAmount(paymentDetail.getBill().getMinimumAmountToBePaid());</span>
+<span class="nc" id="L165">            bd.setPartPaymentAllowed(paymentDetail.getBill().getPartPaymentAllowed());</span>
+<span class="nc" id="L166">            bd.setReasonForCancellation(paymentDetail.getBill().getReasonForCancellation());</span>
+<span class="nc" id="L167">            bd.setReceiptDate(paymentDetail.getReceiptDate());</span>
+<span class="nc" id="L168">            bd.setReceiptNumber(paymentDetail.getReceiptNumber());</span>
+<span class="nc" id="L169">            bd.setReceiptType(paymentDetail.getReceiptType());</span>
+//            bd.setStateId(stateId);
+<span class="nc" id="L171">            bd.setStatus(paymentDetail.getBill().getStatus().name());</span>
+<span class="nc" id="L172">            bd.setTenantId(bdv1.getTenantId());</span>
+<span class="nc" id="L173">            bd.setToPeriod(bdv1.getToPeriod());</span>
+<span class="nc" id="L174">            bd.setTotalAmount(paymentDetail.getBill().getTotalAmount());</span>
+<span class="nc" id="L175">            bd.setVoucherHeader(bdv1.getVoucherHeader());</span>
+<span class="nc" id="L176">            bd.setBillAccountDetails(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L177">            this.preapreBillAccountDetails(bd,bdv1);</span>
+<span class="nc" id="L178">            bill.getBillDetails().add(bd);</span>
+<span class="nc" id="L179">        });</span>
+<span class="nc" id="L180">    }</span>
+
+    private void preapreBillAccountDetails(BillDetail bd, BillDetailV2 bdv1) {
+<span class="nc" id="L183">        bd.setBillAccountDetails(bdv1.getBillAccountDetails());</span>
+<span class="nc" id="L184">    }</span>
+
+    private void prepareInstrument(Payment payment, Instrument instrument) {
+<span class="nc" id="L187">        instrument.setAmount(payment.getTotalAmountPaid());</span>
+<span class="nc" id="L188">        instrument.setInstrumentDate(payment.getInstrumentDate());</span>
+<span class="nc" id="L189">        instrument.setInstrumentNumber(payment.getInstrumentNumber());</span>
+<span class="nc" id="L190">        instrument.setInstrumentStatus(payment.getInstrumentStatus().name());</span>
+<span class="nc" id="L191">        instrument.setIfscCode(payment.getIfscCode());</span>
+<span class="nc" id="L192">        Bank bank=new Bank();</span>
+<span class="nc" id="L193">        bank.setName(payment.getBankName());</span>
+<span class="nc" id="L194">        instrument.setBank(bank);</span>
+<span class="nc" id="L195">        instrument.setBranchName(payment.getBankBranch());</span>
+<span class="nc" id="L196">        InstrumentType instrumentType = new InstrumentType();</span>
+<span class="nc" id="L197">        instrumentType.setName(payment.getPaymentMode().name());</span>
+<span class="nc" id="L198">        instrument.setInstrumentType(instrumentType);</span>
+<span class="nc" id="L199">        instrument.setTenantId(payment.getTenantId());</span>
+<span class="nc" id="L200">        instrument.setTransactionDate(new Date(payment.getTransactionDate()));</span>
+<span class="nc" id="L201">        instrument.setTransactionNumber(payment.getTransactionNumber());</span>
+<span class="nc" id="L202">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

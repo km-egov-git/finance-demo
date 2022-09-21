@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EisManagersUtill.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.utils</a> &gt; <span class="el_source">EisManagersUtill.java</span></div><h1>EisManagersUtill.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.utils;
+
+import org.apache.log4j.Logger;
+import org.egov.commons.CFinancialYear;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.pims.commons.service.EisCommonsService;
+import org.egov.pims.commons.service.EisCommonsServiceImpl;
+import org.egov.pims.service.EmployeeServiceImpl;
+import org.egov.pims.service.EmployeeServiceOld;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+
+<span class="nc" id="L69">public class EisManagersUtill {</span>
+
+<span class="nc" id="L71">	private static final Logger LOGGER = Logger.getLogger(EisManagersUtill.class);</span>
+	
+	
+<span class="nc" id="L74">	static List list = new ArrayList();</span>
+<span class="nc" id="L75">	static boolean RESET = true;</span>
+<span class="nc" id="L76">	static boolean RESETMONTH = true;</span>
+<span class="nc" id="L77">	static Map monthsVsDays = new TreeMap();</span>
+<span class="nc" id="L78">	static Map yearAndMon = new HashMap();</span>
+<span class="nc" id="L79">	static Map monthStrVsDays = new TreeMap();</span>
+<span class="nc" id="L80">	static boolean RESETSTRMONTH = true;</span>
+<span class="nc" id="L81">	static Set&lt;String&gt; setOfHolForMon  = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L82">	static long finId = 0;</span>
+<span class="nc" id="L83">	static int year = 0;</span>
+<span class="nc" id="L84">	static Map monthVsYear = new TreeMap();</span>
+<span class="nc" id="L85">	static boolean RESETFyER = true;</span>
+<span class="nc" id="L86">	static boolean RESETHOLMON = true;</span>
+<span class="nc" id="L87">	static Map finYearMap = new HashMap();</span>
+	private static UserService userService;
+	
+	public static UserService getUserService() {
+<span class="nc" id="L91">		return userService;</span>
+	}
+
+	public void setUserService(UserService userService) {
+<span class="nc" id="L95">		this.userService = userService;</span>
+<span class="nc" id="L96">	}</span>
+
+
+	/*public static void  updateFYMonth()
+	{
+		
+		try {
+			monthVsYear = new TreeMap();
+			Map fYearVsmonthVsYear = new HashMap();
+			List list = EisManagersUtill.getCommonsService().getAllFinancialYearList();
+			int[] monthAry = {4,5,6,7,8,9,10,11,12,1,2,3};
+			SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;,Locale.getDefault());
+			for(Iterator iter = list.iterator();iter.hasNext();)
+			{
+				 fYearVsmonthVsYear = new HashMap();
+				CFinancialYear financialYear = (CFinancialYear)iter.next();
+				for(int i=0;i&lt;monthAry.length;i++)
+				{
+					if(i&lt;=8)
+					{
+						fYearVsmonthVsYear.put(monthAry[i],sdf.format(financialYear.getStartingDate()).substring(6,sdf.format(financialYear.getStartingDate()).length()));
+					}
+					else
+					{
+						fYearVsmonthVsYear.put(monthAry[i],sdf.format(financialYear.getEndingDate()).substring(6,sdf.format(financialYear.getEndingDate()).length()));
+					}
+				}
+
+				monthVsYear.put(financialYear.getId(), fYearVsmonthVsYear);
+
+
+			}
+
+
+						RESETFyER = false;
+		} catch (RuntimeException e) {
+			
+			
+			throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(),e);
+		}
+	}
+
+	public static Map getFYMap()
+	{
+		if (RESETFyER)
+		{
+			updateFYMonth();
+		}
+
+		return monthVsYear;
+	}*/
+
+	public static void  updateStrMonth()
+	{
+<span class="nc" id="L150">		monthStrVsDays = new TreeMap();</span>
+<span class="nc" id="L151">		monthStrVsDays.put(1, &quot;Jan&quot;);</span>
+<span class="nc" id="L152">		monthStrVsDays.put(2, &quot;Feb&quot;);</span>
+<span class="nc" id="L153">		monthStrVsDays.put(3, &quot;Mar&quot;);</span>
+<span class="nc" id="L154">		monthStrVsDays.put(4, &quot;Apr&quot;);</span>
+<span class="nc" id="L155">		monthStrVsDays.put(5, &quot;May&quot;);</span>
+<span class="nc" id="L156">		monthStrVsDays.put(6, &quot;Jun&quot;);</span>
+<span class="nc" id="L157">		monthStrVsDays.put(7, &quot;Jul&quot;);</span>
+<span class="nc" id="L158">		monthStrVsDays.put(8, &quot;Aug&quot;);</span>
+<span class="nc" id="L159">		monthStrVsDays.put(9, &quot;Sep&quot;);</span>
+<span class="nc" id="L160">		monthStrVsDays.put(10, &quot;Oct&quot;);</span>
+<span class="nc" id="L161">		monthStrVsDays.put(11, &quot;Nov&quot;);</span>
+<span class="nc" id="L162">		monthStrVsDays.put(12, &quot;Dec&quot;);</span>
+<span class="nc" id="L163">		RESETSTRMONTH = false;</span>
+<span class="nc" id="L164">	}</span>
+
+	//FIXME - donot use . Use Calendar instead.
+	public static void  updateMonth()
+	{
+<span class="nc" id="L169">		monthsVsDays = new TreeMap();</span>
+<span class="nc" id="L170">		monthsVsDays.put(0, 31);</span>
+<span class="nc" id="L171">		monthsVsDays.put(1, 28); //what about leap years?</span>
+<span class="nc" id="L172">		monthsVsDays.put(2, 31);</span>
+<span class="nc" id="L173">		monthsVsDays.put(3, 30);</span>
+<span class="nc" id="L174">		monthsVsDays.put(4, 31);</span>
+<span class="nc" id="L175">		monthsVsDays.put(5, 30);</span>
+<span class="nc" id="L176">		monthsVsDays.put(6, 31);</span>
+<span class="nc" id="L177">		monthsVsDays.put(7, 31);</span>
+<span class="nc" id="L178">		monthsVsDays.put(8, 30);</span>
+<span class="nc" id="L179">		monthsVsDays.put(9, 31);</span>
+<span class="nc" id="L180">		monthsVsDays.put(10, 30);</span>
+<span class="nc" id="L181">		monthsVsDays.put(11, 31);</span>
+<span class="nc" id="L182">		RESETMONTH = false;</span>
+<span class="nc" id="L183">	}</span>
+	public static Integer getMonthsVsDays(int month)
+	{
+<span class="nc bnc" id="L186" title="All 2 branches missed.">		if (RESETMONTH)</span>
+		{
+<span class="nc" id="L188">			updateMonth();</span>
+		}
+
+<span class="nc" id="L191">		return (Integer)monthsVsDays.get(month);</span>
+	}
+	public static String getMonthsStrVsDays(int month)
+	{
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		if (RESETSTRMONTH)</span>
+		{
+<span class="nc" id="L197">			updateStrMonth();</span>
+		}
+
+<span class="nc" id="L200">		return (String)monthStrVsDays.get(month);</span>
+	}
+	public static Map getMonthsStrVsDaysMap()
+	{
+<span class="nc bnc" id="L204" title="All 2 branches missed.">		if (RESETSTRMONTH)</span>
+		{
+<span class="nc" id="L206">			updateStrMonth();</span>
+		}
+
+<span class="nc" id="L209">		return monthStrVsDays;</span>
+	}
+	
+	public static EisCommonsService getEisCommonsService()
+    {
+<span class="nc" id="L214">        return new EisCommonsServiceImpl();</span>
+    }
+
+	/*public static DepartmentService getDeptService()
+    {
+
+        return new DepartmentService();
+    }*/
+
+		public static EmployeeServiceOld getEmployeeService()
+		{
+<span class="nc" id="L225">			return new EmployeeServiceImpl();</span>
+		}
+		
+				
+		public static List getSundaysForGivenCurrentFinYear(CFinancialYear financialYear)
+		{
+<span class="nc bnc" id="L231" title="All 2 branches missed.">			if(RESET)</span>
+			{
+<span class="nc" id="L233">					update(financialYear);</span>
+			}
+<span class="nc bnc" id="L235" title="All 2 branches missed.">			if(financialYear.getId()!=getFinantialId())</span>
+			{
+<span class="nc" id="L237">					update(financialYear);</span>
+			}
+			
+<span class="nc" id="L240">			return list;</span>
+		}
+		private static synchronized void update(CFinancialYear financialYear)
+		{
+<span class="nc" id="L244">			synchronized(list) {</span>
+<span class="nc" id="L245">				list = new ArrayList();</span>
+<span class="nc" id="L246">			}</span>
+			
+<span class="nc" id="L248">			java.util.Date startingDate=null;</span>
+			int year;
+			
+			
+<span class="nc" id="L252">				CFinancialYear financial = financialYear;</span>
+<span class="nc" id="L253">				finId = financial.getId();</span>
+<span class="nc" id="L254">				startingDate = financial.getStartingDate();</span>
+<span class="nc" id="L255">				year = Integer.valueOf(startingDate.toString().substring(0, 4)).intValue();</span>
+<span class="nc" id="L256">				int[] monthAry = {3,4,5,6,7,8,9,10,11,0,1,2};</span>
+<span class="nc" id="L257">				Calendar calendar = Calendar.getInstance();</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">				for(int i=0;i&lt;monthAry.length;i++)</span>
+				{
+<span class="nc bnc" id="L260" title="All 2 branches missed.">					if(i&lt;=8)</span>
+					{
+<span class="nc" id="L262">						calendar.set(year, monthAry[i], 1);</span>
+<span class="nc" id="L263">						setSundays(list,calendar,year,monthAry[i]);</span>
+					}
+					else
+					{
+<span class="nc" id="L267">						calendar.set(year+1, monthAry[i], 1);</span>
+<span class="nc" id="L268">						setSundays(list,calendar,year+1,monthAry[i]);</span>
+					}
+	
+				}
+			
+
+<span class="nc" id="L274">			RESET = false;</span>
+
+<span class="nc" id="L276">		}</span>
+		private static int getSunday(String weekDay)
+		{
+<span class="nc" id="L279">			int day = 0;</span>
+<span class="nc" id="L280">			Map&lt;String,Integer&gt; dayMap = new HashMap&lt;String,Integer&gt;();</span>
+<span class="nc" id="L281">			dayMap.put(&quot;Mon&quot;,Integer.valueOf(7));</span>
+<span class="nc" id="L282">			dayMap.put(&quot;Tue&quot;,Integer.valueOf(6));</span>
+<span class="nc" id="L283">			dayMap.put(&quot;Wed&quot;,Integer.valueOf(5));</span>
+<span class="nc" id="L284">			dayMap.put(&quot;Thu&quot;,Integer.valueOf(4));</span>
+<span class="nc" id="L285">			dayMap.put(&quot;Fri&quot;,Integer.valueOf(3));</span>
+<span class="nc" id="L286">			dayMap.put(&quot;Sat&quot;,Integer.valueOf(2));</span>
+<span class="nc" id="L287">			dayMap.put(&quot;Sun&quot;,Integer.valueOf(1));</span>
+<span class="nc" id="L288">			day = ((Integer)dayMap.get(weekDay)).intValue();</span>
+<span class="nc" id="L289">			return day;</span>
+		}
+
+		private static long  getFinantialId()
+		{
+<span class="nc" id="L294">			return finId;</span>
+		}
+
+		private static void setSundays(List list,Calendar calendar,int year,int month)
+		{
+<span class="nc" id="L299">			int sun = getSunday(calendar.getTime().toString().substring(0, 3));</span>
+<span class="nc" id="L300">			calendar.set(year, month, sun);</span>
+<span class="nc" id="L301">			synchronized(list) {</span>
+<span class="nc" id="L302">				list.add(new java.sql.Date(calendar.getTime().getTime()).toString());</span>
+<span class="nc" id="L303">				int icrSun = sun;</span>
+				while(true)
+				{
+<span class="nc" id="L306">					icrSun = icrSun+7;</span>
+<span class="nc" id="L307">					calendar.set(year, month, icrSun);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">					if(calendar.getTime().getMonth()==month)</span>
+					{
+<span class="nc" id="L310">						list.add(new java.sql.Date(calendar.getTime().getTime()).toString());</span>
+<span class="nc" id="L311">						continue;</span>
+					}
+					else
+					{
+						break;
+					}
+	
+				}
+<span class="nc" id="L319">			}</span>
+<span class="nc" id="L320">		}</span>
+		/*//FIXME api name
+		public  static List&lt;DatePeriodFY&gt; getListOfFinYrandDate(java.util.Date fromDate,java.util.Date toDate)throws Exception
+		{
+			List list = new ArrayList();
+			DatePeriodFY datePeriodFY = null;
+			//Financial year for the given from and to dates 
+			CFinancialYear fromFinancialYear =null;
+			CFinancialYear toFinancialYear=null;
+			
+			//calendar year for the given from and to dates
+			CalendarYear fromCalYear=null;
+			CalendarYear toCalYear=null;
+			Calendar calendarFrom = Calendar.getInstance();
+			Calendar calendarTo = Calendar.getInstance();
+			calendarFrom.setTime(fromDate);
+			calendarTo.setTime(toDate);
+			String fromFinId=&quot;&quot;;
+			String toFinId=&quot;&quot;;
+			SimpleDateFormat formatter  =new SimpleDateFormat(&quot;dd-MMM-yyyy&quot;,Locale.getDefault());
+			fromFinId =formatter.format(calendarFrom.getTime());
+			toFinId =formatter.format(calendarTo.getTime());
+			fromFinancialYear=EisManagersUtill.getCommonsService().getFinancialYearByDate(fromDate);
+			toFinancialYear =EisManagersUtill.getCommonsService().getFinancialYearByDate(toDate);
+				
+					if(fromFinancialYear!=null &amp;&amp; toFinancialYear !=null)
+					{
+						if(fromFinancialYear.getId().intValue()==toFinancialYear.getId().intValue())
+						{
+							datePeriodFY = new DatePeriodFY();
+							datePeriodFY.setFromDate(fromDate);
+							datePeriodFY.setToDate(toDate);
+							datePeriodFY.setFinancial(fromFinancialYear);
+							list.add(datePeriodFY);
+						}
+						else if(fromFinancialYear.getId().intValue()!=toFinancialYear.getId().intValue())
+						{
+							java.util.Date toDateNext = new java.util.Date();
+							java.util.Date fromDateNext = new java.util.Date();
+							fromDateNext = fromDate;
+							datePeriodFY = new DatePeriodFY();
+							datePeriodFY.setFromDate(fromDateNext);
+							Calendar calendartoDateNext = Calendar.getInstance();
+							calendartoDateNext.setTime(toFinancialYear.getStartingDate());
+							calendartoDateNext.add(Calendar.DATE,-1);
+							toDateNext = calendartoDateNext.getTime();
+							datePeriodFY.setToDate(toDateNext);
+							datePeriodFY.setFinancial(fromFinancialYear);
+							list.add(datePeriodFY);
+							datePeriodFY = new DatePeriodFY();
+							fromDateNext = toFinancialYear.getStartingDate();
+							toDateNext = toDate;
+							datePeriodFY.setToDate(toDateNext);
+							datePeriodFY.setFromDate(fromDateNext);
+							datePeriodFY.setFinancial(toFinancialYear);
+							list.add(datePeriodFY);
+						}
+					}
+			
+			return list;
+		}*/
+
+		public static Map getStartingAndEndingDateForMonthAanFyer(int month,CFinancialYear financialYear)
+		{
+<span class="nc" id="L384">			Map&lt;String,java.sql.Date&gt; mp = new HashMap&lt;String,java.sql.Date&gt;();</span>
+<span class="nc" id="L385">			Calendar calender = Calendar.getInstance();</span>
+<span class="nc" id="L386">			CFinancialYear financial = financialYear;</span>
+			//finId = financial.getId(); //Commented this to fix the holidays bug : SundayHoliday set was loading for only one fin year (first time selected).
+										//If we change the year, it was not loading the Holiday set for changed financial year.
+										//We need to check thoroughly whether commenting finId here is affecting any other features.
+<span class="nc" id="L390">			java.util.Date startingDate = financial.getStartingDate();</span>
+<span class="nc" id="L391">			int year = Integer.valueOf(startingDate.toString().substring(0, 4)).intValue();</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">			if(month-1&lt;=2 )</span>
+			{
+<span class="nc" id="L394">				calender.set(year+1, month-1, 1);</span>
+			}
+			else
+			{
+<span class="nc" id="L398">				calender.set(year, month-1, 1);</span>
+			}
+<span class="nc" id="L400">			java.sql.Date startDate =new  java.sql.Date(calender.getTime().getTime());</span>
+			
+<span class="nc" id="L402">			Calendar cal = new GregorianCalendar(year, month-1, 1);  </span>
+<span class="nc" id="L403">	    	int noOfDaysInMonth= cal.getActualMaximum(Calendar.DAY_OF_MONTH);</span>
+<span class="nc" id="L404">			calender.add(Calendar.DATE, noOfDaysInMonth-1);</span>
+<span class="nc" id="L405">			java.sql.Date endDate =new  java.sql.Date(calender.getTime().getTime());</span>
+<span class="nc" id="L406">			mp.put(&quot;startDate&quot;, startDate);</span>
+<span class="nc" id="L407">			mp.put(&quot;endDate&quot;, endDate);</span>
+<span class="nc" id="L408">			return mp;</span>
+
+		}
+		
+				
+		/*public static void updateHolidaySetForYear(int year,int month)
+		{
+			LOGGER.info(&quot;Year&quot;+year+&quot;month&quot;+month);
+			update(year,month);
+		}
+		
+		public static Set getHolidaySetForMonth(int year,int month)
+		{
+			LOGGER.info(&quot;Inside RESETHOLMON=&quot;+RESETHOLMON+&quot; year =&quot;+year + &quot; month =&quot;+month);
+			if(RESETHOLMON)
+			{
+				update(year,month);
+			}
+							
+			Map mp = getYearAndMonth();
+			
+			int mo = 0;
+		 	int yr = 0;
+			for (Iterator it = mp.entrySet().iterator(); it.hasNext(); )
+		  	{
+		  		Map.Entry entry = (Map.Entry) it.next();
+		  		yr =(Integer) entry.getKey();
+		  		mo =(Integer) entry.getValue();
+		  	}
+			if(yr!=year||mo!=month)
+			{
+				update(year,month);
+			}
+			return setOfHolForMon;
+		}*/
+		//FIXME cache holiday sets for atleast 3 months (SwarmCache/JBossCache ??)
+		/*private static void update(int year,int month)
+		{
+			yearAndMon = new HashMap();
+			setOfHolForMon = new HashSet();
+			yearAndMon.put(year, month);
+			SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;,Locale.getDefault());
+			try
+			{
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(sdf.parse(01+&quot;/&quot;+month+&quot;/&quot;+year));
+				SimpleDateFormat formatter  =new SimpleDateFormat(&quot;dd-MMM-yyyy&quot;,Locale.getDefault());
+				String fid =formatter.format(calendar.getTime());
+				CFinancialYear cFinancialYear =commonsService.findFinancialYearById(Long.valueOf(fid));
+
+				Set hSet = getEmpLeaveService().getHolidaySet(cFinancialYear);
+				for(Iterator iter =hSet.iterator();iter.hasNext();)
+				{
+
+					String dateStr = (String)iter.next();
+
+
+					if(Integer.valueOf(dateStr.substring(5,7)).equals(Integer.valueOf(month)))
+					{
+						setOfHolForMon.add(dateStr);
+					}
+				}
+
+			}
+			catch (Exception he) {
+				
+				LOGGER.error(he.getMessage());
+			}
+			RESETHOLMON = false;
+
+		}*/
+
+		private static Map getYearAndMonth()
+		{
+<span class="nc" id="L482">			return yearAndMon;</span>
+		}
+		public static Map getFinMap(List list, String field1, String field2)
+		{
+<span class="nc bnc" id="L486" title="All 6 branches missed.">			if(list != null &amp;&amp; field1 == null &amp;&amp; field2 == null )</span>
+			{
+<span class="nc" id="L488">				finYearMap = getEmployeeService().getMapForList(list);</span>
+			}
+<span class="nc bnc" id="L490" title="All 6 branches missed.">			else if(list != null &amp;&amp; field1 != null &amp;&amp; field2 != null)</span>
+			{
+<span class="nc" id="L492">				finYearMap = getEmployeeService().getMapForList(list, field1, field2);</span>
+			}
+<span class="nc" id="L494">			return finYearMap;</span>
+		}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

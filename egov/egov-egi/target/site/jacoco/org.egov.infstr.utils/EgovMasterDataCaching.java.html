@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EgovMasterDataCaching.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infstr.utils</a> &gt; <span class="el_source">EgovMasterDataCaching.java</span></div><h1>EgovMasterDataCaching.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infstr.utils;
+
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.annotation.PreDestroy;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.exception.MicroServiceInvalidTokenException;
+import org.egov.infra.exception.MicroServiceNotAuthroizedException;
+import org.egov.infra.microservice.models.Department;
+import org.egov.infra.microservice.models.Designation;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.utils.ApplicationConstant;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * @deprecated no longer supported
+ * */
+@Deprecated
+<span class="nc" id="L91">public class EgovMasterDataCaching {</span>
+<span class="nc" id="L92">    private static final Logger LOGGER = LoggerFactory.getLogger(EgovMasterDataCaching.class);</span>
+    private static final String SQL_QUERY_TYPE = &quot;sql&quot;;
+    private static final String HQL_QUERY_TYPE = &quot;hql&quot;;
+    private static final String PATH_DELIM = &quot;/&quot;;
+    private static final String PATH_HYPHEN = &quot;-&quot;;
+    private static final String SQL_TAG_PREFIX = &quot;sql.&quot;;
+    private static final String CONFIG_FILE_SUFFIX = &quot;_sqlconfig.xml&quot;;
+    private static EmbeddedCacheManager CACHE_MANAGER;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    
+    static {
+        try {
+<span class="nc" id="L109">            final Context context = new InitialContext();</span>
+<span class="nc" id="L110">            CACHE_MANAGER = (EmbeddedCacheManager) context.lookup(&quot;java:jboss/infinispan/container/master-data&quot;);</span>
+<span class="nc" id="L111">        } catch (final NamingException e) {</span>
+<span class="nc" id="L112">            throw new ApplicationRuntimeException(&quot;Error occurred while getting Cache Manager&quot;, e);</span>
+<span class="nc" id="L113">        }</span>
+<span class="nc" id="L114">    }</span>
+
+    /**
+     * This method load the data for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    public List get(final String sqlTagName) throws ApplicationRuntimeException {
+<span class="nc" id="L124">        return get(sqlTagName, ApplicationConstant.MODULE_FINANCE);</span>
+    }
+    
+    /**
+     * This method load the data for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @param module
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    public List get(final String sqlTagName, final String module) throws ApplicationRuntimeException {
+<span class="nc" id="L136">        final String temp[] = sqlTagName.split(&quot;-&quot;);</span>
+<span class="nc" id="L137">        final String domainName = ApplicationThreadLocals.getDomainName();</span>
+<span class="nc" id="L138">        final String applName = temp[0];</span>
+<span class="nc" id="L139">        List&lt;Object&gt; dataList = null;</span>
+<span class="nc" id="L140">        HashMap&lt;String, Object&gt; cacheValuesHashMap = new HashMap&lt;String, Object&gt;();</span>
+
+        try {
+<span class="nc" id="L143">        	cacheValuesHashMap = (HashMap&lt;String, Object&gt;) CACHE_MANAGER.getCache()</span>
+<span class="nc" id="L144">                    .get(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName);</span>
+            
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            if (cacheValuesHashMap != null)</span>
+<span class="nc" id="L147">            	dataList = (List&lt;Object&gt;) cacheValuesHashMap.get(sqlTagName+ PATH_HYPHEN + module);</span>
+
+<span class="nc bnc" id="L149" title="All 4 branches missed.">            if (dataList == null || dataList.isEmpty()) {</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            	if(sqlTagName.equalsIgnoreCase(ApplicationConstant.DEPARTMENT_CACHE_NAME)){</span>
+<span class="nc" id="L151">            		dataList = this.loadDepartmentFromMicroService(module);</span>
+            	}else{
+<span class="nc" id="L153">	            	final String type = EGovConfig</span>
+<span class="nc" id="L154">	                        .getProperty(applName + CONFIG_FILE_SUFFIX, &quot;type&quot;, EMPTY, SQL_TAG_PREFIX + sqlTagName).trim();</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">	                if (type.equalsIgnoreCase(&quot;java&quot;)) {</span>
+<span class="nc" id="L156">	                    final String className = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;class&quot;, EMPTY,</span>
+	                            SQL_TAG_PREFIX + sqlTagName);
+<span class="nc" id="L158">	                    final String methodName = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;method&quot;, EMPTY,</span>
+	                            SQL_TAG_PREFIX + sqlTagName);
+<span class="nc" id="L160">	                    final String parametertype = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;parametertype&quot;, EMPTY,</span>
+	                            SQL_TAG_PREFIX + sqlTagName);
+<span class="nc" id="L162">	                    final String parametervalue = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;parametervalue&quot;, EMPTY,</span>
+	                            SQL_TAG_PREFIX + sqlTagName);
+<span class="nc bnc" id="L164" title="All 4 branches missed.">	                    if (isNotBlank(className) &amp;&amp; isNotBlank(methodName))</span>
+<span class="nc" id="L165">	                        dataList = loadJavaAPIMasterDataList(className, methodName, parametertype.split(&quot;,&quot;),</span>
+<span class="nc" id="L166">	                                parametervalue.split(&quot;,&quot;));</span>
+	                    else
+<span class="nc" id="L168">	                        throw new ApplicationRuntimeException(&quot;ClassName and MethodName should be mentioned for &quot; + type + &quot; in &quot;</span>
+	                                + applName + CONFIG_FILE_SUFFIX);
+<span class="nc bnc" id="L170" title="All 4 branches missed.">	                } else if (type.equalsIgnoreCase(HQL_QUERY_TYPE) || type.equalsIgnoreCase(SQL_QUERY_TYPE)) {</span>
+<span class="nc" id="L171">	                    final String query = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;query&quot;, EMPTY,</span>
+	                            SQL_TAG_PREFIX + sqlTagName);
+<span class="nc bnc" id="L173" title="All 2 branches missed.">	                    if (!query.equalsIgnoreCase(EMPTY))</span>
+<span class="nc" id="L174">	                        dataList = loadQLMasterData(query, type);</span>
+	                    else
+<span class="nc" id="L176">	                        throw new ApplicationRuntimeException(</span>
+	                                &quot;Query should be mentioned for &quot; + type + &quot; in &quot; + applName + CONFIG_FILE_SUFFIX);
+<span class="nc" id="L178">	                } else</span>
+<span class="nc" id="L179">	                    throw new ApplicationRuntimeException(&quot;This type (&quot; + type + &quot;) is not supported for &quot; + sqlTagName);</span>
+            	}
+            	
+                //final HashMap&lt;String, Object&gt; hm = new HashMap&lt;String, Object&gt;();
+                //hm.put(sqlTagName+ PATH_HYPHEN + module, dataList);
+<span class="nc bnc" id="L184" title="All 2 branches missed.">            	if(null == cacheValuesHashMap) {</span>
+<span class="nc" id="L185">            		cacheValuesHashMap = new HashMap&lt;String, Object&gt;();</span>
+            	}
+<span class="nc" id="L187">            	cacheValuesHashMap.put(sqlTagName+ PATH_HYPHEN + module, dataList);</span>
+<span class="nc" id="L188">                CACHE_MANAGER.getCache().put(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName, cacheValuesHashMap);</span>
+            } else
+<span class="nc" id="L190">                LOGGER.info(&quot;EgovMasterDataCaching: Got directly from cache, not from db&quot;);</span>
+<span class="nc" id="L191">        } catch (final Exception e) {</span>
+<span class="nc" id="L192">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching&quot;, e);</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">            if(e instanceof MicroServiceInvalidTokenException || e instanceof MicroServiceNotAuthroizedException)</span>
+<span class="nc" id="L194">                throw e;</span>
+            else
+<span class="nc" id="L196">                throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching&quot;, e);</span>
+<span class="nc" id="L197">        }</span>
+<span class="nc" id="L198">        return dataList;</span>
+    }
+
+    /**
+     * This method load the data for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @return Map
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    /* public Map getMap(final String sqlTagName) throws ApplicationRuntimeException {
+        Map dataMap = new HashMap();
+        final String temp[] = sqlTagName.split(&quot;-&quot;);
+        final String applName = temp[0];
+        final String domainName = ApplicationThreadLocals.getDomainName();
+        final String type = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;type&quot;, EMPTY, SQL_TAG_PREFIX + sqlTagName)
+                .trim();
+        try {
+            if (type.trim().equalsIgnoreCase(SQL_QUERY_TYPE)) {
+                final List dataList = get(sqlTagName);
+                if (dataList != null) {
+                    final Iterator itr = dataList.iterator();
+                    LabelValueBean obj = null;
+                    while (itr.hasNext()) {
+                        obj = (LabelValueBean) itr.next();
+                        dataMap.put(Integer.toString(obj.getId()), obj.getName());
+                        obj = null;
+                    }
+                }
+            } else if (type.equalsIgnoreCase(HQL_QUERY_TYPE))
+                throw new ApplicationRuntimeException(&quot;getMap() is not supported for HQL query&quot;);
+            else if (type.equalsIgnoreCase(&quot;java&quot;)) {
+                final String className = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;class&quot;, EMPTY,
+                        SQL_TAG_PREFIX + sqlTagName);
+                final String methodName = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;method&quot;, EMPTY,
+                        SQL_TAG_PREFIX + sqlTagName);
+                final String parametertype = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;parametertype&quot;, EMPTY,
+                        SQL_TAG_PREFIX + sqlTagName);
+                final String parametervalue = EGovConfig.getProperty(applName + CONFIG_FILE_SUFFIX, &quot;parametervalue&quot;, EMPTY,
+                        SQL_TAG_PREFIX + sqlTagName);
+                if (isNotBlank(className) &amp;&amp; isNotBlank(methodName))
+                    dataMap = loadJavaAPIMasterDataMap(className, methodName, parametertype.split(&quot;,&quot;),
+                            parametervalue.split(&quot;,&quot;));
+                else
+                    throw new ApplicationRuntimeException(
+                            &quot;ClassName and MethodName should be mentioned for &quot; + type + &quot; in &quot; + applName + CONFIG_FILE_SUFFIX);
+                final HashMap&lt;String, Object&gt; hm = new HashMap&lt;String, Object&gt;();
+                hm.put(sqlTagName, dataMap);
+                CACHE_MANAGER.getCache().put(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName, hm);
+            } else
+                throw new ApplicationRuntimeException(&quot;This type (&quot; + type + &quot;) is not supported for &quot; + sqlTagName);
+        } catch (final Exception e) {
+            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching getMap&quot;, e);
+            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching getMap&quot;, e);
+        }
+        return dataMap;
+    }*/
+    
+    /**
+     * This method load the department map for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @param module
+     * @return Map
+     */
+
+    public Map&lt;String, String&gt; getDepartmentMapMS(final String sqlTagName, final String module) throws ApplicationRuntimeException {
+<span class="nc" id="L264">        Map&lt;String, String&gt; deptMap = new HashMap&lt;String, String&gt;();</span>
+        
+        try {
+<span class="nc" id="L267">        	final List dataList = get(sqlTagName, module);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        	if(!CollectionUtils.isEmpty(dataList)) {</span>
+<span class="nc" id="L269">        		deptMap = (Map&lt;String, String&gt;) dataList.stream().collect(</span>
+<span class="nc" id="L270">                        	Collectors.toMap(Department::getCode, Department::getName));</span>
+        	}
+<span class="nc" id="L272">        } catch (final Exception e) {</span>
+<span class="nc" id="L273">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching getMSDepartmentMap&quot;, e);</span>
+<span class="nc" id="L274">        }</span>
+<span class="nc" id="L275">        return deptMap;</span>
+    }
+
+    public static EmbeddedCacheManager getCACHE_MANAGER() {
+<span class="nc" id="L279">        return CACHE_MANAGER;</span>
+    }
+
+    /**
+     * This method removes the data from cache for given sqlTagName.
+     * @param sqlTagName the sql tag name
+     * @return void
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    public static void removeFromCache(final String sqlTagName) throws ApplicationRuntimeException {
+        try {
+<span class="nc" id="L291">            final String temp[] = sqlTagName.split(&quot;-&quot;);</span>
+<span class="nc" id="L292">            final String domainName = ApplicationThreadLocals.getDomainName();</span>
+<span class="nc" id="L293">            final String applName = temp[0];</span>
+<span class="nc" id="L294">            CACHE_MANAGER.getCache().remove(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName);</span>
+<span class="nc" id="L295">        } catch (final Exception e) {</span>
+<span class="nc" id="L296">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching removeFromCache&quot;, e);</span>
+<span class="nc" id="L297">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching removeFromCache&quot;, e);</span>
+<span class="nc" id="L298">        }</span>
+<span class="nc" id="L299">    }</span>
+
+    /**
+     * This method loads the data for Hql and Sql queries.
+     * @param query the query
+     * @param queryType the query type
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private List loadQLMasterData(final String query, final String queryType) throws ApplicationRuntimeException {
+<span class="nc" id="L310">        List list = null;</span>
+        try {
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (queryType.trim().equalsIgnoreCase(HQL_QUERY_TYPE))</span>
+<span class="nc" id="L313">                list = queryByHibernate(query);</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">            else if (queryType.trim().equalsIgnoreCase(SQL_QUERY_TYPE))</span>
+<span class="nc" id="L315">                list = queryByJdbc(query);</span>
+
+<span class="nc" id="L317">        } catch (final Exception e) {</span>
+<span class="nc" id="L318">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching loadQLMasterData&quot;, e);</span>
+<span class="nc" id="L319">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching loadQLMasterData&quot;, e);</span>
+<span class="nc" id="L320">        }</span>
+<span class="nc" id="L321">        return list;</span>
+    }
+
+    /**
+     * This method loads the data for type Java API.
+     * @param className the class name
+     * @param methodName the method name
+     * @param parametertype the parametertype
+     * @param parametervalue the parametervalue
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private List loadJavaAPIMasterDataList(final String className, final String methodName, final String parametertype[],
+            final String parametervalue[]) throws ApplicationRuntimeException {
+<span class="nc" id="L336">        List list = null;</span>
+        try {
+<span class="nc bnc" id="L338" title="All 2 branches missed.">            if (parametertype.length != parametervalue.length)</span>
+<span class="nc" id="L339">                throw new ApplicationRuntimeException(&quot;Number of parameter types and parameter values doesnt match&quot;);</span>
+<span class="nc" id="L340">            final Class cls = Class.forName(className);</span>
+<span class="nc" id="L341">            final Method method = cls.getMethod(methodName, loadMethodParameter(parametertype));</span>
+<span class="nc" id="L342">            list = (List) method.invoke(cls.newInstance(), loadMethodArguments(parametertype, parametervalue));</span>
+<span class="nc" id="L343">        } catch (final Exception e) {</span>
+<span class="nc" id="L344">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching loadJavaAPIMasterDataList&quot;, e);</span>
+<span class="nc" id="L345">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching loadJavaAPIMasterDataList&quot;, e);</span>
+<span class="nc" id="L346">        }</span>
+<span class="nc" id="L347">        return list;</span>
+    }
+
+    /**
+     * This method loads the data for type Java API.
+     * @param className the class name
+     * @param methodName the method name
+     * @param parametertype the parametertype
+     * @param parametervalue the parametervalue
+     * @return Map
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private Map loadJavaAPIMasterDataMap(final String className, final String methodName, final String parametertype[],
+            final String parametervalue[]) throws ApplicationRuntimeException {
+<span class="nc" id="L362">        Map dataMap = new HashMap();</span>
+        try {
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            if (parametertype.length != parametervalue.length)</span>
+<span class="nc" id="L365">                throw new ApplicationRuntimeException(&quot;Number of parameter types and parameter values doesnt match&quot;);</span>
+<span class="nc" id="L366">            final Class cls = Class.forName(className);</span>
+<span class="nc" id="L367">            final Method method = cls.getMethod(methodName, loadMethodParameter(parametertype));</span>
+<span class="nc" id="L368">            dataMap = (HashMap) method.invoke(cls.newInstance(), loadMethodArguments(parametertype, parametervalue));</span>
+<span class="nc" id="L369">        } catch (final Exception e) {</span>
+<span class="nc" id="L370">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching loadJavaAPIMasterDataMap&quot;, e);</span>
+<span class="nc" id="L371">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching loadJavaAPIMasterDataMap&quot;, e);</span>
+<span class="nc" id="L372">        }</span>
+<span class="nc" id="L373">        return dataMap;</span>
+    }
+
+    /**
+     * This method dynamically loads the parameters for a method i.e
+     * &lt;parametertype&gt;java.lang.String\,java.lang.Integer\,java.lang.String&lt;/parametertype&gt;
+     * @param parametertype the parametertype
+     * @return Class[]
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private Class[] loadMethodParameter(final String parametertype[]) throws ApplicationRuntimeException {
+<span class="nc" id="L385">        Class[] class_name = null;</span>
+        try {
+<span class="nc bnc" id="L387" title="All 2 branches missed.">            if (!parametertype[0].trim().equalsIgnoreCase(EMPTY)) {</span>
+<span class="nc" id="L388">                class_name = new Class[parametertype.length];</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">                for (int i = 0; i &lt; parametertype.length; i++)</span>
+<span class="nc" id="L390">                    class_name[i] = Class.forName(parametertype[i]);</span>
+            }
+<span class="nc" id="L392">        } catch (final Exception e) {</span>
+<span class="nc" id="L393">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching loadMethodParameter&quot;, e);</span>
+<span class="nc" id="L394">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching loadMethodParameter&quot;, e);</span>
+<span class="nc" id="L395">        }</span>
+<span class="nc" id="L396">        return class_name;</span>
+    }
+
+    /**
+     * This method dynamically loads the arguments for a method i.e &lt;parametervalue&gt;1\,10\,11&lt;/parametervalue&gt;
+     * @param parametertype the parametertype
+     * @param parametervalue the parametervalue
+     * @return Object[]
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private Object[] loadMethodArguments(final String parametertype[], final String parametervalue[])
+            throws ApplicationRuntimeException {
+<span class="nc" id="L409">        Object[] obj_name = null;</span>
+        try {
+<span class="nc bnc" id="L411" title="All 2 branches missed.">            if (!parametertype[0].trim().equalsIgnoreCase(EMPTY)) {</span>
+<span class="nc" id="L412">                obj_name = new Object[parametervalue.length];</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">                for (int i = 0; i &lt; parametertype.length; i++)</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">                    if (parametertype[i].trim().equalsIgnoreCase(&quot;java.lang.Integer&quot;))</span>
+<span class="nc" id="L415">                        obj_name[i] = Integer.valueOf(parametervalue[i]);</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">                    else if (parametertype[i].trim().equalsIgnoreCase(&quot;java.lang.Double&quot;))</span>
+<span class="nc" id="L417">                        obj_name[i] = Double.valueOf(parametervalue[i]);</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">                    else if (parametertype[i].trim().equalsIgnoreCase(&quot;java.lang.String&quot;))</span>
+<span class="nc" id="L419">                        obj_name[i] = parametervalue[i];</span>
+                    else
+<span class="nc" id="L421">                        throw new ApplicationRuntimeException(&quot;This &quot; + parametertype[i] + &quot; datatype is not supported&quot;);</span>
+            }
+<span class="nc" id="L423">        } catch (final Exception e) {</span>
+<span class="nc" id="L424">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching loadMethodArguments&quot;, e);</span>
+<span class="nc" id="L425">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching loadMethodArguments&quot;, e);</span>
+<span class="nc" id="L426">        }</span>
+<span class="nc" id="L427">        return obj_name;</span>
+    }
+
+    /**
+     * This method executes a hibernate query.
+     * @param query the query
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private List queryByHibernate(final String query) throws ApplicationRuntimeException {
+<span class="nc" id="L438">        List list = null;</span>
+
+        try {
+<span class="nc" id="L441">            final Query qry = getCurrentSession().createQuery(query);</span>
+<span class="nc" id="L442">            list = qry.list();</span>
+<span class="nc" id="L443">        } catch (final Exception e) {</span>
+<span class="nc" id="L444">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching queryByHibernate&quot;, e);</span>
+<span class="nc" id="L445">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching queryByHibernate&quot;, e);</span>
+<span class="nc" id="L446">        }</span>
+<span class="nc" id="L447">        return list;</span>
+    }
+
+    private Session getCurrentSession() {
+<span class="nc" id="L451">        return entityManager.unwrap(Session.class);</span>
+    }
+
+    /**
+     * This method executes a sql query.
+     * @param query the query
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private List queryByJdbc(final String query) throws ApplicationRuntimeException {
+<span class="nc" id="L462">        List resultlist = null;</span>
+<span class="nc" id="L463">        List returnList = null;</span>
+        try {
+<span class="nc" id="L465">            resultlist = getCurrentSession().createSQLQuery(query).list();</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">            if (resultlist != null)</span>
+<span class="nc" id="L467">                returnList = resultSetToArrayList(resultlist);</span>
+<span class="nc" id="L468">        } catch (final Exception e) {</span>
+<span class="nc" id="L469">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching queryByJdbc&quot;, e);</span>
+<span class="nc" id="L470">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching queryByJdbc&quot;, e);</span>
+<span class="nc" id="L471">        }</span>
+<span class="nc" id="L472">        return returnList;</span>
+    }
+
+    /**
+     * This method returns a list of LabelValueBean using the resultList object.
+     * @param resultList the rs
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    private List resultSetToArrayList(final List&lt;Object[]&gt; resultList) throws ApplicationRuntimeException {
+
+<span class="nc" id="L484">        final List list = new ArrayList();</span>
+<span class="nc" id="L485">        LabelValueBean labelValueBean = null;</span>
+        BigDecimal id;
+        try {
+<span class="nc bnc" id="L488" title="All 2 branches missed.">            for (final Object[] objArr : resultList) {</span>
+<span class="nc" id="L489">                labelValueBean = new LabelValueBean();</span>
+<span class="nc" id="L490">                id = (BigDecimal) objArr[0];</span>
+<span class="nc" id="L491">                labelValueBean.setId(id.intValue());</span>
+<span class="nc" id="L492">                labelValueBean.setName((String) objArr[1]);</span>
+<span class="nc" id="L493">                list.add(labelValueBean);</span>
+<span class="nc" id="L494">            }</span>
+<span class="nc" id="L495">        } catch (final Exception e) {</span>
+<span class="nc" id="L496">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching resultSetToArrayList&quot;, e);</span>
+<span class="nc" id="L497">            throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching resultSetToArrayList&quot;, e);</span>
+<span class="nc" id="L498">        }</span>
+<span class="nc" id="L499">        return list;</span>
+    }
+
+    private List loadDepartmentFromMicroService(String module){
+    	
+<span class="nc" id="L504">    	List&lt;Department&gt; deptList = this.microserviceUtils.getDepartments(null, module);</span>
+<span class="nc" id="L505">    	return deptList;</span>
+    }
+    
+    /**
+     * This method load the designation list for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @param module
+     * @return List
+     * @throws ApplicationRuntimeException the eGOV runtime exception
+     */
+
+    public List getDesignationListMS(final String sqlTagName, String module) throws ApplicationRuntimeException {
+<span class="nc" id="L517">        final String temp[] = sqlTagName.split(&quot;-&quot;);</span>
+<span class="nc" id="L518">        final String domainName = ApplicationThreadLocals.getDomainName();</span>
+<span class="nc" id="L519">        final String applName = temp[0];</span>
+<span class="nc" id="L520">        List&lt;Object&gt; dataList = null;</span>
+<span class="nc" id="L521">        HashMap&lt;String, Object&gt; cacheValuesHashMap = new HashMap&lt;String, Object&gt;();</span>
+
+        try {
+<span class="nc" id="L524">            cacheValuesHashMap = (HashMap&lt;String, Object&gt;) CACHE_MANAGER.getCache()</span>
+<span class="nc" id="L525">                    .get(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName);</span>
+<span class="nc bnc" id="L526" title="All 2 branches missed.">            if (cacheValuesHashMap != null)</span>
+<span class="nc" id="L527">                dataList = (List&lt;Object&gt;) cacheValuesHashMap.get(sqlTagName+ PATH_HYPHEN + module);</span>
+
+<span class="nc bnc" id="L529" title="All 4 branches missed.">            if (dataList == null || dataList.isEmpty()) {</span>
+<span class="nc bnc" id="L530" title="All 2 branches missed.">            	if(sqlTagName.equalsIgnoreCase(ApplicationConstant.DESIGNATION_CACHE_NAME)){</span>
+<span class="nc" id="L531">            		dataList = this.loadDesignationFromMicroService(module);</span>
+            	}
+                //final HashMap&lt;String, Object&gt; hm = new HashMap&lt;String, Object&gt;();
+                //hm.put(sqlTagName+ PATH_HYPHEN + module, dataList);
+<span class="nc bnc" id="L535" title="All 2 branches missed.">            	if(null == cacheValuesHashMap) {</span>
+<span class="nc" id="L536">            		cacheValuesHashMap = new HashMap&lt;String, Object&gt;();</span>
+            	}
+<span class="nc" id="L538">            	cacheValuesHashMap.put(sqlTagName+ PATH_HYPHEN + module, dataList);</span>
+<span class="nc" id="L539">                CACHE_MANAGER.getCache().put(applName + PATH_DELIM + domainName + PATH_DELIM + sqlTagName, cacheValuesHashMap);</span>
+            } else
+<span class="nc" id="L541">                LOGGER.info(&quot;EgovMasterDataCaching getDesignationMapMS: Got directly from cache, not from db&quot;);</span>
+<span class="nc" id="L542">        } catch (final Exception e) {</span>
+<span class="nc" id="L543">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching getDesignationMapMS&quot;, e);</span>
+<span class="nc bnc" id="L544" title="All 4 branches missed.">            if(e instanceof MicroServiceInvalidTokenException || e instanceof MicroServiceNotAuthroizedException)</span>
+<span class="nc" id="L545">                throw e;</span>
+            else
+<span class="nc" id="L547">                throw new ApplicationRuntimeException(&quot;Error occurred in EgovMasterDataCaching getDesignationMapMS&quot;, e);</span>
+<span class="nc" id="L548">        }</span>
+<span class="nc" id="L549">        return dataList;</span>
+    }
+    
+    /**
+     * This method load the department map for given sqlTagName and puts it in Cache.
+     * @param sqlTagName the sql tag name
+     * @param module
+     * @return Map
+     */
+
+    public Map&lt;String, String&gt; getDesignationMapMS(final String sqlTagName, final String module) throws ApplicationRuntimeException {
+<span class="nc" id="L560">        Map&lt;String, String&gt; desgMap = new HashMap&lt;String, String&gt;();</span>
+        
+        try {
+<span class="nc" id="L563">        	final List dataList = getDesignationListMS(sqlTagName, module);</span>
+<span class="nc bnc" id="L564" title="All 2 branches missed.">        	if(!CollectionUtils.isEmpty(dataList)) {</span>
+<span class="nc" id="L565">        		desgMap = (Map&lt;String, String&gt;) dataList.stream().collect(</span>
+<span class="nc" id="L566">                        	Collectors.toMap(Designation::getCode, Designation::getName));</span>
+        	}
+<span class="nc" id="L568">        } catch (final Exception e) {</span>
+<span class="nc" id="L569">            LOGGER.error(&quot;Error occurred in EgovMasterDataCaching getDesignationMapMS&quot;, e);</span>
+<span class="nc" id="L570">        }</span>
+<span class="nc" id="L571">        return desgMap;</span>
+    }
+    
+    private List loadDesignationFromMicroService(String module){
+    	
+<span class="nc" id="L576">    	List&lt;Designation&gt; deptList = this.microserviceUtils.getDesignation(null, module);</span>
+<span class="nc" id="L577">    	return deptList;</span>
+    }
+    
+    @PreDestroy
+    public void destroy() {
+<span class="nc bnc" id="L582" title="All 4 branches missed.">        if (CACHE_MANAGER != null &amp;&amp; CACHE_MANAGER.isDefaultRunning())</span>
+<span class="nc" id="L583">            CACHE_MANAGER.stop();</span>
+<span class="nc" id="L584">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeoLocation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.gis.model</a> &gt; <span class="el_source">GeoLocation.java</span></div><h1>GeoLocation.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.gis.model;
+
+import java.util.Map;
+
+<span class="nc" id="L53">public class GeoLocation {</span>
+
+	public static final String INFO5SEPERATOR=&quot;~&quot;;
+
+	private GeoLatLong geoLatLong;
+
+	private String info1;
+
+	private String info2;
+
+	private String info3;
+
+	private String info4;
+	// contains key=values seperated by INFO5SEPERATOR[ tilde(~)]
+	//eg: &quot;Contractor Name=Ramaswamy,Address=123 street,Total Amount=250000&quot; 
+	private String info5;
+	private String urlRedirect;
+
+	private String urlDisplay;
+
+	// Meta data information for the marker option
+	private Map&lt;String, Object&gt; markerOptionData;
+
+<span class="nc" id="L76">	private Boolean useNiceInfoWindow=false;</span>
+    private String styleClass;
+	
+	public String getStyleClass() {
+<span class="nc" id="L80">		return styleClass;</span>
+	}
+	public void setStyleClass(String style) {
+<span class="nc" id="L83">		this.styleClass = style;</span>
+<span class="nc" id="L84">	}</span>
+	public String getInfo5() {
+<span class="nc" id="L86">		return info5;</span>
+	}
+	/**
+	 * use appendToInfor5(String strToAppend) method to avoid errors
+	 * @param info5
+	 */
+	@Deprecated 
+	public void setInfo5(String info5) {
+<span class="nc" id="L94">		this.info5 = info5;</span>
+<span class="nc" id="L95">	}</span>
+
+	
+	public void setUseNiceInfoWindow(Boolean useNiceInfoWindow) {
+<span class="nc" id="L99">		this.useNiceInfoWindow = useNiceInfoWindow;</span>
+<span class="nc" id="L100">	}</span>
+
+	public GeoLatLong getGeoLatLong() {
+<span class="nc" id="L103">		return geoLatLong;</span>
+	}
+
+	public String getInfo1() {
+<span class="nc" id="L107">		return info1;</span>
+	}
+
+	public String getInfo2() {
+<span class="nc" id="L111">		return info2;</span>
+	}
+
+	public String getInfo3() {
+<span class="nc" id="L115">		return info3;</span>
+	}
+
+	public String getInfo4() {
+<span class="nc" id="L119">		return info4;</span>
+	}
+
+	public String getUrlRedirect() {
+<span class="nc" id="L123">		return urlRedirect;</span>
+	}
+
+	public String getUrlDisplay() {
+<span class="nc" id="L127">		return urlDisplay;</span>
+	}
+
+	public void setGeoLatLong(GeoLatLong geoLatLong) {
+<span class="nc" id="L131">		this.geoLatLong = geoLatLong;</span>
+<span class="nc" id="L132">	}</span>
+
+	public void setInfo1(String info1) {
+<span class="nc" id="L135">		this.info1 = info1;</span>
+<span class="nc" id="L136">	}</span>
+
+	public void setInfo2(String info2) {
+<span class="nc" id="L139">		this.info2 = info2;</span>
+<span class="nc" id="L140">	}</span>
+
+	public void setInfo3(String info3) {
+<span class="nc" id="L143">		this.info3 = info3;</span>
+<span class="nc" id="L144">	}</span>
+
+	public void setInfo4(String info4) {
+<span class="nc" id="L147">		this.info4 = info4;</span>
+<span class="nc" id="L148">	}</span>
+
+	public void setUrlRedirect(String urlRedirect) {
+<span class="nc" id="L151">		this.urlRedirect = urlRedirect;</span>
+<span class="nc" id="L152">	}</span>
+
+	public void setUrlDisplay(String urlDisplay) {
+<span class="nc" id="L155">		this.urlDisplay = urlDisplay;</span>
+<span class="nc" id="L156">	}</span>
+
+	public Map&lt;String, Object&gt; getMarkerOptionData() {
+<span class="nc" id="L159">		return markerOptionData;</span>
+	}
+
+	public void setMarkerOptionData(Map&lt;String, Object&gt; markerOptionData) {
+<span class="nc" id="L163">		this.markerOptionData = markerOptionData;</span>
+<span class="nc" id="L164">	}</span>
+	//use atleast a char on right side of = 
+	public void appendToInfo5(String strToAppend)
+	{
+<span class="nc bnc" id="L168" title="All 4 branches missed.">		if(null==this.info5||this.info5.isEmpty())</span>
+		{
+<span class="nc" id="L170">			this.info5=strToAppend;</span>
+		}else
+		{
+<span class="nc" id="L173">			this.info5=this.info5+INFO5SEPERATOR+strToAppend;</span>
+		}
+<span class="nc" id="L175">	}</span>
+	
+
+	public Boolean getUseNiceInfoWindow() {
+		
+<span class="nc" id="L180">		return useNiceInfoWindow;</span>
+	}	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

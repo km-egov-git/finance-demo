@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Demand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Demand.java</span></div><h1>Demand.java</h1><pre class="source lang-java linenums">/*
+ * eGov suite of products aim to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) &lt;2015&gt;  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ */
+package org.egov.infra.microservice.models;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+<span class="nc" id="L54">public class Demand {</span>
+
+    @JsonProperty(&quot;id&quot;)
+    private String id;
+
+    @NotNull
+    @JsonProperty(&quot;tenantId&quot;)
+    private String tenantId;
+
+    @NotNull
+    @JsonProperty(&quot;consumerCode&quot;)
+    private String consumerCode;
+
+    @NotNull
+    @JsonProperty(&quot;consumerType&quot;)
+    private String consumerType;
+
+    @NotNull
+    @JsonProperty(&quot;businessService&quot;)
+    private String businessService;
+
+    @Valid
+    @JsonProperty(&quot;payer&quot;)
+    private User payer;
+
+    @NotNull
+    @JsonProperty(&quot;taxPeriodFrom&quot;)
+    private Long taxPeriodFrom;
+
+    @NotNull
+    @JsonProperty(&quot;taxPeriodTo&quot;)
+    private Long taxPeriodTo;
+
+<span class="nc" id="L87">    @JsonProperty(&quot;demandDetails&quot;)</span>
+    @Valid
+    @NotNull
+    @Size(min=1)
+    private List&lt;DemandDetail&gt; demandDetails = new ArrayList&lt;&gt;();
+
+    @JsonProperty(&quot;auditDetails&quot;)
+    private AuditDetails auditDetails;
+    
+    @JsonProperty(&quot;billExpiryTime&quot;)
+    private Long billExpiryTime;
+
+    @JsonProperty(&quot;additionalDetails&quot;)
+    private Object additionalDetails;
+
+<span class="nc" id="L102">    @JsonProperty(&quot;minimumAmountPayable&quot;)</span>
+    private BigDecimal minimumAmountPayable = BigDecimal.ZERO;
+
+          /**
+* Gets or Sets status
+*/
+<span class="nc" id="L108">public enum StatusEnum {</span>
+      
+<span class="nc" id="L110">ACTIVE(&quot;ACTIVE&quot;),</span>
+
+<span class="nc" id="L112">CANCELLED(&quot;CANCELLED&quot;),</span>
+
+<span class="nc" id="L114">ADJUSTED(&quot;ADJUSTED&quot;);</span>
+
+private String value;
+
+<span class="nc" id="L118">StatusEnum(String value) {</span>
+<span class="nc" id="L119">  this.value = value;</span>
+<span class="nc" id="L120">}</span>
+
+@Override
+@JsonValue
+public String toString() {
+<span class="nc" id="L125">  return String.valueOf(value);</span>
+}
+
+@JsonCreator
+public static StatusEnum fromValue(String text) {
+<span class="nc bnc" id="L130" title="All 2 branches missed.">  for (StatusEnum b : StatusEnum.values()) {</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">    if (String.valueOf(b.value).equalsIgnoreCase(text)) {</span>
+<span class="nc" id="L132">      return b;</span>
+    }
+  }
+<span class="nc" id="L135">  return null;</span>
+}
+}
+
+    @JsonProperty(&quot;status&quot;)
+    private StatusEnum status;
+
+
+    public Demand addDemandDetailsItem(DemandDetail demandDetailsItem) {
+<span class="nc" id="L144">    this.demandDetails.add(demandDetailsItem);</span>
+<span class="nc" id="L145">    return this;</span>
+    }
+
+
+    public String getId() {
+<span class="nc" id="L150">        return id;</span>
+    }
+
+
+    public void setId(String id) {
+<span class="nc" id="L155">        this.id = id;</span>
+<span class="nc" id="L156">    }</span>
+
+
+    public String getTenantId() {
+<span class="nc" id="L160">        return tenantId;</span>
+    }
+
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L165">        this.tenantId = tenantId;</span>
+<span class="nc" id="L166">    }</span>
+
+
+    public String getConsumerCode() {
+<span class="nc" id="L170">        return consumerCode;</span>
+    }
+
+
+    public void setConsumerCode(String consumerCode) {
+<span class="nc" id="L175">        this.consumerCode = consumerCode;</span>
+<span class="nc" id="L176">    }</span>
+
+
+    public String getConsumerType() {
+<span class="nc" id="L180">        return consumerType;</span>
+    }
+
+
+    public void setConsumerType(String consumerType) {
+<span class="nc" id="L185">        this.consumerType = consumerType;</span>
+<span class="nc" id="L186">    }</span>
+
+
+    public String getBusinessService() {
+<span class="nc" id="L190">        return businessService;</span>
+    }
+
+
+    public void setBusinessService(String businessService) {
+<span class="nc" id="L195">        this.businessService = businessService;</span>
+<span class="nc" id="L196">    }</span>
+
+
+    public User getPayer() {
+<span class="nc" id="L200">        return payer;</span>
+    }
+
+
+    public void setPayer(User payer) {
+<span class="nc" id="L205">        this.payer = payer;</span>
+<span class="nc" id="L206">    }</span>
+
+
+    public Long getTaxPeriodFrom() {
+<span class="nc" id="L210">        return taxPeriodFrom;</span>
+    }
+
+
+    public void setTaxPeriodFrom(Long taxPeriodFrom) {
+<span class="nc" id="L215">        this.taxPeriodFrom = taxPeriodFrom;</span>
+<span class="nc" id="L216">    }</span>
+
+
+    public Long getTaxPeriodTo() {
+<span class="nc" id="L220">        return taxPeriodTo;</span>
+    }
+
+
+    public void setTaxPeriodTo(Long taxPeriodTo) {
+<span class="nc" id="L225">        this.taxPeriodTo = taxPeriodTo;</span>
+<span class="nc" id="L226">    }</span>
+
+
+    public List&lt;DemandDetail&gt; getDemandDetails() {
+<span class="nc" id="L230">        return demandDetails;</span>
+    }
+
+
+    public void setDemandDetails(List&lt;DemandDetail&gt; demandDetails) {
+<span class="nc" id="L235">        this.demandDetails = demandDetails;</span>
+<span class="nc" id="L236">    }</span>
+
+
+    public AuditDetails getAuditDetails() {
+<span class="nc" id="L240">        return auditDetails;</span>
+    }
+
+
+    public void setAuditDetails(AuditDetails auditDetails) {
+<span class="nc" id="L245">        this.auditDetails = auditDetails;</span>
+<span class="nc" id="L246">    }</span>
+
+
+    public Long getBillExpiryTime() {
+<span class="nc" id="L250">        return billExpiryTime;</span>
+    }
+
+
+    public void setBillExpiryTime(Long billExpiryTime) {
+<span class="nc" id="L255">        this.billExpiryTime = billExpiryTime;</span>
+<span class="nc" id="L256">    }</span>
+
+
+    public Object getAdditionalDetails() {
+<span class="nc" id="L260">        return additionalDetails;</span>
+    }
+
+
+    public void setAdditionalDetails(Object additionalDetails) {
+<span class="nc" id="L265">        this.additionalDetails = additionalDetails;</span>
+<span class="nc" id="L266">    }</span>
+
+
+    public BigDecimal getMinimumAmountPayable() {
+<span class="nc" id="L270">        return minimumAmountPayable;</span>
+    }
+
+
+    public void setMinimumAmountPayable(BigDecimal minimumAmountPayable) {
+<span class="nc" id="L275">        this.minimumAmountPayable = minimumAmountPayable;</span>
+<span class="nc" id="L276">    }</span>
+
+
+    public StatusEnum getStatus() {
+<span class="nc" id="L280">        return status;</span>
+    }
+
+
+    public void setStatus(StatusEnum status) {
+<span class="nc" id="L285">        this.status = status;</span>
+<span class="nc" id="L286">    }</span>
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

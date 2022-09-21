@@ -1,0 +1,1101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionsUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.utils</a> &gt; <span class="el_source">CollectionsUtil.java</span></div><h1>CollectionsUtil.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.utils;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.egov.collection.config.properties.CollectionApplicationProperties;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.BranchUserMap;
+import org.egov.collection.entity.Challan;
+import org.egov.collection.entity.CollectionIndex;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptDetail;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.collection.integration.models.BillReceiptInfo;
+import org.egov.collection.integration.models.BillReceiptInfoImpl;
+import org.egov.collection.integration.models.BillReceiptInfoReq;
+import org.egov.collection.integration.models.BillReceiptReq;
+import org.egov.collection.integration.models.ReceiptAmountInfo;
+import org.egov.collection.integration.services.BillingIntegrationService;
+import org.egov.commons.Bankbranch;
+import org.egov.commons.CFinancialYear;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.Fund;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.dao.FinancialYearDAO;
+import org.egov.commons.dao.InstallmentHibDao;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.Employee;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.eis.entity.Jurisdiction;
+import org.egov.eis.service.AssignmentService;
+import org.egov.eis.service.DesignationService;
+import org.egov.eis.service.EisCommonService;
+import org.egov.eis.service.OldEmployeeService;
+import org.egov.eis.service.PositionMasterService;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.entity.Location;
+import org.egov.infra.admin.master.entity.Module;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.admin.master.service.DepartmentService;
+import org.egov.infra.admin.master.service.ModuleService;
+import org.egov.infra.admin.master.service.UserService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.config.core.EnvironmentSettings;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.notification.service.NotificationService;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.reporting.engine.ReportRequest;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.validation.exception.ValidationError;
+import org.egov.infra.validation.exception.ValidationException;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.egov.pims.model.PersonalInformation;
+import org.egov.pims.service.EisUtilService;
+import org.egov.pims.service.SearchPositionService;
+import org.egov.pims.utils.EisManagersUtill;
+import org.hibernate.Query;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+@Service
+<span class="nc" id="L135">public class CollectionsUtil {</span>
+<span class="nc" id="L136">    private static final Logger LOGGER = Logger.getLogger(CollectionsUtil.class);</span>
+    @Autowired
+    protected AssignmentService assignmentService;
+
+    @Autowired
+    @Qualifier(&quot;persistenceService&quot;)
+    private PersistenceService persistenceService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ModuleService moduleService;
+
+    @Autowired
+    private AppConfigValueService appConfigValuesService;
+
+    @Autowired
+    private EisCommonService eisCommonService;
+
+    @Autowired
+    private SearchPositionService searchPositionService;
+
+    @Autowired
+    private ApplicationContext context;
+
+    @Autowired
+    private EisUtilService eisService;
+
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    @Autowired
+    private PositionMasterService posService;
+
+    @Autowired
+    private DepartmentService departmentService;
+
+    @Autowired
+    private InstallmentHibDao installmentHibDao;
+
+    @Autowired
+    private DesignationService designationService;
+
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusDAO;
+
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
+
+    @Autowired
+    private FinancialYearDAO financialYearDAO;
+
+    @Autowired
+    private ReportService reportService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private CollectionApplicationProperties collectionApplicationProperties;
+
+    @Autowired
+    MicroserviceUtils microserviceUtils;
+
+    @Autowired
+    private EnvironmentSettings environmentSettings;
+
+    @Autowired
+    @Qualifier(&quot;branchUserMapService&quot;)
+    private PersistenceService&lt;BranchUserMap, Long&gt; branchUserMapService;
+
+    @Autowired
+    private transient OldEmployeeService employeeService;
+
+    /**
+     * Returns the Status object for given status code for a receipt
+     *
+     * @param statusCode Status code for which status object is to be returned
+     * @return the Status object for given status code for a receipt
+     */
+    public EgwStatus getReceiptStatusForCode(final String statusCode) {
+<span class="nc" id="L218">        return getStatusForModuleAndCode(CollectionConstants.MODULE_NAME_RECEIPTHEADER, statusCode);</span>
+    }
+
+    /**
+     * This method returns the &lt;code&gt;EgwStatus&lt;/code&gt; for the given module type and status code
+     *
+     * @param moduleName Module name of the required status
+     * @param statusCode Status code of the required status
+     * @return the &lt;code&gt;EgwStatus&lt;/code&gt; instance
+     */
+    public EgwStatus getStatusForModuleAndCode(final String moduleName, final String statusCode) {
+<span class="nc" id="L229">        return egwStatusDAO.getStatusByModuleAndCode(moduleName, statusCode);</span>
+    }
+
+    /**
+     * This method returns the List of &lt;code&gt;EgwStatus&lt;/code&gt; for ReceiptHeader
+     *
+     * @return the List of &lt;code&gt;EgwStatus&lt;/code&gt; instance
+     */
+    public List&lt;EgwStatus&gt; getAllReceiptHeaderStatus() {
+<span class="nc" id="L238">        return egwStatusDAO.getStatusByModule(CollectionConstants.MODULE_NAME_RECEIPTHEADER);</span>
+    }
+
+    /**
+     * @param sessionMap Map of session variables
+     * @return user name of currently logged in user
+     */
+    public String getLoggedInUserName() {
+<span class="nc" id="L246">        return securityUtils.getCurrentUser().getName();</span>
+    }
+
+    /**
+     * This method returns the User instance associated with the logged in user
+     *
+     * @param sessionMap Map of session variables
+     * @return the logged in user
+     */
+    public User getLoggedInUser() {
+<span class="nc" id="L256">        return securityUtils.getCurrentUser();</span>
+    }
+
+    /**
+     * @param user the user whose department is to be returned
+     * @return department of the given user
+     */
+    public Department getDepartmentOfUser(final User user) {
+<span class="nc bnc" id="L264" title="All 2 branches missed.">        if (assignmentService.getPrimaryAssignmentForUser(user.getId()) == null)</span>
+<span class="nc" id="L265">            return null;</span>
+        else
+<span class="nc" id="L267">            return eisCommonService.getDepartmentForUser(user.getId());</span>
+    }
+
+    /**
+     * @param sessionMap map of session variables
+     * @return department of currently logged in user
+     */
+    public Department getDepartmentOfLoggedInUser() {
+<span class="nc" id="L275">        final User user = securityUtils.getCurrentUser();</span>
+<span class="nc" id="L276">        return getDepartmentOfUser(user);</span>
+    }
+
+    /**
+     * This method returns the User instance for the userName passed as parameter
+     *
+     * @param userName
+     * @return User
+     */
+    public User getUserByUserName(final String userName) {
+<span class="nc" id="L286">        return userService.getUserByUsername(userName);</span>
+    }
+
+    /**
+     * @param sessionMap Map of session variables
+     * @return Location object for given user
+     */
+    public Location getLocationOfUser(final Map&lt;String, Object&gt; sessionMap) {
+<span class="nc" id="L294">        Location location = null;</span>
+<span class="nc" id="L295">        final String locationId = (String) sessionMap.get(CollectionConstants.SESSION_VAR_LOGIN_USER_LOCATIONID);</span>
+<span class="nc bnc" id="L296" title="All 4 branches missed.">        if (locationId != null &amp;&amp; !locationId.isEmpty())</span>
+<span class="nc" id="L297">            location = getLocationById(Long.valueOf(locationId));</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        if (location == null)</span>
+<span class="nc" id="L299">            throw new ValidationException(Arrays.asList(new ValidationError(&quot;Location Not Found&quot;,</span>
+                    &quot;submitcollections.validation.error.location.notfound&quot;)));
+<span class="nc" id="L301">        return location;</span>
+    }
+
+    public Location getLocationById(final Long locationId) {
+<span class="nc" id="L305">        return (Location) persistenceService.findByNamedQuery(CollectionConstants.QUERY_GET_LOCATIONBYID, locationId);</span>
+    }
+
+    /**
+     * @return list of all active counters
+     */
+    public List getAllCounters() {
+<span class="nc" id="L312">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALLCOUNTERS);</span>
+    }
+
+    /**
+     * @return List of all collection services (service type = C)
+     */
+    public List getChallanServiceList() {
+<span class="nc" id="L319">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_SERVICES_BY_TYPE,</span>
+                CollectionConstants.SERVICE_TYPE_CHALLAN_COLLECTION);
+    }
+
+    /**
+     * @return List of all billing services
+     */
+    public List getBillingServiceList() {
+<span class="nc" id="L327">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_SERVICES_BY_TYPE,</span>
+                CollectionConstants.SERVICE_TYPE_BILLING);
+    }
+
+    /**
+     * @return list of all users who have created at least one receipt
+     */
+    public List getReceiptCreators() {
+<span class="nc" id="L335">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_CREATEDBYUSERS_OF_RECEIPTS);</span>
+    }
+
+    /**
+     * @return list of all zones that have receipts created
+     */
+    public List getReceiptZoneList() {
+<span class="nc" id="L342">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ZONE_OF_RECEIPTS);</span>
+    }
+
+    /**
+     * This method returns the collection modes that are not allowed based on rules configured in the script
+     *
+     * @param loggedInUser a &lt;code&gt;User&lt;/code&gt; entity representing the logged in user.
+     * @return a &lt;code&gt;List&lt;/code&gt; of &lt;code&gt;String&lt;/code&gt; values representing the mode of payments supported.
+     */
+    public List&lt;String&gt; getCollectionModesNotAllowed(final User loggedInUser) {
+<span class="nc" id="L352">        final List&lt;String&gt; collectionsModeNotAllowed = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L353">        final List&lt;AppConfigValues&gt; deptCodesApp = appConfigValuesService</span>
+<span class="nc" id="L354">                .getConfigValuesByModuleAndKey(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+                        CollectionConstants.COLLECTION_DEPARTMENT_COLLMODES);
+<span class="nc" id="L356">        final List&lt;String&gt; deptCodes = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">        for (final AppConfigValues deptCode : deptCodesApp)</span>
+<span class="nc" id="L358">            deptCodes.add(deptCode.getValue());</span>
+        List&lt;Assignment&gt; assignList;
+<span class="nc" id="L360">        Boolean isDeptAllowed = false;</span>
+<span class="nc" id="L361">        final Boolean isEmp = isEmployee(loggedInUser);</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">        if (isEmp) {</span>
+<span class="nc" id="L363">            assignList = assignmentService.getAllActiveEmployeeAssignmentsByEmpId(loggedInUser.getId());</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            for (final Assignment assign : assignList)</span>
+<span class="nc bnc" id="L365" title="All 4 branches missed.">                if (!deptCodes.isEmpty() &amp;&amp; deptCodes.contains(assign.getDepartment().getCode()))</span>
+<span class="nc" id="L366">                    isDeptAllowed = true;</span>
+        }
+<span class="nc bnc" id="L368" title="All 4 branches missed.">        if (isEmp &amp;&amp; !isDeptAllowed)</span>
+<span class="nc" id="L369">            throw new ValidationException(Arrays.asList(new ValidationError(&quot;Department&quot;,</span>
+                    &quot;billreceipt.counter.deptcode.null&quot;)));
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        if (isBankCollectionOperator(loggedInUser)) {</span>
+            // Bank Collection Operator cash, cheque, dd and card collection modes are
+            // allowed.
+<span class="nc" id="L374">            collectionsModeNotAllowed.add(CollectionConstants.INSTRUMENTTYPE_BANK);</span>
+<span class="nc" id="L375">            collectionsModeNotAllowed.add(CollectionConstants.INSTRUMENTTYPE_ONLINE);</span>
+        } else
+<span class="nc" id="L377">            collectionsModeNotAllowed.add(CollectionConstants.INSTRUMENTTYPE_ONLINE);</span>
+<span class="nc" id="L378">        return collectionsModeNotAllowed;</span>
+    }
+
+    public Boolean isEmployee(final User user) {
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">            for (final AppConfigValues appconfig : getThirdPartyUserRoles())</span>
+<span class="nc bnc" id="L384" title="All 4 branches missed.">                if (role != null &amp;&amp; role.getName().equals(appconfig.getValue()))</span>
+<span class="nc" id="L385">                    return false;</span>
+<span class="nc" id="L386">        return true;</span>
+    }
+
+    public List&lt;AppConfigValues&gt; getThirdPartyUserRoles() {
+
+<span class="nc" id="L391">        final List&lt;AppConfigValues&gt; appConfigValueList = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG, CollectionConstants.COLLECTION_ROLEFORNONEMPLOYEE);
+<span class="nc bnc" id="L393" title="All 2 branches missed.">        return !appConfigValueList.isEmpty() ? appConfigValueList : null;</span>
+
+    }
+
+    public String getDepartmentForWorkFlow() {
+<span class="nc" id="L398">        String department = &quot;&quot;;</span>
+<span class="nc" id="L399">        final List&lt;AppConfigValues&gt; appConfigValue = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG, CollectionConstants.COLLECTION_WORKFLOWDEPARTMENT);
+<span class="nc bnc" id="L401" title="All 4 branches missed.">        if (null != appConfigValue &amp;&amp; !appConfigValue.isEmpty())</span>
+<span class="nc" id="L402">            department = appConfigValue.get(0).getValue();</span>
+<span class="nc" id="L403">        return department;</span>
+    }
+
+    public Position getPositionByDeptDesgAndBoundary(final Boundary boundary) {
+<span class="nc" id="L407">        Position position = null;</span>
+<span class="nc" id="L408">        final String designationStr = getDesignationForThirdPartyUser();</span>
+<span class="nc" id="L409">        final String departmentStr = getDepartmentForWorkFlow();</span>
+<span class="nc" id="L410">        final String[] department = departmentStr.split(&quot;,&quot;);</span>
+<span class="nc" id="L411">        final String[] designation = designationStr.split(&quot;,&quot;);</span>
+<span class="nc" id="L412">        List&lt;Assignment&gt; assignment = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">        for (final String dept : department) {</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">            for (final String desg : designation) {</span>
+<span class="nc" id="L415">                assignment = assignmentService.findByDepartmentDesignationAndBoundary(departmentService</span>
+<span class="nc" id="L416">                        .getDepartmentByName(dept).getId(), designationService.getDesignationByName(desg).getId(),</span>
+<span class="nc" id="L417">                        boundary.getId());</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">                if (!assignment.isEmpty())</span>
+<span class="nc" id="L419">                    break;</span>
+            }
+<span class="nc bnc" id="L421" title="All 2 branches missed.">            if (!assignment.isEmpty())</span>
+<span class="nc" id="L422">                break;</span>
+        }
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        if (!assignment.isEmpty())</span>
+<span class="nc" id="L425">            position = assignment.get(0).getPosition();</span>
+<span class="nc" id="L426">        return position;</span>
+    }
+
+    public String getDesignationForThirdPartyUser() {
+<span class="nc" id="L430">        String designation = &quot;&quot;;</span>
+<span class="nc" id="L431">        final List&lt;AppConfigValues&gt; appConfigValue = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.COLLECTION_DESIGNATIONFORCSCOPERATOR);
+<span class="nc bnc" id="L434" title="All 4 branches missed.">        if (null != appConfigValue &amp;&amp; !appConfigValue.isEmpty())</span>
+<span class="nc" id="L435">            designation = appConfigValue.get(0).getValue();</span>
+<span class="nc" id="L436">        return designation;</span>
+    }
+
+    /**
+     * @param sessionMap Map of session variables
+     * @return Position of logged in user
+     */
+    public Position getPositionOfUser(final User user) {
+<span class="nc" id="L444">        Position position = posService.getCurrentPositionForUser(user.getId());</span>
+<span class="nc bnc" id="L445" title="All 2 branches missed.">        if (position == null) {</span>
+<span class="nc" id="L446">            List&lt;Assignment&gt; assignList = assignmentService.getAllActiveEmployeeAssignmentsByEmpId(user.getId());</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">            if (!assignList.isEmpty())</span>
+<span class="nc" id="L448">                position = assignList.get(0).getPosition();</span>
+            else
+<span class="nc" id="L450">                throw new ValidationException(user.getUsername() + &quot; User doesn't have active assignments.&quot;,</span>
+<span class="nc" id="L451">                        user.getUsername() + &quot; User doesn't have active assignments.&quot;);</span>
+        }
+
+<span class="nc" id="L454">        return position;</span>
+    }
+
+    public List&lt;Position&gt; getPositionsForEmployee(final User user) {
+<span class="nc" id="L458">        return posService.getPositionsForEmployee(user.getId(), null);</span>
+    }
+
+    /**
+     * Gets position by given position name
+     *
+     * @param positionName Position name
+     * @return Position object for given position name
+     */
+    public Position getPositionByName(final String positionName) {
+<span class="nc" id="L468">        return posService.getPositionByName(positionName);</span>
+    }
+
+    /**
+     * This method retrieves the &lt;code&gt;CFinancialYear&lt;/code&gt; for the given date.
+     *
+     * @param date an instance of &lt;code&gt;Date&lt;/code&gt; for which the financial year is to be retrieved.
+     * @return an instance of &lt;code&gt;&lt;/code&gt; representing the financial year for the given date
+     */
+    public CFinancialYear getFinancialYearforDate(final Date date) {
+<span class="nc" id="L478">        return (CFinancialYear) persistenceService</span>
+<span class="nc" id="L479">                .getSession()</span>
+<span class="nc" id="L480">                .createQuery(</span>
+                        &quot;from CFinancialYear cfinancialyear where ? between &quot;
+                                + &quot;cfinancialyear.startingDate and cfinancialyear.endingDate&quot;)
+<span class="nc" id="L483">                .setDate(0, date).list()</span>
+<span class="nc" id="L484">                .get(0);</span>
+    }
+
+    /**
+     * This method checks if the given challan is valid.
+     *
+     * @param challan the &lt;code&gt;Challan&lt;/code&gt; instance whose validity has to be checked
+     * @return a boolean value - true indicating that the challan is valid and false indicating that teh challan is not valid
+     */
+    public boolean checkChallanValidity(final Challan challan) {
+<span class="nc" id="L494">        final Calendar current = Calendar.getInstance();</span>
+<span class="nc" id="L495">        current.clear(Calendar.HOUR_OF_DAY);</span>
+<span class="nc" id="L496">        current.clear(Calendar.MINUTE);</span>
+<span class="nc" id="L497">        current.clear(Calendar.SECOND);</span>
+<span class="nc" id="L498">        current.clear(Calendar.MILLISECOND);</span>
+
+<span class="nc" id="L500">        final Calendar validityStart = Calendar.getInstance();</span>
+<span class="nc" id="L501">        validityStart.setTime(challan.getChallanDate());</span>
+<span class="nc" id="L502">        validityStart.clear(Calendar.HOUR_OF_DAY);</span>
+<span class="nc" id="L503">        validityStart.clear(Calendar.MINUTE);</span>
+<span class="nc" id="L504">        validityStart.clear(Calendar.SECOND);</span>
+<span class="nc" id="L505">        validityStart.clear(Calendar.MILLISECOND);</span>
+
+<span class="nc" id="L507">        final Calendar validityEnd = Calendar.getInstance();</span>
+<span class="nc" id="L508">        validityEnd.setTime(challan.getValidUpto());</span>
+<span class="nc" id="L509">        validityEnd.clear(Calendar.HOUR_OF_DAY);</span>
+<span class="nc" id="L510">        validityEnd.clear(Calendar.MINUTE);</span>
+<span class="nc" id="L511">        validityEnd.clear(Calendar.SECOND);</span>
+<span class="nc" id="L512">        validityEnd.clear(Calendar.MILLISECOND);</span>
+
+<span class="nc bnc" id="L514" title="All 4 branches missed.">        return validityStart.compareTo(current) &lt;= 0 &amp;&amp; validityEnd.compareTo(current) &gt;= 0;</span>
+    }
+
+    /**
+     * Fetches given bean from application context
+     *
+     * @param beanName name of bean to be fetched
+     * @return given bean from application context
+     */
+    public Object getBean(final String beanName) {
+
+<span class="nc" id="L525">        Object bean = null;</span>
+        try {
+<span class="nc" id="L527">            bean = context.getBean(beanName);</span>
+<span class="nc" id="L528">            LOGGER.debug(&quot; Got bean : &quot; + beanName);</span>
+<span class="nc" id="L529">        } catch (final BeansException e) {</span>
+<span class="nc" id="L530">            final String errorMsg = &quot;Could not locate bean [&quot; + beanName + &quot;]&quot;;</span>
+<span class="nc" id="L531">            LOGGER.error(errorMsg, e);</span>
+<span class="nc" id="L532">            throw new ApplicationRuntimeException(errorMsg, e);</span>
+<span class="nc" id="L533">        }</span>
+<span class="nc" id="L534">        return bean;</span>
+    }
+
+    /**
+     * This method returns the currently active config value for the given module name and key
+     *
+     * @param moduleName a &lt;code&gt;String&lt;code&gt; representing the module name
+     *                     &amp;#64;param key
+     *                     a &lt;code&gt;String&lt;/code&gt; representing the key
+     * @param defaultValue Default value to be returned in case the key is not defined
+     * @return &lt;code&gt;String&lt;/code&gt; representing the configuration value
+     */
+    public String getAppConfigValue(final String moduleName, final String key, final String defaultValue) {
+<span class="nc" id="L547">        final AppConfigValues configVal = appConfigValuesService.getAppConfigValueByDate(moduleName, key, new Date());</span>
+<span class="nc bnc" id="L548" title="All 2 branches missed.">        return configVal == null ? defaultValue : configVal.getValue();</span>
+    }
+
+    /**
+     * This method returns the config value for the given module name and key
+     *
+     * @param moduleName a &lt;code&gt;String&lt;code&gt; representing the module name
+     *                   &amp;#64;param key
+     *                   a &lt;code&gt;String&lt;/code&gt; representing the key
+     * @return &lt;code&gt;String&lt;/code&gt; representing the configuration value
+     */
+    public String getAppConfigValue(final String moduleName, final String key) {
+<span class="nc" id="L560">        final List&lt;AppConfigValues&gt; appConfValues = appConfigValuesService.getConfigValuesByModuleAndKey(moduleName,</span>
+                key);
+<span class="nc bnc" id="L562" title="All 4 branches missed.">        if (appConfValues != null &amp;&amp; !appConfValues.isEmpty())</span>
+<span class="nc" id="L563">            return appConfValues.get(0).getValue();</span>
+        else
+<span class="nc" id="L565">            return &quot;&quot;;</span>
+    }
+
+    /**
+     * This method returns the list of config values for the given module name and key
+     *
+     * @param moduleName a &lt;code&gt;String&lt;code&gt; representing the module name
+     *                   &amp;#64;param key
+     *                   a &lt;code&gt;String&lt;/code&gt; representing the key
+     * @return &lt;code&gt;List&lt;AppConfigValues&gt;&lt;/code&gt; representing the list of configuration values
+     */
+    public List&lt;AppConfigValues&gt; getAppConfigValues(final String moduleName, final String key) {
+<span class="nc" id="L577">        return appConfigValuesService.getConfigValuesByModuleAndKey(moduleName, key);</span>
+    }
+
+    /**
+     * Gets position by given position id
+     *
+     * @param positionId Position Id
+     * @return Position object for given position id
+     */
+    public Position getPositionById(final Long positionId) {
+<span class="nc" id="L587">        return posService.getPositionById(positionId);</span>
+    }
+
+    /**
+     * This method is invoked from the ReceiptHeader.workFlow script and returns the position for the employee id passed as
+     * parameter
+     *
+     * @param employeeId PersonalInformation Id
+     * @return Position object for Employee Id passed as parameter
+     */
+
+    public Position getPositionforEmp(final Long employeeId) {
+<span class="nc" id="L599">        return posService.getPositionByUserId(employeeId);</span>
+    }
+
+    /**
+     * This method is invoked from the ReceiptHeader.workFlow script and returns Employee object for the given Department Id,
+     * Designation Id ,Boundary Id and FunctionaryId
+     *
+     * @param deptId Department Id
+     * @param designationId Designation Id
+     * @param boundaryId Boundary Id
+     * @param functionaryId Functionary Id
+     * @return PersonalInformation
+     */
+
+    public PersonalInformation getEmployeeByDepartmentDesignationBoundaryandFunctionary(final Long deptId,
+            final Long designationId, final Integer boundaryId, final Integer functionaryId) {
+<span class="nc" id="L615">        PersonalInformation personalInformation = null;</span>
+        try {
+<span class="nc" id="L617">            personalInformation = EisManagersUtill.getEmployeeService().getEmployeeByFunctionary(deptId, designationId,</span>
+<span class="nc" id="L618">                    Long.valueOf(boundaryId), functionaryId);</span>
+<span class="nc" id="L619">        } catch (final Exception e) {</span>
+<span class="nc" id="L620">            final String errorMsg = &quot;Could not get PersonalInformation&quot;;</span>
+<span class="nc" id="L621">            LOGGER.error(errorMsg, e);</span>
+<span class="nc" id="L622">            throw new ApplicationRuntimeException(errorMsg, e);</span>
+<span class="nc" id="L623">        }</span>
+<span class="nc" id="L624">        return personalInformation;</span>
+    }
+
+    /**
+     * @param sessionMap
+     * @return
+     */
+
+    public List&lt;Department&gt; getAllNonPrimaryAssignmentsOfLoggedInUser() {
+<span class="nc" id="L633">        return getAllNonPrimaryAssignmentsOfUser(getLoggedInUser());</span>
+    }
+
+    /**
+     * @param user the user whose non-primary department list is to be returned
+     * @return list of non-primary department of the given user
+     */
+    public List&lt;Department&gt; getAllNonPrimaryAssignmentsOfUser(final User user) {
+<span class="nc" id="L641">        final List&lt;Department&gt; departmentlist = new ArrayList&lt;&gt;();</span>
+        try {
+<span class="nc" id="L643">            final HashMap&lt;String, String&gt; paramMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L644">            paramMap.put(&quot;code&quot;, EisManagersUtill.getEmployeeService().getEmpForUserId(user.getId()).getCode());</span>
+<span class="nc" id="L645">            final List&lt;EmployeeView&gt; employeeViewList = eisService.getEmployeeInfoList(paramMap);</span>
+<span class="nc bnc" id="L646" title="All 2 branches missed.">            if (!employeeViewList.isEmpty())</span>
+<span class="nc bnc" id="L647" title="All 2 branches missed.">                for (final EmployeeView employeeView : employeeViewList)</span>
+<span class="nc bnc" id="L648" title="All 2 branches missed.">                    if (!employeeView.getAssignment().getPrimary())</span>
+<span class="nc" id="L649">                        departmentlist.add(employeeView.getAssignment().getDepartment());</span>
+<span class="nc" id="L650">        } catch (final Exception e) {</span>
+<span class="nc" id="L651">            final String errorMsg = &quot;Could not get list of assignments&quot;;</span>
+<span class="nc" id="L652">            LOGGER.error(errorMsg, e);</span>
+<span class="nc" id="L653">            throw new ApplicationRuntimeException(errorMsg, e);</span>
+<span class="nc" id="L654">        }</span>
+
+<span class="nc" id="L656">        return departmentlist;</span>
+    }
+
+    /**
+     * @param user the user whose non-primary department is to be returned
+     * @return non-primary department of the given user. In case user has multiple non-primary departments, the first one will be
+     * returned.
+     */
+    public Department getNonPrimaryDeptOfUser(final User user) {
+<span class="nc" id="L665">        final List&lt;Department&gt; nonPrimaryAssignments = getAllNonPrimaryAssignmentsOfUser(user);</span>
+<span class="nc bnc" id="L666" title="All 2 branches missed.">        return nonPrimaryAssignments.isEmpty() ? null : nonPrimaryAssignments.get(0);</span>
+    }
+
+    public List&lt;Designation&gt; getDesignationsAllowedForChallanApproval(final Integer departmentId) {
+<span class="nc" id="L670">        final List&lt;Designation&gt; designations = designationService.getAllDesignationByDepartment(</span>
+<span class="nc" id="L671">                Long.valueOf(departmentId), new Date());</span>
+<span class="nc" id="L672">        final List&lt;Designation&gt; designation = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L673">        final List&lt;AppConfigValues&gt; appConfigValue = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.COLLECTION_DESIG_CHALLAN_WORKFLOW);
+<span class="nc bnc" id="L676" title="All 2 branches missed.">        for (final Designation desig : designations)</span>
+<span class="nc bnc" id="L677" title="All 2 branches missed.">            for (final AppConfigValues app : appConfigValue)</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">                if (desig.getName().equals(app.getValue()))</span>
+<span class="nc" id="L679">                    designation.add(desig);</span>
+<span class="nc" id="L680">        return designation;</span>
+    }
+
+    public List&lt;Department&gt; getDepartmentsAllowedForChallanApproval() {
+<span class="nc" id="L684">        final List&lt;Department&gt; departments = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L685">        final List&lt;AppConfigValues&gt; appConfigValue = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.COLLECTION_DESIG_CHALLAN_WORKFLOW);
+<span class="nc bnc" id="L688" title="All 4 branches missed.">        if (null != appConfigValue &amp;&amp; !appConfigValue.isEmpty())</span>
+<span class="nc bnc" id="L689" title="All 2 branches missed.">            for (final AppConfigValues app : appConfigValue) {</span>
+<span class="nc" id="L690">                final List&lt;Assignment&gt; assignments = assignmentService.findPrimaryAssignmentForDesignationName(app</span>
+<span class="nc" id="L691">                        .getValue());</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">                for (final Assignment assign : assignments)</span>
+<span class="nc bnc" id="L693" title="All 2 branches missed.">                    if (!departments.contains(assign.getDepartment()))</span>
+<span class="nc" id="L694">                        departments.add(assign.getDepartment());</span>
+<span class="nc" id="L695">            }</span>
+<span class="nc" id="L696">        return departments;</span>
+    }
+
+    /**
+     * This method checks if the given glcode belongs to an account head representing an arrear account head (for Property Tax).
+     * The glcodes for such accounts are retrieved from App Config.
+     *
+     * @param glcode The Chart of Accounts Code
+     * @param description Description of the glcode
+     * @returna a &lt;code&gt;Boolean&lt;/code&gt; indicating if the glcode is arrear account head
+     */
+    public boolean isPropertyTaxArrearAccountHead(final String glcode, final String description) {
+<span class="nc" id="L708">        final List&lt;AppConfigValues&gt; list = appConfigValuesService.getConfigValuesByModuleAndKey(</span>
+                CollectionConstants.MODULE_NAME_PROPERTYTAX, &quot;ISARREARACCOUNT&quot;);
+<span class="nc" id="L710">        final AppConfigValues penaltyGlCode = appConfigValuesService.getAppConfigValueByDate(</span>
+                CollectionConstants.MODULE_NAME_PROPERTYTAX, &quot;PTPENALTYGLCODE&quot;, new Date());
+        boolean retValue;
+<span class="nc" id="L713">        LOGGER.debug(&quot;isPropertyTaxArrearAccountHead glcode &quot; + glcode + &quot; description &quot; + description);</span>
+<span class="nc bnc" id="L714" title="All 4 branches missed.">        if (penaltyGlCode != null &amp;&amp; penaltyGlCode.getValue().equals(glcode)) {</span>
+<span class="nc" id="L715">            final Module module = moduleService.getModuleByName(CollectionConstants.MODULE_NAME_PROPERTYTAX);</span>
+<span class="nc" id="L716">            final String currInst = installmentHibDao.getInsatllmentByModuleForGivenDate(module, new Date())</span>
+<span class="nc" id="L717">                    .getDescription();</span>
+<span class="nc bnc" id="L718" title="All 2 branches missed.">            if (currInst.equals(description.substring(16, description.length())))</span>
+<span class="nc" id="L719">                retValue = false;</span>
+            else
+<span class="nc" id="L721">                retValue = true;</span>
+<span class="nc" id="L722">        } else {</span>
+<span class="nc" id="L723">            final ArrayList&lt;String&gt; accValues = new ArrayList&lt;&gt;(0);</span>
+<span class="nc bnc" id="L724" title="All 2 branches missed.">            for (final AppConfigValues value : list)</span>
+<span class="nc" id="L725">                accValues.add(value.getValue());</span>
+<span class="nc bnc" id="L726" title="All 2 branches missed.">            if (accValues.contains(glcode))</span>
+<span class="nc" id="L727">                retValue = true;</span>
+            else
+<span class="nc" id="L729">                retValue = false;</span>
+        }
+
+<span class="nc" id="L732">        return retValue;</span>
+    }
+
+    public List&lt;EmployeeView&gt; getPositionBySearchParameters(final String beginsWith, final Integer desId,
+            final Integer deptId, final Integer jurdId, final Integer roleId, final Date userDate,
+            final Integer maxResults) throws NoSuchObjectException {
+
+<span class="nc bnc" id="L739" title="All 2 branches missed.">        return searchPositionService.getPositionBySearchParameters(beginsWith, desId, deptId,</span>
+<span class="nc" id="L740">                jurdId != null ? Long.valueOf(jurdId) : null, roleId, userDate, maxResults);</span>
+
+    }
+
+    /**
+     * @param consumerCode
+     * @return last three online transaction for the consumerCode
+     */
+    public List&lt;OnlinePayment&gt; getOnlineTransactionHistory(final String consumerCode) {
+<span class="nc" id="L749">        final String hql = &quot;select online from ReceiptHeader rh, org.egov.collection.entity.OnlinePayment online where rh.id = online.receiptHeader.id and rh.consumerCode =:consumercode  order by online.id desc&quot;;</span>
+<span class="nc" id="L750">        final Query query = persistenceService.getSession().createQuery(hql);</span>
+<span class="nc" id="L751">        query.setString(&quot;consumercode&quot;, consumerCode);</span>
+<span class="nc" id="L752">        query.setMaxResults(3);</span>
+<span class="nc" id="L753">        return query.list();</span>
+    }
+
+    /**
+     * @return list of all active locations
+     */
+    public List getAllLocations() {
+<span class="nc" id="L760">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_LOCATIONS);</span>
+    }
+
+    /**
+     * @return list of all fund
+     */
+    public List&lt;Fund&gt; getAllFunds() {
+<span class="nc" id="L767">        return persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUND);</span>
+    }
+
+    public User getUserById(final Long userId) {
+<span class="nc" id="L771">        return userService.getUserById(userId);</span>
+    }
+
+    public boolean isValidTemplate(final String templateName) {
+<span class="nc" id="L775">        return reportService.isValidTemplate(templateName);</span>
+    }
+
+    public ReportOutput createReport(final ReportRequest reportRequest) {
+<span class="nc" id="L779">        return reportService.createReport(reportRequest);</span>
+    }
+
+    public ReceiptAmountInfo updateReceiptDetailsAndGetReceiptAmountInfo(final BillReceiptReq billReceipt,
+            final String serviceCode) {
+<span class="nc" id="L784">        final RestTemplate restTemplate = new RestTemplate();</span>
+<span class="nc" id="L785">        billReceipt.setTenantId(microserviceUtils.getTenentId());</span>
+<span class="nc" id="L786">        final BillReceiptInfoReq billReceiptInfoReq = new BillReceiptInfoReq();</span>
+<span class="nc" id="L787">        billReceiptInfoReq.setBillReceiptInfo(billReceipt);</span>
+<span class="nc" id="L788">        billReceiptInfoReq.setRequestInfo(microserviceUtils.createRequestInfo());</span>
+<span class="nc bnc" id="L789" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L790">            LOGGER.debug(&quot;updateReceiptDetailsAndGetReceiptAmountInfo - before calling LAMS update&quot;);</span>
+<span class="nc" id="L791">        final String url = collectionApplicationProperties.getLamsServiceUrl().concat(</span>
+<span class="nc" id="L792">                collectionApplicationProperties.getUpdateDemandUrl(serviceCode.toLowerCase()));</span>
+<span class="nc bnc" id="L793" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L794">            LOGGER.debug(&quot;updateReceiptDetailsAndGetReceiptAmountInfo - url&quot; + url);</span>
+<span class="nc" id="L795">        ReceiptAmountInfo receiptAmountInfo = null;</span>
+        try {
+<span class="nc" id="L797">            receiptAmountInfo = restTemplate.postForObject(url, billReceiptInfoReq, ReceiptAmountInfo.class);</span>
+<span class="nc" id="L798">        } catch (final Exception e) {</span>
+<span class="nc" id="L799">            final String errMsg = &quot;Exception while updateReceiptDetailsAndGetReceiptAmountInfo for bill number  [&quot;</span>
+<span class="nc" id="L800">                    + billReceipt.getBillReferenceNum() + &quot;]!&quot;;</span>
+<span class="nc" id="L801">            LOGGER.error(errMsg, e);</span>
+<span class="nc" id="L802">            throw new ApplicationRuntimeException(errMsg, e);</span>
+<span class="nc" id="L803">        }</span>
+<span class="nc bnc" id="L804" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled())</span>
+<span class="nc" id="L805">            LOGGER.debug(&quot;updateReceiptDetailsAndGetReceiptAmountInfo - response&quot; + receiptAmountInfo);</span>
+<span class="nc" id="L806">        return receiptAmountInfo;</span>
+    }
+
+    public CollectionIndex constructCollectionIndex(final ReceiptHeader receiptHeader) {
+<span class="nc" id="L810">        ReceiptAmountInfo receiptAmountInfo = new ReceiptAmountInfo();</span>
+
+<span class="nc" id="L812">        String instrumentType = &quot;&quot;;</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">        if (!receiptHeader.getReceiptInstrument().isEmpty())</span>
+<span class="nc" id="L814">            instrumentType = receiptHeader.getReceiptInstrument().iterator().next().getInstrumentType().getType();</span>
+
+<span class="nc bnc" id="L816" title="All 2 branches missed.">        if (receiptHeader.getReceipttype() == CollectionConstants.RECEIPT_TYPE_BILL)</span>
+            try {
+<span class="nc" id="L818">                final Set&lt;BillReceiptInfo&gt; billReceipts = new HashSet&lt;&gt;(0);</span>
+<span class="nc" id="L819">                final BillReceiptInfo billReceipt = new BillReceiptInfoImpl(receiptHeader, chartOfAccountsHibernateDAO,</span>
+                        persistenceService, null);
+<span class="nc" id="L821">                billReceipts.add(billReceipt);</span>
+<span class="nc bnc" id="L822" title="All 2 branches missed.">                if (receiptHeader.getService().equals(CollectionConstants.SERVICECODE_LAMS))</span>
+<span class="nc" id="L823">                    receiptAmountInfo = updateReceiptDetailsAndGetReceiptAmountInfo(new BillReceiptReq(billReceipt),</span>
+<span class="nc" id="L824">                            receiptHeader.getService());</span>
+                else {
+<span class="nc" id="L826">                    final BillingIntegrationService billingServiceBean = (BillingIntegrationService) getBean(</span>
+<span class="nc" id="L827">                            receiptHeader.getService() + CollectionConstants.COLLECTIONS_INTERFACE_SUFFIX);</span>
+<span class="nc" id="L828">                    receiptAmountInfo = billingServiceBean.receiptAmountBifurcation(billReceipt);</span>
+                }
+<span class="nc" id="L830">            } catch (final Exception e) {</span>
+<span class="nc" id="L831">                final String errMsg = &quot;Exception while constructing collection index for receipt number [&quot;</span>
+<span class="nc" id="L832">                        + receiptHeader.getReceiptnumber() + &quot;]!&quot;;</span>
+<span class="nc" id="L833">                LOGGER.error(errMsg, e);</span>
+<span class="nc" id="L834">                throw new ApplicationRuntimeException(errMsg, e);</span>
+<span class="nc" id="L835">            }</span>
+<span class="nc" id="L836">        return CollectionIndex</span>
+<span class="nc" id="L837">                .builder()</span>
+<span class="nc" id="L838">                .withReceiptDate(receiptHeader.getReceiptdate())</span>
+<span class="nc" id="L839">                .withReceiptnumber(receiptHeader.getReceiptnumber())</span>
+<span class="nc" id="L840">                .withBillingservice(receiptHeader.getService())</span>
+<span class="nc" id="L841">                .withPaymentMode(instrumentType)</span>
+<span class="nc" id="L842">                .withTotalamount(receiptHeader.getTotalAmount())</span>
+<span class="nc" id="L843">                .withChannel(receiptHeader.getSource())</span>
+<span class="nc" id="L844">                .withStatus(receiptHeader.getStatus().getDescription())</span>
+<span class="nc bnc" id="L845" title="All 2 branches missed.">                .withConsumerCode(receiptHeader.getConsumerCode() != null ? receiptHeader.getConsumerCode() : &quot;&quot;)</span>
+<span class="nc bnc" id="L846" title="All 2 branches missed.">                .withBillNumber(receiptHeader.getReferencenumber() != null ? receiptHeader.getReferencenumber() : null)</span>
+<span class="nc" id="L847">                .withPaymentGateway(</span>
+<span class="nc bnc" id="L848" title="All 2 branches missed.">                        receiptHeader.getOnlinePayment() != null ? receiptHeader.getOnlinePayment().getService()</span>
+<span class="nc" id="L849">                                .getName() : &quot;&quot;)</span>
+<span class="nc bnc" id="L850" title="All 2 branches missed.">                .withConsumerName(receiptHeader.getPayeeName() != null ? receiptHeader.getPayeeName() : &quot;&quot;)</span>
+                /* .withReceiptCreator(receiptHeader.getCreatedBy() != null ? receiptHeader.getCreatedBy().getName() : &quot;&quot;) */
+<span class="nc" id="L852">                .withArrearAmount(receiptAmountInfo.getArrearsAmount())</span>
+<span class="nc" id="L853">                .withAdvanceAmount(receiptAmountInfo.getAdvanceAmount())</span>
+<span class="nc" id="L854">                .withCurrentAmount(receiptAmountInfo.getCurrentInstallmentAmount())</span>
+<span class="nc" id="L855">                .withPenaltyAmount(receiptAmountInfo.getPenaltyAmount())</span>
+<span class="nc" id="L856">                .withArrearCess(receiptAmountInfo.getArrearCess())</span>
+<span class="nc" id="L857">                .withLatePaymentChargesAmount(receiptAmountInfo.getLatePaymentCharges())</span>
+<span class="nc" id="L858">                .withCurrentCess(receiptAmountInfo.getCurrentCess())</span>
+<span class="nc" id="L859">                .withReductionAmount(receiptAmountInfo.getReductionAmount())</span>
+<span class="nc" id="L860">                .withInstallmentFrom(</span>
+<span class="nc bnc" id="L861" title="All 2 branches missed.">                        receiptAmountInfo.getInstallmentFrom() != null ? receiptAmountInfo.getInstallmentFrom() : &quot;&quot;)</span>
+<span class="nc" id="L862">                .withInstallmentTo(</span>
+<span class="nc bnc" id="L863" title="All 2 branches missed.">                        receiptAmountInfo.getInstallmentTo() != null ? receiptAmountInfo.getInstallmentTo() : &quot;&quot;)</span>
+<span class="nc" id="L864">                .withRevenueWard(receiptAmountInfo.getRevenueWard())</span>
+<span class="nc bnc" id="L865" title="All 2 branches missed.">                .withConsumerType(receiptHeader.getConsumerType() != null ? receiptHeader.getConsumerType() : &quot;&quot;)</span>
+<span class="nc bnc" id="L866" title="All 2 branches missed.">                .withConflict(receiptAmountInfo.getConflict() != null ? receiptAmountInfo.getConflict() : 0).build();</span>
+    }
+
+    public Boolean checkVoucherCreation(final ReceiptHeader receiptHeader) {
+<span class="nc" id="L870">        Boolean createVoucherForBillingService = Boolean.FALSE;</span>
+<span class="nc" id="L871">        List&lt;BusinessDetails&gt; servcie = microserviceUtils.getBusinessDetailsByCode(receiptHeader.getService());</span>
+<span class="nc bnc" id="L872" title="All 2 branches missed.">        if (servcie != null) {</span>
+<span class="nc bnc" id="L873" title="All 2 branches missed.">            if (servcie.get(0).getVoucherCutoffDate() != null</span>
+<span class="nc bnc" id="L874" title="All 2 branches missed.">                    &amp;&amp; receiptHeader.getReceiptdate().compareTo(new Date(servcie.get(0).getVoucherCutoffDate())) &gt; 0) {</span>
+<span class="nc bnc" id="L875" title="All 2 branches missed.">                if (servcie.get(0).getVoucherCreation() != null)</span>
+<span class="nc" id="L876">                    createVoucherForBillingService = servcie.get(0).getVoucherCreation();</span>
+<span class="nc bnc" id="L877" title="All 2 branches missed.">            } else if (servcie.get(0).getVoucherCutoffDate() == null</span>
+<span class="nc bnc" id="L878" title="All 2 branches missed.">                    &amp;&amp; servcie.get(0).getVoucherCreation() != null)</span>
+<span class="nc" id="L879">                createVoucherForBillingService = servcie.get(0).getVoucherCreation();</span>
+        }
+<span class="nc" id="L881">        return createVoucherForBillingService;</span>
+    }
+
+    public Designation getDesignationForApprover() {
+<span class="nc" id="L885">        return designationService.getDesignationByName(getAppConfigValue(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.COLLECTION_DESIGNATIONFORAPPROVER));
+    }
+
+    public String getApproverName(final Long position) {
+<span class="nc" id="L891">        String approver = null;</span>
+<span class="nc" id="L892">        final List&lt;Assignment&gt; assignments = assignmentService.getAssignmentsForPosition(position);</span>
+<span class="nc bnc" id="L893" title="All 2 branches missed.">        for (final Assignment assignment : assignments)</span>
+<span class="nc bnc" id="L894" title="All 2 branches missed.">            if (assignment.getPrimary())</span>
+<span class="nc" id="L895">                approver = assignment.getEmployee().getName().concat(&quot;~&quot;).concat(assignment.getEmployee().getCode())</span>
+<span class="nc" id="L896">                        .concat(&quot;~&quot;).concat(assignment.getPosition().getName());</span>
+<span class="nc" id="L897">        return approver;</span>
+    }
+
+    public List&lt;ReceiptDetail&gt; reconstructReceiptDetail(final ReceiptHeader receiptHeader,
+            final List&lt;ReceiptDetail&gt; receiptDetailList) {
+<span class="nc" id="L902">        final BillingIntegrationService billingService = (BillingIntegrationService) getBean(receiptHeader.getService()</span>
+                + CollectionConstants.COLLECTIONS_INTERFACE_SUFFIX);
+<span class="nc" id="L904">        return billingService.reconstructReceiptDetail(receiptHeader.getReferencenumber(),</span>
+<span class="nc" id="L905">                receiptHeader.getTotalAmount(), receiptDetailList);</span>
+    }
+
+    public Date getRemittanceVoucherDate(final Date receiptDate) {
+<span class="nc" id="L909">        Boolean useReceiptDateAsContraVoucherDate = false;</span>
+<span class="nc" id="L910">        final SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+        Date voucherDate;
+<span class="nc" id="L912">        Date rcptDate = null;</span>
+<span class="nc" id="L913">        if (getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+<span class="nc bnc" id="L914" title="All 2 branches missed.">                CollectionConstants.APPCONFIG_VALUE_USERECEIPTDATEFORCONTRA).equals(CollectionConstants.YES))</span>
+<span class="nc" id="L915">            useReceiptDateAsContraVoucherDate = true;</span>
+
+        try {
+<span class="nc" id="L918">            Date finDate = null;</span>
+<span class="nc bnc" id="L919" title="All 2 branches missed.">            if (receiptDate != null) {</span>
+<span class="nc" id="L920">                rcptDate = receiptDate;</span>
+<span class="nc" id="L921">                finDate = financialYearDAO.getFinancialYearByDate(rcptDate).getStartingDate();</span>
+            }
+<span class="nc bnc" id="L923" title="All 4 branches missed.">            if (finDate != null &amp;&amp; finDate.toString().equals(financialYearDAO.getCurrYearStartDate())) {</span>
+<span class="nc bnc" id="L924" title="All 2 branches missed.">                if (useReceiptDateAsContraVoucherDate)</span>
+<span class="nc" id="L925">                    voucherDate = rcptDate;</span>
+                else
+<span class="nc" id="L927">                    voucherDate = sdf.parse(sdf.format(new Date()));</span>
+            } else
+<span class="nc" id="L929">                voucherDate = financialYearDAO.getPreviousFinancialYearByDate(new Date()).getEndingDate();</span>
+<span class="nc" id="L930">        } catch (final ParseException e) {</span>
+
+<span class="nc" id="L932">            LOGGER.debug(&quot;Exception in parsing date  &quot; + rcptDate + &quot; - &quot; + e.getMessage());</span>
+<span class="nc" id="L933">            throw new ApplicationRuntimeException(&quot;Exception while parsing date&quot;, e);</span>
+<span class="nc" id="L934">        }</span>
+<span class="nc" id="L935">        return voucherDate;</span>
+    }
+
+    public Boolean getVoucherType() {
+<span class="nc" id="L939">        Boolean voucherTypeForChequeDDCard = false;</span>
+<span class="nc" id="L940">        if (getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">                CollectionConstants.APPCONFIG_VALUE_REMITTANCEVOUCHERTYPEFORCHEQUEDDCARD).equals(</span>
+                        CollectionConstants.FINANCIAL_RECEIPTS_VOUCHERTYPE))
+<span class="nc" id="L943">            voucherTypeForChequeDDCard = true;</span>
+<span class="nc" id="L944">        return voucherTypeForChequeDDCard;</span>
+    }
+
+    /**
+     * @param serviceCode Billing service code for which the receipt template is to be returned
+     * @return Receipt template to be used for given billing service code.
+     */
+    public String getReceiptTemplateName(final char receiptType, final String serviceCode) {
+<span class="nc" id="L952">        String templateName = null;</span>
+
+<span class="nc bnc" id="L954" title="All 4 branches missed.">        switch (receiptType) {</span>
+        case CollectionConstants.RECEIPT_TYPE_BILL:
+//            templateName = serviceCode + CollectionConstants.SEPARATOR_UNDERSCORE
+//                    + CollectionConstants.RECEIPT_TEMPLATE_NAME;// &lt;servicecode&gt;_collection_receipt 
+<span class="nc" id="L958">            templateName = CollectionConstants.RECEIPT_TEMPLATE_NAME;</span>
+<span class="nc bnc" id="L959" title="All 2 branches missed.">            if (!isValidTemplate(templateName)) {</span>
+<span class="nc" id="L960">                LOGGER.info(&quot;Billing system specific report template [&quot; + templateName</span>
+                        + &quot;] not available. Using the default template [&quot; + CollectionConstants.RECEIPT_TEMPLATE_NAME
+                        + &quot;]&quot;);
+<span class="nc" id="L963">                templateName = &quot;PT_collection_receipt&quot;;</span>
+
+<span class="nc bnc" id="L965" title="All 2 branches missed.">                if (!isValidTemplate(templateName)) {</span>
+                    // No template available for creating the receipt report.
+                    // Throw
+                    // exception.
+<span class="nc" id="L969">                    final String errMsg = &quot;Report template [&quot; + templateName</span>
+                            + &quot;] not available! Receipt report cannot be generated.&quot;;
+<span class="nc" id="L971">                    LOGGER.error(errMsg);</span>
+<span class="nc" id="L972">                    throw new ApplicationRuntimeException(errMsg);</span>
+                }
+            }
+            break;
+        case CollectionConstants.RECEIPT_TYPE_CHALLAN:
+<span class="nc" id="L977">            templateName = CollectionConstants.CHALLAN_RECEIPT_TEMPLATE_NAME;</span>
+<span class="nc" id="L978">            break;</span>
+        case CollectionConstants.RECEIPT_TYPE_ADHOC:
+<span class="nc" id="L980">            templateName = CollectionConstants.RECEIPT_TEMPLATE_NAME;</span>
+            break;
+        }
+<span class="nc" id="L983">        return templateName;</span>
+    }
+
+    public void emailReceiptAsAttachment(final ReceiptHeader receiptHeader, final byte[] attachment) {
+<span class="nc" id="L987">        String emailBody = collectionApplicationProperties.getEmailBody();</span>
+<span class="nc" id="L988">        List&lt;BusinessDetails&gt; bds = microserviceUtils.getBusinessDetailsByCode(receiptHeader.getService());</span>
+<span class="nc" id="L989">        emailBody = String.format(emailBody, ApplicationThreadLocals.getCityName(), receiptHeader.getTotalAmount()</span>
+<span class="nc" id="L990">                .toString(), bds.get(0).getName(), receiptHeader.getConsumerCode(), receiptHeader</span>
+<span class="nc" id="L991">                        .getReceiptdate().toString(),</span>
+<span class="nc" id="L992">                ApplicationThreadLocals.getCityName());</span>
+<span class="nc" id="L993">        String emailSubject = collectionApplicationProperties.getEmailSubject();</span>
+<span class="nc" id="L994">        emailSubject = String.format(emailSubject, bds.get(0).getName());</span>
+<span class="nc" id="L995">        notificationService.sendEmailWithAttachment(receiptHeader.getPayeeEmail(), emailSubject, emailBody,</span>
+<span class="nc" id="L996">                &quot;application/pdf&quot;, &quot;Receipt&quot; + receiptHeader.getReceiptdate().toString(), attachment);</span>
+<span class="nc" id="L997">    }</span>
+
+    public void setUserService(final UserService userService) {
+<span class="nc" id="L1000">        this.userService = userService;</span>
+<span class="nc" id="L1001">    }</span>
+
+    public void setPersistenceService(final PersistenceService persistenceService) {
+<span class="nc" id="L1004">        this.persistenceService = persistenceService;</span>
+<span class="nc" id="L1005">    }</span>
+
+    public void setReportService(final ReportService reportService) {
+<span class="nc" id="L1008">        this.reportService = reportService;</span>
+<span class="nc" id="L1009">    }</span>
+
+    public String getBeanNameForDebitAccountHead() {
+<span class="nc" id="L1012">        Class&lt;?&gt; service = null;</span>
+        try {
+<span class="nc" id="L1014">            service = Class.forName(environmentSettings.getProperty(&quot;collection.debitaccounthead.client.impl.class&quot;));</span>
+<span class="nc" id="L1015">        } catch (final ClassNotFoundException e) {</span>
+<span class="nc" id="L1016">            LOGGER.error(&quot;Error getting Class name for Debit Account Head&quot; + e);</span>
+<span class="nc" id="L1017">        }</span>
+        // getting the entity type service.
+<span class="nc" id="L1019">        String serviceClassName = null;</span>
+<span class="nc bnc" id="L1020" title="All 2 branches missed.">        if (service != null)</span>
+<span class="nc" id="L1021">            serviceClassName = service.getSimpleName();</span>
+<span class="nc bnc" id="L1022" title="All 2 branches missed.">        if (serviceClassName != null)</span>
+<span class="nc" id="L1023">            serviceClassName = Character.toLowerCase(serviceClassName.charAt(0))</span>
+<span class="nc" id="L1024">                    + serviceClassName.substring(1).substring(0, serviceClassName.length() - 5);</span>
+<span class="nc" id="L1025">        return serviceClassName;</span>
+    }
+
+    public Boolean isBankCollectionOperator(final User user) {
+<span class="nc bnc" id="L1029" title="All 2 branches missed.">        for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L1030" title="All 4 branches missed.">            if (role != null &amp;&amp; role.getName().equals(CollectionConstants.BANK_COLLECTION_OPERATOR))</span>
+<span class="nc" id="L1031">                return true;</span>
+<span class="nc" id="L1032">        return false;</span>
+    }
+
+    public Boolean isBankCollectionRemitter(final User user) {
+<span class="nc bnc" id="L1036" title="All 2 branches missed.">        for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L1037" title="All 4 branches missed.">            if (role != null &amp;&amp; role.getName().equals(CollectionConstants.BANK_COLLECTION_REMITTER))</span>
+<span class="nc" id="L1038">                return true;</span>
+<span class="nc" id="L1039">        return false;</span>
+    }
+
+    public Boolean isUserRole(final User user, String roleName) {
+<span class="nc bnc" id="L1043" title="All 2 branches missed.">        for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L1044" title="All 4 branches missed.">            if (role != null &amp;&amp; role.getName().equals(roleName))</span>
+<span class="nc" id="L1045">                return true;</span>
+<span class="nc" id="L1046">        return false;</span>
+    }
+
+    public Boolean isRoleToCreateReceiptApprovedStatus(final User user) {
+<span class="nc" id="L1050">        final List&lt;AppConfigValues&gt; appConfigValuesList = getAppConfigValues(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.APPCONFIG_VALUE_ROLES_CREATERECEIPT_APPROVEDSTATUS);
+        String value;
+<span class="nc bnc" id="L1054" title="All 2 branches missed.">        for (final AppConfigValues appConfigVal : appConfigValuesList) {</span>
+<span class="nc" id="L1055">            value = appConfigVal.getValue();</span>
+<span class="nc bnc" id="L1056" title="All 2 branches missed.">            for (final Role role : user.getRoles())</span>
+<span class="nc bnc" id="L1057" title="All 4 branches missed.">                if (role != null &amp;&amp; role.getName().equals(value))</span>
+<span class="nc" id="L1058">                    return true;</span>
+<span class="nc" id="L1059">        }</span>
+<span class="nc" id="L1060">        return false;</span>
+    }
+
+    public List&lt;Bankbranch&gt; getBankCollectionBankBranchList() {
+<span class="nc" id="L1064">        List&lt;Bankbranch&gt; bankBranchArrayList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1065">        StringBuilder queryString = new StringBuilder(</span>
+                &quot;select distinct(bb.id) as branchid,b.NAME||'-'||bb.BRANCHNAME as branchname from BANK b,BANKBRANCH bb,&quot;
+                        + &quot; EGCL_COLLECTIONMIS cmis where bb.BANKID=b.ID  and bb.id=cmis.depositedBranch &quot;);
+<span class="nc" id="L1068">        final Query query = persistenceService.getSession().createSQLQuery(queryString.toString());</span>
+<span class="nc" id="L1069">        List&lt;Object[]&gt; queryResult = query.list();</span>
+<span class="nc bnc" id="L1070" title="All 2 branches missed.">        for (int i = 0; i &lt; queryResult.size(); i++) {</span>
+<span class="nc" id="L1071">            final Object[] arrayObjectInitialIndex = queryResult.get(i);</span>
+<span class="nc" id="L1072">            final Bankbranch newBankbranch = new Bankbranch();</span>
+<span class="nc" id="L1073">            newBankbranch.setId(Integer.valueOf(arrayObjectInitialIndex[0].toString()));</span>
+<span class="nc" id="L1074">            newBankbranch.setBranchname(arrayObjectInitialIndex[1].toString());</span>
+<span class="nc" id="L1075">            bankBranchArrayList.add(newBankbranch);</span>
+        }
+<span class="nc" id="L1077">        return bankBranchArrayList;</span>
+    }
+
+    public String getJurisdictionBoundary() {
+<span class="nc" id="L1081">        final User user = getLoggedInUser();</span>
+<span class="nc bnc" id="L1082" title="All 2 branches missed.">        if (!isBankCollectionRemitter(user)) {</span>
+<span class="nc" id="L1083">            final Employee employee = employeeService.getEmployeeById(user.getId());</span>
+<span class="nc" id="L1084">            final StringBuilder jurValuesId = new StringBuilder();</span>
+<span class="nc bnc" id="L1085" title="All 2 branches missed.">            for (final Jurisdiction element : employee.getJurisdictions()) {</span>
+<span class="nc bnc" id="L1086" title="All 2 branches missed.">                if (jurValuesId.length() &gt; 0)</span>
+<span class="nc" id="L1087">                    jurValuesId.append(',');</span>
+<span class="nc" id="L1088">                jurValuesId.append(element.getBoundary().getId());</span>
+
+<span class="nc bnc" id="L1090" title="All 2 branches missed.">                for (final Boundary boundary : element.getBoundary().getChildren()) {</span>
+<span class="nc" id="L1091">                    jurValuesId.append(',');</span>
+<span class="nc" id="L1092">                    jurValuesId.append(boundary.getId());</span>
+<span class="nc" id="L1093">                }</span>
+<span class="nc" id="L1094">            }</span>
+<span class="nc" id="L1095">            return jurValuesId.toString();</span>
+        } else
+<span class="nc" id="L1097">            return &quot;&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

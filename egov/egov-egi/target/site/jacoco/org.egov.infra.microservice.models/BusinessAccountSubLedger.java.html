@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BusinessAccountSubLedger.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">BusinessAccountSubLedger.java</span></div><h1>BusinessAccountSubLedger.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+<span class="nc" id="L3">public class BusinessAccountSubLedger {</span>
+
+	private Long id;
+
+	private Long detailType;
+
+	private Long detailKey;
+
+	private Double amount;
+
+	private Long businessAccountDetails;
+
+	public Long getId() {
+<span class="nc" id="L16">		return id;</span>
+	}
+
+	public void setId(Long id) {
+<span class="nc" id="L20">		this.id = id;</span>
+<span class="nc" id="L21">	}</span>
+
+	public Long getDetailType() {
+<span class="nc" id="L24">		return detailType;</span>
+	}
+
+	public void setDetailType(Long detailType) {
+<span class="nc" id="L28">		this.detailType = detailType;</span>
+<span class="nc" id="L29">	}</span>
+
+	public Long getDetailKey() {
+<span class="nc" id="L32">		return detailKey;</span>
+	}
+
+	public void setDetailKey(Long detailKey) {
+<span class="nc" id="L36">		this.detailKey = detailKey;</span>
+<span class="nc" id="L37">	}</span>
+
+	public Double getAmount() {
+<span class="nc bnc" id="L40" title="All 2 branches missed.">		return amount == null ? Double.valueOf(0) : amount;</span>
+	}
+
+	public void setAmount(Double amount) {
+<span class="nc" id="L44">		this.amount = amount;</span>
+<span class="nc" id="L45">	}</span>
+
+	public Long getBusinessAccountDetails() {
+<span class="nc" id="L48">		return businessAccountDetails;</span>
+	}
+
+	public void setBusinessAccountDetails(Long businessAccountDetails) {
+<span class="nc" id="L52">		this.businessAccountDetails = businessAccountDetails;</span>
+<span class="nc" id="L53">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

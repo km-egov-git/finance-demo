@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersonalInformationHibernateDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.dao</a> &gt; <span class="el_source">PersonalInformationHibernateDAO.java</span></div><h1>PersonalInformationHibernateDAO.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.pims.dao;
+
+import org.apache.log4j.Logger;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.commons.exception.TooManyValuesException;
+import org.egov.eis.entity.Jurisdiction;
+import org.egov.infra.admin.master.entity.Boundary;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.BoundaryService;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.model.PersonalInformation;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+<span class="nc" id="L77">public class PersonalInformationHibernateDAO implements PersonalInformationDAO</span>
+{
+    
+<span class="nc" id="L80">	private static final Logger LOGGER = Logger.getLogger(PersonalInformationHibernateDAO.class); </span>
+	
+	private final static String STR_CURRDATE= &quot;currDate&quot;;
+	
+	@Autowired
+	private BoundaryService boundaryService;
+	
+	@PersistenceContext
+	private EntityManager entityManager;
+    
+	public Session  getCurrentSession() {
+<span class="nc" id="L91">		return entityManager.unwrap(Session.class);</span>
+	}
+	
+
+	public PersonalInformation getPersonalInformationByID(Integer idPersonalInformation)
+	{
+<span class="nc" id="L97">		Query qry = getCurrentSession().createQuery(&quot;from PersonalInformation P where P.idPersonalInformation =:idPersonalInformation &quot;);</span>
+<span class="nc" id="L98">		qry.setInteger(&quot;idPersonalInformation&quot;, idPersonalInformation);</span>
+<span class="nc" id="L99">		return (PersonalInformation)qry.uniqueResult();</span>
+	}
+
+	public Map getAllPIMap()
+	{
+		try
+		{
+<span class="nc" id="L106">			Query qry = getCurrentSession().createQuery(&quot;from PersonalInformation P order by P.idPersonalInformation&quot;);</span>
+<span class="nc" id="L107">			Map&lt;Integer,String&gt; retMap = new LinkedHashMap&lt;Integer,String&gt;();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">			for (Iterator iter = qry.iterate(); iter.hasNext();)</span>
+			{
+<span class="nc" id="L110">				PersonalInformation egpimsPersonalInformation = (PersonalInformation)iter.next();</span>
+<span class="nc" id="L111">				retMap.put(egpimsPersonalInformation.getIdPersonalInformation(),egpimsPersonalInformation.getEmployeeCode());</span>
+<span class="nc" id="L112">			}</span>
+
+<span class="nc" id="L114">			return retMap;</span>
+		}
+<span class="nc" id="L116">		catch (Exception e)</span>
+		{
+<span class="nc" id="L118">				throw new ApplicationRuntimeException(&quot;Hibernate Exception : &quot;+e.getMessage(),e);</span>
+		}
+	}
+
+	public PersonalInformation getPersonalInformationByUserId(Long userId) 
+	{
+<span class="nc" id="L124">		Query qry = getCurrentSession().createQuery(&quot;from PersonalInformation P where P.userMaster.id =:userId &quot;);</span>
+<span class="nc" id="L125">		qry.setLong(&quot;userId&quot;, userId);</span>
+<span class="nc" id="L126">		return (PersonalInformation)qry.uniqueResult();</span>
+		
+	}
+	
+	public void deleteLangKnownForEmp(PersonalInformation personalInformation)
+	{
+<span class="nc" id="L132">		Query qry = getCurrentSession().createSQLQuery(&quot;delete  from EGEIS_LANG_KNOWN B where B.id = :id &quot;);</span>
+<span class="nc" id="L133">		qry.setInteger(&quot;id&quot;, personalInformation.getIdPersonalInformation());</span>
+		
+<span class="nc" id="L135">	}</span>
+	public List getListOfPersonalInformationByEmpIdsList(List empIdsList)
+	{
+<span class="nc" id="L138">		List &lt;PersonalInformation&gt; list = null;</span>
+<span class="nc bnc" id="L139" title="All 4 branches missed.">		if(empIdsList!=null &amp;&amp; !empIdsList.isEmpty())</span>
+		{			
+<span class="nc" id="L141">			Query qry = getCurrentSession().createQuery(&quot;from PersonalInformation per where per.idPersonalInformation in (:empIdsList) order by per.employeeCode&quot;);</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">			if(empIdsList.size() &lt;= 1000)</span>
+			{
+<span class="nc" id="L144">				qry.setParameterList(&quot;empIdsList&quot;, empIdsList);		</span>
+<span class="nc" id="L145">				list = qry.list();</span>
+<span class="nc" id="L146">				return list;</span>
+			}
+			else
+			{
+				//If it exceeds 1000, get the list for each 1000 employees iteratively.
+<span class="nc" id="L151">				int noOfSublists = empIdsList.size()/1000;</span>
+<span class="nc" id="L152">				int remainingItems= empIdsList.size() % 1000 ;		</span>
+<span class="nc" id="L153">				int initialVal=0;</span>
+<span class="nc" id="L154">				List &lt;PersonalInformation&gt; listFinal = new ArrayList();</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">				for(int i=1; i&lt;=noOfSublists; i++)</span>
+				{				
+<span class="nc" id="L157">					qry.setParameterList(&quot;empIdsList&quot;, empIdsList.subList(initialVal,i*1000));		</span>
+<span class="nc" id="L158">					list = qry.list();</span>
+<span class="nc" id="L159">					listFinal.addAll(list);</span>
+<span class="nc" id="L160">					initialVal=i*1000;</span>
+				}
+<span class="nc" id="L162">				qry.setParameterList(&quot;empIdsList&quot;, empIdsList.subList(initialVal,initialVal+remainingItems));		</span>
+<span class="nc" id="L163">				list = qry.list();</span>
+<span class="nc" id="L164">				listFinal.addAll(list);						</span>
+<span class="nc" id="L165">				return listFinal;</span>
+			}						
+		}
+		else
+		{
+<span class="nc" id="L170">			return list;</span>
+		}
+		
+	}
+	
+	public List getListOfUsersByBoundaryId(Long boundaryId) throws NoSuchObjectException
+	{
+<span class="nc" id="L177">		List userObjList = new ArrayList();</span>
+<span class="nc" id="L178">		List bndryObjList = boundaryService.getParentBoundariesByBoundaryId(boundaryId);</span>
+<span class="nc" id="L179">		Date currDate =new Date();</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">		if(!bndryObjList.isEmpty())</span>
+		{
+<span class="nc" id="L182">			Query qry = getCurrentSession().createQuery(&quot;select J FROM JurisdictionValues JurVal, Jurisdiction J  where &quot; +</span>
+						&quot;JurVal.boundary in (:bndryObjList) and JurVal.userJurLevel.id=J.id and JurVal.isHistory='N' and J.user.active=true and &quot;+
+						&quot;(&quot; +
+						&quot;(JurVal.toDate IS NULL and JurVal.fromDate &lt;= :currDate) &quot; +
+						&quot;OR &quot; +
+						&quot;(JurVal.fromDate &lt;= :currDate and JurVal.toDate &gt;= :currDate)) &quot;);
+<span class="nc" id="L188">			qry.setParameterList(&quot;bndryObjList&quot;,bndryObjList);</span>
+<span class="nc" id="L189">			qry.setDate(STR_CURRDATE,currDate);</span>
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">			for (Iterator iter = qry.iterate(); iter.hasNext();)</span>
+			{
+<span class="nc" id="L193">				Jurisdiction jurObj = (Jurisdiction)iter.next();</span>
+				//userObjList.add(jurObj.getUser());
+<span class="nc" id="L195">			}</span>
+		}
+<span class="nc" id="L197">		return userObjList;</span>
+
+ 	}
+	/**
+	 * To get list of users which belong to given boundary. If give boundary is Zone, then it will get all the wards 
+	 * under that zone and search for users for that Zone and wards within that zone. 
+	 * @param boundaryId
+	 * @return
+	 * @throws NoSuchObjectException
+	 */
+	public List getListOfUsersForGivenBoundaryId(Long boundaryId) throws NoSuchObjectException
+	{
+<span class="nc" id="L209">		List userObjList = new ArrayList();</span>
+<span class="nc" id="L210">		List bndryObjList = new ArrayList();	</span>
+			
+		//get All Children of given boundary
+<span class="nc" id="L213">		bndryObjList = boundaryService.getChildBoundariesByBoundaryId(boundaryId);</span>
+		//Add parent boundary
+<span class="nc" id="L215">		Boundary bnd = boundaryService.getBoundaryById(boundaryId);</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">		if(bnd != null)</span>
+<span class="nc" id="L217">			bndryObjList.add(bnd);</span>
+<span class="nc" id="L218">		Date currDate =new Date();</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">		if(!bndryObjList.isEmpty())</span>
+		{
+<span class="nc" id="L221">			Query qry = getCurrentSession().createQuery(&quot;select J FROM JurisdictionValues JurVal, Jurisdiction J  where &quot; +</span>
+						&quot;JurVal.boundary in (:bndryObjList) and JurVal.userJurLevel.id=J.id and JurVal.isHistory='N' and J.user.active=true and &quot;+
+						&quot;(&quot; +
+						&quot;(JurVal.toDate IS NULL and JurVal.fromDate &lt;= :currDate) &quot; +
+						&quot;OR &quot; +
+						&quot;(JurVal.fromDate &lt;= :currDate and JurVal.toDate &gt;= :currDate)) &quot;);
+<span class="nc" id="L227">			qry.setParameterList(&quot;bndryObjList&quot;,bndryObjList);</span>
+<span class="nc" id="L228">			qry.setDate(STR_CURRDATE,currDate);</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			for (Iterator iter = qry.iterate(); iter.hasNext();)</span>
+			{
+<span class="nc" id="L232">				Jurisdiction jurObj = (Jurisdiction)iter.next();</span>
+				//userObjList.add(jurObj.getUser());
+<span class="nc" id="L234">			}</span>
+		}
+<span class="nc" id="L236">		return userObjList;</span>
+
+ 	}
+	/**
+	 * This is used for workflow
+	 * Getting employee by passing dept,desig,boundary
+	 * @param deptId
+	 * @param designationId
+	 * @param Boundaryid
+	 * @return temAssigned employee if temp Assignement is present otherwise primary assigned employee 
+	 * @throws TooManyValuesException
+	 * @throws NoSuchObjectException
+	 */
+	public PersonalInformation getEmployee(Integer deptId, Integer designationId, Long boundaryId)throws TooManyValuesException, NoSuchObjectException
+	{
+<span class="nc" id="L251">		PersonalInformation personalInformation= null;</span>
+<span class="nc" id="L252">		Query qry1=null;</span>
+		try
+		{
+<span class="nc" id="L255">			List userList = new ArrayList();</span>
+			List&lt;PersonalInformation&gt; empList;
+<span class="nc" id="L257">			Date currDate =new Date();</span>
+<span class="nc bnc" id="L258" title="All 4 branches missed.">			if(boundaryId!=null &amp;&amp; boundaryId!=0)</span>
+			{
+				//FIXME: should  take actual instance of boundary
+				//fixed
+<span class="nc" id="L262">			userList = getListOfUsersByBoundaryId(boundaryId);</span>
+			} 
+<span class="nc bnc" id="L264" title="All 2 branches missed.">			if(userList.isEmpty())</span>
+			{
+<span class="nc" id="L266">				throw new NoSuchObjectException(&quot;user.Obj.null&quot;);</span>
+				
+			}
+			else{
+<span class="nc" id="L270">				qry1 = getCurrentSession().createQuery(&quot;select P from PersonalInformation P, Assignment A where&quot; +</span>
+						&quot; P.idPersonalInformation=A.employee.idPersonalInformation and &quot; +
+						&quot; A.deptId.id=:deptId and&quot; +
+						&quot; A.desigId.designationId=:designationId and &quot; +
+						&quot; A.isPrimary = 'N' and &quot; +
+						&quot; P.userMaster in (:userObjList) and (&quot; +
+						&quot;(A.toDate IS NULL and A.fromDate &lt;= :currDate) &quot; +
+						&quot;OR &quot; +
+						&quot;(A.fromDate &lt;= :currDate and A.toDate &gt;= :currDate))&quot;);  
+<span class="nc" id="L279">		qry1.setInteger(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L280">		qry1.setInteger(&quot;designationId&quot;, designationId);</span>
+<span class="nc" id="L281">		qry1.setParameterList(&quot;userObjList&quot;,userList);</span>
+<span class="nc" id="L282">		qry1.setDate(STR_CURRDATE,currDate);</span>
+<span class="nc" id="L283">		empList = qry1.list();</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		if(empList.size()==0){</span>
+<span class="nc" id="L285">				qry1 = getCurrentSession().createQuery(&quot;select P from PersonalInformation P, Assignment A where&quot; +</span>
+						&quot; P.idPersonalInformation=A.employee.idPersonalInformation and &quot; +
+						&quot; A.deptId.id=:deptId and&quot; +
+						&quot; A.desigId.designationId=:designationId and &quot; +
+						&quot; A.isPrimary = 'Y' and &quot; +
+						&quot; P.userMaster in (:userObjList) and (&quot; +
+						&quot;(A.toDate IS NULL and A.fromDate &lt;= :currDate) &quot; +
+						&quot;OR &quot; +
+						&quot;(A.fromDate &lt;= :currDate and A.toDate &gt;= :currDate))&quot;);  
+<span class="nc" id="L294">				qry1.setInteger(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L295">				qry1.setInteger(&quot;designationId&quot;, designationId);</span>
+<span class="nc" id="L296">				qry1.setParameterList(&quot;userObjList&quot;,userList);</span>
+<span class="nc" id="L297">				qry1.setDate(STR_CURRDATE,currDate);</span>
+<span class="nc" id="L298">				empList = qry1.list();</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">				if(empList.isEmpty()){</span>
+<span class="nc" id="L300">					throw new NoSuchObjectException(&quot;personalinformation.object.notFound&quot;);</span>
+				}
+<span class="nc bnc" id="L302" title="All 2 branches missed.">				if(empList.size()&gt;1)</span>
+				{
+<span class="nc" id="L304">					throw new TooManyValuesException(&quot;personalinformation.object.Foundmorethanone&quot;);</span>
+
+				}
+<span class="nc bnc" id="L307" title="All 2 branches missed.">				if(empList.size()==1)</span>
+				{
+<span class="nc" id="L309">					personalInformation = empList.get(0);</span>
+				}
+		}
+<span class="nc bnc" id="L312" title="All 2 branches missed.">		else if(empList.size()&gt;1){</span>
+<span class="nc" id="L313">			throw new TooManyValuesException(&quot;tempAssigned.personalinformation.object.Foundmorethanone&quot;);</span>
+		}
+<span class="nc bnc" id="L315" title="All 2 branches missed.">		else if(empList.size()==1){</span>
+<span class="nc" id="L316">			personalInformation = empList.get(0);</span>
+		}
+
+			}
+<span class="nc" id="L320">		return (personalInformation);</span>
+
+		}
+<span class="nc" id="L323">		 catch(Exception e)</span>
+        {
+<span class="nc" id="L325">           throw new ApplicationRuntimeException(e.getMessage(),e);</span>
+        }
+
+
+	}
+	
+	
+	/**
+	 * This is used for workflow
+	 * Getting employee by passing deptId,desigId,boundaryId,functionaryId
+	 * @param deptId
+	 * @param designationId
+	 * @param Boundaryid
+	 * @return temAssigned employee if tempAssignement is present otherwise primary assigned employee
+	 * @throws TooManyValuesException
+	 * @throws NoSuchObjectException
+	 */
+	public PersonalInformation getEmployeeByFunctionary(Long deptId, Long designationId, Long boundaryId,Integer functionaryId)throws TooManyValuesException, NoSuchObjectException
+	{
+<span class="nc" id="L344">		PersonalInformation personalInformation= null;</span>
+<span class="nc" id="L345">		Query qry1=null;</span>
+		try
+		{
+<span class="nc" id="L348">			List userList = new ArrayList();</span>
+			List&lt;PersonalInformation&gt; empList;
+<span class="nc" id="L350">			Date currDate =new Date();</span>
+<span class="nc bnc" id="L351" title="All 4 branches missed.">			if(boundaryId!=null &amp;&amp; boundaryId!=0)</span>
+			{
+				//FIXME: should  take actual instance of boundary
+				//fixed
+<span class="nc" id="L355">			userList = getListOfUsersByBoundaryId(boundaryId);</span>
+			} 
+<span class="nc bnc" id="L357" title="All 2 branches missed.">			if(userList.isEmpty())</span>
+			{
+				
+<span class="nc" id="L360">				throw new NoSuchObjectException(&quot;user.Obj.null&quot;);</span>
+			}
+			else
+			{
+<span class="nc" id="L364">				qry1 = getCurrentSession().createQuery(&quot;select P from PersonalInformation P, Assignment A where&quot; +</span>
+						&quot; P.idPersonalInformation=A.employee.idPersonalInformation and &quot; +
+						&quot; A.deptId.id=:deptId and&quot; +
+						&quot; A.desigId.designationId=:designationId and &quot; +
+						&quot;A.functionary.id=:functionaryId and &quot; +
+						&quot; A.isPrimary = 'N' and &quot;+
+						&quot; P.userMaster in (:userObjList) and (&quot; +
+						&quot;(A.toDate IS NULL and A.fromDate &lt;= :currDate) &quot; +
+						&quot;OR &quot; +
+						&quot;(A.fromDate &lt;= :currDate and A.toDate &gt;= :currDate))&quot;);  
+<span class="nc" id="L374">		qry1.setLong(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L375">		qry1.setLong(&quot;designationId&quot;, designationId);</span>
+<span class="nc" id="L376">		qry1.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+<span class="nc" id="L377">		qry1.setParameterList(&quot;userObjList&quot;,userList);</span>
+<span class="nc" id="L378">		qry1.setDate(STR_CURRDATE,currDate);</span>
+<span class="nc" id="L379">		empList = qry1.list();</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">		if(empList.size()==0){</span>
+<span class="nc" id="L381">			qry1 = getCurrentSession().createQuery(&quot;select P from PersonalInformation P, Assignment A where&quot; +</span>
+					&quot; P.idPersonalInformation=A.employee.idPersonalInformation and &quot; +
+					&quot; A.deptId.id=:deptId and&quot; +
+					&quot; A.desigId.designationId=:designationId and &quot; +
+					&quot;A.functionary.id=:functionaryId and &quot; +
+					&quot; A.isPrimary = 'Y' and &quot; +
+					&quot; P.userMaster in (:userObjList) and (&quot; +
+					&quot;(A.toDate IS NULL and A.fromDate &lt;= :currDate) &quot; +
+					&quot;OR &quot; +
+					&quot;(A.fromDate &lt;= :currDate and A.toDate &gt;= :currDate))&quot;);  
+<span class="nc" id="L391">			qry1.setLong(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L392">			qry1.setLong(&quot;designationId&quot;, designationId);</span>
+<span class="nc" id="L393">			qry1.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+<span class="nc" id="L394">			qry1.setParameterList(&quot;userObjList&quot;,userList);</span>
+<span class="nc" id="L395">			qry1.setDate(STR_CURRDATE,currDate);</span>
+<span class="nc" id="L396">			empList = qry1.list();</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">			if(empList.size() == 0){</span>
+<span class="nc" id="L398">				throw new NoSuchObjectException(&quot;personalinformation.object.notFound&quot;);</span>
+			}
+<span class="nc bnc" id="L400" title="All 2 branches missed.">			if(empList.size()&gt;1)</span>
+			{
+<span class="nc" id="L402">				throw new TooManyValuesException(&quot;personalinformation.object.Foundmorethanone&quot;);</span>
+
+			}
+<span class="nc bnc" id="L405" title="All 2 branches missed.">			if(empList.size()==1)</span>
+			{
+<span class="nc" id="L407">				personalInformation = empList.get(0);</span>
+			}
+
+<span class="nc bnc" id="L410" title="All 2 branches missed.">		}else if(empList.size()&gt;1){</span>
+<span class="nc" id="L411">			throw new TooManyValuesException(&quot;personalinformation.object.Foundmorethanone&quot;);</span>
+		}
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		else if(empList.size()==1){</span>
+<span class="nc" id="L414">			personalInformation = empList.get(0);</span>
+		}
+		
+			}
+<span class="nc" id="L418">		return (personalInformation);</span>
+
+		}
+<span class="nc" id="L421">		 catch(Exception e)</span>
+        {
+			
+<span class="nc" id="L424">           throw new ApplicationRuntimeException(e.getMessage(),e);</span>
+        }
+
+
+	}
+	
+	
+	
+	
+	/**
+	  * Returning temporary  assigned employee object by pepartment,designation,functionary,date 
+	  * @param deptId
+	  * @param DesigId
+	  * @param functionaryId
+	  * @param onDate
+	  * @return Employee
+	  * @throws Exception 
+	  */
+	 public PersonalInformation getTempAssignedEmployeeByDeptDesigFunctionaryDate(Integer deptId, Integer desigId, Integer functionaryId, Date onDate) throws Exception{
+<span class="nc" id="L443">		 PersonalInformation tempAssignedEemployee = null;</span>
+<span class="nc" id="L444">		 LOGGER.info(&quot;Inside temp assigned emp API-----------&quot;);</span>
+<span class="nc" id="L445">		 List&lt;PersonalInformation&gt; listEmployee = null;</span>
+<span class="nc" id="L446">		 Query qry = getCurrentSession().createQuery(&quot;select A.employee from Assignment A where &quot; +</span>
+								&quot;A.deptId.id=:deptId and &quot; +
+								&quot;A.desigId.designationId=:desigId and &quot; +
+								&quot;A.functionary.id=:functionaryId and &quot; +
+								&quot;A.isPrimary = 'N' and &quot; +
+								&quot;((A.toDate IS NULL and A.fromDate &lt;= :onDate) OR &quot; +
+								&quot;(A.fromDate &lt;= :onDate and A.toDate &gt;= :onDate))&quot;);
+<span class="nc" id="L453">		qry.setInteger(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L454">		qry.setInteger(&quot;desigId&quot;, desigId);</span>
+<span class="nc" id="L455">		qry.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+<span class="nc" id="L456">		qry.setDate(&quot;onDate&quot;,onDate);</span>
+<span class="nc" id="L457">		LOGGER.info(&quot;Inside temp assigned emp API query-----------&quot;+qry.getQueryString());</span>
+<span class="nc" id="L458">		listEmployee = qry.list();</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">		if(listEmployee.size()==0){</span>
+<span class="nc" id="L460">        	throw new NoSuchObjectException(&quot;tempAssigned.personalinformation.object.notFound&quot;);</span>
+		}
+<span class="nc bnc" id="L462" title="All 2 branches missed.">		if(listEmployee.size()&gt;1){</span>
+<span class="nc" id="L463">			throw new TooManyValuesException(&quot;tempAssigned.personalinformation.object.Foundmorethanone&quot;);</span>
+		}
+<span class="nc bnc" id="L465" title="All 2 branches missed.">		if(listEmployee.size()==1){</span>
+<span class="nc" id="L466">			tempAssignedEemployee = listEmployee.get(0);</span>
+		}
+<span class="nc" id="L468">		 return tempAssignedEemployee;</span>
+	 }
+	 
+	 public List getAllDesignationByDept(Integer deptId)throws TooManyValuesException, NoSuchObjectException
+		{
+<span class="nc" id="L473">		 	List&lt;Designation&gt; desgMstr = null;</span>
+			try
+			{
+				
+				
+<span class="nc" id="L478">					Query qry = getCurrentSession().createQuery(&quot;from Designation dm where dm.deptId =:deptId&quot;);</span>
+<span class="nc" id="L479">					qry.setInteger(&quot;deptId&quot;,deptId);</span>
+<span class="nc" id="L480">					LOGGER.info(&quot;QUERY TEST-----------&quot;+qry.getQueryString());</span>
+<span class="nc" id="L481">					desgMstr = qry.list();</span>
+				
+				
+			}
+<span class="nc" id="L485">			 catch(Exception e)</span>
+		        {
+					
+<span class="nc" id="L488">		           throw new ApplicationRuntimeException(&quot;system.error&quot;, e);</span>
+<span class="nc" id="L489">		        }</span>
+			 
+
+
+		
+<span class="nc" id="L494">		 	return desgMstr;</span>
+		}
+	
+	 public List getAllActiveUsersByGivenDesg(Integer desgId)
+	 {
+<span class="nc" id="L499">		 List&lt;User&gt; userList = null; </span>
+			
+			try {					
+<span class="nc" id="L502">						Query qry = getCurrentSession().createQuery(&quot;from User u where u.id in (select ev.userMaster.id from EmployeeView ev where ev.desigId.designationId =:desgId) and u.active=true &quot;);</span>
+<span class="nc" id="L503">						qry.setInteger(&quot;desgId&quot;,desgId);					</span>
+<span class="nc" id="L504">						userList = qry.list();</span>
+						
+					
+<span class="nc" id="L507">				} catch (RuntimeException e) {</span>
+<span class="nc" id="L508">					throw new ApplicationRuntimeException(&quot;Exception while getting users for given designation&quot;,e);</span>
+					
+<span class="nc" id="L510">				}</span>
+		
+				
+<span class="nc" id="L513">		 return userList;</span>
+	 }
+	 
+	 public List&lt;PersonalInformation&gt; getAllEmpByGrade(Integer gradeId) throws Exception
+	 {
+<span class="nc" id="L518">		 List&lt;PersonalInformation&gt; listEmployee = null;</span>
+<span class="nc" id="L519">		 Query qry = getCurrentSession().createQuery(&quot;select distinct A.employee from Assignment A where A.gradeId.id=:gradeId &quot;);</span>
+
+<span class="nc" id="L521">		qry.setInteger(&quot;gradeId&quot;,gradeId);</span>
+<span class="nc" id="L522">		listEmployee = qry.list();</span>
+<span class="nc" id="L523">		return listEmployee;</span>
+	 }
+	
+	 /**
+	  * This is used for getting the users (both active and inactive) who are not mapped to any of the employees
+	  */	 
+	 public  List getListOfUsersNotMappedToEmp()
+	 {
+<span class="nc" id="L531">		 Query qry = getCurrentSession().createQuery(&quot;from User UI where id not in(&quot;+</span>
+			&quot;select userMaster.id from PersonalInformation  where  userMaster.id is not null) order by UI.userName&quot;);
+		 
+<span class="nc" id="L534">		 return qry.list();</span>
+	 }
+
+	@Override
+	@Transactional
+	public void create(final PersonalInformation egpimsPersonalInformation) {
+<span class="nc" id="L540">		getCurrentSession().save(egpimsPersonalInformation);</span>
+<span class="nc" id="L541">	}</span>
+
+	@Override
+	@Transactional
+	public void update(final PersonalInformation egpimsPersonalInformation) {
+<span class="nc" id="L546">		getCurrentSession().update(egpimsPersonalInformation);</span>
+<span class="nc" id="L547">	}</span>
+
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

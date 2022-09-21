@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericWorkFlowAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.eis.web.actions.workflow</a> &gt; <span class="el_source">GenericWorkFlowAction.java</span></div><h1>GenericWorkFlowAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.eis.web.actions.workflow;
+
+import org.egov.infra.microservice.models.Department;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.workflow.entity.State;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.matrix.entity.WorkFlowMatrix;
+import org.egov.infra.workflow.matrix.service.CustomizedWorkFlowService;
+import org.egov.infstr.utils.EgovMasterDataCaching;
+import org.elasticsearch.action.get.GetRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Generic WorkFlow Action. Can be extended by any action class that intends to provide Work flow functionality.
+ * 
+ * @author subhash
+ */
+<span class="nc" id="L70">public abstract class GenericWorkFlowAction extends BaseFormAction {</span>
+
+    private static final long serialVersionUID = 1L;
+    public final static String FORWARD = &quot;Forward&quot;;
+    protected CustomizedWorkFlowService customizedWorkFlowService;
+    protected String workFlowAction;
+    protected String approverComments;
+    protected String currentState;
+    protected String currentDesignation;
+    protected String additionalRule;
+    protected BigDecimal amountRule;
+    protected String workFlowDepartment;
+    protected String pendingActions;
+    protected String approverName;
+    protected String approverDepartment;
+    protected String approverDesignation;
+    protected Long approverPositionId;
+
+    @Override
+    public abstract StateAware getModel();
+    
+    @Autowired
+    protected EgovMasterDataCaching masterDataCache;
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L96">        super.prepare();</span>
+<span class="nc" id="L97">        addDropdownData(&quot;approverDepartmentList&quot;, masterDataCache.get(&quot;egi-department&quot;));</span>
+<span class="nc" id="L98">        addDropdownData(&quot;approverList&quot;, Collections.EMPTY_LIST);</span>
+<span class="nc" id="L99">        addDropdownData(&quot;designationList&quot;, Collections.EMPTY_LIST);</span>
+<span class="nc" id="L100">    }</span>
+
+    /**
+     * Implementations must override this method based on their object's value that needs to be used in workflow
+     * 
+     * @return the value that needs to be compared in the Amount rule table against FromAmount and ToAmount
+     */
+
+    protected BigDecimal getAmountRule() {
+<span class="nc" id="L109">        return null;</span>
+    }
+
+    /**
+     * Implementations must override this method to get additional rule for workflow.
+     * 
+     * @return the value that needs to be compared in the matrix table against Additional rule
+     */
+
+    protected String getAdditionalRule() {
+<span class="nc" id="L119">        return null;</span>
+    }
+
+    /**
+     * Implementations must override this method to achieve department wise workflow.
+     * 
+     * @return the value that needs to be compared in the matrix table against Department.
+     */
+
+    protected String getWorkFlowDepartment() {
+<span class="nc" id="L129">        return null;</span>
+    }
+
+    /**
+     * Used to get valid actions that needs to be performed Based on these value workflow buttons will be rendered
+     */
+
+    public List&lt;String&gt; getValidActions() {
+<span class="nc" id="L137">        List&lt;String&gt; validActions = Collections.emptyList();</span>
+<span class="nc bnc" id="L138" title="All 6 branches missed.">        if (null == getModel() || null == getModel().getId() || getModel().getCurrentState() == null</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                || getModel().getCurrentState().getValue().endsWith(&quot;NEW&quot;)</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">                || (getModel() != null &amp;&amp; getModel().getCurrentState() != null ? getModel().getCurrentState().getValue()</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                        .equals(&quot;Closed&quot;)</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">                        || getModel().getCurrentState().getValue().equals(&quot;END&quot;) : false)) {</span>
+
+<span class="nc" id="L144">            validActions = Arrays.asList(FORWARD);</span>
+        } else {
+<span class="nc" id="L146">        	System.out.println(&quot;currentstate &quot;+getModel().getCurrentState().getValue());</span>
+<span class="nc" id="L147">        	System.out.println(&quot;createdby &quot;+getModel().getCurrentState().getCreatedBy());</span>
+<span class="nc" id="L148">        	System.out.println(&quot;currentowner &quot;+getModel().getCurrentState().getOwnerPosition());</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        	if (getModel().getCurrentState() != null) {</span>
+<span class="nc" id="L150">                validActions = this.customizedWorkFlowService.getNextValidActions(getModel()</span>
+<span class="nc" id="L151">                        .getStateType(), getWorkFlowDepartment(), getAmountRule(),</span>
+<span class="nc" id="L152">                        getAdditionalRule(), getModel().getCurrentState().getValue(),</span>
+<span class="nc" id="L153">                        getPendingActions(), getModel().getCreatedDate());</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                if ((getModel().getCurrentState().getValue()).equals(&quot;Rejected&quot;)){</span>
+<span class="nc" id="L155">                long ownerid=getModel().getCurrentState().getOwnerPosition();</span>
+<span class="nc" id="L156">            	long createdid=getModel().getCurrentState().getCreatedBy();</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            	if(ownerid==createdid) {</span>
+<span class="nc" id="L158">            		validActions = Arrays.asList(FORWARD);</span>
+<span class="nc" id="L159">            		System.out.println(&quot;ValidActions &quot;+validActions.toString());</span>
+            	}
+                }
+            }
+        }
+<span class="nc" id="L164">        return validActions;</span>
+    }
+
+    /**
+     * Used to get next action If the nextAction value is END then approval Information won't be shown on the UI.
+     */
+    public String getNextAction() {
+<span class="nc" id="L171">        WorkFlowMatrix wfMatrix = null;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (getModel().getId() != null) {</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            if (getModel().getCurrentState() != null) {</span>
+<span class="nc" id="L174">                wfMatrix = this.customizedWorkFlowService.getWfMatrix(getModel().getStateType(),</span>
+<span class="nc" id="L175">                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(), getModel()</span>
+<span class="nc" id="L176">                                .getCurrentState().getValue(),</span>
+<span class="nc" id="L177">                        getPendingActions(), getModel()</span>
+<span class="nc" id="L178">                                .getCreatedDate());</span>
+            } else {
+<span class="nc" id="L180">                wfMatrix = this.customizedWorkFlowService.getWfMatrix(getModel().getStateType(),</span>
+<span class="nc" id="L181">                        getWorkFlowDepartment(), getAmountRule(), getAdditionalRule(),</span>
+<span class="nc" id="L182">                        State.DEFAULT_STATE_VALUE_CREATED, getPendingActions(), getModel()</span>
+<span class="nc" id="L183">                                .getCreatedDate());</span>
+            }
+        }
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        return wfMatrix == null ? &quot;&quot; : wfMatrix.getNextAction();</span>
+    }
+
+    public void setCustomizedWorkFlowService(
+            final CustomizedWorkFlowService customizedWorkFlowService) {
+<span class="nc" id="L191">        this.customizedWorkFlowService = customizedWorkFlowService;</span>
+<span class="nc" id="L192">    }</span>
+
+    /**
+     * Used to Set actionValue that will be used to call workflow script.
+     * 
+     * @param workFlowAction
+     */
+
+    public void setWorkFlowAction(final String workFlowAction) {
+<span class="nc" id="L201">        this.workFlowAction = workFlowAction;</span>
+<span class="nc" id="L202">    }</span>
+
+    /**
+     * This parameter is used to get matrix object Implementations must override this method to get pendingActions
+     * 
+     * @return the value needs to be compared against matrix table pendingActions
+     */
+
+    protected String getPendingActions() {
+<span class="nc" id="L211">        return null;</span>
+    }
+
+    public String getApproverComments() {
+<span class="nc" id="L215">        return this.approverComments;</span>
+    }
+
+    public void setApproverComments(final String approverComments) {
+<span class="nc" id="L219">        this.approverComments = approverComments;</span>
+<span class="nc" id="L220">    }</span>
+
+    public String getCurrentState() {
+<span class="nc" id="L223">        return currentState;</span>
+    }
+
+    public void setCurrentState(String currentState) {
+<span class="nc" id="L227">        this.currentState = currentState;</span>
+<span class="nc" id="L228">    }</span>
+
+    public String getCurrentDesignation() {
+<span class="nc" id="L231">        return currentDesignation;</span>
+    }
+
+    public void setCurrentDesignation(String currentDesignation) {
+<span class="nc" id="L235">        this.currentDesignation = currentDesignation;</span>
+<span class="nc" id="L236">    }</span>
+
+    public String getApproverName() {
+<span class="nc" id="L239">        return approverName;</span>
+    }
+
+    public void setApproverName(String approverName) {
+<span class="nc" id="L243">        this.approverName = approverName;</span>
+<span class="nc" id="L244">    }</span>
+
+    public String getApproverDepartment() {
+<span class="nc" id="L247">        return approverDepartment;</span>
+    }
+
+    public void setApproverDepartment(String approverDepartment) {
+<span class="nc" id="L251">        this.approverDepartment = approverDepartment;</span>
+<span class="nc" id="L252">    }</span>
+
+    public String getApproverDesignation() {
+<span class="nc" id="L255">        return approverDesignation;</span>
+    }
+
+    public void setApproverDesignation(String approverDesignation) {
+<span class="nc" id="L259">        this.approverDesignation = approverDesignation;</span>
+<span class="nc" id="L260">    }</span>
+
+    public Long getApproverPositionId() {
+<span class="nc" id="L263">        return approverPositionId;</span>
+    }
+
+    public void setApproverPositionId(Long approverPositionId) {
+<span class="nc" id="L267">        this.approverPositionId = approverPositionId;</span>
+<span class="nc" id="L268">    }</span>
+
+    public String getWorkFlowAction() {
+<span class="nc" id="L271">        return workFlowAction;</span>
+    }
+
+    public void setAdditionalRule(String additionalRule) {
+<span class="nc" id="L275">        this.additionalRule = additionalRule;</span>
+<span class="nc" id="L276">    }</span>
+
+    public void setAmountRule(BigDecimal amountRule) {
+<span class="nc" id="L279">        this.amountRule = amountRule;</span>
+<span class="nc" id="L280">    }</span>
+
+    public void setWorkFlowDepartment(String workFlowDepartment) {
+<span class="nc" id="L283">        this.workFlowDepartment = workFlowDepartment;</span>
+<span class="nc" id="L284">    }</span>
+
+    public void setPendingActions(String pendingActions) {
+<span class="nc" id="L287">        this.pendingActions = pendingActions;</span>
+<span class="nc" id="L288">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

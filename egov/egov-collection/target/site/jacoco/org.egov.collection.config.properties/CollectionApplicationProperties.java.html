@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionApplicationProperties.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.config.properties</a> &gt; <span class="el_source">CollectionApplicationProperties.java</span></div><h1>CollectionApplicationProperties.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.config.properties;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+
+@Configuration
+@PropertySource(name = &quot;collectionApplicationProperties&quot;, value = {
+        &quot;classpath:config/application-config-collection.properties&quot;,
+        &quot;classpath:config/payment-gateway.properties&quot;,
+        &quot;classpath:config/egov-erp-${user.name}.properties&quot;,
+        &quot;classpath:config/application-config-${client.id}.properties&quot;,
+        &quot;classpath:config/egov-erp-override.properties&quot;,
+        &quot;classpath:config/collection-override-${env}.properties&quot; }, ignoreResourceNotFound = true)
+<span class="nc" id="L63">public class CollectionApplicationProperties {</span>
+
+    @Autowired
+    private Environment environment;
+
+    public String axisTransactionMessage() {
+<span class="nc" id="L69">        return environment.getProperty(&quot;AXIS.transactionmessage&quot;);</span>
+    }
+
+    public String axisVersion() {
+<span class="nc" id="L73">        return environment.getProperty(&quot;axis.version&quot;, String.class);</span>
+    }
+
+    public String axisCommand() {
+<span class="nc" id="L77">        return environment.getProperty(&quot;axis.command&quot;);</span>
+    }
+
+    public String axisCommandQuery() {
+<span class="nc" id="L81">        return environment.getProperty(&quot;axis.command.query&quot;);</span>
+    }
+
+    public String axisAccessCode() {
+<span class="nc" id="L85">        return environment.getProperty(&quot;axis.access.code&quot;);</span>
+    }
+
+    public String axisMerchant() {
+<span class="nc" id="L89">        return environment.getProperty(&quot;axis.merchant&quot;);</span>
+    }
+
+    public String axisLocale() {
+<span class="nc" id="L93">        return environment.getProperty(&quot;axis.locale&quot;);</span>
+    }
+
+    public String axisOperator() {
+<span class="nc" id="L97">        return environment.getProperty(&quot;axis.operator.id&quot;);</span>
+    }
+
+    public String axisPassword() {
+<span class="nc" id="L101">        return environment.getProperty(&quot;axis.password&quot;);</span>
+    }
+
+    public String axisReconcileUrl() {
+<span class="nc" id="L105">        return environment.getProperty(&quot;axis.reconcile.url&quot;);</span>
+    }
+
+    public String axisSecureSecret() {
+<span class="nc" id="L109">        return environment.getProperty(&quot;axis.secure.secret&quot;);</span>
+    }
+
+    public String getEmailSubject() {
+<span class="nc" id="L113">        return environment.getProperty(&quot;email.subject.message&quot;);</span>
+    }
+
+    public String getEmailBody() {
+<span class="nc" id="L117">        return environment.getProperty(&quot;email.body.message&quot;);</span>
+    }
+
+    public String getValue(final String key) {
+<span class="nc" id="L121">        return environment.getProperty(key);</span>
+    }
+
+    public String sbimopsDdocode(final String cityCode) {
+<span class="nc" id="L125">        return environment.getProperty(cityCode.concat(&quot;.sbimops.ddocode&quot;));</span>
+    }
+
+    public String sbimopsServiceCode(final String serviceCode) {
+<span class="nc" id="L129">        return environment.getProperty(serviceCode.concat(&quot;.sbimops.serviceCode&quot;));</span>
+    }
+
+    public String sbimopsDepartmentcode(final String key) {
+<span class="nc" id="L133">        return environment.getProperty(key);</span>
+    }
+
+    public String sbimopsHoa(final String cityCode) {
+<span class="nc" id="L137">        return environment.getProperty(cityCode.concat(&quot;.sbimops.hoa&quot;));</span>
+    }
+
+    public String sbimopsHoa(final String cityCode, final String serviceCode) {
+<span class="nc" id="L141">        return environment.getProperty(cityCode.concat(serviceCode).concat(&quot;.sbimops.hoa&quot;));</span>
+    }
+
+    public String sbimopsReconcileUrl() {
+<span class="nc" id="L145">        return environment.getProperty(&quot;sbimops.reconcile.url&quot;);</span>
+    }
+
+    public String sbimopsReconcileUsername() {
+<span class="nc" id="L149">        return environment.getProperty(&quot;sbimops.reconcile.username&quot;);</span>
+    }
+
+    public String sbimopsReconcilePassword() {
+<span class="nc" id="L153">        return environment.getProperty(&quot;sbimops.reconcile.password&quot;);</span>
+    }
+
+    public String sbimopsTransactionMessage() {
+<span class="nc" id="L157">        return environment.getProperty(&quot;SBIMOPS.transactionmessage&quot;);</span>
+    }
+
+    public String getUpdateDemandUrl(final String serviceCode) {
+<span class="nc" id="L161">        return environment.getProperty(serviceCode.concat(&quot;.updatedemand.url&quot;));</span>
+    }
+
+    public String getLamsServiceUrl() {
+<span class="nc" id="L165">        return environment.getProperty(&quot;egov.services.lams.hostname&quot;);</span>
+    }
+
+    public String atomProdid() {
+<span class="nc" id="L169">        return environment.getProperty(&quot;atom.prodid&quot;, String.class);</span>
+    }
+
+    public String atomPass() {
+<span class="nc" id="L173">        return environment.getProperty(&quot;atom.pass&quot;, String.class);</span>
+    }
+
+    public String atomTtype() {
+<span class="nc" id="L177">        return environment.getProperty(&quot;atom.ttype&quot;, String.class);</span>
+    }
+
+    public String atomClientcode() {
+<span class="nc" id="L181">        return environment.getProperty(&quot;atom.clientcode&quot;, String.class);</span>
+    }
+
+    public String atomCustacc() {
+<span class="nc" id="L185">        return environment.getProperty(&quot;atom.custacc&quot;, String.class);</span>
+    }
+
+    public String atomMdd() {
+<span class="nc" id="L189">        return environment.getProperty(&quot;atom.mdd&quot;, String.class);</span>
+    }
+
+    public String atomTxncurr() {
+<span class="nc" id="L193">        return environment.getProperty(&quot;atom.txncurr&quot;, String.class);</span>
+    }
+
+    public String atomLogin() {
+<span class="nc" id="L197">        return environment.getProperty(&quot;atom.login&quot;, String.class);</span>
+    }
+
+    public String atomTxnscamt() {
+<span class="nc" id="L201">        return environment.getProperty(&quot;atom.txnscamt&quot;, String.class);</span>
+    }
+
+    public String atomTransactionMessage() {
+<span class="nc" id="L205">        return environment.getProperty(&quot;ATOM.transactionmessage&quot;);</span>
+    }
+
+    public String atomReconcileUrl() {
+<span class="nc" id="L209">        return environment.getProperty(&quot;atom.reconcile.url&quot;);</span>
+    }
+
+    public String mobilePaymentServiceCode() {
+<span class="nc" id="L213">        return environment.getProperty(&quot;mobile.paymentservice.code&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

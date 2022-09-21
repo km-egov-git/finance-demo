@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceDetailsAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.service</a> &gt; <span class="el_source">ServiceDetailsAction.java</span></div><h1>ServiceDetailsAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.web.actions.service;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.commons.Accountdetailtype;
+import org.egov.commons.CChartOfAccountDetail;
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CFunction;
+import org.egov.commons.Fund;
+import org.egov.commons.dao.ChartOfAccountsDAO;
+import org.egov.commons.dao.ChartOfAccountsHibernateDAO;
+import org.egov.commons.dao.FunctionHibernateDAO;
+import org.egov.commons.utils.EntityType;
+import org.egov.egf.commons.EgovCommon;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.service.DepartmentService;
+import org.egov.infra.exception.ApplicationException;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPage;
+import org.egov.infstr.models.ServiceAccountDetails;
+import org.egov.infstr.models.ServiceCategory;
+import org.egov.infstr.models.ServiceDetails;
+import org.egov.infstr.models.ServiceSubledgerInfo;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Query;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = ServiceDetailsAction.NEW, location = &quot;serviceDetails-new.jsp&quot;),
+        @Result(name = &quot;list&quot;, location = &quot;serviceDetails-list.jsp&quot;),
+        @Result(name = ServiceDetailsAction.BEFORECREATE, location = &quot;serviceDetails-beforeCreate.jsp&quot;),
+        @Result(name = &quot;codeUniqueCheck&quot;, location = &quot;serviceDetails-codeUniqueCheck.jsp&quot;),
+        @Result(name = ServiceDetailsAction.MESSAGE, location = &quot;serviceDetails-message.jsp&quot;),
+        @Result(name = &quot;view&quot;, location = &quot;serviceDetails-view.jsp&quot;),
+        @Result(name = &quot;SUCCESS&quot;, location = &quot;serviceDetails-view.jsp&quot;),
+        @Result(name = ServiceDetailsAction.BEFOREMODIFY, location = &quot;serviceDetails-beforeModify.jsp&quot;), })
+public class ServiceDetailsAction extends BaseFormAction {
+
+<span class="nc" id="L106">    private static final Logger LOGGER = Logger.getLogger(ServiceDetailsAction.class);</span>
+    private static final long serialVersionUID = 1L;
+    private PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService;
+    private PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService;
+<span class="nc" id="L110">    private ServiceDetails serviceDetails = new ServiceDetails();</span>
+    protected static final String BEFORECREATE = &quot;beforeCreate&quot;;
+    protected static final String BEFOREMODIFY = &quot;beforeModify&quot;;
+    protected static final String MESSAGE = &quot;message&quot;;
+<span class="nc" id="L114">    private List&lt;ServiceAccountDetails&gt; accountDetails = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L115">    private List&lt;ServiceSubledgerInfo&gt; subledgerDetails = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L116">    private List&lt;Long&gt; departmentList = new ArrayList&lt;&gt;();</span>
+    private List&lt;ServiceDetails&gt; serviceList;
+<span class="nc" id="L118">    private Boolean isVoucherApproved = Boolean.FALSE;</span>
+    @Autowired
+    private DepartmentService departmentService;
+    private Long serviceCategoryId;
+    protected List&lt;String&gt; headerFields;
+    protected List&lt;String&gt; mandatoryFields;
+    @Autowired
+    private CollectionsUtil collectionsUtil;
+    @Autowired
+    private FunctionHibernateDAO functionDAO;
+    @Autowired
+    private ChartOfAccountsDAO chartOfAccountsDAO;
+    @Autowired
+    private ChartOfAccountsHibernateDAO chartOfAccountsHibernateDAO;
+<span class="nc" id="L132">    private SortedMap&lt;String, String&gt; serviceTypeMap = new TreeMap&lt;&gt;();</span>
+    private String deptId;
+    private EgovCommon egovCommon;
+<span class="nc" id="L135">    private Boolean isVoucherOnReceiptAndStatusDisplay = Boolean.FALSE;</span>
+
+<span class="nc" id="L137">    public ServiceDetailsAction() {</span>
+<span class="nc" id="L138">        addRelatedEntity(&quot;serviceCategory&quot;, ServiceCategory.class);</span>
+<span class="nc" id="L139">        addRelatedEntity(&quot;fund&quot;, Fund.class);</span>
+<span class="nc" id="L140">        addRelatedEntity(&quot;function&quot;, CFunction.class);</span>
+<span class="nc" id="L141">    }</span>
+
+    @Override
+    public ServiceDetails getModel() {
+<span class="nc" id="L145">        return serviceDetails;</span>
+    }
+
+    @Action(value = &quot;/service/serviceDetails-newform&quot;)
+    public String newform() {
+<span class="nc" id="L150">        addDropdownData(&quot;serviceCategoryList&quot;,</span>
+<span class="nc" id="L151">                serviceCategoryService.findAllByNamedQuery(CollectionConstants.QUERY_ACTIVE_SERVICE_CATEGORY));</span>
+<span class="nc" id="L152">        return NEW;</span>
+    }
+
+    @Override
+    @Action(value = &quot;/service/serviceDetails&quot;)
+    public String execute() {
+<span class="nc" id="L158">        return SUCCESS;</span>
+    }
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L163">        super.prepare();</span>
+<span class="nc bnc" id="L164" title="All 4 branches missed.">        if (null != parameters.get(&quot;serviceId&quot;) &amp;&amp; StringUtils.isNotEmpty(parameters.get(&quot;serviceId&quot;)[0])) {</span>
+<span class="nc" id="L165">            serviceDetails = serviceDetailsService.findById(Long.valueOf(parameters.get(&quot;serviceId&quot;)[0]), false);</span>
+<span class="nc" id="L166">            accountDetails.addAll(serviceDetails.getServiceAccountDtls());</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">            for (final ServiceAccountDetails account : serviceDetails.getServiceAccountDtls())</span>
+<span class="nc" id="L168">                subledgerDetails.addAll(account.getSubledgerDetails());</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            for (final ServiceSubledgerInfo serviceSubledgerInfo : subledgerDetails)</span>
+<span class="nc bnc" id="L170" title="All 4 branches missed.">                if (serviceSubledgerInfo.getDetailType() != null &amp;&amp; serviceSubledgerInfo.getDetailKeyId() != null) {</span>
+<span class="nc" id="L171">                    EntityType entityType = null;</span>
+                    try {
+<span class="nc" id="L173">                        entityType = egovCommon.getEntityType(serviceSubledgerInfo.getDetailType(),</span>
+<span class="nc" id="L174">                                serviceSubledgerInfo.getDetailKeyId());</span>
+<span class="nc" id="L175">                    } catch (final ApplicationException e) {</span>
+<span class="nc" id="L176">                        LOGGER.error(&quot;Exception while setting subledger details&quot;, e);</span>
+<span class="nc" id="L177">                        throw new ApplicationRuntimeException(&quot;Exception while setting subledger details&quot;, e);</span>
+<span class="nc" id="L178">                    }</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">                    if (entityType != null) {</span>
+<span class="nc" id="L180">                        serviceSubledgerInfo.setDetailCode(entityType.getCode());</span>
+<span class="nc" id="L181">                        serviceSubledgerInfo.setDetailKey(entityType.getName());</span>
+                    }
+                }
+<span class="nc bnc" id="L184" title="All 2 branches missed.">            for (final Department department : serviceDetails.getServiceDept()) {</span>
+<span class="nc" id="L185">                departmentList.add(department.getId());</span>
+<span class="nc" id="L186">                setDeptId(department.getId().toString());</span>
+<span class="nc" id="L187">            }</span>
+<span class="nc bnc" id="L188" title="All 4 branches missed.">        } else if (null != serviceDetails.getServiceCategory() &amp;&amp; null != serviceDetails.getServiceCategory().getCode()) {</span>
+<span class="nc" id="L189">            final ServiceCategory category = serviceCategoryService.findById(serviceDetails.getServiceCategory()</span>
+<span class="nc" id="L190">                    .getId(), false);</span>
+<span class="nc" id="L191">            setServiceCategoryId(serviceDetails.getServiceCategory().getId());</span>
+<span class="nc" id="L192">            serviceDetails.setServiceCategory(category);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        } else if (null != serviceCategoryId) {</span>
+<span class="nc" id="L194">            final ServiceCategory category = serviceCategoryService.findById(serviceCategoryId, false);</span>
+<span class="nc" id="L195">            serviceDetails.setServiceCategory(category);</span>
+        }
+<span class="nc" id="L197">        headerFields = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L198">        mandatoryFields = new ArrayList&lt;&gt;(0);</span>
+<span class="nc" id="L199">        getHeaderMandateFields();</span>
+<span class="nc" id="L200">        setupDropdownDataExcluding();</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.DEPARTMENT))</span>
+<span class="nc" id="L203">            addDropdownData(&quot;departmentList&quot;,</span>
+<span class="nc" id="L204">                    persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_DEPARTMENTS));</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNCTIONARY))</span>
+<span class="nc" id="L206">            addDropdownData(&quot;functionaryList&quot;,</span>
+<span class="nc" id="L207">                    persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUNCTIONARY));</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUND))</span>
+<span class="nc" id="L209">            addDropdownData(&quot;fundList&quot;, collectionsUtil.getAllFunds());</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNCTION))</span>
+<span class="nc" id="L211">            addDropdownData(&quot;functionList&quot;, functionDAO.getAllActiveFunctions());</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FIELD))</span>
+<span class="nc" id="L213">            addDropdownData(&quot;fieldList&quot;, persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FIELD));</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (headerFields.contains(CollectionConstants.FUNDSOURCE))</span>
+<span class="nc" id="L215">            addDropdownData(&quot;fundsourceList&quot;,</span>
+<span class="nc" id="L216">                    persistenceService.findAllByNamedQuery(CollectionConstants.QUERY_ALL_FUNDSOURCE));</span>
+<span class="nc" id="L217">        serviceTypeMap.putAll(CollectionConstants.SERVICE_TYPE_CLASSIFICATION);</span>
+<span class="nc" id="L218">        serviceTypeMap.remove(CollectionConstants.SERVICE_TYPE_PAYMENT);</span>
+<span class="nc" id="L219">        serviceTypeMap.remove(CollectionConstants.SERVICE_TYPE_BILLING);</span>
+<span class="nc" id="L220">        setHeaderFields(headerFields);</span>
+<span class="nc" id="L221">        setMandatoryFields(mandatoryFields);</span>
+<span class="nc" id="L222">        if (collectionsUtil.getAppConfigValue(CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">                CollectionConstants.APPCONFIG_VALUE_ISVOUCHERCREATIONONRECEIPTANDSTATUSDISPLAY).equals(CollectionConstants.YES))</span>
+<span class="nc" id="L224">            isVoucherOnReceiptAndStatusDisplay = Boolean.TRUE;</span>
+<span class="nc" id="L225">    }</span>
+
+    @Action(value = &quot;/service/serviceDetails-beforeCreate&quot;)
+    public String beforeCreate() {
+<span class="nc" id="L229">        accountDetails.add(new ServiceAccountDetails());</span>
+<span class="nc" id="L230">        subledgerDetails.add(new ServiceSubledgerInfo());</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (!isVoucherOnReceiptAndStatusDisplay) {</span>
+<span class="nc" id="L232">            serviceDetails.setVoucherCreation(Boolean.TRUE);</span>
+<span class="nc" id="L233">            serviceDetails.setIsVoucherApproved(Boolean.TRUE);</span>
+        }
+<span class="nc" id="L235">        return BEFORECREATE;</span>
+    }
+
+    @ValidationErrorPage(value = BEFORECREATE)
+    @Action(value = &quot;/service/serviceDetails-create&quot;)
+    public String create() {
+<span class="nc" id="L241">        insertOrUpdateService();</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (hasActionErrors())</span>
+<span class="nc" id="L243">            return BEFORECREATE;</span>
+<span class="nc" id="L244">        return MESSAGE;</span>
+    }
+
+    @Action(value = &quot;/service/serviceDetails-listServices&quot;)
+    public String listServices() {
+<span class="nc" id="L249">        return &quot;list&quot;;</span>
+    }
+
+    @Action(value = &quot;/service/serviceDetails-view&quot;)
+    public String view() {
+<span class="nc" id="L254">        serviceTypeMap.putAll(CollectionConstants.SERVICE_TYPE_CLASSIFICATION);</span>
+<span class="nc" id="L255">        return &quot;view&quot;;</span>
+    }
+
+    @ValidationErrorPage(value = BEFOREMODIFY)
+    @Action(value = &quot;/service/serviceDetails-beforeModify&quot;)
+    public String beforeModify() {
+
+<span class="nc bnc" id="L262" title="All 4 branches missed.">        if (null == accountDetails || accountDetails.isEmpty())</span>
+<span class="nc" id="L263">            accountDetails.add(new ServiceAccountDetails());</span>
+
+<span class="nc bnc" id="L265" title="All 4 branches missed.">        if (null == subledgerDetails || subledgerDetails.isEmpty())</span>
+<span class="nc" id="L266">            subledgerDetails.add(new ServiceSubledgerInfo());</span>
+<span class="nc" id="L267">        serviceTypeMap.putAll(CollectionConstants.SERVICE_TYPE_CLASSIFICATION);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (serviceDetails.getServiceType().equals(CollectionConstants.SERVICE_TYPE_CHALLAN_COLLECTION)</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">                || serviceDetails.getServiceType().equals(CollectionConstants.SERVICE_TYPE_MISC_COLLECTION)) {</span>
+<span class="nc" id="L270">            serviceTypeMap.remove(CollectionConstants.SERVICE_TYPE_PAYMENT);</span>
+<span class="nc" id="L271">            serviceTypeMap.remove(CollectionConstants.SERVICE_TYPE_BILLING);</span>
+        }
+<span class="nc" id="L273">        return BEFOREMODIFY;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @ValidationErrorPage(value = BEFOREMODIFY)
+    @Action(value = &quot;/service/serviceDetails-modify&quot;)
+    public String modify() {
+<span class="nc" id="L280">        final List&lt;ServiceAccountDetails&gt; accountList = getPersistenceService().getSession()</span>
+<span class="nc" id="L281">                .createCriteria(ServiceAccountDetails.class)</span>
+<span class="nc" id="L282">                .add(Restrictions.eq(&quot;serviceDetails.id&quot;, serviceDetails.getId())).list();</span>
+
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (final ServiceAccountDetails serviceAccountDetails : accountList) {</span>
+
+<span class="nc" id="L286">            final Query qry = getPersistenceService().getSession().createQuery(</span>
+                    &quot;delete from ServiceSubledgerInfo where serviceAccountDetail.id=:accountId&quot;);
+<span class="nc" id="L288">            qry.setLong(&quot;accountId&quot;, serviceAccountDetails.getId());</span>
+<span class="nc" id="L289">            qry.executeUpdate();</span>
+<span class="nc" id="L290">        }</span>
+
+<span class="nc" id="L292">        final Query qry = getPersistenceService().getSession().createQuery(</span>
+                &quot;delete from ServiceAccountDetails where serviceDetails.id=:serviceId&quot;);
+<span class="nc" id="L294">        qry.setLong(&quot;serviceId&quot;, serviceDetails.getId());</span>
+<span class="nc" id="L295">        qry.executeUpdate();</span>
+<span class="nc" id="L296">        insertOrUpdateService();</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        if (hasActionErrors())</span>
+<span class="nc" id="L298">            return BEFOREMODIFY;</span>
+<span class="nc" id="L299">        return MESSAGE;</span>
+    }
+
+    private void insertOrUpdateService() {
+<span class="nc" id="L303">        removeEmptyRowsAccoutDetail(accountDetails);</span>
+<span class="nc" id="L304">        removeEmptyRowsSubledger(subledgerDetails);</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">        if (validateAccountDetails()) {</span>
+<span class="nc" id="L306">            formatServiceDetails();</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">            if (serviceDetails.getVoucherCreation().equals(Boolean.TRUE)) {</span>
+<span class="nc" id="L308">                isVoucherApproved = serviceDetails.getIsVoucherApproved();</span>
+<span class="nc" id="L309">                serviceDetails.setIsVoucherApproved(isVoucherApproved);</span>
+            }
+<span class="nc" id="L311">            serviceDetailsService.getSession().flush();</span>
+<span class="nc" id="L312">            serviceDetailsService.persist(serviceDetails);</span>
+<span class="nc" id="L313">            addActionMessage(getText(&quot;service.create.success.msg&quot;, new String[] { getModel().getCode(),</span>
+<span class="nc" id="L314">                    getModel().getName() }));</span>
+        }
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (subledgerDetails.isEmpty())</span>
+<span class="nc" id="L317">            subledgerDetails.add(new ServiceSubledgerInfo());</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (accountDetails.isEmpty())</span>
+<span class="nc" id="L319">            accountDetails.add(new ServiceAccountDetails());</span>
+<span class="nc" id="L320">    }</span>
+
+    private void formatServiceDetails() {
+
+<span class="nc bnc" id="L324" title="All 2 branches missed.">        for (final Long departId : departmentList) {</span>
+
+<span class="nc" id="L326">            final Department dept = departmentService.getDepartmentById(departId);</span>
+<span class="nc" id="L327">            serviceDetails.addServiceDept(dept);</span>
+<span class="nc" id="L328">        }</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        for (final ServiceAccountDetails account : accountDetails) {</span>
+
+<span class="nc" id="L331">            final ServiceAccountDetails serviceAccount = new ServiceAccountDetails();</span>
+<span class="nc" id="L332">            serviceAccount.setAmount(account.getAmount());</span>
+<span class="nc" id="L333">            final CChartOfAccounts glCodeId = chartOfAccountsDAO.findById(account.getGlCodeId().getId(), false);</span>
+<span class="nc" id="L334">            serviceAccount.setGlCodeId(glCodeId);</span>
+<span class="nc" id="L335">            serviceAccount.setServiceDetails(serviceDetails);</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">            for (final ServiceSubledgerInfo subledger : subledgerDetails)</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">                if (subledger.getServiceAccountDetail().getGlCodeId().getId().equals(account.getGlCodeId().getId())) {</span>
+
+<span class="nc" id="L339">                    final ServiceSubledgerInfo subledgerInfo = new ServiceSubledgerInfo();</span>
+<span class="nc" id="L340">                    final Accountdetailtype accdetailtype = (Accountdetailtype) getPersistenceService()</span>
+<span class="nc" id="L341">                            .findByNamedQuery(CollectionConstants.QUERY_ACCOUNTDETAILTYPE_BY_ID,</span>
+<span class="nc" id="L342">                                    subledger.getDetailType().getId());</span>
+<span class="nc" id="L343">                    subledgerInfo.setDetailType(accdetailtype);</span>
+<span class="nc" id="L344">                    subledgerInfo.setDetailKeyId(subledger.getDetailKeyId());</span>
+<span class="nc" id="L345">                    subledgerInfo.setAmount(subledger.getAmount());</span>
+<span class="nc" id="L346">                    subledgerInfo.setServiceAccountDetail(serviceAccount);</span>
+<span class="nc" id="L347">                    serviceAccount.addSubledgerDetails(subledgerInfo);</span>
+                }
+<span class="nc" id="L349">            serviceDetails.addServiceAccountDtls(serviceAccount);</span>
+<span class="nc" id="L350">        }</span>
+
+<span class="nc" id="L352">    }</span>
+
+    private void removeEmptyRowsAccoutDetail(final List&lt;ServiceAccountDetails&gt; list) {
+<span class="nc bnc" id="L355" title="All 2 branches missed.">        for (final Iterator&lt;ServiceAccountDetails&gt; detail = list.iterator(); detail.hasNext();) {</span>
+<span class="nc" id="L356">            final ServiceAccountDetails next = detail.next();</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">            if (null != next</span>
+<span class="nc bnc" id="L358" title="All 4 branches missed.">                    &amp;&amp; (null == next.getGlCodeId() || null == next.getGlCodeId().getId() || next.getGlCodeId().getId()</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">                            .toString().trim().isEmpty())</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">                    &amp;&amp; next.getAmount().compareTo(BigDecimal.ZERO) == 0)</span>
+<span class="nc" id="L361">                detail.remove();</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">            else if (null == next)</span>
+<span class="nc" id="L363">                detail.remove();</span>
+<span class="nc" id="L364">        }</span>
+<span class="nc" id="L365">    }</span>
+
+    protected void removeEmptyRowsSubledger(final List&lt;ServiceSubledgerInfo&gt; list) {
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        for (final Iterator&lt;ServiceSubledgerInfo&gt; detail = list.iterator(); detail.hasNext();) {</span>
+<span class="nc" id="L369">            final ServiceSubledgerInfo next = detail.next();</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">            if (null != next</span>
+<span class="nc bnc" id="L371" title="All 4 branches missed.">                    &amp;&amp; (null == next.getServiceAccountDetail() || null == next.getServiceAccountDetail().getGlCodeId()</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">                            || null == next.getServiceAccountDetail().getGlCodeId().getId()</span>
+<span class="nc bnc" id="L373" title="All 4 branches missed.">                            || next.getServiceAccountDetail().getGlCodeId().getId() == 0 || next</span>
+<span class="nc" id="L374">                                    .getServiceAccountDetail().getGlCodeId().getId() == -1))</span>
+<span class="nc" id="L375">                detail.remove();</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">            else if (null == next)</span>
+<span class="nc" id="L377">                detail.remove();</span>
+
+<span class="nc" id="L379">        }</span>
+
+<span class="nc" id="L381">    }</span>
+
+    private boolean validateAccountDetails() {
+<span class="nc" id="L384">        int index = 0;</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">        for (final ServiceAccountDetails account : accountDetails)</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">            if (account.getAmount().compareTo(BigDecimal.ZERO) &gt; 0</span>
+<span class="nc bnc" id="L387" title="All 4 branches missed.">                    &amp;&amp; (null == account.getGlCodeId() || null == account.getGlCodeId().getId())) {</span>
+<span class="nc" id="L388">                addActionError(getText(&quot;service.accdetail.accmissing&quot;, new String[] { &quot;&quot; + ++index }));</span>
+<span class="nc" id="L389">                return Boolean.FALSE;</span>
+            }
+<span class="nc" id="L391">        return validateSubledger();</span>
+    }
+
+    private boolean validateSubledger() {
+<span class="nc" id="L395">        final Map&lt;String, BigDecimal&gt; accountDetailAmount = new HashMap&lt;String, BigDecimal&gt;(0);</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        for (final ServiceAccountDetails account : accountDetails) {</span>
+<span class="nc" id="L397">            final Set&lt;CChartOfAccountDetail&gt; chartOfAccountDetail = chartOfAccountsHibernateDAO</span>
+<span class="nc" id="L398">                    .getCChartOfAccountsByGlCode(account.getGlCodeId().getGlcode()).getChartOfAccountDetails();</span>
+<span class="nc bnc" id="L399" title="All 4 branches missed.">            if (null != chartOfAccountDetail &amp;&amp; !chartOfAccountDetail.isEmpty())</span>
+<span class="nc" id="L400">                accountDetailAmount.put(account.getGlCodeId().getGlcode(), account.getAmount());</span>
+<span class="nc" id="L401">        }</span>
+
+<span class="nc" id="L403">        final Map&lt;String, BigDecimal&gt; subledgerAmount = new HashMap&lt;String, BigDecimal&gt;(0);</span>
+
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        for (final ServiceSubledgerInfo subledger : subledgerDetails)</span>
+<span class="nc bnc" id="L406" title="All 4 branches missed.">            if (null == subledger.getDetailType() || null == subledger.getDetailType().getId()</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">                    || subledger.getDetailType().getId() == 0) {</span>
+
+<span class="nc" id="L409">                addActionError(getText(&quot;service.accdetailType.entrymissing&quot;, new String[] { subledger</span>
+<span class="nc" id="L410">                        .getServiceAccountDetail().getGlCodeId().getGlcode() }));</span>
+<span class="nc" id="L411">                return Boolean.FALSE;</span>
+            }
+
+<span class="nc bnc" id="L414" title="All 2 branches missed.">            else if (null != subledgerAmount.get(subledger.getServiceAccountDetail().getGlCodeId().getGlcode())) {</span>
+
+<span class="nc" id="L416">                final BigDecimal amount = subledgerAmount.get(subledger.getServiceAccountDetail().getGlCodeId()</span>
+<span class="nc" id="L417">                        .getGlcode());</span>
+<span class="nc" id="L418">                subledgerAmount.put(subledger.getServiceAccountDetail().getGlCodeId().getGlcode(),</span>
+<span class="nc" id="L419">                        amount.add(subledger.getAmount()));</span>
+<span class="nc" id="L420">            } else</span>
+<span class="nc" id="L421">                subledgerAmount.put(subledger.getServiceAccountDetail().getGlCodeId().getGlcode(),</span>
+<span class="nc" id="L422">                        subledger.getAmount());</span>
+
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        for (final Map.Entry&lt;String, BigDecimal&gt; entry : accountDetailAmount.entrySet()) {</span>
+
+<span class="nc" id="L426">            final String key = entry.getKey();</span>
+<span class="nc" id="L427">            final BigDecimal value = entry.getValue();</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">            if (null == subledgerAmount.get(key)) {</span>
+<span class="nc" id="L429">                addActionError(getText(&quot;service.accdetail.entrymissing&quot;, new String[] { key }));</span>
+<span class="nc" id="L430">                return Boolean.FALSE;</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">            } else if (subledgerAmount.get(key).compareTo(value) != 0) {</span>
+<span class="nc" id="L432">                addActionError(getText(&quot;service.subledger.amtnotmatchinng&quot;, new String[] { key }));</span>
+<span class="nc" id="L433">                return Boolean.FALSE;</span>
+            }
+<span class="nc" id="L435">        }</span>
+
+<span class="nc" id="L437">        return Boolean.TRUE;</span>
+    }
+
+    public boolean isFieldMandatory(final String field) {
+<span class="nc" id="L441">        return mandatoryFields.contains(field);</span>
+    }
+
+    public boolean shouldShowHeaderField(final String field) {
+<span class="nc" id="L445">        return headerFields.contains(field);</span>
+    }
+
+    protected void getHeaderMandateFields() {
+<span class="nc" id="L449">        final List&lt;AppConfigValues&gt; appConfigValuesList = collectionsUtil.getAppConfigValues(</span>
+                CollectionConstants.MODULE_NAME_COLLECTIONS_CONFIG,
+                CollectionConstants.MISMandatoryAttributesKeyCollection);
+
+<span class="nc bnc" id="L453" title="All 2 branches missed.">        for (final AppConfigValues appConfigVal : appConfigValuesList) {</span>
+<span class="nc" id="L454">            final String value = appConfigVal.getValue();</span>
+<span class="nc" id="L455">            final String header = value.substring(0, value.indexOf('|'));</span>
+<span class="nc" id="L456">            headerFields.add(header);</span>
+<span class="nc" id="L457">            final String mandate = value.substring(value.indexOf('|') + 1);</span>
+<span class="nc bnc" id="L458" title="All 2 branches missed.">            if (mandate.equalsIgnoreCase(CollectionConstants.Mandatory))</span>
+<span class="nc" id="L459">                mandatoryFields.add(header);</span>
+<span class="nc" id="L460">        }</span>
+<span class="nc" id="L461">    }</span>
+
+    @Action(value = &quot;/service/serviceDetails-codeUniqueCheck&quot;)
+    public String codeUniqueCheck() {
+<span class="nc" id="L465">        return &quot;codeUniqueCheck&quot;;</span>
+    }
+
+    public boolean getCodeCheck() {
+<span class="nc" id="L469">        boolean codeExistsOrNot = false;</span>
+<span class="nc" id="L470">        final ServiceDetails service = serviceDetailsService.findByNamedQuery(</span>
+<span class="nc" id="L471">                CollectionConstants.QUERY_SERVICE_BY_CODE, serviceDetails.getCode());</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">        if (null != service)</span>
+<span class="nc" id="L473">            codeExistsOrNot = true;</span>
+<span class="nc" id="L474">        return codeExistsOrNot;</span>
+    }
+
+    public ServiceDetails getServiceDetails() {
+<span class="nc" id="L478">        return serviceDetails;</span>
+    }
+
+    public void setServiceDetails(final ServiceDetails serviceDetails) {
+<span class="nc" id="L482">        this.serviceDetails = serviceDetails;</span>
+<span class="nc" id="L483">    }</span>
+
+    public List&lt;ServiceAccountDetails&gt; getAccountDetails() {
+<span class="nc" id="L486">        return accountDetails;</span>
+    }
+
+    public void setAccountDetails(final List&lt;ServiceAccountDetails&gt; accountDetails) {
+<span class="nc" id="L490">        this.accountDetails = accountDetails;</span>
+<span class="nc" id="L491">    }</span>
+
+    public List&lt;ServiceSubledgerInfo&gt; getSubledgerDetails() {
+<span class="nc" id="L494">        return subledgerDetails;</span>
+    }
+
+    public void setSubledgerDetails(final List&lt;ServiceSubledgerInfo&gt; subledgerDetails) {
+<span class="nc" id="L498">        this.subledgerDetails = subledgerDetails;</span>
+<span class="nc" id="L499">    }</span>
+
+    public void setServiceDetailsService(final PersistenceService&lt;ServiceDetails, Long&gt; serviceDetailsService) {
+<span class="nc" id="L502">        this.serviceDetailsService = serviceDetailsService;</span>
+<span class="nc" id="L503">    }</span>
+
+    public List&lt;Long&gt; getDepartmentList() {
+<span class="nc" id="L506">        return departmentList;</span>
+    }
+
+    public void setDepartmentList(final List&lt;Long&gt; departmentList) {
+<span class="nc" id="L510">        this.departmentList = departmentList;</span>
+<span class="nc" id="L511">    }</span>
+
+    public List&lt;ServiceDetails&gt; getServiceList() {
+<span class="nc" id="L514">        return serviceList;</span>
+    }
+
+    public void setServiceCategoryService(final PersistenceService&lt;ServiceCategory, Long&gt; serviceCategoryService) {
+<span class="nc" id="L518">        this.serviceCategoryService = serviceCategoryService;</span>
+<span class="nc" id="L519">    }</span>
+
+    public Long getServiceCategoryId() {
+<span class="nc" id="L522">        return serviceCategoryId;</span>
+    }
+
+    public void setServiceCategoryId(final Long serviceCategoryId) {
+<span class="nc" id="L526">        this.serviceCategoryId = serviceCategoryId;</span>
+<span class="nc" id="L527">    }</span>
+
+    public List&lt;String&gt; getHeaderFields() {
+<span class="nc" id="L530">        return headerFields;</span>
+    }
+
+    public void setHeaderFields(final List&lt;String&gt; headerFields) {
+<span class="nc" id="L534">        this.headerFields = headerFields;</span>
+<span class="nc" id="L535">    }</span>
+
+    public List&lt;String&gt; getMandatoryFields() {
+<span class="nc" id="L538">        return mandatoryFields;</span>
+    }
+
+    public void setMandatoryFields(final List&lt;String&gt; mandatoryFields) {
+<span class="nc" id="L542">        this.mandatoryFields = mandatoryFields;</span>
+<span class="nc" id="L543">    }</span>
+
+    public SortedMap&lt;String, String&gt; getServiceTypeMap() {
+<span class="nc" id="L546">        return serviceTypeMap;</span>
+    }
+
+    public void setServiceTypeMap(final SortedMap&lt;String, String&gt; serviceTypeMap) {
+<span class="nc" id="L550">        this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L551">    }</span>
+
+    public String getDeptId() {
+<span class="nc" id="L554">        return deptId;</span>
+    }
+
+    public void setDeptId(final String deptId) {
+<span class="nc" id="L558">        this.deptId = deptId;</span>
+<span class="nc" id="L559">    }</span>
+
+    public void setEgovCommon(final EgovCommon egovCommon) {
+<span class="nc" id="L562">        this.egovCommon = egovCommon;</span>
+<span class="nc" id="L563">    }</span>
+
+    public Boolean getIsVoucherOnReceiptAndStatusDisplay() {
+<span class="nc" id="L566">        return isVoucherOnReceiptAndStatusDisplay;</span>
+    }
+
+    public void setIsVoucherOnReceiptAndStatusDisplay(Boolean isVoucherOnReceiptAndStatusDisplay) {
+<span class="nc" id="L570">        this.isVoucherOnReceiptAndStatusDisplay = isVoucherOnReceiptAndStatusDisplay;</span>
+<span class="nc" id="L571">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

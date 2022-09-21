@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RestTemplateLoggerInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.rest.handler</a> &gt; <span class="el_source">RestTemplateLoggerInterceptor.java</span></div><h1>RestTemplateLoggerInterceptor.java</h1><pre class="source lang-java linenums">package org.egov.infra.web.rest.handler;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+
+import org.apache.log4j.Logger;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.util.StreamUtils;
+
+<span class="nc" id="L13">public class RestTemplateLoggerInterceptor implements ClientHttpRequestInterceptor {</span>
+
+<span class="nc" id="L15">    private static final Logger LOGGER = Logger.getLogger(RestTemplateLoggerInterceptor.class);</span>
+    
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+            throws IOException {
+<span class="nc" id="L20">        System.out.println(&quot;**************** recieved request***********&quot;);</span>
+<span class="nc" id="L21">        logRequest(request, body);</span>
+<span class="nc" id="L22">        ClientHttpResponse response = execution.execute(request, body);</span>
+<span class="nc" id="L23">        logResponse(response);</span>
+        
+<span class="nc" id="L25">        return response;</span>
+    }
+    
+
+    private void logRequest(HttpRequest request,byte[] body) throws IOException{
+//        if(LOGGER.isDebugEnabled()){
+//            LOGGER.debug(&quot;URI          &quot;+request.getURI());
+//            LOGGER.debug(&quot;Method       &quot;+request.getMethod());
+//            LOGGER.debug(&quot;Headers      &quot;+request.getHeaders());
+//            LOGGER.debug(&quot;Request body &quot;+new String(body,&quot;UTF-8&quot;));
+//        }
+        
+<span class="nc" id="L37">        LOGGER.info(&quot;URI          &quot;+request.getURI());</span>
+<span class="nc" id="L38">        LOGGER.info(&quot;Method       &quot;+request.getMethod());</span>
+<span class="nc" id="L39">        LOGGER.info(&quot;Headers      &quot;+request.getHeaders());</span>
+<span class="nc" id="L40">        LOGGER.info(&quot;Request body &quot;+new String(body,&quot;UTF-8&quot;));</span>
+      
+        
+        
+<span class="nc" id="L44">    }</span>
+    
+    private void logResponse(ClientHttpResponse response) throws IOException{
+        
+//        if(LOGGER.isDebugEnabled()){
+//            LOGGER.debug(&quot;Status       &quot;+response.getRawStatusCode());
+//            LOGGER.debug(&quot;Status text  &quot;+response.getStatusText());
+//            LOGGER.debug(&quot;Headers      &quot;+response.getHeaders());
+//            LOGGER.debug(&quot;Response body&quot;+StreamUtils.copyToString(response.getBody(), Charset.defaultCharset()));
+//        }
+        
+<span class="nc" id="L55">      LOGGER.info(&quot;Status       &quot;+response.getRawStatusCode());</span>
+<span class="nc" id="L56">      LOGGER.info(&quot;Status text  &quot;+response.getStatusText());</span>
+<span class="nc" id="L57">      LOGGER.info(&quot;Headers      &quot;+response.getHeaders());</span>
+<span class="nc" id="L58">      LOGGER.info(&quot;Response body&quot;+StreamUtils.copyToString(response.getBody(), Charset.defaultCharset()));</span>
+       
+        
+<span class="nc" id="L61">    }</span>
+    
+    
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

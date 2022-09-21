@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultInboxRenderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.inbox</a> &gt; <span class="el_source">DefaultInboxRenderServiceImpl.java</span></div><h1>DefaultInboxRenderServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.inbox;
+
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.egov.infra.config.core.ApplicationThreadLocals.getUserId;
+import static org.egov.infra.workflow.entity.State.StateStatus.INPROGRESS;
+import static org.egov.infra.workflow.entity.State.StateStatus.STARTED;
+import static org.hibernate.FetchMode.JOIN;
+import static org.hibernate.FlushMode.MANUAL;
+
+/**
+ * Every module which is having StateAware should initialize this with their own
+ * StateAware persistence service&lt;br/&gt;
+ * eg:
+ * &lt;p&gt;
+ * &lt;pre&gt;
+ *      &amp;lt;bean id=&quot;myStateAwarePersistenceService&quot; parent=&quot;persistenceService&quot;&amp;gt;
+ *                 &amp;lt;property name=&quot;type&quot; value=&quot;org.egov.infra.web.struts.actions.common.MyStateAware&quot; /&amp;gt;
+ *         &amp;lt;/bean&gt;
+ *
+ *         &amp;lt;bean id=&quot;MyStateAwareInboxRenderService&quot; class=&quot;org.egov.infra.workflow.inbox.DefaultInboxRenderServiceImpl&quot;&amp;gt;
+ *                 &amp;lt;constructor-arg index=&quot;0&quot; ref=&quot;myStateAwarePersistenceService&quot;/&amp;gt;
+ *         &amp;lt;/bean&amp;gt;
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ * &lt;br/&gt;
+ * id or name attribute value of the workflowTypeService bean definition should
+ * follow a strict naming convention as follows&lt;br/&gt;
+ * &lt;code&gt;
+ * &lt;YourStateAwareClassName&gt;InboxRenderService
+ * &lt;/code&gt; This is how, {@link InboxRenderServiceDelegate} will detect the
+ * appropriate {@link InboxRenderService} and render the inbox items.
+ **/
+@SuppressWarnings(&quot;all&quot;)
+public class DefaultInboxRenderServiceImpl&lt;T extends StateAware&gt; implements InboxRenderService&lt;T&gt; {
+
+    private final Class&lt;T&gt; stateAwareType;
+    private final PersistenceService&lt;T, Long&gt; stateAwarePersistenceService;
+
+<span class="nc" id="L95">    public DefaultInboxRenderServiceImpl(PersistenceService&lt;T, Long&gt; stateAwarePersistenceService) {</span>
+<span class="nc" id="L96">        this.stateAwarePersistenceService = stateAwarePersistenceService;</span>
+<span class="nc" id="L97">        this.stateAwareType = stateAwarePersistenceService.getType();</span>
+<span class="nc" id="L98">    }</span>
+
+    @Override
+    public List&lt;T&gt; getAssignedWorkflowItems(List&lt;Long&gt; owners) {
+      
+//    	List&lt;T&gt; list = this.stateAwarePersistenceService.getSession().createCriteria(this.stateAwareType)
+//                .setFetchMode(&quot;state&quot;, JOIN).createAlias(&quot;state&quot;, &quot;state&quot;)
+//                .setFlushMode(MANUAL).setReadOnly(true).setCacheable(true)
+//                .add(Restrictions.eq(&quot;state.type&quot;, this.stateAwareType.getSimpleName()))
+//                .add(Restrictions.in(&quot;state.ownerPosition&quot;, owners))
+//                .add(Restrictions.in(&quot;state.status&quot;, Arrays.asList(INPROGRESS, STARTED)))
+//                .addOrder(Order.desc(&quot;state.createdDate&quot;))
+//                .list();
+    	
+<span class="nc" id="L112">    	Criteria criteria =  this.stateAwarePersistenceService.getSession().createCriteria(this.stateAwareType)</span>
+<span class="nc" id="L113">              .setFetchMode(&quot;state&quot;, JOIN).createAlias(&quot;state&quot;, &quot;state&quot;)</span>
+<span class="nc" id="L114">              .setFlushMode(MANUAL).setReadOnly(true).setCacheable(true)</span>
+<span class="nc" id="L115">              .add(Restrictions.eq(&quot;state.type&quot;, this.stateAwareType.getSimpleName()))</span>
+<span class="nc" id="L116">              .add(Restrictions.in(&quot;state.ownerPosition&quot;, owners))</span>
+<span class="nc" id="L117">              .add(Restrictions.in(&quot;state.status&quot;, Arrays.asList(INPROGRESS, STARTED)))</span>
+<span class="nc" id="L118">              .addOrder(Order.desc(&quot;state.createdDate&quot;));</span>
+    	
+<span class="nc" id="L120">    	List list = criteria.list();</span>
+<span class="nc" id="L121">    	System.out.println(&quot;#################### inbox list size&quot;+list.size());</span>
+<span class="nc" id="L122">    	return list;</span>
+    }
+
+    @Override
+    public List&lt;T&gt; getDraftWorkflowItems(List&lt;Long&gt; owners) {
+<span class="nc" id="L127">        return this.stateAwarePersistenceService.getSession().createCriteria(this.stateAwareType)</span>
+<span class="nc" id="L128">                .setFetchMode(&quot;state&quot;, JOIN).createAlias(&quot;state&quot;, &quot;state&quot;)</span>
+<span class="nc" id="L129">                .setFlushMode(MANUAL).setReadOnly(true).setCacheable(true)</span>
+<span class="nc" id="L130">                .add(Restrictions.eq(&quot;state.type&quot;, this.stateAwareType.getSimpleName()))</span>
+<span class="nc" id="L131">                .add(Restrictions.in(&quot;state.ownerPosition.id&quot;, owners))</span>
+<span class="nc" id="L132">                .add(Restrictions.eq(&quot;state.status&quot;, STARTED))</span>
+<span class="nc" id="L133">                .add(Restrictions.eq(&quot;state.createdBy.id&quot;, getUserId()))</span>
+<span class="nc" id="L134">                .addOrder(Order.asc(&quot;state.createdDate&quot;))</span>
+<span class="nc" id="L135">                .list();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaxPayerDashBoardDetails.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.bean.dashboard</a> &gt; <span class="el_source">TaxPayerDashBoardDetails.java</span></div><h1>TaxPayerDashBoardDetails.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.bean.dashboard;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.math.BigDecimal;
+
+<span class="nc" id="L54">public class TaxPayerDashBoardDetails implements Comparable&lt;TaxPayerDashBoardDetails&gt; {</span>
+
+<span class="nc" id="L56">    private String regionName = StringUtils.EMPTY;</span>
+<span class="nc" id="L57">    private String districtName = StringUtils.EMPTY;</span>
+<span class="nc" id="L58">    private String ulbGrade = StringUtils.EMPTY;</span>
+<span class="nc" id="L59">    private String ulbName = StringUtils.EMPTY;</span>
+<span class="nc" id="L60">    private String wardName = StringUtils.EMPTY;</span>
+<span class="nc" id="L61">    private BigDecimal cytdColl = BigDecimal.ZERO;</span>
+<span class="nc" id="L62">    private BigDecimal lytdColl = BigDecimal.ZERO;</span>
+<span class="nc" id="L63">    private BigDecimal lyVar = BigDecimal.ZERO;</span>
+
+    public String getRegionName() {
+<span class="nc" id="L66">        return regionName;</span>
+    }
+
+    public void setRegionName(String regionName) {
+<span class="nc" id="L70">        this.regionName = regionName;</span>
+<span class="nc" id="L71">    }</span>
+
+    public String getDistrictName() {
+<span class="nc" id="L74">        return districtName;</span>
+    }
+
+    public void setDistrictName(String districtName) {
+<span class="nc" id="L78">        this.districtName = districtName;</span>
+<span class="nc" id="L79">    }</span>
+
+    public String getUlbGrade() {
+<span class="nc" id="L82">        return ulbGrade;</span>
+    }
+
+    public void setUlbGrade(String ulbGrade) {
+<span class="nc" id="L86">        this.ulbGrade = ulbGrade;</span>
+<span class="nc" id="L87">    }</span>
+
+    public String getUlbName() {
+<span class="nc" id="L90">        return ulbName;</span>
+    }
+
+    public void setUlbName(String ulbName) {
+<span class="nc" id="L94">        this.ulbName = ulbName;</span>
+<span class="nc" id="L95">    }</span>
+
+    public String getWardName() {
+<span class="nc" id="L98">        return wardName;</span>
+    }
+
+    public void setWardName(String wardName) {
+<span class="nc" id="L102">        this.wardName = wardName;</span>
+<span class="nc" id="L103">    }</span>
+
+
+    public BigDecimal getCytdColl() {
+<span class="nc" id="L107">        return cytdColl;</span>
+    }
+
+    public void setCytdColl(BigDecimal cytdColl) {
+<span class="nc" id="L111">        this.cytdColl = cytdColl;</span>
+<span class="nc" id="L112">    }</span>
+
+    public BigDecimal getLytdColl() {
+<span class="nc" id="L115">        return lytdColl;</span>
+    }
+
+    public void setLytdColl(BigDecimal lytdColl) {
+<span class="nc" id="L119">        this.lytdColl = lytdColl;</span>
+<span class="nc" id="L120">    }</span>
+
+    public BigDecimal getLyVar() {
+<span class="nc" id="L123">        return lyVar;</span>
+    }
+
+    public void setLyVar(BigDecimal lyVar) {
+<span class="nc" id="L127">        this.lyVar = lyVar;</span>
+<span class="nc" id="L128">    }</span>
+
+    @Override
+    public int compareTo(TaxPayerDashBoardDetails object) {
+<span class="nc" id="L132">        return cytdColl.compareTo(object.getCytdColl());</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L137">        final int prime = 31;</span>
+<span class="nc" id="L138">        int result = 1;</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        result = prime * result + ((cytdColl == null) ? 0 : cytdColl.hashCode());</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">        result = prime * result + ((districtName == null) ? 0 : districtName.hashCode());</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        result = prime * result + ((lyVar == null) ? 0 : lyVar.hashCode());</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        result = prime * result + ((lytdColl == null) ? 0 : lytdColl.hashCode());</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        result = prime * result + ((regionName == null) ? 0 : regionName.hashCode());</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        result = prime * result + ((ulbGrade == null) ? 0 : ulbGrade.hashCode());</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        result = prime * result + ((ulbName == null) ? 0 : ulbName.hashCode());</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        result = prime * result + ((wardName == null) ? 0 : wardName.hashCode());</span>
+<span class="nc" id="L147">        return result;</span>
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (this == obj)</span>
+<span class="nc" id="L153">            return true;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (obj == null)</span>
+<span class="nc" id="L155">            return false;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (getClass() != obj.getClass())</span>
+<span class="nc" id="L157">            return false;</span>
+<span class="nc" id="L158">        TaxPayerDashBoardDetails other = (TaxPayerDashBoardDetails) obj;</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (cytdColl == null) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (other.cytdColl != null)</span>
+<span class="nc" id="L161">                return false;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        } else if (!cytdColl.equals(other.cytdColl))</span>
+<span class="nc" id="L163">            return false;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (districtName == null) {</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            if (other.districtName != null)</span>
+<span class="nc" id="L166">                return false;</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        } else if (!districtName.equals(other.districtName))</span>
+<span class="nc" id="L168">            return false;</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (lyVar == null) {</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            if (other.lyVar != null)</span>
+<span class="nc" id="L171">                return false;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        } else if (!lyVar.equals(other.lyVar))</span>
+<span class="nc" id="L173">            return false;</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        if (lytdColl == null) {</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">            if (other.lytdColl != null)</span>
+<span class="nc" id="L176">                return false;</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        } else if (!lytdColl.equals(other.lytdColl))</span>
+<span class="nc" id="L178">            return false;</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (regionName == null) {</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (other.regionName != null)</span>
+<span class="nc" id="L181">                return false;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        } else if (!regionName.equals(other.regionName))</span>
+<span class="nc" id="L183">            return false;</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (ulbGrade == null) {</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (other.ulbGrade != null)</span>
+<span class="nc" id="L186">                return false;</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        } else if (!ulbGrade.equals(other.ulbGrade))</span>
+<span class="nc" id="L188">            return false;</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (ulbName == null) {</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            if (other.ulbName != null)</span>
+<span class="nc" id="L191">                return false;</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        } else if (!ulbName.equals(other.ulbName))</span>
+<span class="nc" id="L193">            return false;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (wardName == null) {</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">            if (other.wardName != null)</span>
+<span class="nc" id="L196">                return false;</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        } else if (!wardName.equals(other.wardName))</span>
+<span class="nc" id="L198">            return false;</span>
+<span class="nc" id="L199">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

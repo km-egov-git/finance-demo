@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AxisAdaptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.integration.pgi</a> &gt; <span class="el_source">AxisAdaptor.java</span></div><h1>AxisAdaptor.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.integration.pgi;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.log4j.Logger;
+import org.egov.collection.config.properties.CollectionApplicationProperties;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.entity.OnlinePayment;
+import org.egov.collection.entity.ReceiptHeader;
+import org.egov.infra.admin.master.entity.City;
+import org.egov.infra.admin.master.service.CityService;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.exception.ApplicationException;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infstr.models.ServiceDetails;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * The PaymentRequestAdaptor class frames the request object for the payment service.
+ */
+@Service
+<span class="nc" id="L107">public class AxisAdaptor implements PaymentGatewayAdaptor {</span>
+
+<span class="nc" id="L109">    private static final Logger LOGGER = Logger.getLogger(AxisAdaptor.class);</span>
+<span class="nc" id="L110">    private static final BigDecimal PAISE_RUPEE_CONVERTER = BigDecimal.valueOf(100);</span>
+    private static final String UTF8 = &quot;UTF-8&quot;;
+    private static final String NO_VALUE_RETURNED = &quot;No Value Returned&quot;;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private CollectionApplicationProperties collectionApplicationProperties;
+
+    @Autowired
+    private CityService cityService;
+
+    /**
+     * This method invokes APIs to frame request object for the payment service passed as parameter
+     *
+     * @param serviceDetails
+     * @param receiptHeader
+     * @return
+     */
+    @Override
+    public PaymentRequest createPaymentRequest(final ServiceDetails paymentServiceDetails,
+            final ReceiptHeader receiptHeader) {
+<span class="nc" id="L133">        LOGGER.debug(&quot;inside createPaymentRequest&quot;);</span>
+<span class="nc" id="L134">        final DefaultPaymentRequest paymentRequest = new DefaultPaymentRequest();</span>
+<span class="nc" id="L135">        final LinkedHashMap&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;(0);</span>
+<span class="nc" id="L136">        final StringBuilder requestURL = new StringBuilder();</span>
+<span class="nc" id="L137">        final BigDecimal amount = receiptHeader.getTotalAmount();</span>
+<span class="nc" id="L138">        final float rupees = Float.parseFloat(amount.toString());</span>
+<span class="nc" id="L139">        final Integer rupee = (int) rupees;</span>
+<span class="nc" id="L140">        final Float exponent = rupees - (float) rupee;</span>
+<span class="nc" id="L141">        final Integer paise = (int) (rupee * PAISE_RUPEE_CONVERTER.intValue()</span>
+<span class="nc" id="L142">                + exponent * PAISE_RUPEE_CONVERTER.intValue());</span>
+<span class="nc" id="L143">        final StringBuilder returnUrl = new StringBuilder();</span>
+<span class="nc" id="L144">        returnUrl.append(paymentServiceDetails.getCallBackurl()).append(&quot;?paymentServiceId=&quot;)</span>
+<span class="nc" id="L145">                .append(paymentServiceDetails.getId());</span>
+<span class="nc" id="L146">        fields.put(CollectionConstants.AXIS_ACCESS_CODE, collectionApplicationProperties.axisAccessCode());</span>
+<span class="nc" id="L147">        fields.put(CollectionConstants.AXIS_AMOUNT, paise.toString());</span>
+<span class="nc" id="L148">        fields.put(CollectionConstants.AXIS_COMMAND, collectionApplicationProperties.axisCommand());</span>
+<span class="nc" id="L149">        fields.put(CollectionConstants.AXIS_LOCALE, collectionApplicationProperties.axisLocale());</span>
+<span class="nc" id="L150">        fields.put(CollectionConstants.AXIS_MERCHANT_TXN_REF, ApplicationThreadLocals.getCityCode()</span>
+<span class="nc" id="L151">                + CollectionConstants.SEPARATOR_HYPHEN + receiptHeader.getId().toString());</span>
+<span class="nc" id="L152">        fields.put(CollectionConstants.AXIS_MERCHANT, collectionApplicationProperties.axisMerchant());</span>
+<span class="nc" id="L153">        fields.put(CollectionConstants.AXIS_ORDER_INFO, ApplicationThreadLocals.getCityCode()</span>
+<span class="nc" id="L154">                + CollectionConstants.SEPARATOR_HYPHEN + ApplicationThreadLocals.getCityName());</span>
+<span class="nc" id="L155">        fields.put(CollectionConstants.AXIS_RETURN_URL, returnUrl.toString());</span>
+<span class="nc" id="L156">        fields.put(CollectionConstants.AXIS_TICKET_NO, receiptHeader.getConsumerCode());</span>
+<span class="nc" id="L157">        fields.put(CollectionConstants.AXIS_VERSION, collectionApplicationProperties.axisVersion());</span>
+<span class="nc" id="L158">        final String axisSecureSecret = collectionApplicationProperties.axisSecureSecret();</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (axisSecureSecret != null) {</span>
+<span class="nc" id="L160">            final String secureHash = hashAllFields(fields);</span>
+<span class="nc" id="L161">            fields.put(CollectionConstants.AXIS_SECURE_HASH, secureHash);</span>
+        }
+<span class="nc" id="L163">        fields.put(CollectionConstants.AXIS_SECURE_HASHTYPE, CollectionConstants.AXIS_SECURE_HASHTYPE_VALUE);</span>
+
+<span class="nc" id="L165">        requestURL.append(paymentServiceDetails.getServiceUrl()).append('?');</span>
+<span class="nc" id="L166">        appendQueryFields(requestURL, fields);</span>
+<span class="nc" id="L167">        paymentRequest.setParameter(CollectionConstants.ONLINEPAYMENT_INVOKE_URL, requestURL);</span>
+<span class="nc" id="L168">        LOGGER.info(&quot;AXIS payment gateway request: &quot; + paymentRequest.getRequestParameters());</span>
+<span class="nc" id="L169">        return paymentRequest;</span>
+    }
+
+    private String hashAllFields(final LinkedHashMap&lt;String, String&gt; fields) {
+
+<span class="nc" id="L174">        final String axisSecureSecret = collectionApplicationProperties.axisSecureSecret();</span>
+        byte[] decodedKey;
+<span class="nc" id="L176">        byte[] hashValue = null;</span>
+        // Sort list with field names ascending order
+<span class="nc" id="L178">        final List&lt;String&gt; fieldNames = new ArrayList&lt;&gt;(fields.keySet());</span>
+<span class="nc" id="L179">        Collections.sort(fieldNames);</span>
+
+        // iterate through field name list and generate message for hashing. Format: fieldname1=fieldvale1?fieldname2=fieldvalue2
+<span class="nc" id="L182">        final Iterator&lt;String&gt; itr = fieldNames.iterator();</span>
+<span class="nc" id="L183">        final StringBuilder hashingMessage = new StringBuilder();</span>
+<span class="nc" id="L184">        int i = 0;</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        while (itr.hasNext()) {</span>
+<span class="nc" id="L186">            final String fieldName = itr.next();</span>
+<span class="nc" id="L187">            final String fieldValue = fields.get(fieldName);</span>
+<span class="nc bnc" id="L188" title="All 4 branches missed.">            if (fieldValue != null &amp;&amp; fieldValue.length() &gt; 0) {</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                if (i != 0)</span>
+<span class="nc" id="L190">                    hashingMessage.append(&quot;&amp;&quot;);</span>
+<span class="nc" id="L191">                hashingMessage.append(fieldName).append(&quot;=&quot;).append(fieldValue);</span>
+<span class="nc" id="L192">                i++;</span>
+            }
+<span class="nc" id="L194">        }</span>
+        try {
+<span class="nc" id="L196">            decodedKey = Hex.decodeHex(axisSecureSecret.toCharArray());</span>
+<span class="nc" id="L197">            SecretKeySpec keySpec = new SecretKeySpec(decodedKey, &quot;HmacSHA256&quot;);</span>
+<span class="nc" id="L198">            Mac mac = Mac.getInstance(&quot;HmacSHA256&quot;);</span>
+<span class="nc" id="L199">            mac.init(keySpec);</span>
+<span class="nc" id="L200">            byte[] hashingMessageBytes = hashingMessage.toString().getBytes(UTF8);</span>
+<span class="nc" id="L201">            hashValue = mac.doFinal(hashingMessageBytes);</span>
+<span class="nc" id="L202">        } catch (DecoderException e1) {</span>
+            // TODO Auto-generated catch block
+<span class="nc" id="L204">            e1.printStackTrace();</span>
+<span class="nc" id="L205">        } catch (NoSuchAlgorithmException e) {</span>
+            // TODO Auto-generated catch block
+<span class="nc" id="L207">            e.printStackTrace();</span>
+<span class="nc" id="L208">        } catch (InvalidKeyException e) {</span>
+            // TODO Auto-generated catch block
+<span class="nc" id="L210">            e.printStackTrace();</span>
+<span class="nc" id="L211">        } catch (UnsupportedEncodingException e) {</span>
+            // TODO Auto-generated catch block
+<span class="nc" id="L213">            e.printStackTrace();</span>
+<span class="nc" id="L214">        }</span>
+<span class="nc" id="L215">        return DatatypeConverter.printHexBinary(hashValue);</span>
+    } // end hashAllFields()
+
+    /**
+     * Returns Hex output of byte array
+     */
+    /*
+     * private static String hex(final byte[] input) { // create a StringBuilder 2x the size of the hash array final StringBuilder
+     * sb = new StringBuilder(input.length * 2); // retrieve the byte array data, convert it to hex // and add it to the
+     * StringBuilder for (final byte element : input) { sb.append(CollectionConstants.AXIS_HEX_TABLE[element &gt;&gt; 4 &amp; 0xf]);
+     * sb.append(CollectionConstants.AXIS_HEX_TABLE[element &amp; 0xf]); } return sb.toString(); }
+     */
+
+    /**
+     * This method parses the given response string into a AXIS payment response object.
+     *
+     * @param a &lt;code&gt;String&lt;/code&gt; representation of the response.
+     * @return an instance of &lt;code&gt;&lt;/code&gt; containing the response information
+     */
+    @Override
+    public PaymentResponse parsePaymentResponse(final String response) {
+<span class="nc" id="L236">        LOGGER.info(&quot;Response message from Axis Payment gateway: &quot; + response);</span>
+<span class="nc" id="L237">        final String[] keyValueStr = response.replace(&quot;{&quot;, &quot;&quot;).replace(&quot;}&quot;, &quot;&quot;).split(&quot;,&quot;);</span>
+<span class="nc" id="L238">        final LinkedHashMap&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;(0);</span>
+
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        for (final String pair : keyValueStr) {</span>
+<span class="nc" id="L241">            final String[] entry = pair.split(&quot;=&quot;);</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if (entry.length == 2)</span>
+<span class="nc" id="L243">                fields.put(entry[0].trim(), entry[1].trim());</span>
+        }
+        /*
+         * If there has been a merchant secret set then sort and loop through all the data in the Virtual Payment Client response.
+         * while we have the data, we can append all the fields that contain values (except the secure hash) so that we can create
+         * a hash and validate it against the secure hash in the Virtual Payment Client response. NOTE: If the vpc_TxnResponseCode
+         * in not a single character then there was a Virtual Payment Client error and we cannot accurately validate the incoming
+         * data from the secure hash.
+         */
+
+        // remove the vpc_TxnResponseCode code from the response fields as we do
+        // not
+        // want to include this field in the hash calculation
+<span class="nc" id="L256">        final String vpcTxnSecureHash = null2unknown(fields.remove(CollectionConstants.AXIS_SECURE_HASH));</span>
+        // defines if error message should be output
+<span class="nc" id="L258">        final String axisSecureSecret = collectionApplicationProperties.axisSecureSecret();</span>
+<span class="nc bnc" id="L259" title="All 4 branches missed.">        if (axisSecureSecret != null &amp;&amp; (fields.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE) != null</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">                || NO_VALUE_RETURNED.equals(fields.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE)))) {</span>
+
+            // create secure hash and append it to the hash map if it was
+            // created
+            // remember if SECURE_SECRET = &quot;&quot; it wil not be created
+<span class="nc" id="L265">            final String secureHash = hashAllFields(fields);</span>
+
+            // Validate the Secure Hash (remember MD5 hashes are not case
+            // sensitive)
+<span class="nc bnc" id="L269" title="All 2 branches missed.">            if (!vpcTxnSecureHash.equalsIgnoreCase(secureHash)) {</span>
+                // Secure Hash validation failed, add a data field to be
+                // displayed later.
+                // throw new ApplicationRuntimeException(&quot;Axis Bank Payment
+                // Secure Hash validation failed&quot;);
+            }
+        }
+<span class="nc" id="L276">        return preparePaymentResponse(fields);</span>
+    }
+
+    private PaymentResponse preparePaymentResponse(final Map&lt;String, String&gt; fields) {
+<span class="nc" id="L280">        final PaymentResponse axisResponse = new DefaultPaymentResponse();</span>
+        try {
+            // AXIS Payment Gateway returns Response Code 0(Zero) for successful
+            // transactions, so converted it to 0300
+            // as that is being followed as a standard in other payment
+            // gateways.
+<span class="nc" id="L286">            final String[] merchantRef = fields.get(CollectionConstants.AXIS_MERCHANT_TXN_REF)</span>
+<span class="nc" id="L287">                    .split(CollectionConstants.SEPARATOR_HYPHEN);</span>
+<span class="nc" id="L288">            final String receiptId = merchantRef[1];</span>
+<span class="nc" id="L289">            final String ulbCode = merchantRef[0];</span>
+            final ReceiptHeader receiptHeader;
+<span class="nc" id="L291">            final Query qry = entityManager.createNamedQuery(CollectionConstants.QUERY_RECEIPT_BY_ID_AND_CITYCODE);</span>
+<span class="nc" id="L292">            qry.setParameter(1, Long.valueOf(receiptId));</span>
+<span class="nc" id="L293">            qry.setParameter(2, ulbCode);</span>
+<span class="nc" id="L294">            receiptHeader = (ReceiptHeader) qry.getSingleResult();</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">            axisResponse.setAuthStatus(&quot;0&quot;.equals(fields.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE))</span>
+                    ? CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS
+<span class="nc" id="L297">                    : fields.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE));</span>
+<span class="nc" id="L298">            axisResponse.setErrorDescription(fields.get(CollectionConstants.AXIS_RESP_MESSAGE));</span>
+<span class="nc" id="L299">            axisResponse.setAdditionalInfo6(receiptHeader.getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L300">            axisResponse.setReceiptId(receiptId);</span>
+<span class="nc" id="L301">            axisResponse.setAdditionalInfo2(fields.get(CollectionConstants.AXIS_ORDER_INFO));</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">            if (axisResponse.getAuthStatus().equals(CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS)) {</span>
+<span class="nc" id="L303">                axisResponse.setTxnAmount(</span>
+<span class="nc" id="L304">                        new BigDecimal(fields.get(CollectionConstants.AXIS_AMOUNT)).divide(PAISE_RUPEE_CONVERTER));</span>
+<span class="nc" id="L305">                axisResponse.setTxnReferenceNo(fields.get(CollectionConstants.AXIS_TXN_NO));</span>
+<span class="nc" id="L306">                axisResponse.setTxnDate(getTransactionDate(fields.get(CollectionConstants.AXIS_BATCH_NO)));</span>
+            }
+<span class="nc" id="L308">        } catch (final Exception exp) {</span>
+<span class="nc" id="L309">            LOGGER.error(exp);</span>
+<span class="nc" id="L310">            throw new ApplicationRuntimeException(&quot;Exception during prepare payment response&quot; + exp.getMessage());</span>
+<span class="nc" id="L311">        }</span>
+<span class="nc" id="L312">        return axisResponse;</span>
+    }
+
+    /*
+     * This method takes a data String and returns a predefined value if empty If data Sting is null, returns string
+     * &quot;No Value Returned&quot;, else returns input
+     * @param in String containing the data String
+     * @return String containing the output String
+     */
+    private static String null2unknown(final String in) {
+<span class="nc bnc" id="L322" title="All 4 branches missed.">        if (in == null || in.length() == 0)</span>
+<span class="nc" id="L323">            return NO_VALUE_RETURNED;</span>
+        else
+<span class="nc" id="L325">            return in;</span>
+    } // null2unknown()
+
+    /**
+     * This method is for creating a URL query string.
+     *
+     * @param buf is the inital URL for appending the encoded fields to
+     * @param fields is the input parameters from the order page
+     */
+    @SuppressWarnings({ &quot;rawtypes&quot;, &quot;unchecked&quot; })
+    // Method for creating a URL query string
+    private void appendQueryFields(final StringBuilder buf, final LinkedHashMap&lt;String, String&gt; fields) {
+
+        // create a list
+<span class="nc" id="L339">        final List fieldNames = new ArrayList(fields.keySet());</span>
+<span class="nc" id="L340">        final Iterator itr = fieldNames.iterator();</span>
+
+        // move through the list and create a series of URL key/value pairs
+<span class="nc bnc" id="L343" title="All 2 branches missed.">        while (itr.hasNext()) {</span>
+<span class="nc" id="L344">            final String fieldName = (String) itr.next();</span>
+<span class="nc" id="L345">            final String fieldValue = fields.get(fieldName);</span>
+
+<span class="nc bnc" id="L347" title="All 4 branches missed.">            if (fieldValue != null &amp;&amp; fieldValue.length() &gt; 0)</span>
+                // append the URL parameters
+                try {
+<span class="nc" id="L350">                buf.append(URLEncoder.encode(fieldName, UTF8));</span>
+<span class="nc" id="L351">                buf.append('=');</span>
+<span class="nc" id="L352">                buf.append(URLEncoder.encode(fieldValue, UTF8));</span>
+<span class="nc" id="L353">                } catch (final UnsupportedEncodingException e) {</span>
+<span class="nc" id="L354">                LOGGER.error(&quot;Error appending QueryFields&quot; + e);</span>
+<span class="nc" id="L355">                throw new ApplicationRuntimeException(e.getMessage());</span>
+<span class="nc" id="L356">                }</span>
+            // add a '&amp;' to the end if we have more fields coming.
+<span class="nc bnc" id="L358" title="All 2 branches missed.">            if (itr.hasNext())</span>
+<span class="nc" id="L359">                buf.append('&amp;');</span>
+<span class="nc" id="L360">        }</span>
+<span class="nc" id="L361">    } // appendQueryFields()</span>
+
+    @Transactional
+    public PaymentResponse createOfflinePaymentRequest(final OnlinePayment onlinePayment) {
+<span class="nc" id="L365">        LOGGER.debug(&quot;Inside createOfflinePaymentRequest&quot;);</span>
+<span class="nc" id="L366">        final PaymentResponse axisResponse = new DefaultPaymentResponse();</span>
+        try {
+<span class="nc" id="L368">            final HttpPost httpPost = new HttpPost(collectionApplicationProperties.axisReconcileUrl());</span>
+<span class="nc" id="L369">            httpPost.setEntity(prepareEncodedFormEntity(onlinePayment));</span>
+<span class="nc" id="L370">            final CloseableHttpClient httpclient = HttpClients.createDefault();</span>
+            CloseableHttpResponse response;
+            HttpEntity responseAxis;
+<span class="nc" id="L373">            response = httpclient.execute(httpPost);</span>
+<span class="nc" id="L374">            LOGGER.debug(&quot;Response Status &gt;&gt;&gt;&gt;&gt;&quot; + response.getStatusLine());</span>
+<span class="nc" id="L375">            responseAxis = response.getEntity();</span>
+<span class="nc" id="L376">            final Map&lt;String, String&gt; responseAxisMap = prepareResponseMap(responseAxis.getContent());</span>
+<span class="nc" id="L377">            axisResponse.setAdditionalInfo6(</span>
+<span class="nc" id="L378">                    onlinePayment.getReceiptHeader().getConsumerCode().replace(&quot;-&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;&quot;));</span>
+<span class="nc" id="L379">            axisResponse.setReceiptId(onlinePayment.getReceiptHeader().getId().toString());</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">            if (null != responseAxisMap.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE)</span>
+<span class="nc bnc" id="L381" title="All 2 branches missed.">                    &amp;&amp; !&quot;&quot;.equals(responseAxisMap.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE))) {</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">                axisResponse.setAuthStatus(null != responseAxisMap.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE)</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">                        &amp;&amp; &quot;0&quot;.equals(responseAxisMap.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE))</span>
+                                ? CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS
+<span class="nc" id="L385">                                : responseAxisMap.get(CollectionConstants.AXIS_TXN_RESPONSE_CODE));</span>
+<span class="nc" id="L386">                axisResponse.setErrorDescription(responseAxisMap.get(CollectionConstants.AXIS_RESP_MESSAGE));</span>
+
+<span class="nc bnc" id="L388" title="All 2 branches missed.">                if (CollectionConstants.PGI_AUTHORISATION_CODE_SUCCESS.equals(axisResponse.getAuthStatus())) {</span>
+<span class="nc" id="L389">                    axisResponse.setTxnReferenceNo(responseAxisMap.get(CollectionConstants.AXIS_TXN_NO));</span>
+<span class="nc" id="L390">                    axisResponse.setTxnAmount(new BigDecimal(responseAxisMap.get(CollectionConstants.AXIS_AMOUNT))</span>
+<span class="nc" id="L391">                            .divide(PAISE_RUPEE_CONVERTER));</span>
+<span class="nc" id="L392">                    axisResponse.setAdditionalInfo2(responseAxisMap.get(CollectionConstants.AXIS_ORDER_INFO));</span>
+<span class="nc" id="L393">                    axisResponse.setTxnDate(getTransactionDate(responseAxisMap.get(CollectionConstants.AXIS_BATCH_NO)));</span>
+                }
+<span class="nc bnc" id="L395" title="All 2 branches missed.">            } else if (null != responseAxisMap.get(CollectionConstants.AXIS_CHECK_DR_EXISTS)</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">                    &amp;&amp; &quot;N&quot;.equals(responseAxisMap.get(CollectionConstants.AXIS_CHECK_DR_EXISTS))) {</span>
+<span class="nc" id="L397">                axisResponse.setErrorDescription(CollectionConstants.AXIS_FAILED_ABORTED_MESSAGE);</span>
+<span class="nc" id="L398">                axisResponse.setAuthStatus(CollectionConstants.AXIS_ABORTED_AUTH_STATUS);</span>
+            }
+<span class="nc" id="L400">            LOGGER.debug(</span>
+<span class="nc" id="L401">                    &quot;receiptid=&quot; + axisResponse.getReceiptId() + &quot;consumercode=&quot; + axisResponse.getAdditionalInfo6());</span>
+<span class="nc" id="L402">        } catch (final Exception exp) {</span>
+<span class="nc" id="L403">            LOGGER.error(exp);</span>
+<span class="nc" id="L404">            throw new ApplicationRuntimeException(&quot;Exception during create offline requests&quot; + exp.getMessage());</span>
+<span class="nc" id="L405">        }</span>
+<span class="nc" id="L406">        return axisResponse;</span>
+    }
+
+    private UrlEncodedFormEntity prepareEncodedFormEntity(final OnlinePayment onlinePayment) {
+<span class="nc" id="L410">        final List&lt;NameValuePair&gt; formData = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L411">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_VERSION,</span>
+<span class="nc" id="L412">                collectionApplicationProperties.axisVersion()));</span>
+<span class="nc" id="L413">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_COMMAND,</span>
+<span class="nc" id="L414">                collectionApplicationProperties.axisCommandQuery()));</span>
+<span class="nc" id="L415">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_ACCESS_CODE,</span>
+<span class="nc" id="L416">                collectionApplicationProperties.axisAccessCode()));</span>
+<span class="nc" id="L417">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_MERCHANT,</span>
+<span class="nc" id="L418">                collectionApplicationProperties.axisMerchant()));</span>
+<span class="nc" id="L419">        final City cityWebsite = cityService.getCityByURL(ApplicationThreadLocals.getDomainName());</span>
+<span class="nc" id="L420">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_MERCHANT_TXN_REF, cityWebsite.getCode()</span>
+<span class="nc" id="L421">                + CollectionConstants.SEPARATOR_HYPHEN + onlinePayment.getReceiptHeader().getId().toString()));</span>
+<span class="nc" id="L422">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_OPERATOR_ID,</span>
+<span class="nc" id="L423">                collectionApplicationProperties.axisOperator()));</span>
+<span class="nc" id="L424">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_PASSWORD,</span>
+<span class="nc" id="L425">                collectionApplicationProperties.axisPassword()));</span>
+<span class="nc" id="L426">        formData.add(new BasicNameValuePair(CollectionConstants.AXIS_ORDER_INFO,</span>
+<span class="nc" id="L427">                cityWebsite.getCode() + CollectionConstants.SEPARATOR_HYPHEN + cityWebsite.getName()));</span>
+<span class="nc" id="L428">        UrlEncodedFormEntity urlEncodedFormEntity = null;</span>
+        try {
+<span class="nc" id="L430">            urlEncodedFormEntity = new UrlEncodedFormEntity(formData);</span>
+<span class="nc" id="L431">        } catch (final UnsupportedEncodingException e1) {</span>
+<span class="nc" id="L432">            LOGGER.error(&quot;Error in Create Offline Payment Request&quot; + e1);</span>
+<span class="nc" id="L433">        }</span>
+<span class="nc" id="L434">        return urlEncodedFormEntity;</span>
+    }
+
+    private Date getTransactionDate(final String transDate) throws ApplicationException {
+<span class="nc" id="L438">        final SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyyMMdd&quot;, Locale.getDefault());</span>
+        try {
+<span class="nc" id="L440">            return sdf.parse(transDate);</span>
+<span class="nc" id="L441">        } catch (final ParseException e) {</span>
+<span class="nc" id="L442">            LOGGER.error(&quot;Error occured in parsing the transaction date [&quot; + transDate + &quot;]&quot;, e);</span>
+<span class="nc" id="L443">            throw new ApplicationException(&quot;.transactiondate.parse.error&quot;, e);</span>
+        }
+    }
+
+    private Map&lt;String, String&gt; prepareResponseMap(final InputStream responseContent) {
+        String[] pairs;
+<span class="nc" id="L449">        final BufferedReader reader = new BufferedReader(new InputStreamReader(responseContent));</span>
+<span class="nc" id="L450">        final StringBuilder data = new StringBuilder();</span>
+        String line;
+        try {
+<span class="nc bnc" id="L453" title="All 2 branches missed.">            while ((line = reader.readLine()) != null)</span>
+<span class="nc" id="L454">                data.append(line);</span>
+<span class="nc" id="L455">            reader.close();</span>
+<span class="nc" id="L456">        } catch (final IOException e) {</span>
+<span class="nc" id="L457">            LOGGER.error(&quot;Error Reading InsputStrem from Axis Bank Response&quot; + e);</span>
+<span class="nc" id="L458">        }</span>
+<span class="nc" id="L459">        LOGGER.info(&quot;ResponseAXIS: &quot; + data.toString());</span>
+<span class="nc" id="L460">        pairs = data.toString().split(&quot;&amp;&quot;);</span>
+<span class="nc" id="L461">        final Map&lt;String, String&gt; responseAxisMap = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L462" title="All 2 branches missed.">        for (final String pair : pairs) {</span>
+<span class="nc" id="L463">            final int idx = pair.indexOf('=');</span>
+            try {
+<span class="nc" id="L465">                responseAxisMap.put(URLDecoder.decode(pair.substring(0, idx), UTF8),</span>
+<span class="nc" id="L466">                        URLDecoder.decode(pair.substring(idx + 1), UTF8));</span>
+<span class="nc" id="L467">            } catch (final UnsupportedEncodingException e) {</span>
+<span class="nc" id="L468">                LOGGER.error(&quot;Error Decoding Axis Bank Response&quot; + e);</span>
+<span class="nc" id="L469">            }</span>
+        }
+<span class="nc" id="L471">        return responseAxisMap;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

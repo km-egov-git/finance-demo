@@ -1,0 +1,1304 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationDocumentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.elasticsearch.service.es</a> &gt; <span class="el_source">ApplicationDocumentService.java</span></div><h1>ApplicationDocumentService.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.elasticsearch.service.es;
+
+import org.apache.commons.lang3.StringUtils;
+import org.egov.infra.config.mapper.BeanMapperConfiguration;
+import org.egov.infra.elasticsearch.entity.ApplicationIndex;
+import org.egov.infra.elasticsearch.entity.bean.ApplicationDetails;
+import org.egov.infra.elasticsearch.entity.bean.ApplicationIndexRequest;
+import org.egov.infra.elasticsearch.entity.bean.ApplicationIndexResponse;
+import org.egov.infra.elasticsearch.entity.bean.ApplicationInfo;
+import org.egov.infra.elasticsearch.entity.bean.ServiceDetails;
+import org.egov.infra.elasticsearch.entity.bean.ServiceGroupDetails;
+import org.egov.infra.elasticsearch.entity.bean.ServiceGroupTrend;
+import org.egov.infra.elasticsearch.entity.bean.SourceTrend;
+import org.egov.infra.elasticsearch.entity.bean.Trend;
+import org.egov.infra.elasticsearch.entity.es.ApplicationDocument;
+import org.egov.infra.elasticsearch.repository.es.ApplicationDocumentRepository;
+import org.egov.infra.utils.DateUtils;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
+import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCountBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@Transactional(readOnly = true)
+public class ApplicationDocumentService {
+
+    private static final String OWNER_NAME = &quot;ownerName&quot;;
+
+    private static final String CITY_CODE = &quot;cityCode&quot;;
+
+    private static final String CITY_GRADE = &quot;cityGrade&quot;;
+
+    private static final String APPLICATION_DATE = &quot;applicationDate&quot;;
+
+    private static final String CITY_NAME = &quot;cityName&quot;;
+
+    private static final String SOURCE_SYSTEM = &quot;SYSTEM&quot;;
+
+    private static final String SOURCE_ONLINE = &quot;ONLINE&quot;;
+
+    private static final String SOURCE_MEESEVA = &quot;MEESEVA&quot;;
+
+    private static final String SOURCE_CSC = &quot;CSC&quot;;
+
+    private static final String SLA_GAP = &quot;slaGap&quot;;
+
+    private static final String OTHERS_TOTAL = &quot;othersTotal&quot;;
+
+    private static final String ULB_TOTAL = &quot;ulbTotal&quot;;
+
+    private static final String ONLINE_TOTAL = &quot;onlineTotal&quot;;
+
+    private static final String MEESEVA_TOTAL = &quot;meesevaTotal&quot;;
+
+    private static final String CSC_TOTAL = &quot;cscTotal&quot;;
+
+    private static final String SLAB4BEYOND_SLA = &quot;slab4beyondSLA&quot;;
+
+    private static final String SLAB3BEYOND_SLA = &quot;slab3beyondSLA&quot;;
+
+    private static final String SLAB2BEYOND_SLA = &quot;slab2beyondSLA&quot;;
+
+    private static final String SLAB1BEYOND_SLA = &quot;slab1beyondSLA&quot;;
+
+    private static final String OPEN_BEYOND_SLA = &quot;openBeyondSLA&quot;;
+
+    private static final String OPEN_WITHIN_SLA = &quot;openWithinSLA&quot;;
+
+    private static final String CLOSED_BEYOND_SLA = &quot;closedBeyondSLA&quot;;
+
+    private static final String CLOSED_WITHIN_SLA = &quot;closedWithinSLA&quot;;
+
+    private static final String CHANNEL = &quot;channel&quot;;
+
+    private static final String APPLICATION_TYPE = &quot;applicationType&quot;;
+
+    private static final String REGION_NAME = &quot;regionName&quot;;
+
+    private static final String MODULE_NAME = &quot;moduleName&quot;;
+
+    private static final String APPLICATION_NUMBER = &quot;applicationNumber&quot;;
+
+    private static final String APPLICATIONS_INDEX = &quot;applications&quot;;
+
+    private static final String IS_CLOSED = &quot;isClosed&quot;;
+
+    private static final String DATE_AGGR = &quot;date_aggr&quot;;
+
+    private static final String DISTRICT_NAME = &quot;districtName&quot;;
+
+    private static final String OPEN = &quot;open&quot;;
+
+    private static final String CLOSED = &quot;closed&quot;;
+
+    private static final String RECEIVED = &quot;received&quot;;
+
+    private static final String TOTAL_COUNT = &quot;total_count&quot;;
+
+    private static final String TOTAL_BEYOND_SLA = &quot;totalBeyondSLA&quot;;
+
+    private static final String TOTAL_WITHIN_SLA = &quot;totalWithinSLA&quot;; 
+    
+    private static final String MODULE_PROPERTY_TAX = &quot;Property Tax&quot;;
+    
+    private static final String MODULE_WATER_TAX = &quot;Water Charges&quot;;
+    
+    private static final String MODULE_TRADE_LICENSE = &quot;Trade License&quot;;
+    
+    private static final String MODULE_ADVERTISEMENT_TAX = &quot;Advertisement Tax&quot;;
+    
+    private static final String MODULE_MARRIAGE_REGISTRATION = &quot;Marriage Registration&quot;;
+    
+    private static final String SLA = &quot;sla&quot;;
+
+    private static final String REJECTED = &quot;REJECTED&quot;;
+    private static final String APPROVED = &quot;APPROVED&quot;;
+    private static final String COLUMN_APPROVED=&quot;approved&quot;;
+    private final ApplicationDocumentRepository applicationDocumentRepository;
+
+    @Autowired
+    private BeanMapperConfiguration beanMapperConfiguration;
+
+//    @Autowired
+    private ElasticsearchTemplate elasticsearchTemplate;
+
+    private static final String DATE_FORMAT_YYYYMMDD = &quot;yyyy-MM-dd&quot;;
+<span class="nc" id="L203">    private static final SimpleDateFormat DATEFORMATTER_YYYY_MM_DD = new SimpleDateFormat(DATE_FORMAT_YYYYMMDD);</span>
+
+    @Autowired
+<span class="nc" id="L206">    public ApplicationDocumentService(ApplicationDocumentRepository applicationDocumentRepository) {</span>
+<span class="nc" id="L207">        this.applicationDocumentRepository = applicationDocumentRepository;</span>
+<span class="nc" id="L208">    }</span>
+
+    @Transactional
+    public ApplicationDocument createOrUpdateApplicationDocument(ApplicationIndex applicationIndex) {
+<span class="nc" id="L212">        ApplicationDocument applicationDocument = beanMapperConfiguration.map(applicationIndex, ApplicationDocument.class);</span>
+<span class="nc" id="L213">        return applicationDocumentRepository.save(applicationDocument);</span>
+    }
+
+    /**
+     * Provides Applications details
+     * @param applicationIndexRequest
+     * @return ApplicationIndexResponse
+     */
+    public ApplicationIndexResponse findAllApplications(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L222">        ApplicationIndexResponse applicationIndexResponse = new ApplicationIndexResponse();</span>
+        Aggregations aggregation;
+        ValueCount valueCount;
+<span class="nc" id="L225">        Date fromDate = null;</span>
+<span class="nc" id="L226">        Date toDate = null;</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L229">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L230">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+<span class="nc" id="L233">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, RECEIVED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L236">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">            applicationIndexResponse.setTotalReceived(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L239">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, CLOSED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L242">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">            applicationIndexResponse.setTotalClosed(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L245">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, OPEN, StringUtils.EMPTY, 0);</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L247">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">            applicationIndexResponse.setTotalOpen(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+
+        // For today's counts
+<span class="nc" id="L252">        fromDate = new Date();</span>
+<span class="nc" id="L253">        toDate = DateUtils.addDays(new Date(), 1);</span>
+<span class="nc" id="L254">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, CLOSED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L257">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">            applicationIndexResponse.setTodaysClosed(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L260">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, RECEIVED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L262" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L263">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">            applicationIndexResponse.setTodaysReceived(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L266">        List&lt;Trend&gt; applicationTrends = getMonthwiseApplicationTrends(applicationIndexRequest);</span>
+<span class="nc" id="L267">        applicationIndexResponse.setTrend(applicationTrends);</span>
+<span class="nc" id="L268">        List&lt;ApplicationDetails&gt; applicationDetails = getAnalysisTableResponse(applicationIndexRequest);</span>
+<span class="nc" id="L269">        applicationIndexResponse.setDetails(applicationDetails);</span>
+<span class="nc" id="L270">        return applicationIndexResponse;</span>
+    }
+
+    /**
+     * Provides Service group wise applications details
+     * 
+     * @param applicationIndexRequest
+     * @return ApplicationIndexResponse
+     */
+    public ApplicationIndexResponse findServiceGroupWiseApplications(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L280">        ApplicationIndexResponse applicationIndexResponse = new ApplicationIndexResponse();</span>
+        Aggregations aggregation;
+        ValueCount valueCount;
+<span class="nc" id="L283">        Date fromDate = null;</span>
+<span class="nc" id="L284">        Date toDate = null;</span>
+<span class="nc" id="L285">        List&lt;ServiceGroupDetails&gt; serviceGroups = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L288">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L289">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+<span class="nc" id="L292">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, MODULE_NAME, RECEIVED, MODULE_NAME,</span>
+                0);
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L295">            StringTerms aggr = aggregation.get(MODULE_NAME);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">            for (Terms.Bucket entry : aggr.getBuckets()) {</span>
+<span class="nc" id="L297">                ServiceGroupDetails serviceGroup = new ServiceGroupDetails();</span>
+<span class="nc" id="L298">                valueCount = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L299">                serviceGroup.setServiceGroup(String.valueOf(entry.getKey()));</span>
+<span class="nc" id="L300">                serviceGroup.setTotalReceived(valueCount.getValue());</span>
+<span class="nc" id="L301">                serviceGroups.add(serviceGroup);</span>
+<span class="nc" id="L302">            }</span>
+        }
+<span class="nc" id="L304">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, MODULE_NAME, OPEN, MODULE_NAME, 0);</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L306">            StringTerms aggr = aggregation.get(MODULE_NAME);</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">            for (Terms.Bucket entry : aggr.getBuckets()) {</span>
+<span class="nc" id="L308">                String moduleName = String.valueOf(entry.getKey());</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">                for (ServiceGroupDetails serviceGroup : serviceGroups) {</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">                    if (serviceGroup.getServiceGroup().equals(moduleName)) {</span>
+<span class="nc" id="L311">                        valueCount = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L312">                        serviceGroup.setTotalOpen(valueCount.getValue());</span>
+<span class="nc" id="L313">                        break;</span>
+                    }
+<span class="nc" id="L315">                }</span>
+<span class="nc" id="L316">            }</span>
+        }
+<span class="nc" id="L318">        applicationIndexResponse.setServiceGroupDetails(serviceGroups);</span>
+<span class="nc" id="L319">        List&lt;ServiceGroupTrend&gt; serviceGroupTrend = getMonthwiseServiceGroupApplicationTrends(applicationIndexRequest);</span>
+<span class="nc" id="L320">        applicationIndexResponse.setServiceGroupTrend(serviceGroupTrend);</span>
+<span class="nc" id="L321">        return applicationIndexResponse;</span>
+    }
+
+    /**
+     * Provides month-wise service group application trends - received/open
+     * @param applicationIndexRequest
+     * @return list
+     */
+    public List&lt;ServiceGroupTrend&gt; getMonthwiseServiceGroupApplicationTrends(
+            ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L331">        Date fromDate = null;</span>
+<span class="nc" id="L332">        Date toDate = null;</span>
+<span class="nc" id="L333">        Map&lt;Integer, String&gt; monthValuesMap = DateUtils.getAllMonthsWithFullNames();</span>
+<span class="nc" id="L334">        List&lt;ServiceGroupTrend&gt; receivedApplications = new ArrayList&lt;&gt;();</span>
+        Aggregations aggregation;
+
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L339">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L340">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+
+<span class="nc" id="L344">        aggregation = getMonthwiseServiceGroupApplications(applicationIndexRequest, fromDate,</span>
+                toDate, RECEIVED);
+
+<span class="nc" id="L347">        Histogram aggr = aggregation.get(DATE_AGGR);</span>
+<span class="nc" id="L348">        prepareMonthwiseServiceGroupDetails(monthValuesMap, receivedApplications, aggr);</span>
+
+<span class="nc" id="L350">        return receivedApplications;</span>
+    }
+
+    /**
+     * Provides Source wise applications details
+     * 
+     * @param applicationIndexRequest
+     * @return ApplicationIndexResponse
+     */
+    public ApplicationIndexResponse findSourceWiseApplicationDetails(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L360">        ApplicationIndexResponse applicationIndexResponse = new ApplicationIndexResponse();</span>
+        Aggregations aggregation;
+        ValueCount valueCount;
+<span class="nc" id="L363">        Date fromDate = null;</span>
+<span class="nc" id="L364">        Date toDate = null;</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L367">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L368">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+<span class="nc" id="L371">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, RECEIVED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L373" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L374">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">            applicationIndexResponse.setTotalReceived(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L377">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, MEESEVA_TOTAL,</span>
+                StringUtils.EMPTY,
+                0);
+<span class="nc bnc" id="L380" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L381">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">            applicationIndexResponse.setTotalMeeseva(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L384">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, CSC_TOTAL,</span>
+                StringUtils.EMPTY,
+                0);
+<span class="nc bnc" id="L387" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L388">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">            applicationIndexResponse.setTotalCsc(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L391">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, ULB_TOTAL,</span>
+                StringUtils.EMPTY,
+                0);
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L395">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">            applicationIndexResponse.setTotalUlb(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L398">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, ONLINE_TOTAL,</span>
+                StringUtils.EMPTY,
+                0);
+<span class="nc bnc" id="L401" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L402">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            applicationIndexResponse.setTotalOnline(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L405">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, OTHERS_TOTAL,</span>
+                StringUtils.EMPTY,
+                0);
+<span class="nc bnc" id="L408" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L409">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L410" title="All 2 branches missed.">            applicationIndexResponse.setTotalOthers(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+
+<span class="nc" id="L413">        List&lt;SourceTrend&gt; sourceTrend = getMonthwiseSourceApplicationTrends(applicationIndexRequest);</span>
+<span class="nc" id="L414">        applicationIndexResponse.setSourceTrend(sourceTrend);</span>
+<span class="nc" id="L415">        return applicationIndexResponse;</span>
+    }
+
+    /**
+     * Provides month-wise source application trends - received/open
+     * @param applicationIndexRequest
+     * @return list
+     */
+    public List&lt;SourceTrend&gt; getMonthwiseSourceApplicationTrends(
+            ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L425">        Date fromDate = null;</span>
+<span class="nc" id="L426">        Date toDate = null;</span>
+<span class="nc" id="L427">        Map&lt;Integer, String&gt; monthValuesMap = DateUtils.getAllMonthsWithFullNames();</span>
+<span class="nc" id="L428">        List&lt;SourceTrend&gt; receivedApplications = new ArrayList&lt;&gt;();</span>
+        Aggregations aggregation;
+
+<span class="nc bnc" id="L431" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L433">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L434">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+
+<span class="nc" id="L438">        aggregation = getMonthwiseSourceApplications(applicationIndexRequest, fromDate,</span>
+                toDate, RECEIVED);
+
+<span class="nc" id="L441">        Histogram aggr = aggregation.get(DATE_AGGR);</span>
+<span class="nc" id="L442">        prepareMonthwiseSourceDetails(monthValuesMap, receivedApplications, aggr);</span>
+
+<span class="nc" id="L444">        return receivedApplications;</span>
+    }
+
+    private void prepareMonthwiseSourceDetails(Map&lt;Integer, String&gt; monthValuesMap,
+            List&lt;SourceTrend&gt; applications,
+            Histogram aggr) {
+        String[] dateArr;
+        Integer month;
+        String monthName;
+<span class="nc bnc" id="L453" title="All 2 branches missed.">        for (Histogram.Bucket entry : aggr.getBuckets()) {</span>
+<span class="nc" id="L454">            SourceTrend sourceTrend = new SourceTrend();</span>
+<span class="nc" id="L455">            dateArr = entry.getKeyAsString().split(&quot;T&quot;);</span>
+<span class="nc" id="L456">            month = Integer.valueOf(dateArr[0].split(&quot;-&quot;, 3)[1]);</span>
+<span class="nc" id="L457">            monthName = monthValuesMap.get(month);</span>
+<span class="nc" id="L458">            StringTerms termAggr = entry.getAggregations().get(CHANNEL);</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">            for (Bucket term : termAggr.getBuckets()) {</span>
+<span class="nc" id="L460">                populateTotal(sourceTrend, term, term.getKeyAsString());</span>
+<span class="nc" id="L461">            }</span>
+<span class="nc" id="L462">            sourceTrend.setMonth(monthName);</span>
+<span class="nc" id="L463">            applications.add(sourceTrend);</span>
+<span class="nc" id="L464">        }</span>
+<span class="nc" id="L465">    }</span>
+
+    private void populateTotal(final SourceTrend sourceTrend, final Bucket term, final String channel) {
+<span class="nc" id="L468">        final ValueCount countAggr = term.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">        if (SOURCE_CSC.equals(channel))</span>
+<span class="nc" id="L470">            sourceTrend.setTotalCsc(countAggr.getValue());</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">        else if (SOURCE_MEESEVA.equals(channel))</span>
+<span class="nc" id="L472">            sourceTrend.setTotalMeeseva(countAggr.getValue());</span>
+<span class="nc bnc" id="L473" title="All 2 branches missed.">        else if (SOURCE_SYSTEM.equals(channel))</span>
+<span class="nc" id="L474">            sourceTrend.setTotalUlb(countAggr.getValue());</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">        else if (SOURCE_ONLINE.equals(channel))</span>
+<span class="nc" id="L476">            sourceTrend.setTotalOnline(countAggr.getValue());</span>
+        else
+<span class="nc" id="L478">            sourceTrend.setTotalOthers(countAggr.getValue());</span>
+<span class="nc" id="L479">    }</span>
+
+    @SuppressWarnings(&quot;rawtypes&quot;)
+    private Aggregations getMonthwiseSourceApplications(ApplicationIndexRequest applicationIndexRequest,
+            Date fromDate, Date toDate, String status) {
+
+<span class="nc" id="L485">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc bnc" id="L487" title="All 2 branches missed.">        if (CLOSED.equalsIgnoreCase(status))</span>
+<span class="nc" id="L488">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc bnc" id="L489" title="All 2 branches missed.">        else if (OPEN.equalsIgnoreCase(status))</span>
+<span class="nc" id="L490">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0));</span>
+
+<span class="nc" id="L492">        AggregationBuilder aggregationBuilder = AggregationBuilders.dateHistogram(DATE_AGGR).field(APPLICATION_DATE)</span>
+<span class="nc" id="L493">                .interval(DateHistogramInterval.MONTH);</span>
+
+<span class="nc" id="L495">        aggregationBuilder.subAggregation(AggregationBuilders.terms(CHANNEL).field(CHANNEL)</span>
+<span class="nc" id="L496">                .subAggregation(AggregationBuilders.count(TOTAL_COUNT).field(APPLICATION_NUMBER)));</span>
+
+<span class="nc" id="L498">        SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L499">                .withQuery(boolQuery)</span>
+<span class="nc" id="L500">                .addAggregation(aggregationBuilder).build();</span>
+
+<span class="nc" id="L502">        return elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L503">                response -&gt; response.getAggregations());</span>
+    }
+
+    private void prepareMonthwiseServiceGroupDetails(Map&lt;Integer, String&gt; monthValuesMap,
+            List&lt;ServiceGroupTrend&gt; applications,
+            Histogram aggr) {
+        String[] dateArr;
+        Integer month;
+        ValueCount countAggr;
+        String monthName;
+<span class="nc bnc" id="L513" title="All 2 branches missed.">        for (Histogram.Bucket entry : aggr.getBuckets()) {</span>
+<span class="nc" id="L514">            ServiceGroupTrend serviceGroupTrend = new ServiceGroupTrend();</span>
+<span class="nc" id="L515">            dateArr = entry.getKeyAsString().split(&quot;T&quot;);</span>
+<span class="nc" id="L516">            month = Integer.valueOf(dateArr[0].split(&quot;-&quot;, 3)[1]);</span>
+<span class="nc" id="L517">            monthName = monthValuesMap.get(month);</span>
+<span class="nc" id="L518">            StringTerms termAggr = entry.getAggregations().get(MODULE_NAME);</span>
+<span class="nc" id="L519">            List&lt;ServiceGroupDetails&gt; serviceGroupDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L520" title="All 2 branches missed.">            for (Bucket term : termAggr.getBuckets()) {</span>
+<span class="nc" id="L521">                ServiceGroupDetails details = new ServiceGroupDetails();</span>
+<span class="nc" id="L522">                countAggr = term.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L523">                details.setServiceGroup(term.getKeyAsString());</span>
+<span class="nc" id="L524">                details.setTotalReceived(countAggr.getValue());</span>
+<span class="nc" id="L525">                serviceGroupDetails.add(details);</span>
+<span class="nc" id="L526">            }</span>
+<span class="nc" id="L527">            serviceGroupTrend.setMonth(monthName);</span>
+<span class="nc" id="L528">            serviceGroupTrend.setServiceGroupDetails(serviceGroupDetails);</span>
+<span class="nc" id="L529">            applications.add(serviceGroupTrend);</span>
+<span class="nc" id="L530">        }</span>
+<span class="nc" id="L531">    }</span>
+
+    private BoolQueryBuilder prepareWhereClause(ApplicationIndexRequest applicationIndexRequest, Date fromDate, Date toDate) {
+<span class="nc" id="L534">        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()</span>
+<span class="nc" id="L535">                .mustNot(QueryBuilders.matchQuery(APPLICATION_NUMBER, StringUtils.EMPTY));</span>
+
+<span class="nc bnc" id="L537" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getRegion()))</span>
+<span class="nc" id="L538">            boolQuery = boolQuery</span>
+<span class="nc" id="L539">                    .filter(QueryBuilders.matchQuery(REGION_NAME, applicationIndexRequest.getRegion()));</span>
+<span class="nc bnc" id="L540" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getDistrict()))</span>
+<span class="nc" id="L541">            boolQuery = boolQuery</span>
+<span class="nc" id="L542">                    .filter(QueryBuilders.matchQuery(DISTRICT_NAME, applicationIndexRequest.getDistrict()));</span>
+<span class="nc bnc" id="L543" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getGrade()))</span>
+<span class="nc" id="L544">            boolQuery = boolQuery</span>
+<span class="nc" id="L545">                    .filter(QueryBuilders.matchQuery(CITY_GRADE, applicationIndexRequest.getGrade()));</span>
+<span class="nc bnc" id="L546" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getUlbCode()))</span>
+<span class="nc" id="L547">            boolQuery = boolQuery</span>
+<span class="nc" id="L548">                    .filter(QueryBuilders.matchQuery(CITY_CODE, applicationIndexRequest.getUlbCode()));</span>
+<span class="nc bnc" id="L549" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getServiceGroup()))</span>
+<span class="nc" id="L550">            boolQuery = boolQuery</span>
+<span class="nc" id="L551">                    .filter(QueryBuilders.matchQuery(MODULE_NAME, applicationIndexRequest.getServiceGroup()));</span>
+<span class="nc bnc" id="L552" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getService()))</span>
+<span class="nc" id="L553">            boolQuery = boolQuery</span>
+<span class="nc" id="L554">                    .filter(QueryBuilders.matchQuery(APPLICATION_TYPE, applicationIndexRequest.getService()));</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getSource())) {</span>
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">            if (&quot;OTHERS&quot;.equalsIgnoreCase(applicationIndexRequest.getSource()))</span>
+<span class="nc" id="L558">                boolQuery = boolQuery.mustNot(QueryBuilders.termsQuery(CHANNEL,</span>
+<span class="nc" id="L559">                        Arrays.asList(SOURCE_CSC, SOURCE_MEESEVA, SOURCE_ONLINE, SOURCE_SYSTEM)));</span>
+            else
+<span class="nc" id="L561">                boolQuery = boolQuery</span>
+<span class="nc" id="L562">                        .filter(QueryBuilders.matchQuery(CHANNEL, applicationIndexRequest.getSource()));</span>
+        }
+<span class="nc bnc" id="L564" title="All 4 branches missed.">        if (fromDate != null &amp;&amp; toDate != null)</span>
+<span class="nc" id="L565">            boolQuery = boolQuery</span>
+<span class="nc" id="L566">                    .filter(QueryBuilders.rangeQuery(APPLICATION_DATE).gte(DATEFORMATTER_YYYY_MM_DD.format(fromDate))</span>
+<span class="nc" id="L567">                            .lte(DATEFORMATTER_YYYY_MM_DD.format(toDate)).includeUpper(false));</span>
+<span class="nc bnc" id="L568" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFunctionaryCode())) {</span>
+<span class="nc" id="L569">            boolQuery = boolQuery</span>
+<span class="nc" id="L570">                    .filter(QueryBuilders.matchQuery(OWNER_NAME, applicationIndexRequest.getFunctionaryCode()));</span>
+<span class="nc bnc" id="L571" title="All 2 branches missed.">            if (StringUtils.isNotBlank(applicationIndexRequest.getClosed())) {</span>
+<span class="nc bnc" id="L572" title="All 2 branches missed.">                if (&quot;Y&quot;.equalsIgnoreCase(applicationIndexRequest.getClosed()))</span>
+<span class="nc" id="L573">                    boolQuery = boolQuery</span>
+<span class="nc" id="L574">                            .filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+                else
+<span class="nc" id="L576">                    boolQuery = boolQuery</span>
+<span class="nc" id="L577">                            .filter(QueryBuilders.matchQuery(IS_CLOSED, 0));</span>
+            }
+<span class="nc bnc" id="L579" title="All 2 branches missed.">            if (StringUtils.isNotBlank(applicationIndexRequest.getApproved())) {</span>
+<span class="nc bnc" id="L580" title="All 2 branches missed.">                if (REJECTED.equalsIgnoreCase(applicationIndexRequest.getApproved()))</span>
+<span class="nc" id="L581">                    boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1))</span>
+<span class="nc" id="L582">                            .filter(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+                else
+<span class="nc" id="L584">                    boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1))</span>
+<span class="nc" id="L585">                            .filter(QueryBuilders.matchQuery(COLUMN_APPROVED, APPROVED));</span>
+            }
+<span class="nc bnc" id="L587" title="All 2 branches missed.">            if (StringUtils.isNotBlank(applicationIndexRequest.getBeyondSLA()))</span>
+<span class="nc" id="L588">                boolQuery = filterBasedOnSLAForFunctionary(applicationIndexRequest, boolQuery);</span>
+        }
+
+<span class="nc" id="L591">        return boolQuery;</span>
+    }
+
+    private BoolQueryBuilder filterBasedOnSLAForFunctionary(ApplicationIndexRequest applicationIndexRequest,
+            BoolQueryBuilder boolQuery) {
+<span class="nc" id="L596">        BoolQueryBuilder slaQuery = boolQuery;</span>
+<span class="nc bnc" id="L597" title="All 2 branches missed.">        if (&quot;Y&quot;.equalsIgnoreCase(applicationIndexRequest.getBeyondSLA())) {</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">            if (StringUtils.isNotBlank(applicationIndexRequest.getAgeing())) {</span>
+<span class="nc bnc" id="L599" title="All 2 branches missed.">                if (&quot;0-1Wdays&quot;.equalsIgnoreCase(applicationIndexRequest.getAgeing()))</span>
+<span class="nc" id="L600">                    slaQuery = slaQuery</span>
+<span class="nc" id="L601">                            .filter(QueryBuilders.rangeQuery(SLA_GAP).gte(1).lt(8))</span>
+<span class="nc" id="L602">                            .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L603" title="All 2 branches missed.">                else if (&quot;1W-1M&quot;.equalsIgnoreCase(applicationIndexRequest.getAgeing()))</span>
+<span class="nc" id="L604">                    slaQuery = slaQuery</span>
+<span class="nc" id="L605">                            .filter(QueryBuilders.rangeQuery(SLA_GAP).gte(8).lt(31))</span>
+<span class="nc" id="L606">                            .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L607" title="All 2 branches missed.">                else if (&quot;1M-3M&quot;.equalsIgnoreCase(applicationIndexRequest.getAgeing()))</span>
+<span class="nc" id="L608">                    slaQuery = slaQuery</span>
+<span class="nc" id="L609">                            .filter(QueryBuilders.rangeQuery(SLA_GAP).gte(31).lt(91))</span>
+<span class="nc" id="L610">                            .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+                else
+<span class="nc" id="L612">                    slaQuery = slaQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gte(91))</span>
+<span class="nc" id="L613">                            .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+            } else
+<span class="nc" id="L615">                slaQuery = slaQuery</span>
+<span class="nc" id="L616">                        .filter(QueryBuilders.rangeQuery(SLA_GAP).gt(0));</span>
+        } else
+<span class="nc" id="L618">            slaQuery = slaQuery</span>
+<span class="nc" id="L619">                    .filter(QueryBuilders.rangeQuery(SLA_GAP).lte(0));</span>
+<span class="nc" id="L620">        return slaQuery;</span>
+    }
+
+    private Map&lt;String, Long&gt; getAggregationWiseApplicationCounts(ApplicationIndexRequest applicationIndexRequest, Date fromDate,
+            Date toDate,
+            String aggregationName, String status, String aggregationField, int size) {
+<span class="nc" id="L626">        Map&lt;String, Long&gt; aggregationResults = new HashMap&lt;&gt;();</span>
+        ValueCount valueCount;
+<span class="nc" id="L628">        Aggregations aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, aggregationName, status,</span>
+                aggregationField, size);
+<span class="nc" id="L630">        StringTerms cityAggr = aggregation.get(aggregationName);</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">        for (Terms.Bucket entry : cityAggr.getBuckets()) {</span>
+<span class="nc" id="L632">            valueCount = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L633">            aggregationResults.put(String.valueOf(entry.getKey()), valueCount.getValue());</span>
+<span class="nc" id="L634">        }</span>
+<span class="nc" id="L635">        return aggregationResults;</span>
+    }
+
+    /**
+     * Provides analysis table response
+     * @param applicationIndexRequest
+     * @return list
+     */
+    private List&lt;ApplicationDetails&gt; getAnalysisTableResponse(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L644">        List&lt;ApplicationDetails&gt; applicationDetailsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L645">        Date fromDate = null;</span>
+<span class="nc" id="L646">        Date toDate = null;</span>
+<span class="nc" id="L647">        String aggregationField = DISTRICT_NAME;</span>
+<span class="nc" id="L648">        int size = 15;</span>
+        String name;
+        ApplicationDetails applicationDetails;
+<span class="nc" id="L651">        Map detailsForAggregationField = Collections.emptyMap();</span>
+<span class="nc" id="L652">        Map&lt;String, Long&gt; delayDaysMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L653">        Map&lt;String, List&lt;ApplicationDetails&gt;&gt; moduleWiseDetailsMap = new LinkedHashMap&lt;&gt;();</span>
+        List&lt;ApplicationDetails&gt; modulewiseDetails;
+
+<span class="nc bnc" id="L656" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getAggregationLevel())) {</span>
+<span class="nc" id="L657">            Map&lt;String, String&gt; aggrTypeAndSize = fetchAggregationTypeAndSize(applicationIndexRequest.getAggregationLevel());</span>
+<span class="nc" id="L658">            aggregationField = aggrTypeAndSize.get(&quot;aggregationField&quot;);</span>
+<span class="nc" id="L659">            size = Integer.parseInt(aggrTypeAndSize.get(&quot;size&quot;));</span>
+        }
+
+<span class="nc bnc" id="L662" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L663" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L664">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L665">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+
+<span class="nc" id="L669">        Map&lt;String, Long&gt; totalRcvdApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                &quot;totalReceived&quot;, RECEIVED, aggregationField, size);
+<span class="nc" id="L671">        Map&lt;String, Long&gt; totalClosedApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                &quot;totalClosed&quot;, CLOSED, aggregationField, size);
+<span class="nc" id="L673">        Map&lt;String, Long&gt; totalRejectedClosedApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate, &quot;totalRejectedClosed&quot;, &quot;rejectedClosed&quot;, aggregationField, size);
+<span class="nc" id="L675">        Map&lt;String, Long&gt; totalApprovedClosedApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate, &quot;totalApprovedClosed&quot;, &quot;approvedClosed&quot;, aggregationField, size);
+<span class="nc" id="L677">        Map&lt;String, Long&gt; totalOpenApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                &quot;totalOpen&quot;, OPEN, aggregationField, size);
+<span class="nc" id="L679">        Map&lt;String, Long&gt; closedWithinSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                CLOSED_WITHIN_SLA, CLOSED_WITHIN_SLA, aggregationField, size);
+<span class="nc" id="L682">        Map&lt;String, Long&gt; closedBeyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate, CLOSED_BEYOND_SLA, CLOSED_BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L684">        Map&lt;String, Long&gt; openWithinSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                OPEN_WITHIN_SLA, OPEN_WITHIN_SLA, aggregationField, size);
+<span class="nc" id="L687">        Map&lt;String, Long&gt; openBeyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                OPEN_BEYOND_SLA, OPEN_BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L690">        Map&lt;String, Long&gt; slab1beyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                SLAB1BEYOND_SLA, SLAB1BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L693">        Map&lt;String, Long&gt; slab2beyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                SLAB2BEYOND_SLA, SLAB2BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L696">        Map&lt;String, Long&gt; slab3beyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                SLAB3BEYOND_SLA, SLAB3BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L699">        Map&lt;String, Long&gt; slab4beyondSLAApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                SLAB4BEYOND_SLA, SLAB4BEYOND_SLA, aggregationField, size);
+<span class="nc" id="L702">        Map&lt;String, Long&gt; cscApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                CSC_TOTAL, CSC_TOTAL, aggregationField, size);
+<span class="nc" id="L704">        Map&lt;String, Long&gt; meesevaApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate,</span>
+                toDate,
+                MEESEVA_TOTAL, MEESEVA_TOTAL, aggregationField, size);
+<span class="nc" id="L707">        Map&lt;String, Long&gt; onlineApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                ONLINE_TOTAL, ONLINE_TOTAL, aggregationField, size);
+<span class="nc" id="L709">        Map&lt;String, Long&gt; ulbApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                ULB_TOTAL, ULB_TOTAL, aggregationField, size);
+<span class="nc" id="L711">        Map&lt;String, Long&gt; otherApplications = getAggregationWiseApplicationCounts(applicationIndexRequest, fromDate, toDate,</span>
+                OTHERS_TOTAL, OTHERS_TOTAL, aggregationField, size);
+
+<span class="nc bnc" id="L714" title="All 4 branches missed.">        if (APPLICATION_TYPE.equalsIgnoreCase(aggregationField) || OWNER_NAME.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L715">            delayDaysMap = getDelayedDaysAggregate(applicationIndexRequest, fromDate, toDate, aggregationField, size);</span>
+
+<span class="nc bnc" id="L717" title="All 2 branches missed.">        for (Map.Entry&lt;String, Long&gt; entry : totalRcvdApplications.entrySet()) {</span>
+<span class="nc" id="L718">            applicationDetails = new ApplicationDetails();</span>
+<span class="nc" id="L719">            name = entry.getKey();</span>
+<span class="nc bnc" id="L720" title="All 4 branches missed.">            if (DISTRICT_NAME.equalsIgnoreCase(aggregationField) || CITY_NAME.equalsIgnoreCase(aggregationField)</span>
+<span class="nc bnc" id="L721" title="All 4 branches missed.">                    || APPLICATION_TYPE.equalsIgnoreCase(aggregationField) || OWNER_NAME.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L722">                detailsForAggregationField = getDetailsForAggregationType(applicationIndexRequest, fromDate, toDate, name,</span>
+                        aggregationField);
+
+<span class="nc bnc" id="L725" title="All 2 branches missed.">            if (DISTRICT_NAME.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L726">                applicationDetails.setDistrict(name);</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">                if (!detailsForAggregationField.isEmpty())</span>
+<span class="nc" id="L728">                    applicationDetails.setRegion(detailsForAggregationField.get(REGION_NAME).toString());</span>
+<span class="nc bnc" id="L729" title="All 2 branches missed.">            } else if (REGION_NAME.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L730">                applicationDetails.setRegion(name);</span>
+<span class="nc bnc" id="L731" title="All 2 branches missed.">            else if (CITY_NAME.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L732">                applicationDetails.setUlbName(name);</span>
+<span class="nc bnc" id="L733" title="All 2 branches missed.">                if (!detailsForAggregationField.isEmpty()) {</span>
+<span class="nc" id="L734">                    applicationDetails.setRegion(detailsForAggregationField.get(REGION_NAME).toString());</span>
+<span class="nc" id="L735">                    applicationDetails.setDistrict(detailsForAggregationField.get(DISTRICT_NAME).toString());</span>
+<span class="nc" id="L736">                    applicationDetails.setGrade(detailsForAggregationField.get(CITY_GRADE).toString());</span>
+<span class="nc" id="L737">                    applicationDetails.setUlbCode(detailsForAggregationField.get(CITY_CODE).toString());</span>
+                }
+<span class="nc bnc" id="L739" title="All 2 branches missed.">            } else if (APPLICATION_TYPE.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L740">                applicationDetails.setServiceType(name);</span>
+<span class="nc bnc" id="L741" title="All 2 branches missed.">                if (!detailsForAggregationField.isEmpty()) {</span>
+<span class="nc" id="L742">                    applicationDetails.setServiceGroup(detailsForAggregationField.get(MODULE_NAME).toString());</span>
+<span class="nc" id="L743">                    applicationDetails.setSlaPeriod((Integer) detailsForAggregationField.get(SLA));</span>
+                }
+<span class="nc bnc" id="L745" title="All 4 branches missed.">                if (!delayDaysMap.isEmpty() &amp;&amp; delayDaysMap.get(name) != null)</span>
+<span class="nc" id="L746">                    applicationDetails.setDelayedDays(delayDaysMap.get(name));</span>
+<span class="nc bnc" id="L747" title="All 2 branches missed.">            } else if (CITY_GRADE.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L748">                applicationDetails.setGrade(name);</span>
+<span class="nc bnc" id="L749" title="All 2 branches missed.">            else if (MODULE_NAME.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L750">                applicationDetails.setServiceGroup(name);</span>
+<span class="nc bnc" id="L751" title="All 2 branches missed.">            else if (CHANNEL.equalsIgnoreCase(aggregationField))</span>
+<span class="nc" id="L752">                applicationDetails.setSource(name);</span>
+<span class="nc bnc" id="L753" title="All 2 branches missed.">            else if (OWNER_NAME.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L754">                applicationDetails.setFunctionaryName(name);</span>
+<span class="nc bnc" id="L755" title="All 2 branches missed.">                if (StringUtils.isNotBlank(applicationIndexRequest.getService()))</span>
+<span class="nc" id="L756">                    applicationDetails.setServiceType(applicationIndexRequest.getService());</span>
+<span class="nc bnc" id="L757" title="All 2 branches missed.">                if (!detailsForAggregationField.isEmpty()) {</span>
+<span class="nc" id="L758">                    applicationDetails.setUlbName(detailsForAggregationField.get(CITY_NAME).toString());</span>
+<span class="nc" id="L759">                    applicationDetails.setSlaPeriod((Integer) detailsForAggregationField.get(SLA));</span>
+                }
+<span class="nc bnc" id="L761" title="All 4 branches missed.">                if (!delayDaysMap.isEmpty() &amp;&amp; delayDaysMap.get(name) != null)</span>
+<span class="nc" id="L762">                    applicationDetails.setDelayedDays(delayDaysMap.get(name));</span>
+            }
+
+<span class="nc" id="L765">            applicationDetails.setTotalReceived(entry.getValue());</span>
+<span class="nc bnc" id="L766" title="All 2 branches missed.">            applicationDetails.setTotalClosed(totalClosedApplications.get(name) == null ? 0 : totalClosedApplications.get(name));</span>
+<span class="nc bnc" id="L767" title="All 2 branches missed.">            applicationDetails.setTotalOpen(totalOpenApplications.get(name) == null ? 0 : totalOpenApplications.get(name));</span>
+<span class="nc" id="L768">            applicationDetails</span>
+<span class="nc" id="L769">                    .setTotalRejectedClosed(</span>
+<span class="nc bnc" id="L770" title="All 2 branches missed.">                            totalRejectedClosedApplications.get(name) == null ? 0 : totalRejectedClosedApplications.get(name));</span>
+<span class="nc" id="L771">            applicationDetails.setTotalApprovedClosed(</span>
+<span class="nc bnc" id="L772" title="All 2 branches missed.">                    totalApprovedClosedApplications.get(name) == null ? 0 : totalApprovedClosedApplications.get(name));</span>
+<span class="nc" id="L773">            applicationDetails.setClosedWithinSLA(</span>
+<span class="nc bnc" id="L774" title="All 2 branches missed.">                    closedWithinSLAApplications.get(name) == null ? 0 : closedWithinSLAApplications.get(name));</span>
+<span class="nc" id="L775">            applicationDetails.setClosedBeyondSLA(</span>
+<span class="nc bnc" id="L776" title="All 2 branches missed.">                    closedBeyondSLAApplications.get(name) == null ? 0 : closedBeyondSLAApplications.get(name));</span>
+<span class="nc" id="L777">            applicationDetails</span>
+<span class="nc bnc" id="L778" title="All 2 branches missed.">                    .setOpenWithinSLA(openWithinSLAApplications.get(name) == null ? 0 : openWithinSLAApplications.get(name));</span>
+<span class="nc" id="L779">            applicationDetails</span>
+<span class="nc bnc" id="L780" title="All 2 branches missed.">                    .setOpenBeyondSLA(openBeyondSLAApplications.get(name) == null ? 0 : openBeyondSLAApplications.get(name));</span>
+<span class="nc" id="L781">            applicationDetails</span>
+<span class="nc bnc" id="L782" title="All 2 branches missed.">                    .setSlab1beyondSLA(slab1beyondSLAApplications.get(name) == null ? 0 : slab1beyondSLAApplications.get(name));</span>
+<span class="nc" id="L783">            applicationDetails</span>
+<span class="nc bnc" id="L784" title="All 2 branches missed.">                    .setSlab2beyondSLA(slab2beyondSLAApplications.get(name) == null ? 0 : slab2beyondSLAApplications.get(name));</span>
+<span class="nc" id="L785">            applicationDetails</span>
+<span class="nc bnc" id="L786" title="All 2 branches missed.">                    .setSlab3beyondSLA(slab3beyondSLAApplications.get(name) == null ? 0 : slab3beyondSLAApplications.get(name));</span>
+<span class="nc" id="L787">            applicationDetails</span>
+<span class="nc bnc" id="L788" title="All 2 branches missed.">                    .setSlab4beyondSLA(slab4beyondSLAApplications.get(name) == null ? 0 : slab4beyondSLAApplications.get(name));</span>
+<span class="nc bnc" id="L789" title="All 2 branches missed.">            applicationDetails.setCscTotal(cscApplications.get(name) == null ? 0 : cscApplications.get(name));</span>
+<span class="nc bnc" id="L790" title="All 2 branches missed.">            applicationDetails.setMeesevaTotal(meesevaApplications.get(name) == null ? 0 : meesevaApplications.get(name));</span>
+<span class="nc bnc" id="L791" title="All 2 branches missed.">            applicationDetails.setOnlineTotal(onlineApplications.get(name) == null ? 0 : onlineApplications.get(name));</span>
+<span class="nc bnc" id="L792" title="All 2 branches missed.">            applicationDetails.setUlbTotal(ulbApplications.get(name) == null ? 0 : ulbApplications.get(name));</span>
+<span class="nc bnc" id="L793" title="All 2 branches missed.">            applicationDetails.setOthersTotal(otherApplications.get(name) == null ? 0 : otherApplications.get(name));</span>
+
+<span class="nc bnc" id="L795" title="All 2 branches missed.">            if (APPLICATION_TYPE.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc bnc" id="L796" title="All 2 branches missed.">                if (moduleWiseDetailsMap.get(applicationDetails.getServiceGroup()) == null) {</span>
+<span class="nc" id="L797">                    modulewiseDetails = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L798">                    modulewiseDetails.add(applicationDetails);</span>
+<span class="nc" id="L799">                    moduleWiseDetailsMap.put(applicationDetails.getServiceGroup(), modulewiseDetails);</span>
+                } else
+<span class="nc" id="L801">                    moduleWiseDetailsMap.get(applicationDetails.getServiceGroup()).add(applicationDetails);</span>
+            } else
+<span class="nc" id="L803">                applicationDetailsList.add(applicationDetails);</span>
+<span class="nc" id="L804">        }</span>
+
+<span class="nc bnc" id="L806" title="All 2 branches missed.">        if (APPLICATION_TYPE.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc bnc" id="L807" title="All 2 branches missed.">            if (moduleWiseDetailsMap.get(MODULE_PROPERTY_TAX) != null)</span>
+<span class="nc" id="L808">                applicationDetailsList.addAll(moduleWiseDetailsMap.get(MODULE_PROPERTY_TAX));</span>
+<span class="nc bnc" id="L809" title="All 2 branches missed.">            if (moduleWiseDetailsMap.get(MODULE_WATER_TAX) != null)</span>
+<span class="nc" id="L810">                applicationDetailsList.addAll(moduleWiseDetailsMap.get(MODULE_WATER_TAX));</span>
+<span class="nc bnc" id="L811" title="All 2 branches missed.">            if (moduleWiseDetailsMap.get(MODULE_TRADE_LICENSE) != null)</span>
+<span class="nc" id="L812">                applicationDetailsList.addAll(moduleWiseDetailsMap.get(MODULE_TRADE_LICENSE));</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">            if (moduleWiseDetailsMap.get(MODULE_ADVERTISEMENT_TAX) != null)</span>
+<span class="nc" id="L814">                applicationDetailsList.addAll(moduleWiseDetailsMap.get(MODULE_ADVERTISEMENT_TAX));</span>
+<span class="nc bnc" id="L815" title="All 2 branches missed.">            if (moduleWiseDetailsMap.get(MODULE_MARRIAGE_REGISTRATION) != null)</span>
+<span class="nc" id="L816">                applicationDetailsList.addAll(moduleWiseDetailsMap.get(MODULE_MARRIAGE_REGISTRATION));</span>
+        }
+<span class="nc" id="L818">        return applicationDetailsList;</span>
+    }
+
+    private Map&lt;String, String&gt; fetchAggregationTypeAndSize(String aggregationLevel) {
+<span class="nc" id="L822">        Map&lt;String, String&gt; aggrTypeAndSize = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L823">        String aggregationField = DISTRICT_NAME;</span>
+<span class="nc" id="L824">        int size = 15;</span>
+<span class="nc bnc" id="L825" title="All 2 branches missed.">        if (&quot;region&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L826">            aggregationField = REGION_NAME;</span>
+<span class="nc" id="L827">            size = 4;</span>
+<span class="nc bnc" id="L828" title="All 2 branches missed.">        } else if (&quot;district&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L829">            aggregationField = DISTRICT_NAME;</span>
+<span class="nc" id="L830">            size = 15;</span>
+<span class="nc bnc" id="L831" title="All 2 branches missed.">        } else if (&quot;grade&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L832">            aggregationField = CITY_GRADE;</span>
+<span class="nc" id="L833">            size = 7;</span>
+<span class="nc bnc" id="L834" title="All 2 branches missed.">        } else if (&quot;ulb&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L835">            aggregationField = CITY_NAME;</span>
+<span class="nc" id="L836">            size = 112;</span>
+<span class="nc bnc" id="L837" title="All 2 branches missed.">        } else if (&quot;module&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L838">            aggregationField = MODULE_NAME;</span>
+<span class="nc" id="L839">            size = 6;</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">        } else if (&quot;service&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L841">            aggregationField = APPLICATION_TYPE;</span>
+<span class="nc" id="L842">            size = 27;</span>
+<span class="nc bnc" id="L843" title="All 2 branches missed.">        } else if (&quot;source&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L844">            aggregationField = CHANNEL;</span>
+<span class="nc" id="L845">            size = 5;</span>
+<span class="nc bnc" id="L846" title="All 2 branches missed.">        } else if (&quot;functionary&quot;.equalsIgnoreCase(aggregationLevel)) {</span>
+<span class="nc" id="L847">            aggregationField = OWNER_NAME;</span>
+<span class="nc" id="L848">            size = 1000;</span>
+        }
+<span class="nc" id="L850">        aggrTypeAndSize.put(&quot;aggregationField&quot;, aggregationField);</span>
+<span class="nc" id="L851">        aggrTypeAndSize.put(&quot;size&quot;, String.valueOf(size));</span>
+<span class="nc" id="L852">        return aggrTypeAndSize;</span>
+    }
+
+    /**
+     * Provides month-wise Application trends - received/closed/open
+     * @param applicationIndexRequest
+     * @return list
+     */
+    public List&lt;Trend&gt; getMonthwiseApplicationTrends(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L861">        List&lt;Trend&gt; trendsList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L862">        Date fromDate = null;</span>
+<span class="nc" id="L863">        Date toDate = null;</span>
+<span class="nc" id="L864">        Map&lt;Integer, String&gt; monthValuesMap = DateUtils.getAllMonthsWithFullNames();</span>
+<span class="nc" id="L865">        Map&lt;String, Long&gt; receivedApplications = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L866">        Map&lt;String, Long&gt; closedApplications = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L867">        Map&lt;String, Long&gt; openApplications = new LinkedHashMap&lt;&gt;();</span>
+        Aggregations aggregation;
+
+<span class="nc bnc" id="L870" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L871" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L872">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L873">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+
+<span class="nc" id="L877">        aggregation = getMonthwiseApplications(applicationIndexRequest, fromDate,</span>
+                toDate, RECEIVED);
+<span class="nc" id="L879">        Histogram dateaggs = aggregation.get(DATE_AGGR);</span>
+<span class="nc" id="L880">        prepareMonthwiseDetails(monthValuesMap, receivedApplications, dateaggs);</span>
+<span class="nc" id="L881">        aggregation = getMonthwiseApplications(applicationIndexRequest, fromDate,</span>
+                toDate, CLOSED);
+<span class="nc" id="L883">        dateaggs = aggregation.get(DATE_AGGR);</span>
+<span class="nc" id="L884">        prepareMonthwiseDetails(monthValuesMap, closedApplications, dateaggs);</span>
+
+<span class="nc" id="L886">        aggregation = getMonthwiseApplications(applicationIndexRequest, fromDate,</span>
+                toDate, OPEN);
+<span class="nc" id="L888">        dateaggs = aggregation.get(DATE_AGGR);</span>
+<span class="nc" id="L889">        prepareMonthwiseDetails(monthValuesMap, openApplications, dateaggs);</span>
+        Trend trend;
+
+<span class="nc bnc" id="L892" title="All 2 branches missed.">        if (StringUtils.isBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L893" title="All 2 branches missed.">                &amp;&amp; StringUtils.isBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc bnc" id="L894" title="All 2 branches missed.">            for (Map.Entry&lt;Integer, String&gt; entry : DateUtils.getAllFinancialYearMonthsWithFullNames().entrySet()) {</span>
+<span class="nc" id="L895">                trend = new Trend();</span>
+<span class="nc" id="L896">                trend.setMonth(entry.getValue());</span>
+<span class="nc" id="L897">                trend.setTotalReceived(</span>
+<span class="nc bnc" id="L898" title="All 2 branches missed.">                        receivedApplications.get(entry.getValue()) == null ? 0 : receivedApplications.get(entry.getValue()));</span>
+<span class="nc" id="L899">                trend.setTotalClosed(</span>
+<span class="nc bnc" id="L900" title="All 2 branches missed.">                        closedApplications.get(entry.getValue()) == null ? 0 : closedApplications.get(entry.getValue()));</span>
+<span class="nc bnc" id="L901" title="All 2 branches missed.">                trend.setTotalOpen(openApplications.get(entry.getValue()) == null ? 0 : openApplications.get(entry.getValue()));</span>
+<span class="nc" id="L902">                trendsList.add(trend);</span>
+<span class="nc" id="L903">            }</span>
+        } else {
+<span class="nc bnc" id="L905" title="All 2 branches missed.">            for (Map.Entry&lt;String, Long&gt; entry : receivedApplications.entrySet()) {</span>
+<span class="nc" id="L906">                trend = new Trend();</span>
+<span class="nc" id="L907">                trend.setMonth(entry.getKey());</span>
+<span class="nc" id="L908">                trend.setTotalReceived(</span>
+<span class="nc bnc" id="L909" title="All 2 branches missed.">                        receivedApplications.get(entry.getKey()) == null ? 0 : receivedApplications.get(entry.getKey()));</span>
+<span class="nc bnc" id="L910" title="All 2 branches missed.">                trend.setTotalClosed(closedApplications.get(entry.getKey()) == null ? 0 : closedApplications.get(entry.getKey()));</span>
+<span class="nc bnc" id="L911" title="All 2 branches missed.">                trend.setTotalOpen(openApplications.get(entry.getKey()) == null ? 0 : openApplications.get(entry.getKey()));</span>
+<span class="nc" id="L912">                trendsList.add(trend);</span>
+<span class="nc" id="L913">            }</span>
+        }
+<span class="nc" id="L915">        return trendsList;</span>
+    }
+
+    private void prepareMonthwiseDetails(Map&lt;Integer, String&gt; monthValuesMap, Map&lt;String, Long&gt; applications,
+            Histogram dateaggs) {
+        String[] dateArr;
+        Integer month,year;
+        ValueCount countAggr;
+        String monthName;
+<span class="nc" id="L924">        Map &lt;String,Long&gt; map = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L925" title="All 2 branches missed.">        for (Histogram.Bucket entry : dateaggs.getBuckets()) {</span>
+<span class="nc" id="L926">            dateArr = entry.getKeyAsString().split(&quot;T&quot;);</span>
+<span class="nc" id="L927">            year = Integer.valueOf(dateArr[0].split(&quot;-&quot;, 3)[0]);</span>
+<span class="nc" id="L928">            month = Integer.valueOf(dateArr[0].split(&quot;-&quot;, 3)[1]);</span>
+<span class="nc" id="L929">            monthName = monthValuesMap.get(month);</span>
+<span class="nc" id="L930">            countAggr = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L931">            map.put(monthName + &quot; &quot; + year, countAggr.getValue());</span>
+<span class="nc" id="L932">        }</span>
+<span class="nc" id="L933">        applications.putAll(map);</span>
+<span class="nc" id="L934">    }</span>
+    private Aggregations getMonthwiseApplications(ApplicationIndexRequest applicationIndexRequest,
+            Date fromDate, Date toDate, String status) {
+<span class="nc" id="L937">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc bnc" id="L939" title="All 2 branches missed.">        if (CLOSED.equalsIgnoreCase(status))</span>
+<span class="nc" id="L940">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">        else if (OPEN.equalsIgnoreCase(status))</span>
+<span class="nc" id="L942">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0));</span>
+
+<span class="nc" id="L944">        AggregationBuilder aggregationBuilder = AggregationBuilders.dateHistogram(DATE_AGGR).field(APPLICATION_DATE)</span>
+<span class="nc" id="L945">                .interval(DateHistogramInterval.MONTH)</span>
+<span class="nc" id="L946">                .subAggregation(AggregationBuilders.count(TOTAL_COUNT).field(APPLICATION_NUMBER));</span>
+
+<span class="nc" id="L948">        SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L949">                .withQuery(boolQuery)</span>
+<span class="nc" id="L950">                .addAggregation(aggregationBuilder).build();</span>
+
+<span class="nc" id="L952">        return elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L953">                response -&gt; response.getAggregations());</span>
+    }
+
+    @SuppressWarnings(&quot;rawtypes&quot;)
+    private Aggregations getMonthwiseServiceGroupApplications(ApplicationIndexRequest applicationIndexRequest,
+            Date fromDate, Date toDate, String status) {
+
+<span class="nc" id="L960">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc bnc" id="L962" title="All 2 branches missed.">        if (CLOSED.equalsIgnoreCase(status))</span>
+<span class="nc" id="L963">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc bnc" id="L964" title="All 2 branches missed.">        else if (OPEN.equalsIgnoreCase(status))</span>
+<span class="nc" id="L965">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0));</span>
+
+<span class="nc" id="L967">        AggregationBuilder aggregationBuilder = AggregationBuilders.dateHistogram(DATE_AGGR).field(APPLICATION_DATE)</span>
+<span class="nc" id="L968">                .interval(DateHistogramInterval.MONTH);</span>
+
+<span class="nc" id="L970">        aggregationBuilder.subAggregation(AggregationBuilders.terms(MODULE_NAME).field(MODULE_NAME)</span>
+<span class="nc" id="L971">                .subAggregation(AggregationBuilders.count(TOTAL_COUNT).field(APPLICATION_NUMBER)));</span>
+
+<span class="nc" id="L973">        SearchQuery searchQueryColl = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L974">                .withQuery(boolQuery)</span>
+<span class="nc" id="L975">                .addAggregation(aggregationBuilder).build();</span>
+
+<span class="nc" id="L977">        return elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L978">                response -&gt; response.getAggregations());</span>
+    }
+
+    private Aggregations getDocumentCounts(ApplicationIndexRequest applicationIndexRequest, Date fromDate,
+            Date toDate, String aggregationName, String applicationStatus, String aggregationField, int size) {
+<span class="nc" id="L983">        AggregationBuilder aggregation = null;</span>
+        SearchQuery searchQueryColl;
+<span class="nc" id="L985">        ValueCountBuilder countBuilder = AggregationBuilders.count(TOTAL_COUNT).field(APPLICATION_NUMBER);</span>
+<span class="nc" id="L986">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc bnc" id="L988" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationStatus))</span>
+<span class="nc" id="L989">            boolQuery = prepareQueryForApplicationStatus(applicationStatus, boolQuery);</span>
+
+<span class="nc bnc" id="L991" title="All 2 branches missed.">        if (StringUtils.isNotBlank(aggregationName))</span>
+<span class="nc" id="L992">            aggregation = AggregationBuilders.terms(aggregationName).field(aggregationField).size(size)</span>
+<span class="nc" id="L993">                    .subAggregation(countBuilder);</span>
+
+<span class="nc" id="L995">        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L996">                .withQuery(boolQuery).addAggregation(countBuilder);</span>
+<span class="nc bnc" id="L997" title="All 2 branches missed.">        if (StringUtils.isNotBlank(aggregationName))</span>
+<span class="nc" id="L998">            searchQueryColl = queryBuilder.addAggregation(aggregation).build();</span>
+        else
+<span class="nc" id="L1000">            searchQueryColl = queryBuilder.build();</span>
+
+<span class="nc" id="L1002">        return elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L1003">                response -&gt; response.getAggregations());</span>
+    }
+
+    private BoolQueryBuilder prepareQueryForApplicationStatus(String applicationStatus, BoolQueryBuilder boolQuery) {
+<span class="nc" id="L1007">        BoolQueryBuilder appStatusQuery = boolQuery;</span>
+<span class="nc bnc" id="L1008" title="All 2 branches missed.">        if (CLOSED.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1009">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc bnc" id="L1010" title="All 2 branches missed.">        else if (OPEN.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1011">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0));</span>
+<span class="nc bnc" id="L1012" title="All 2 branches missed.">        else if (CLOSED_WITHIN_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1013">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1))</span>
+<span class="nc" id="L1014">                    .must(QueryBuilders.rangeQuery(SLA_GAP).lte(0)).must(QueryBuilders.matchQuery(COLUMN_APPROVED, APPROVED));</span>
+<span class="nc bnc" id="L1015" title="All 2 branches missed.">        else if (CLOSED_BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1016">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 1))</span>
+<span class="nc" id="L1017">                    .must(QueryBuilders.rangeQuery(SLA_GAP).gt(0)).must(QueryBuilders.matchQuery(COLUMN_APPROVED, APPROVED));</span>
+<span class="nc bnc" id="L1018" title="All 2 branches missed.">        else if (TOTAL_BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1019">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gt(0))</span>
+<span class="nc" id="L1020">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1021" title="All 2 branches missed.">        else if (TOTAL_WITHIN_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1022">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).lte(0))</span>
+<span class="nc" id="L1023">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1024" title="All 2 branches missed.">        else if (OPEN_WITHIN_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1025">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0))</span>
+<span class="nc" id="L1026">                    .must(QueryBuilders.rangeQuery(SLA_GAP).lte(0)).mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1027" title="All 2 branches missed.">        else if (OPEN_BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1028">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(IS_CLOSED, 0))</span>
+<span class="nc" id="L1029">                    .must(QueryBuilders.rangeQuery(SLA_GAP).gt(0)).mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1030" title="All 2 branches missed.">        else if (SLAB1BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1031">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gte(1).lt(8))</span>
+<span class="nc" id="L1032">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1033" title="All 2 branches missed.">        else if (SLAB2BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1034">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gte(8).lt(31))</span>
+<span class="nc" id="L1035">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1036" title="All 2 branches missed.">        else if (SLAB3BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1037">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gte(31).lt(91))</span>
+<span class="nc" id="L1038">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1039" title="All 2 branches missed.">        else if (SLAB4BEYOND_SLA.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1040">            appStatusQuery = appStatusQuery.filter(QueryBuilders.rangeQuery(SLA_GAP).gte(91))</span>
+<span class="nc" id="L1041">                    .mustNot(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED));</span>
+<span class="nc bnc" id="L1042" title="All 2 branches missed.">        else if (CSC_TOTAL.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1043">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(CHANNEL, SOURCE_CSC));</span>
+<span class="nc bnc" id="L1044" title="All 2 branches missed.">        else if (MEESEVA_TOTAL.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1045">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(CHANNEL, SOURCE_MEESEVA));</span>
+<span class="nc bnc" id="L1046" title="All 2 branches missed.">        else if (ONLINE_TOTAL.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1047">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(CHANNEL, SOURCE_ONLINE));</span>
+<span class="nc bnc" id="L1048" title="All 2 branches missed.">        else if (ULB_TOTAL.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1049">            appStatusQuery = appStatusQuery.filter(QueryBuilders.matchQuery(CHANNEL, SOURCE_SYSTEM));</span>
+<span class="nc bnc" id="L1050" title="All 2 branches missed.">        else if (OTHERS_TOTAL.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1051">            appStatusQuery = appStatusQuery.mustNot(</span>
+<span class="nc" id="L1052">                    QueryBuilders.termsQuery(CHANNEL, Arrays.asList(SOURCE_CSC, SOURCE_MEESEVA, SOURCE_ONLINE, SOURCE_SYSTEM)));</span>
+<span class="nc bnc" id="L1053" title="All 2 branches missed.">        else if (&quot;approvedClosed&quot;.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1054">            appStatusQuery = appStatusQuery.must(QueryBuilders.matchQuery(COLUMN_APPROVED, APPROVED))</span>
+<span class="nc" id="L1055">                    .filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc bnc" id="L1056" title="All 2 branches missed.">        else if (&quot;rejectedClosed&quot;.equalsIgnoreCase(applicationStatus))</span>
+<span class="nc" id="L1057">            appStatusQuery = appStatusQuery.must(QueryBuilders.matchQuery(COLUMN_APPROVED, REJECTED))</span>
+<span class="nc" id="L1058">                    .filter(QueryBuilders.matchQuery(IS_CLOSED, 1));</span>
+<span class="nc" id="L1059">        return appStatusQuery;</span>
+    }
+
+    /**
+     * Provides the details required for the aggregation Field
+     * @param applicationIndexRequest
+     * @param fromDate
+     * @param toDate
+     * @param value
+     * @param aggregationField
+     * @return map
+     */
+    private Map getDetailsForAggregationType(ApplicationIndexRequest applicationIndexRequest, Date fromDate, Date toDate,
+            String value, String aggregationField) {
+<span class="nc" id="L1073">        String[] requiredFields = null;</span>
+<span class="nc" id="L1074">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc bnc" id="L1076" title="All 2 branches missed.">        if (DISTRICT_NAME.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L1077">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(&quot;districtName&quot;, value));</span>
+<span class="nc" id="L1078">            requiredFields = new String[1];</span>
+<span class="nc" id="L1079">            requiredFields[0] = REGION_NAME;</span>
+<span class="nc bnc" id="L1080" title="All 2 branches missed.">        } else if (CITY_NAME.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L1081">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(&quot;cityName&quot;, value));</span>
+<span class="nc" id="L1082">            requiredFields = new String[4];</span>
+<span class="nc" id="L1083">            requiredFields[0] = REGION_NAME;</span>
+<span class="nc" id="L1084">            requiredFields[1] = DISTRICT_NAME;</span>
+<span class="nc" id="L1085">            requiredFields[2] = CITY_GRADE;</span>
+<span class="nc" id="L1086">            requiredFields[3] = CITY_CODE;</span>
+<span class="nc bnc" id="L1087" title="All 2 branches missed.">        } else if (APPLICATION_TYPE.equalsIgnoreCase(aggregationField)) {</span>
+<span class="nc" id="L1088">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(APPLICATION_TYPE, value));</span>
+<span class="nc" id="L1089">            requiredFields = new String[2];</span>
+<span class="nc" id="L1090">            requiredFields[0] = MODULE_NAME;</span>
+<span class="nc" id="L1091">            requiredFields[1] = SLA;</span>
+<span class="nc bnc" id="L1092" title="All 2 branches missed.">        } else if (OWNER_NAME.equalsIgnoreCase(aggregationField)){</span>
+<span class="nc" id="L1093">            boolQuery = boolQuery.filter(QueryBuilders.matchQuery(OWNER_NAME, value));</span>
+<span class="nc" id="L1094">            requiredFields = new String[2];</span>
+<span class="nc" id="L1095">            requiredFields[0] = CITY_NAME;</span>
+<span class="nc" id="L1096">            requiredFields[1] = SLA;</span>
+        }
+
+<span class="nc" id="L1099">        Map applicationTypeDetails = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1100">        SearchResponse response = elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L1101">                .prepareSearch(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L1102">                .setQuery(boolQuery).setSize(1)</span>
+<span class="nc" id="L1103">                .setFetchSource(requiredFields, null)</span>
+<span class="nc" id="L1104">                .execute().actionGet();</span>
+
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">        for (SearchHit hit : response.getHits())</span>
+<span class="nc" id="L1107">            applicationTypeDetails = hit.sourceAsMap();</span>
+
+<span class="nc" id="L1109">        return applicationTypeDetails;</span>
+    }
+
+    public ApplicationIndexResponse findServiceWiseDetails(final ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L1113">        final ApplicationIndexResponse applicationIndexResponse = new ApplicationIndexResponse();</span>
+        Aggregations aggregation;
+        ValueCount valueCount;
+<span class="nc" id="L1116">        Date fromDate = null;</span>
+<span class="nc" id="L1117">        Date toDate = null;</span>
+<span class="nc bnc" id="L1118" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L1119" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L1120">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L1121">            toDate = org.apache.commons.lang3.time.DateUtils.addDays(</span>
+<span class="nc" id="L1122">                    DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+<span class="nc" id="L1125">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, RECEIVED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L1127" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1128">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1129" title="All 2 branches missed.">            applicationIndexResponse.setTotalReceived(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1131">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, CLOSED, StringUtils.EMPTY,</span>
+                0);
+<span class="nc bnc" id="L1133" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1134">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1135" title="All 2 branches missed.">            applicationIndexResponse.setTotalClosed(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1137">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, OPEN, StringUtils.EMPTY, 0);</span>
+<span class="nc bnc" id="L1138" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1139">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1140" title="All 2 branches missed.">            applicationIndexResponse.setTotalOpen(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1142">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, TOTAL_BEYOND_SLA,</span>
+                StringUtils.EMPTY, 0);
+<span class="nc bnc" id="L1144" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1145">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1146" title="All 2 branches missed.">            applicationIndexResponse.setTotalBeyondSLA(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1148">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, TOTAL_WITHIN_SLA,</span>
+                StringUtils.EMPTY, 0);
+<span class="nc bnc" id="L1150" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1151">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1152" title="All 2 branches missed.">            applicationIndexResponse.setTotalWithinSLA(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1154">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, OPEN_BEYOND_SLA,</span>
+                StringUtils.EMPTY, 0);
+<span class="nc bnc" id="L1156" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1157">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1158" title="All 2 branches missed.">            applicationIndexResponse.setOpenBeyondSLA(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+<span class="nc" id="L1160">        aggregation = getDocumentCounts(applicationIndexRequest, fromDate, toDate, StringUtils.EMPTY, CLOSED_BEYOND_SLA,</span>
+                StringUtils.EMPTY, 0);
+<span class="nc bnc" id="L1162" title="All 2 branches missed.">        if (aggregation != null) {</span>
+<span class="nc" id="L1163">            valueCount = aggregation.get(TOTAL_COUNT);</span>
+<span class="nc bnc" id="L1164" title="All 2 branches missed.">            applicationIndexResponse.setClosedBeyondSLA(valueCount != null ? valueCount.getValue() : 0);</span>
+        }
+
+<span class="nc" id="L1167">        final List&lt;ServiceDetails&gt; serviceDetails = getServiceDetails(applicationIndexRequest, fromDate, toDate);</span>
+<span class="nc" id="L1168">        applicationIndexResponse.setServiceDetails(serviceDetails);</span>
+<span class="nc" id="L1169">        return applicationIndexResponse;</span>
+    }
+
+    @SuppressWarnings(&quot;rawtypes&quot;)
+    private List&lt;ServiceDetails&gt; getServiceDetails(final ApplicationIndexRequest applicationIndexRequest, final Date fromDate,
+            final Date toDate) {
+<span class="nc" id="L1175">        final List&lt;ServiceDetails&gt; serviceDetailsList = new ArrayList&lt;&gt;();</span>
+        AggregationBuilder aggregation;
+        SearchQuery searchQueryColl;
+<span class="nc" id="L1178">        final ValueCountBuilder countBuilder = AggregationBuilders.count(TOTAL_COUNT).field(APPLICATION_NUMBER);</span>
+<span class="nc" id="L1179">        final BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc" id="L1181">        aggregation = AggregationBuilders.terms(&quot;by_service1&quot;).field(APPLICATION_TYPE).size(5)</span>
+<span class="nc" id="L1182">                .subAggregation(countBuilder)</span>
+<span class="nc" id="L1183">                .order(Terms.Order.aggregation(TOTAL_COUNT, false));</span>
+
+<span class="nc" id="L1185">        final NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L1186">                .withQuery(boolQuery).addAggregation(aggregation);</span>
+<span class="nc" id="L1187">        searchQueryColl = queryBuilder.build();</span>
+
+<span class="nc" id="L1189">        final Aggregations aggr = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L1190">                response -&gt; response.getAggregations());</span>
+<span class="nc" id="L1191">        final Map&lt;String, Long&gt; aggregationResults = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L1192">        final StringTerms serviceAggr = aggr.get(&quot;by_service1&quot;);</span>
+        ValueCount valueCount;
+<span class="nc bnc" id="L1194" title="All 2 branches missed.">        for (final Terms.Bucket entry : serviceAggr.getBuckets()) {</span>
+<span class="nc" id="L1195">            valueCount = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L1196">            aggregationResults.put(String.valueOf(entry.getKey()), valueCount.getValue());</span>
+<span class="nc" id="L1197">        }</span>
+        ServiceDetails serviceDetails;
+<span class="nc bnc" id="L1199" title="All 2 branches missed.">        for (final Map.Entry&lt;String, Long&gt; entry : aggregationResults.entrySet()) {</span>
+<span class="nc" id="L1200">            serviceDetails = new ServiceDetails();</span>
+<span class="nc" id="L1201">            serviceDetails.setServiceName(entry.getKey());</span>
+<span class="nc" id="L1202">            serviceDetails</span>
+<span class="nc bnc" id="L1203" title="All 2 branches missed.">                    .setBeyondSLA(aggregationResults.get(entry.getKey()) == null ? 0 : aggregationResults.get(entry.getKey()));</span>
+<span class="nc" id="L1204">            serviceDetailsList.add(serviceDetails);</span>
+<span class="nc" id="L1205">        }</span>
+
+<span class="nc" id="L1207">        return serviceDetailsList;</span>
+    }
+
+    /**
+     * Fetch delayed days for aggregation based on service type
+     * @param applicationIndexRequest
+     * @param fromDate
+     * @param toDate
+     * @param aggregationField
+     * @param size
+     * @return map
+     */
+    private Map&lt;String, Long&gt; getDelayedDaysAggregate(ApplicationIndexRequest applicationIndexRequest, Date fromDate, Date toDate,
+            String aggregationField, int size) {
+        Sum sumAggr;
+<span class="nc" id="L1222">        Map&lt;String, Long&gt; delayMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L1223">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+<span class="nc" id="L1224">        boolQuery = boolQuery.must(QueryBuilders.rangeQuery(SLA_GAP).gt(0));</span>
+
+<span class="nc" id="L1226">        AggregationBuilder aggregationBuilder = AggregationBuilders.terms(&quot;by_service&quot;).field(aggregationField).size(size)</span>
+<span class="nc" id="L1227">                .subAggregation(AggregationBuilders.sum(TOTAL_COUNT).field(SLA_GAP));</span>
+
+<span class="nc" id="L1229">        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder().withIndices(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L1230">                .withQuery(boolQuery);</span>
+<span class="nc" id="L1231">        SearchQuery searchQueryColl = queryBuilder.addAggregation(aggregationBuilder).build();</span>
+
+<span class="nc" id="L1233">        Aggregations aggregation = elasticsearchTemplate.query(searchQueryColl,</span>
+<span class="nc" id="L1234">                response -&gt; response.getAggregations());</span>
+
+<span class="nc" id="L1236">        StringTerms stringTerms = aggregation.get(&quot;by_service&quot;);</span>
+<span class="nc bnc" id="L1237" title="All 2 branches missed.">        for (Terms.Bucket entry : stringTerms.getBuckets()) {</span>
+<span class="nc" id="L1238">            sumAggr = entry.getAggregations().get(TOTAL_COUNT);</span>
+<span class="nc" id="L1239">            delayMap.put(String.valueOf(entry.getKey()), (long) sumAggr.getValue());</span>
+<span class="nc" id="L1240">        }</span>
+<span class="nc" id="L1241">        return delayMap;</span>
+    }
+
+    /**
+     * Provides the details of the applications
+     * @param applicationIndexRequest
+     * @return list
+     */
+    public List&lt;ApplicationInfo&gt; getApplicationInfo(ApplicationIndexRequest applicationIndexRequest) {
+<span class="nc" id="L1250">        List&lt;ApplicationInfo&gt; applications = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1251">        List&lt;Map&gt; appDetails = new ArrayList&lt;&gt;();</span>
+        ApplicationInfo appInfo;
+<span class="nc" id="L1253">        Date fromDate = null;</span>
+<span class="nc" id="L1254">        Date toDate = null;</span>
+<span class="nc bnc" id="L1255" title="All 2 branches missed.">        if (StringUtils.isNotBlank(applicationIndexRequest.getFromDate())</span>
+<span class="nc bnc" id="L1256" title="All 2 branches missed.">                &amp;&amp; StringUtils.isNotBlank(applicationIndexRequest.getToDate())) {</span>
+<span class="nc" id="L1257">            fromDate = DateUtils.getDate(applicationIndexRequest.getFromDate(), DATE_FORMAT_YYYYMMDD);</span>
+<span class="nc" id="L1258">            toDate = DateUtils.addDays(DateUtils.getDate(applicationIndexRequest.getToDate(), DATE_FORMAT_YYYYMMDD),</span>
+                    1);
+        }
+<span class="nc" id="L1261">        BoolQueryBuilder boolQuery = prepareWhereClause(applicationIndexRequest, fromDate, toDate);</span>
+
+<span class="nc" id="L1263">        SearchResponse response = elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L1264">                .prepareSearch(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L1265">                .setQuery(boolQuery)</span>
+<span class="nc" id="L1266">                .execute().actionGet();</span>
+
+<span class="nc" id="L1268">        int size = (int) response.getHits().totalHits();</span>
+<span class="nc" id="L1269">        response = elasticsearchTemplate.getClient()</span>
+<span class="nc" id="L1270">                .prepareSearch(APPLICATIONS_INDEX)</span>
+<span class="nc" id="L1271">                .setQuery(boolQuery).setSize(size)</span>
+<span class="nc" id="L1272">                .addSort(APPLICATION_DATE, SortOrder.DESC)</span>
+<span class="nc" id="L1273">                .setFetchSource(new String[] { APPLICATION_DATE, APPLICATION_NUMBER, APPLICATION_TYPE, &quot;applicantName&quot;,</span>
+                        &quot;applicantAddress&quot;, &quot;status&quot;, CHANNEL, SLA, MODULE_NAME, SLA_GAP, CITY_NAME, OWNER_NAME,&quot;url&quot;,CITY_CODE }, null)
+<span class="nc" id="L1275">                .execute().actionGet();</span>
+
+<span class="nc bnc" id="L1277" title="All 2 branches missed.">        for (SearchHit hit : response.getHits())</span>
+<span class="nc" id="L1278">            appDetails.add(hit.sourceAsMap());</span>
+
+<span class="nc bnc" id="L1280" title="All 2 branches missed.">        if (!appDetails.isEmpty()) {</span>
+<span class="nc bnc" id="L1281" title="All 2 branches missed.">            for (Map details : appDetails) {</span>
+<span class="nc" id="L1282">                appInfo = new ApplicationInfo();</span>
+<span class="nc" id="L1283">                appInfo.setAppDate(details.get(APPLICATION_DATE).toString().split(&quot;T&quot;)[0]);</span>
+<span class="nc" id="L1284">                appInfo.setAppNo(details.get(APPLICATION_NUMBER).toString());</span>
+<span class="nc" id="L1285">                appInfo.setService(details.get(APPLICATION_TYPE).toString());</span>
+<span class="nc" id="L1286">                appInfo.setApplicantName(details.get(&quot;applicantName&quot;).toString());</span>
+<span class="nc" id="L1287">                appInfo.setApplicantAddress(details.get(&quot;applicantAddress&quot;).toString());</span>
+<span class="nc" id="L1288">                appInfo.setAppStatus(details.get(&quot;status&quot;).toString());</span>
+<span class="nc" id="L1289">                appInfo.setSource(details.get(CHANNEL).toString());</span>
+<span class="nc bnc" id="L1290" title="All 2 branches missed.">                appInfo.setSla(details.get(SLA) == null ? 0 : (int) details.get(SLA));</span>
+<span class="nc" id="L1291">                appInfo.setServiceGroup(details.get(MODULE_NAME).toString());</span>
+<span class="nc bnc" id="L1292" title="All 2 branches missed.">                appInfo.setAge(details.get(SLA_GAP) == null ? 0 : (int) details.get(SLA_GAP));</span>
+<span class="nc bnc" id="L1293" title="All 2 branches missed.">                appInfo.setPendingWith(details.get(OWNER_NAME) == null ? &quot;NA&quot; : details.get(OWNER_NAME).toString());</span>
+<span class="nc" id="L1294">                appInfo.setUlbName(details.get(CITY_NAME).toString());</span>
+<span class="nc" id="L1295">                appInfo.setUrl(details.get(&quot;url&quot;).toString());</span>
+<span class="nc" id="L1296">                appInfo.setCityCode(details.get(CITY_CODE).toString());</span>
+<span class="nc" id="L1297">                applications.add(appInfo);</span>
+<span class="nc" id="L1298">            }</span>
+        }
+<span class="nc" id="L1300">        return applications;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

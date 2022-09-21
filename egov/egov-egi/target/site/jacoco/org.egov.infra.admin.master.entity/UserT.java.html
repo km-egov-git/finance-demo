@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserT.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.entity</a> &gt; <span class="el_source">UserT.java</span></div><h1>UserT.java</h1><pre class="source lang-java linenums">package org.egov.infra.admin.master.entity;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+
+import org.egov.infra.persistence.entity.Address;
+import org.egov.infra.persistence.entity.enums.Gender;
+import org.egov.infra.persistence.entity.enums.UserType;
+
+
+public class UserT implements Serializable {
+
+	 /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6377318813304092695L;
+<span class="nc" id="L22">	public UserT() {}</span>
+	
+	public Long getId() {
+<span class="nc" id="L25">		return id;</span>
+	}
+	public void setId(Long id) {
+<span class="nc" id="L28">		this.id = id;</span>
+<span class="nc" id="L29">	}</span>
+	public String getUsername() {
+<span class="nc" id="L31">		return username;</span>
+	}
+	public void setUsername(String username) {
+<span class="nc" id="L34">		this.username = username;</span>
+<span class="nc" id="L35">	}</span>
+	public String getPassword() {
+<span class="nc" id="L37">		return password;</span>
+	}
+	public void setPassword(String password) {
+<span class="nc" id="L40">		this.password = password;</span>
+<span class="nc" id="L41">	}</span>
+	public String getSalutation() {
+<span class="nc" id="L43">		return salutation;</span>
+	}
+	public void setSalutation(String salutation) {
+<span class="nc" id="L46">		this.salutation = salutation;</span>
+<span class="nc" id="L47">	}</span>
+	public String getGuardian() {
+<span class="nc" id="L49">		return guardian;</span>
+	}
+	public void setGuardian(String guardian) {
+<span class="nc" id="L52">		this.guardian = guardian;</span>
+<span class="nc" id="L53">	}</span>
+	public String getGuardianRelation() {
+<span class="nc" id="L55">		return guardianRelation;</span>
+	}
+	public void setGuardianRelation(String guardianRelation) {
+<span class="nc" id="L58">		this.guardianRelation = guardianRelation;</span>
+<span class="nc" id="L59">	}</span>
+	public String getName() {
+<span class="nc" id="L61">		return name;</span>
+	}
+	public void setName(String name) {
+<span class="nc" id="L64">		this.name = name;</span>
+<span class="nc" id="L65">	}</span>
+	public Gender getGender() {
+<span class="nc" id="L67">		return gender;</span>
+	}
+	public void setGender(Gender gender) {
+<span class="nc" id="L70">		this.gender = gender;</span>
+<span class="nc" id="L71">	}</span>
+	public String getMobileNumber() {
+<span class="nc" id="L73">		return mobileNumber;</span>
+	}
+	public void setMobileNumber(String mobileNumber) {
+<span class="nc" id="L76">		this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L77">	}</span>
+	public String getEmailId() {
+<span class="nc" id="L79">		return emailId;</span>
+	}
+	public void setEmailId(String emailId) {
+<span class="nc" id="L82">		this.emailId = emailId;</span>
+<span class="nc" id="L83">	}</span>
+	public String getAltContactNumber() {
+<span class="nc" id="L85">		return altContactNumber;</span>
+	}
+	public void setAltContactNumber(String altContactNumber) {
+<span class="nc" id="L88">		this.altContactNumber = altContactNumber;</span>
+<span class="nc" id="L89">	}</span>
+	public String getPan() {
+<span class="nc" id="L91">		return pan;</span>
+	}
+	public void setPan(String pan) {
+<span class="nc" id="L94">		this.pan = pan;</span>
+<span class="nc" id="L95">	}</span>
+	public String getAadhaarNumber() {
+<span class="nc" id="L97">		return aadhaarNumber;</span>
+	}
+	public void setAadhaarNumber(String aadhaarNumber) {
+<span class="nc" id="L100">		this.aadhaarNumber = aadhaarNumber;</span>
+<span class="nc" id="L101">	}</span>
+	public List&lt;Address&gt; getAddress() {
+<span class="nc" id="L103">		return address;</span>
+	}
+	public void setAddress(List&lt;Address&gt; address) {
+<span class="nc" id="L106">		this.address = address;</span>
+<span class="nc" id="L107">	}</span>
+	public boolean isActive() {
+<span class="nc" id="L109">		return active;</span>
+	}
+	public void setActive(boolean active) {
+<span class="nc" id="L112">		this.active = active;</span>
+<span class="nc" id="L113">	}</span>
+	public Set&lt;RoleT&gt; getRoles() {
+<span class="nc" id="L115">		return roles;</span>
+	}
+	public void setRoles(Set&lt;RoleT&gt; roles) {
+<span class="nc" id="L118">		this.roles = roles;</span>
+<span class="nc" id="L119">	}</span>
+	public Date getDob() {
+<span class="nc" id="L121">		return dob;</span>
+	}
+	public void setDob(Date dob) {
+<span class="nc" id="L124">		this.dob = dob;</span>
+<span class="nc" id="L125">	}</span>
+	public Date getPwdExpiryDate() {
+<span class="nc" id="L127">		return pwdExpiryDate;</span>
+	}
+	public void setPwdExpiryDate(Date pwdExpiryDate) {
+<span class="nc" id="L130">		this.pwdExpiryDate = pwdExpiryDate;</span>
+<span class="nc" id="L131">	}</span>
+	public String getLocale() {
+<span class="nc" id="L133">		return locale;</span>
+	}
+	public void setLocale(String locale) {
+<span class="nc" id="L136">		this.locale = locale;</span>
+<span class="nc" id="L137">	}</span>
+	public UserType getType() {
+<span class="nc" id="L139">		return type;</span>
+	}
+	public void setType(UserType type) {
+<span class="nc" id="L142">		this.type = type;</span>
+<span class="nc" id="L143">	}</span>
+	public byte[] getSignature() {
+<span class="nc" id="L145">		return signature;</span>
+	}
+	public void setSignature(byte[] signature) {
+<span class="nc" id="L148">		this.signature = signature;</span>
+<span class="nc" id="L149">	}</span>
+	public boolean isAccountLocked() {
+<span class="nc" id="L151">		return accountLocked;</span>
+	}
+	public void setAccountLocked(boolean accountLocked) {
+<span class="nc" id="L154">		this.accountLocked = accountLocked;</span>
+<span class="nc" id="L155">	}</span>
+	public String getCreatedBy() {
+<span class="nc" id="L157">		return createdBy;</span>
+	}
+	public void setCreatedBy(String createdBy) {
+<span class="nc" id="L160">		this.createdBy = createdBy;</span>
+<span class="nc" id="L161">	}</span>
+	public Date getCreatedDate() {
+<span class="nc" id="L163">		return createdDate;</span>
+	}
+	public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L166">		this.createdDate = createdDate;</span>
+<span class="nc" id="L167">	}</span>
+	public String getLastModifiedBy() {
+<span class="nc" id="L169">		return lastModifiedBy;</span>
+	}
+	public void setLastModifiedBy(String lastModifiedBy) {
+<span class="nc" id="L172">		this.lastModifiedBy = lastModifiedBy;</span>
+<span class="nc" id="L173">	}</span>
+	public Date getLastModifiedDate() {
+<span class="nc" id="L175">		return lastModifiedDate;</span>
+	}
+	public void setLastModifiedDate(Date lastModifiedDate) {
+<span class="nc" id="L178">		this.lastModifiedDate = lastModifiedDate;</span>
+<span class="nc" id="L179">	}</span>
+	private Long id;
+
+	    private String username;
+	    private String password;
+	    private String salutation;
+	    private String guardian;
+	    private String guardianRelation;
+	    private String name;
+	    private Gender gender;
+	    private String mobileNumber;
+	    private String emailId;
+	    private String altContactNumber;
+	    private String pan;
+	    private String aadhaarNumber;
+<span class="nc" id="L194">	    private List&lt;Address&gt; address = new ArrayList&lt;&gt;();</span>
+	    private boolean active;
+<span class="nc" id="L196">	    private Set&lt;RoleT&gt; roles = new HashSet&lt;&gt;();</span>
+	    private Date dob;
+<span class="nc" id="L198">	    private Date pwdExpiryDate = new Date();</span>
+<span class="nc" id="L199">	    private String locale = &quot;en_IN&quot;;</span>
+	    private UserType type;
+	    private byte[] signature;
+	    private boolean accountLocked;
+	    private String createdBy;
+	    private Date createdDate;
+	    private String lastModifiedBy;
+	    private Date lastModifiedDate;
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

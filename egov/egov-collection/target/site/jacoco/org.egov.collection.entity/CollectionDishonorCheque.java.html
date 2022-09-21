@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionDishonorCheque.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">CollectionDishonorCheque.java</span></div><h1>CollectionDishonorCheque.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import org.egov.commons.CChartOfAccounts;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.EgwStatus;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.model.instrument.InstrumentHeader;
+import org.egov.pims.commons.Position;
+import org.hibernate.validator.constraints.Length;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.egov.collection.entity.CollectionDishonorCheque.SEQ_EGCL_DISHONORCHEQUE;
+
+@Entity
+@Table(name = &quot;EGCL_DISHONORCHEQUE&quot;)
+@SequenceGenerator(name = SEQ_EGCL_DISHONORCHEQUE, sequenceName = SEQ_EGCL_DISHONORCHEQUE, allocationSize = 1)
+<span class="nc" id="L80">public class CollectionDishonorCheque extends StateAware {</span>
+
+    public static final String SEQ_EGCL_DISHONORCHEQUE = &quot;SEQ_EGCL_DISHONORCHEQUE&quot;;
+    private static final long serialVersionUID = -6134188498111765210L;
+    @Id
+    @GeneratedValue(generator = SEQ_EGCL_DISHONORCHEQUE, strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;instrumentheader&quot;)
+    private InstrumentHeader instrumentHeader;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;collectionheader&quot;)
+    private ReceiptHeader collectionHeader;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;status&quot;)
+    private EgwStatus status;
+
+    @Column(name = &quot;bankcharges&quot;)
+    private BigDecimal bankChargesAmt;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;bankchargeschartofaccounts&quot;)
+    private CChartOfAccounts bankcChargesChartofaccounts;
+
+    private Date transactionDate;
+
+    @Length(max = 20)
+    private String bankReferenceNumber;
+
+    private String instrumentDishonorReason;
+
+    private String bankreason;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;reversalvoucher&quot;)
+    private CVoucherHeader reversalVoucherHeader;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;bankchargesvoucher&quot;)
+    private CVoucherHeader bankchargesVoucherHeader;
+
+<span class="nc" id="L124">    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = &quot;dishonorcheque&quot;, targetEntity = CollectionDishonorChequeDetails.class)</span>
+    private Set&lt;CollectionDishonorChequeDetails&gt; details = new HashSet&lt;&gt;();
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L129">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L134">        this.id = id;</span>
+<span class="nc" id="L135">    }</span>
+
+    @Override
+    public String getStateDetails() {
+<span class="nc" id="L139">        return new StringBuilder().append(&quot;Instrument Number :&quot;).append(getInstrumentHeader().getInstrumentNumber())</span>
+<span class="nc" id="L140">                .append(&quot; Amount : &quot;).append(getInstrumentHeader().getInstrumentAmount()).toString();</span>
+    }
+
+    public Date getTransactionDate() {
+<span class="nc" id="L144">        return transactionDate;</span>
+    }
+
+    public void setTransactionDate(final Date transactionDate) {
+<span class="nc" id="L148">        this.transactionDate = transactionDate;</span>
+<span class="nc" id="L149">    }</span>
+
+    public String getBankReferenceNumber() {
+<span class="nc" id="L152">        return bankReferenceNumber;</span>
+    }
+
+    public void setBankReferenceNumber(final String bankReferenceNumber) {
+<span class="nc" id="L156">        this.bankReferenceNumber = bankReferenceNumber;</span>
+<span class="nc" id="L157">    }</span>
+
+    public InstrumentHeader getInstrumentHeader() {
+<span class="nc" id="L160">        return instrumentHeader;</span>
+    }
+
+    public void setInstrumentHeader(final InstrumentHeader instrumentHeader) {
+<span class="nc" id="L164">        this.instrumentHeader = instrumentHeader;</span>
+<span class="nc" id="L165">    }</span>
+
+    public ReceiptHeader getCollectionHeader() {
+<span class="nc" id="L168">        return collectionHeader;</span>
+    }
+
+    public void setCollectionHeader(ReceiptHeader collectionHeader) {
+<span class="nc" id="L172">        this.collectionHeader = collectionHeader;</span>
+<span class="nc" id="L173">    }</span>
+
+    public EgwStatus getStatus() {
+<span class="nc" id="L176">        return status;</span>
+    }
+
+    public void setStatus(final EgwStatus status) {
+<span class="nc" id="L180">        this.status = status;</span>
+<span class="nc" id="L181">    }</span>
+
+    public BigDecimal getBankChargesAmt() {
+<span class="nc" id="L184">        return bankChargesAmt;</span>
+    }
+
+    public void setBankChargesAmt(final BigDecimal bankChargesAmt) {
+<span class="nc" id="L188">        this.bankChargesAmt = bankChargesAmt;</span>
+<span class="nc" id="L189">    }</span>
+
+    public CChartOfAccounts getBankcChargesChartofaccounts() {
+<span class="nc" id="L192">        return bankcChargesChartofaccounts;</span>
+    }
+
+    public void setBankcChargesChartofaccounts(CChartOfAccounts bankcChargesChartofaccounts) {
+<span class="nc" id="L196">        this.bankcChargesChartofaccounts = bankcChargesChartofaccounts;</span>
+<span class="nc" id="L197">    }</span>
+
+    public CVoucherHeader getReversalVoucherHeader() {
+<span class="nc" id="L200">        return reversalVoucherHeader;</span>
+    }
+
+    public void setReversalVoucherHeader(final CVoucherHeader reversalVoucherHeader) {
+<span class="nc" id="L204">        this.reversalVoucherHeader = reversalVoucherHeader;</span>
+<span class="nc" id="L205">    }</span>
+
+    public CVoucherHeader getBankchargesVoucherHeader() {
+<span class="nc" id="L208">        return bankchargesVoucherHeader;</span>
+    }
+
+    public void setBankchargesVoucherHeader(final CVoucherHeader bankchargesVoucherHeader) {
+<span class="nc" id="L212">        this.bankchargesVoucherHeader = bankchargesVoucherHeader;</span>
+<span class="nc" id="L213">    }</span>
+
+    public Set&lt;CollectionDishonorChequeDetails&gt; getDetails() {
+<span class="nc" id="L216">        return details;</span>
+    }
+
+    public void setDetails(final Set&lt;CollectionDishonorChequeDetails&gt; details) {
+<span class="nc" id="L220">        this.details = details;</span>
+<span class="nc" id="L221">    }</span>
+
+    public Set&lt;CollectionDishonorChequeDetails&gt; addDishonorChqDetails(final CollectionDishonorChequeDetails chqDet) {
+<span class="nc" id="L224">        details.add(chqDet);</span>
+<span class="nc" id="L225">        return details;</span>
+    }
+
+    public String getInstrumentDishonorReason() {
+<span class="nc" id="L229">        return instrumentDishonorReason;</span>
+    }
+
+    public void setInstrumentDishonorReason(final String instrumentDishonorReason) {
+<span class="nc" id="L233">        this.instrumentDishonorReason = instrumentDishonorReason;</span>
+<span class="nc" id="L234">    }</span>
+
+    public String getBankreason() {
+<span class="nc" id="L237">        return bankreason;</span>
+    }
+
+    public void setBankreason(final String bankreason) {
+<span class="nc" id="L241">        this.bankreason = bankreason;</span>
+<span class="nc" id="L242">    }</span>
+
+    @Override
+    public String myLinkId() {
+<span class="nc" id="L246">        return getId().toString();</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

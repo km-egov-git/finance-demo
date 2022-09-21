@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaxHeadMaster.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">TaxHeadMaster.java</span></div><h1>TaxHeadMaster.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.List;
+
+<span class="nc" id="L5">public class TaxHeadMaster {</span>
+
+    private String id;
+    private String tenantId;
+    private Category category;
+    private String service;
+    private String name;
+    private String code;
+    private List&lt;GlCodeMaster&gt; glCodes;
+<span class="nc" id="L14">    private Boolean isDebit = false;</span>
+    private Boolean isActualDemand;
+    private Long validFrom;
+    private Long validTill;
+    private Integer order;
+
+    public String getId() {
+<span class="nc" id="L21">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L25">        this.id = id;</span>
+<span class="nc" id="L26">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L29">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L33">        this.tenantId = tenantId;</span>
+<span class="nc" id="L34">    }</span>
+
+    public Category getCategory() {
+<span class="nc" id="L37">        return category;</span>
+    }
+
+    public void setCategory(Category category) {
+<span class="nc" id="L41">        this.category = category;</span>
+<span class="nc" id="L42">    }</span>
+
+    public String getService() {
+<span class="nc" id="L45">        return service;</span>
+    }
+
+    public void setService(String service) {
+<span class="nc" id="L49">        this.service = service;</span>
+<span class="nc" id="L50">    }</span>
+
+    public String getName() {
+<span class="nc" id="L53">        return name;</span>
+    }
+
+    public void setName(String name) {
+<span class="nc" id="L57">        this.name = name;</span>
+<span class="nc" id="L58">    }</span>
+
+    public String getCode() {
+<span class="nc" id="L61">        return code;</span>
+    }
+
+    public void setCode(String code) {
+<span class="nc" id="L65">        this.code = code;</span>
+<span class="nc" id="L66">    }</span>
+
+    public List&lt;GlCodeMaster&gt; getGlCodes() {
+<span class="nc" id="L69">        return glCodes;</span>
+    }
+
+    public void setGlCodes(List&lt;GlCodeMaster&gt; glCodes) {
+<span class="nc" id="L73">        this.glCodes = glCodes;</span>
+<span class="nc" id="L74">    }</span>
+
+    public Boolean getIsDebit() {
+<span class="nc" id="L77">        return isDebit;</span>
+    }
+
+    public void setIsDebit(Boolean isDebit) {
+<span class="nc" id="L81">        this.isDebit = isDebit;</span>
+<span class="nc" id="L82">    }</span>
+
+    public Boolean getIsActualDemand() {
+<span class="nc" id="L85">        return isActualDemand;</span>
+    }
+
+    public void setIsActualDemand(Boolean isActualDemand) {
+<span class="nc" id="L89">        this.isActualDemand = isActualDemand;</span>
+<span class="nc" id="L90">    }</span>
+
+    public Long getValidFrom() {
+<span class="nc" id="L93">        return validFrom;</span>
+    }
+
+    public void setValidFrom(Long validFrom) {
+<span class="nc" id="L97">        this.validFrom = validFrom;</span>
+<span class="nc" id="L98">    }</span>
+
+    public Long getValidTill() {
+<span class="nc" id="L101">        return validTill;</span>
+    }
+
+    public void setValidTill(Long validTill) {
+<span class="nc" id="L105">        this.validTill = validTill;</span>
+<span class="nc" id="L106">    }</span>
+
+    public Integer getOrder() {
+<span class="nc" id="L109">        return order;</span>
+    }
+
+    public void setOrder(Integer order) {
+<span class="nc" id="L113">        this.order = order;</span>
+<span class="nc" id="L114">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InboxRenderServiceDelegate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.workflow.inbox</a> &gt; <span class="el_source">InboxRenderServiceDelegate.java</span></div><h1>InboxRenderServiceDelegate.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.workflow.inbox;
+
+import org.apache.commons.lang3.StringUtils;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.config.persistence.datasource.routing.annotation.ReadOnly;
+import org.egov.infra.microservice.models.EmployeeInfo;
+import org.egov.infra.microservice.models.FinancialStatus;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.web.support.ui.Inbox;
+import org.egov.infra.workflow.entity.OwnerGroup;
+import org.egov.infra.workflow.entity.State;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.entity.WorkflowAction;
+import org.egov.infra.workflow.entity.WorkflowTypes;
+import org.egov.infra.workflow.service.OwnerGroupService;
+import org.egov.infra.workflow.service.StateService;
+import org.egov.infra.workflow.service.WorkflowActionService;
+import org.egov.infra.workflow.service.WorkflowTypeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getUserId;
+
+@Service
+@Transactional(readOnly = true)
+<span class="nc" id="L94">public class InboxRenderServiceDelegate&lt;T extends StateAware&gt; {</span>
+    private static final String SUPPLIER_BILL = &quot;Supplier Bill&quot;;
+    private static final String EXPENSE_BILL = &quot;Expense Bill&quot;;
+    private static final String WORKS_BILL = &quot;Works Bill&quot;;
+    private static final String WORKFLOW_MODULE_AGENDA=&quot;agenda&quot;;
+    private static final String WORKFLOW_MODULE_APNIMANDI=&quot;apnimandi&quot;;
+    private static final String WORKFLOW_MODULE_AUDIT=&quot;audit&quot;;
+	private static final String WORKFLOW_MODULE_WORKS=&quot;works&quot;;
+<span class="nc" id="L102">    private static final List&lt;String&gt; WORKFLOW_MODULE_AGENDA_TYPES = Arrays.asList(&quot;CouncilPreamble&quot;,&quot;CouncilMeeting&quot;);</span>
+<span class="nc" id="L103">    private static final List&lt;String&gt; WORKFLOW_MODULE_APNIMANDI_TYPES = Arrays.asList(&quot;ApnimandiContractor&quot;,&quot;ApnimandiCollectionDetails&quot;);</span>
+<span class="nc" id="L104">    private static final List&lt;String&gt; WORKFLOW_MODULE_AUDIT_TYPES = Arrays.asList(&quot;AuditDetails&quot;);</span>
+<span class="nc" id="L105">	private static final List&lt;String&gt; WORKFLOW_MODULE_WORKS_TYPES = Arrays.asList(&quot;EstimatePreparationApproval&quot;,&quot;WorkOrderAgreement&quot;,&quot;DNITCreation&quot;);</span>
+<span class="nc" id="L106">    private static final Logger LOG = LoggerFactory.getLogger(InboxRenderServiceDelegate.class);</span>
+    private static final String INBOX_RENDER_SERVICE_SUFFIX = &quot;%sInboxRenderService&quot;;
+<span class="nc" id="L108">    private static final Map&lt;String, WorkflowTypes&gt; WORKFLOW_TYPE_CACHE = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private StateService stateService;
+    
+   
+
+//    @Autowired
+//    @Qualifier(&quot;eisService&quot;)
+//    private OwnerGroupService&lt;? extends OwnerGroup&gt; ownerGroupService;
+
+    @Autowired
+    private WorkflowTypeService workflowTypeService;
+
+    @Autowired
+    private WorkflowActionService workflowActionService;
+
+    @Autowired
+    private MicroserviceUtils microserviceUtils;
+    
+   // @Autowired
+   // private EgBilldetailsHibernateDAO efdfd;
+
+    @ReadOnly
+    public List&lt;Inbox&gt; getCurrentUserInboxItems() {
+<span class="nc" id="L136">        return buildInbox(getAssignedWorkflowItems())</span>
+<span class="nc" id="L137">                .parallelStream()</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                .filter(item -&gt; !item.isDraft())</span>
+<span class="nc" id="L139">                .collect(Collectors.toList());</span>
+    }
+    @ReadOnly
+    public List&lt;Inbox&gt; getCurrentUserInboxItems(String module) {
+<span class="nc" id="L143">        return buildInbox(getAssignedWorkflowItems(module))</span>
+<span class="nc" id="L144">                .parallelStream()</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">                .filter(item -&gt; !item.isDraft())</span>
+<span class="nc" id="L146">                .collect(Collectors.toList());</span>
+    }
+    @ReadOnly
+    public List&lt;Inbox&gt; getCurrentUserDraftItems() {
+<span class="nc" id="L150">        return buildInbox(getAssignedWorkflowDrafts());</span>
+    }
+
+    @ReadOnly
+    public List&lt;Inbox&gt; getWorkflowHistoryItems(Long stateId) {
+<span class="nc" id="L155">        List&lt;Inbox&gt; inboxHistoryItems = new LinkedList&lt;&gt;();</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        for (StateHistory stateHistory : getStateHistory(stateId)) {</span>
+<span class="nc" id="L157">            inboxHistoryItems.add(Inbox</span>
+<span class="nc" id="L158">                    .buildHistory(stateHistory, getWorkflowType(stateHistory.getState().getType())));</span>
+<span class="nc" id="L159">        }</span>
+<span class="nc" id="L160">        return inboxHistoryItems;</span>
+    }
+
+    @ReadOnly
+    public List&lt;T&gt; getAssignedWorkflowItems() {
+<span class="nc" id="L165">        return getAssignedWorkflowItems(false);</span>
+    }
+    
+    @ReadOnly
+    public List&lt;T&gt; getAssignedWorkflowItems(String module) {
+<span class="nc" id="L170">        return getAssignedWorkflowItems(false, module);</span>
+    }
+
+    @ReadOnly
+    public List&lt;T&gt; getAssignedWorkflowDrafts() {
+<span class="nc" id="L175">        return getAssignedWorkflowItems(true);</span>
+    }
+
+    @ReadOnly
+    public List&lt;StateHistory&gt; getStateHistory(Long stateId) {
+<span class="nc" id="L180">        return new LinkedList&lt;&gt;(stateService.getStateById(stateId).getHistory());</span>
+    }
+
+    private List&lt;T&gt; getAssignedWorkflowItems(boolean draft) {
+<span class="nc" id="L184">        List&lt;T&gt; workflowItems = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L185">        List&lt;Long&gt; owners = currentUserPositionIds();</span>
+//        List&lt;Long&gt; owners = new ArrayList&lt;&gt;();
+//        owners.add(4L);
+//        owners.add(1L);
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (!owners.isEmpty()) {</span>
+<span class="nc" id="L190">        	LOG.debug (&quot;Owner&quot;);</span>
+<span class="nc" id="L191">            List&lt;String&gt; types = stateService.getAssignedWorkflowTypeNames(owners);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            for (String type : types) {</span>
+<span class="nc" id="L193">            	LOG.debug (&quot;type : &quot;+type);</span>
+<span class="nc" id="L194">                Optional&lt;InboxRenderService&lt;T&gt;&gt; inboxRenderService = this.getInboxRenderService(type);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">                if (inboxRenderService.isPresent()) {</span>
+<span class="nc" id="L196">                	LOG.debug (&quot;draft : &quot;+draft);</span>
+<span class="nc" id="L197">                    InboxRenderService&lt;T&gt; renderService = inboxRenderService.get();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">                    workflowItems.addAll(draft ? renderService.getDraftWorkflowItems(owners) :</span>
+<span class="nc" id="L199">                            renderService.getAssignedWorkflowItems(owners));</span>
+                }
+<span class="nc" id="L201">            }</span>
+        }
+<span class="nc" id="L203">        return workflowItems;</span>
+    }
+    
+    private List&lt;T&gt; getAssignedWorkflowItems(boolean draft, String module) {
+<span class="nc" id="L207">        List&lt;T&gt; workflowItems = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L208">        List&lt;Long&gt; owners = currentUserPositionIds();</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (!owners.isEmpty()) {</span>
+<span class="nc" id="L210">            List&lt;String&gt; types = stateService.getAssignedWorkflowTypeNames(owners);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            for (String type : types) {</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">            	if(!StringUtils.isEmpty(module)</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">            			&amp;&amp; !isAllowableType(module, type)) {</span>
+<span class="nc" id="L214">            		continue;</span>
+            	}
+            	
+<span class="nc" id="L217">                Optional&lt;InboxRenderService&lt;T&gt;&gt; inboxRenderService = this.getInboxRenderService(type);</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">                if (inboxRenderService.isPresent()) {</span>
+<span class="nc" id="L219">                    InboxRenderService&lt;T&gt; renderService = inboxRenderService.get();</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                    workflowItems.addAll(draft ? renderService.getDraftWorkflowItems(owners) :</span>
+<span class="nc" id="L221">                            renderService.getAssignedWorkflowItems(owners));</span>
+                }
+<span class="nc" id="L223">            }</span>
+        }
+<span class="nc" id="L225">        return workflowItems;</span>
+    }
+    
+    private boolean isAllowableType(String module, String type) {
+<span class="nc bnc" id="L229" title="All 2 branches missed.">    	if(WORKFLOW_MODULE_AGENDA.equalsIgnoreCase(module)</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">    			&amp;&amp; WORKFLOW_MODULE_AGENDA_TYPES.contains(type)) {</span>
+<span class="nc" id="L231">    		return true;</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">    	}else if(WORKFLOW_MODULE_APNIMANDI.equalsIgnoreCase(module)</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">    			&amp;&amp; WORKFLOW_MODULE_APNIMANDI_TYPES.contains(type)) {</span>
+<span class="nc" id="L234">    		return true;</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">    	}else if(WORKFLOW_MODULE_AUDIT.equalsIgnoreCase(module)</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">    			&amp;&amp; WORKFLOW_MODULE_AUDIT_TYPES.contains(type)) {</span>
+<span class="nc" id="L237">    		return true;</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">    	}else if(WORKFLOW_MODULE_WORKS.equalsIgnoreCase(module)</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">    			&amp;&amp; WORKFLOW_MODULE_WORKS_TYPES.contains(type)) {</span>
+<span class="nc" id="L240">    		return true;</span>
+    	}
+<span class="nc" id="L242">    	return false;</span>
+    }
+
+    private List&lt;Inbox&gt; buildInbox(List&lt;T&gt; items) {
+<span class="nc" id="L246">        List&lt;Inbox&gt; inboxItems = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        for (StateAware stateAware : items) {</span>
+<span class="nc" id="L248">            WorkflowTypes workflowType = getWorkflowType(stateAware.getStateType());</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">            if(WORKS_BILL.equals(stateAware.getCurrentState().getNatureOfTask())){</span>
+<span class="nc" id="L250">                workflowType.setLink(workflowType.getLink().replace(&quot;/expensebill/&quot;, &quot;/contractorbill/&quot;));</span>
+<span class="nc" id="L251">                workflowType.setLink(workflowType.getLink().replace(&quot;/supplierbill/&quot;, &quot;/contractorbill/&quot;));</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            }else if(EXPENSE_BILL.equals(stateAware.getCurrentState().getNatureOfTask())){</span>
+<span class="nc" id="L253">                workflowType.setLink(workflowType.getLink().replace(&quot;/contractorbill/&quot;, &quot;/expensebill/&quot;));</span>
+<span class="nc" id="L254">                workflowType.setLink(workflowType.getLink().replace(&quot;/supplierbill/&quot;, &quot;/expensebill/&quot;));</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">            }else if(SUPPLIER_BILL.equals(stateAware.getCurrentState().getNatureOfTask())){</span>
+<span class="nc" id="L256">                workflowType.setLink(workflowType.getLink().replace(&quot;/expensebill/&quot;, &quot;/supplierbill/&quot;));</span>
+<span class="nc" id="L257">                workflowType.setLink(workflowType.getLink().replace(&quot;/contractorbill/&quot;, &quot;/supplierbill/&quot;));</span>
+            }
+<span class="nc" id="L259">            inboxItems.add(Inbox</span>
+<span class="nc" id="L260">                    .build(stateAware,</span>
+                            workflowType,
+<span class="nc" id="L262">                            getNextAction(stateAware.getState())));</span>
+<span class="nc" id="L263">        }</span>
+<span class="nc" id="L264">        inboxItems.addAll(microserviceUtils.getInboxItems());</span>
+<span class="nc" id="L265">        return inboxItems</span>
+<span class="nc" id="L266">                .stream()</span>
+<span class="nc" id="L267">                .sorted(comparing(Inbox::getCreatedDate).reversed())</span>
+<span class="nc" id="L268">                .collect(toList());</span>
+    }
+
+    private Optional&lt;InboxRenderService&lt;T&gt;&gt; getInboxRenderService(String type) {
+<span class="nc" id="L272">        InboxRenderService&lt;T&gt; inboxRenderService = null;</span>
+        try {
+<span class="nc bnc" id="L274" title="All 2 branches missed.">            if (getWorkflowType(type) != null)</span>
+<span class="nc" id="L275">                inboxRenderService = applicationContext.getBean(String.format(INBOX_RENDER_SERVICE_SUFFIX, type), InboxRenderService.class);</span>
+<span class="nc" id="L276">        } catch (BeansException e) {</span>
+<span class="nc" id="L277">            LOG.warn(&quot;{}InboxRenderService bean not defined&quot;, type, e);</span>
+<span class="nc" id="L278">        }</span>
+<span class="nc" id="L279">        return Optional.ofNullable(inboxRenderService);</span>
+    }
+
+    private String getNextAction(State state) {
+<span class="nc" id="L283">        String nextAction = EMPTY;</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (state.getNextAction() != null) {</span>
+<span class="nc" id="L285">            WorkflowAction workflowAction = workflowActionService.getWorkflowActionByNameAndType(state.getNextAction(), state.getType());</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            if (workflowAction == null)</span>
+<span class="nc" id="L287">                nextAction = state.getNextAction();</span>
+            else
+<span class="nc bnc" id="L289" title="All 2 branches missed.">                nextAction = workflowAction.getDescription() == null ? state.getNextAction() : workflowAction.getDescription();</span>
+        }
+<span class="nc" id="L291">        return nextAction;</span>
+    }
+
+    private WorkflowTypes getWorkflowType(String type) {
+<span class="nc" id="L295">        WorkflowTypes workflowType = WORKFLOW_TYPE_CACHE.get(type);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">        if (workflowType == null) {</span>
+<span class="nc" id="L297">            workflowType = workflowTypeService.getEnabledWorkflowTypeByType(type);</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">            if (workflowType != null)</span>
+<span class="nc" id="L299">                WORKFLOW_TYPE_CACHE.put(type, workflowType);</span>
+        }
+<span class="nc" id="L301">        return workflowType;</span>
+    }
+
+    private List&lt;Long&gt; currentUserPositionIds() {
+       
+<span class="nc" id="L306">    	List&lt;Long&gt; positions = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L307">    	Long empId = ApplicationThreadLocals.getUserId();</span>
+<span class="nc" id="L308">    	LOG.debug(&quot;emp id : &quot;+empId);</span>
+<span class="nc" id="L309">    	List&lt;EmployeeInfo&gt; employs = microserviceUtils.getEmployee(empId, null,null, null);</span>
+    	
+<span class="nc bnc" id="L311" title="All 4 branches missed.">    	if(null !=employs &amp;&amp; employs.size()&gt;0 ) {</span>
+			/*
+			 * LOG.debug (&quot;pos no : &quot;+employs.get(0).getAssignments().get(0).getPosition());
+			 * employs.get(0).getAssignments().forEach(assignment-&gt;{
+			 * positions.add(assignment.getPosition()); });
+			 */
+<span class="nc" id="L317">    		positions.add(empId);</span>
+    	}
+    	
+<span class="nc" id="L320">    	return positions;</span>
+//    	return this.ownerGroupService.getOwnerGroupsByUserId(getUserId())
+//                .parallelStream()
+//                .map(OwnerGroup::getId)
+//                .collect(Collectors.toList());
+    }
+    
+    List&lt;Inbox&gt; getHistoryForBillRegister(Long billid){
+<span class="nc" id="L328">    	return null;</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

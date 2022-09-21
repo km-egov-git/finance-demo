@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModuleRepositoryImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.admin.master.repository</a> &gt; <span class="el_source">ModuleRepositoryImpl.java</span></div><h1>ModuleRepositoryImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.admin.master.repository;
+
+import org.egov.infra.admin.master.entity.Role;
+import org.hibernate.FlushMode;
+
+import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
+import javax.persistence.PersistenceContext;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+
+<span class="nc" id="L65">public class ModuleRepositoryImpl implements ModuleRepositoryCustom {</span>
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public List&lt;Object[]&gt; fetchModulesForRoles(final Set&lt;Role&gt; roles) {
+<span class="nc" id="L72">        final StringBuilder sql = new StringBuilder().</span>
+<span class="nc" id="L73">                append(&quot;SELECT DISTINCT mod.name,mod.contextRoot,mod.displayName, mod.id, mod.ordernumber FROM eg_module mod,eg_action act &quot;).</span>
+<span class="nc" id="L74">                append(&quot;WHERE act.id IN (SELECT DISTINCT actionid FROM eg_roleaction WHERE roleid IN (:roles)) &quot;).</span>
+<span class="nc" id="L75">                append(&quot;AND mod.enabled=true AND act.enabled = true AND act.application=mod.id AND mod.parentmodule is null ORDER BY mod.ordernumber ASC&quot;);</span>
+        //entityManager.setFlushMode(FlushModeType.COMMIT);
+       
+//        return entityManager.createNativeQuery(sql.toString()).
+//                setParameter(&quot;roles&quot;, roles).
+//                setFlushMode(FlushModeType.COMMIT).
+//                getResultList();
+  
+        	
+<span class="nc" id="L84">        return entityManager.createNativeQuery(sql.toString()).</span>
+<span class="nc" id="L85">                setParameter(&quot;roles&quot;, Arrays.asList(4L,2L)).</span>
+<span class="nc" id="L86">                setFlushMode(FlushModeType.COMMIT).</span>
+<span class="nc" id="L87">                getResultList();</span>
+    }
+
+    @Override
+    public List&lt;Object[]&gt; fetchModulesByParentModuleId(final Long parentId, final Long userId) {
+
+<span class="nc" id="L93">        final StringBuilder sql = new StringBuilder().</span>
+<span class="nc" id="L94">                append(&quot;SELECT DISTINCT view_ram.module_id as id,view_ram.module_name as name,null as url,view_ram.typeflag as typeflag,view_ram.context_root as ctx_root,view_ram.order_number as ordernumber &quot;).</span>
+<span class="nc" id="L95">                append(&quot;FROM VIEW_EG_MENULINK view_ram WHERE  view_ram.parent_id =:parentId and view_ram.typeflag='M' and view_ram.is_enabled=true &quot;).</span>
+<span class="nc" id="L96">                append(&quot;AND EXISTS (SELECT action.id FROM eg_action action, eg_roleaction roleaction where action.parentmodule = view_ram.module_id &quot;).</span>
+<span class="nc" id="L97">                append(&quot;AND action.enabled = true AND action.id = roleaction.actionid  AND roleaction.roleid IN (SELECT roleid FROM eg_userrole userrole &quot;).</span>
+<span class="nc" id="L98">                append(&quot;WHERE userrole.userid = :userId) UNION (SELECT module.id FROM eg_module module WHERE module.parentmodule = view_ram.module_id AND module.enabled=true) ) &quot;).</span>
+<span class="nc" id="L99">                append(&quot;UNION SELECT distinct view_ram.action_id as id,view_ram.action_name as name,view_ram.action_url as url,view_ram.typeflag as typeflag, &quot;).</span>
+<span class="nc" id="L100">                append(&quot;view_ram.context_root as ctx_root,view_ram.order_number as ordernumber FROM VIEW_EG_MENULINK view_ram where   parent_id = :parentId and typeflag='A' &quot;).</span>
+<span class="nc" id="L101">                append(&quot;AND view_ram.is_enabled=true and (view_ram.action_id in (select actionid from eg_roleaction ra  where ra.roleid in &quot;).</span>
+<span class="nc" id="L102">                append(&quot;(select roleid from eg_userrole ur where ur.userid = :userId))) order by typeflag desc,ordernumber asc&quot;);</span>
+
+<span class="nc" id="L104">        return entityManager.createNativeQuery(sql.toString()).</span>
+<span class="nc" id="L105">                setParameter(&quot;parentId&quot;, parentId).</span>
+<span class="nc" id="L106">                setParameter(&quot;userId&quot;, userId).</span>
+<span class="nc" id="L107">                getResultList();</span>
+    }
+
+    @Override
+    public List&lt;Object[]&gt; fetchUserFavourateModules(final Long userId) {
+<span class="nc" id="L112">        final StringBuilder sql = new StringBuilder().</span>
+<span class="nc" id="L113">                append(&quot;SELECT distinct view_ram.action_id,fav.name,fav.contextroot,view_ram.action_url &quot;).</span>
+<span class="nc" id="L114">                append(&quot;FROM VIEW_EG_MENULINK view_ram, EG_FAVOURITES fav WHERE  fav.actionid = view_ram.action_id and fav.userid = :userId &quot;).</span>
+<span class="nc" id="L115">                append(&quot;and view_ram.typeflag='A' and view_ram.is_enabled=true GROUP BY view_ram.action_id,fav.name,fav.contextroot,view_ram.action_url&quot;);</span>
+<span class="nc" id="L116">        return entityManager.createNativeQuery(sql.toString()).</span>
+<span class="nc" id="L117">                setParameter(&quot;userId&quot;, userId).</span>
+<span class="nc" id="L118">                getResultList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

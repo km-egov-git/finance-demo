@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StringUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.utils</a> &gt; <span class="el_source">StringUtils.java</span></div><h1>StringUtils.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.utils;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.RandomStringGenerator;
+import org.egov.infra.exception.ApplicationRuntimeException;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.lang3.StringUtils.toEncodedString;
+import static org.egov.infra.utils.ApplicationConstant.NA;
+import static org.egov.infra.utils.ApplicationConstant.NO;
+import static org.egov.infra.utils.ApplicationConstant.UNDERSCORE;
+import static org.egov.infra.utils.ApplicationConstant.WHITESPACE;
+import static org.egov.infra.utils.ApplicationConstant.YES;
+import static org.egov.infra.utils.DateUtils.currentDateToFileNameFormat;
+import static org.egov.infra.validation.regex.Constants.UNSIGNED_NUMERIC;
+
+<span class="nc" id="L71">public class StringUtils extends org.apache.commons.lang.StringUtils {</span>
+
+<span class="nc" id="L73">    public static final RandomStringGenerator UNIQUE_STRING_GENERATOR = new RandomStringGenerator.Builder()</span>
+<span class="nc" id="L74">            .withinRange('a', 'z').build();</span>
+
+    public static String escapeSpecialChars(final String str) {
+<span class="nc" id="L77">        return str.replaceAll(&quot;\\s\\s+|\\r\\n&quot;, &quot;&lt;br/&gt;&quot;).replaceAll(&quot;\'&quot;, &quot;\\\\'&quot;);</span>
+    }
+
+    public static String escapeJavaScript(final String str) {
+<span class="nc" id="L81">        return StringEscapeUtils.escapeJavaScript(str);</span>
+    }
+
+    public static String emptyIfNull(final String value) {
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        return value == null ? EMPTY : value;</span>
+    }
+
+    public static List&lt;String&gt; toList(final String... values) {
+<span class="nc" id="L89">        return Arrays.asList(values);</span>
+    }
+
+    public static String encodeString(String string) {
+<span class="nc" id="L93">        return toEncodedString(string.getBytes(), Charset.forName(&quot;UTF-8&quot;));</span>
+    }
+
+    public static String[] listToStringArray(List&lt;String&gt; values) {
+<span class="nc" id="L97">        return values.stream().toArray(String[]::new);</span>
+    }
+
+    public static String toYesOrNo(boolean value) {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        return value ? YES : NO;</span>
+    }
+
+    public static String defaultIfBlank(String value) {
+<span class="nc" id="L105">        return defaultIfBlank(value, NA);</span>
+    }
+
+    public static String appendTimestamp(String name) {
+<span class="nc" id="L109">        return new StringBuilder().append(name).append(UNDERSCORE).append(currentDateToFileNameFormat()).toString();</span>
+    }
+
+    public static String append(String value, String append) {
+<span class="nc" id="L113">        return new StringBuilder().append(value).append(append).toString();</span>
+    }
+
+    public static String prepend(String value, String prepend) {
+<span class="nc" id="L117">        return new StringBuilder().append(prepend).append(value).toString();</span>
+    }
+
+    public static boolean isUnsignedNumber(String value) {
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        return isNotBlank(value) &amp;&amp; value.matches(UNSIGNED_NUMERIC);</span>
+    }
+
+    public static String stripExtraSpaces(String value) {
+<span class="nc" id="L125">        return value.trim().replaceAll(&quot;\\s{2,}&quot;, WHITESPACE);</span>
+    }
+
+    public static String uniqueString(int codePoint) {
+<span class="nc" id="L129">        return UNIQUE_STRING_GENERATOR.generate(codePoint);</span>
+    }
+
+    public static String encodeURL(String value) {
+        try {
+<span class="nc" id="L134">            return URLEncoder.encode(value, UTF_8.toString());</span>
+<span class="nc" id="L135">        } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L136">            throw new ApplicationRuntimeException(&quot;Error occurred while encoding URL value&quot;, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

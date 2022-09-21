@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchQuerySQL.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infstr.search</a> &gt; <span class="el_source">SearchQuerySQL.java</span></div><h1>SearchQuerySQL.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infstr.search;
+
+import org.egov.infra.persistence.utils.Page;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Query;
+
+import java.math.BigInteger;
+import java.util.List;
+
+/**
+ * Class representing a search query. Stores the query and list of parameters. This can be used to represent SQL queries with a full query string and optional parameters.
+ *
+ * @author manoranjan
+ * @deprecated
+ */
+@Deprecated
+public class SearchQuerySQL implements SearchQuery {
+    private final String searchQuery;
+    private final String countQuery;
+<span class="nc" id="L68">    private Object[] params = new Object[0];</span>
+
+    /**
+     * Creates a search query object using the given query and parameters
+     *
+     * @param searchQuery The SQL search query
+     * @param countQuery  The SQL query which will return the number of records that will be returned by the search query
+     * @param params      List of parameters to be passed to the query
+     */
+<span class="nc" id="L77">    public SearchQuerySQL(final String searchQuery, final String countQuery, final List&lt;Object&gt; params) {</span>
+<span class="nc" id="L78">        this.searchQuery = searchQuery;</span>
+<span class="nc" id="L79">        this.countQuery = countQuery;</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (params != null) {</span>
+<span class="nc" id="L81">            this.params = params.toArray();</span>
+        }
+<span class="nc" id="L83">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.search.SearchQuery#getCount(org.egov.infstr.services.PersistenceService)
+     */
+    @Override
+    public int getCount(final PersistenceService persistenceService) {
+<span class="nc" id="L91">        final Query q = getSQLQueryWithParams(persistenceService, this.countQuery);</span>
+<span class="nc" id="L92">        return ((BigInteger) q.uniqueResult()).intValue();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.egov.infstr.search.SearchQuery#getPage(org.egov.infstr.services.PersistenceService, int, int)
+     */
+    @Override
+    public Page getPage(final PersistenceService persistenceService, final int pageNum, final int pageSize) {
+<span class="nc" id="L101">        final Query q = getSQLQueryWithParams(persistenceService, this.searchQuery);</span>
+<span class="nc" id="L102">        return new Page(q, pageNum, pageSize);</span>
+    }
+
+    /**
+     * Creates an SQL query and also sets parameters in to it if required
+     *
+     * @param persistenceService Persistence service used for creating the query
+     * @param query              The SQL query string
+     * @return The created Query object
+     */
+    private Query getSQLQueryWithParams(final PersistenceService persistenceService, final String query) {
+<span class="nc" id="L113">        final Query q = persistenceService.getSession().createSQLQuery(query);</span>
+
+<span class="nc bnc" id="L115" title="All 4 branches missed.">        if (this.params != null &amp;&amp; this.params.length &gt; 0) {</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">            for (int index = 0; index &lt; this.params.length; index++) {</span>
+<span class="nc" id="L117">                q.setParameter(index, this.params[index]);</span>
+            }
+        }
+<span class="nc" id="L120">        return q;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

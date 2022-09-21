@@ -1,0 +1,2220 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmployeeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.service</a> &gt; <span class="el_source">EmployeeServiceImpl.java</span></div><h1>EmployeeServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.service;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.log4j.Logger;
+import org.egov.commons.Accountdetailkey;
+import org.egov.commons.Accountdetailtype;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.dao.AccountdetailkeyHibernateDAO;
+import org.egov.commons.dao.AccountdetailtypeHibernateDAO;
+import org.egov.commons.dao.EgwStatusHibernateDAO;
+import org.egov.commons.exception.NoSuchObjectException;
+import org.egov.commons.exception.TooManyValuesException;
+import org.egov.eis.entity.Assignment;
+import org.egov.eis.entity.EmployeeView;
+import org.egov.infra.admin.master.entity.AppConfigValues;
+import org.egov.infra.admin.master.entity.Department;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.egov.infra.exception.ApplicationException;
+import org.egov.infra.exception.ApplicationRuntimeException;
+import org.egov.infstr.services.PersistenceService;
+import org.egov.pims.commons.Designation;
+import org.egov.pims.commons.Position;
+import org.egov.pims.dao.AssignmentDAO;
+import org.egov.pims.dao.GenericMasterDAO;
+import org.egov.pims.dao.PersonalInformationDAO;
+import org.egov.pims.model.EmployeeNamePoJo;
+import org.egov.pims.model.GenericMaster;
+import org.egov.pims.model.LangKnown;
+import org.egov.pims.model.PersonalInformation;
+import org.egov.pims.model.SearchEmpDTO;
+import org.egov.pims.model.ServiceHistory;
+import org.egov.pims.utils.EisManagersUtill;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.type.IntegerType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="nc" id="L104">public class EmployeeServiceImpl implements EmployeeServiceOld {</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.egov.infstr.utils.ejb.support.AbstractStatelessSessionBean#ejbCreate
+     * ()
+     */
+<span class="nc" id="L112">    private static final Logger logger = Logger.getLogger(EmployeeServiceImpl.class);</span>
+    private EisUtilService eisService;
+    private PersistenceService persistenceService;
+    private PersonalInformationDAO personalInformationDAO;
+    private AssignmentDAO assignmentDAO;
+    private AppConfigValueService appConfigValuesService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private EgwStatusHibernateDAO egwStatusHibernateDAO;
+
+    @Autowired
+    private AccountdetailtypeHibernateDAO accountdetailtypeHibernateDAO;
+
+    @Autowired
+    private AccountdetailkeyHibernateDAO accountdetailkeyHibernateDAO;
+
+    @Autowired
+    private GenericMasterDAO genericMasterDAO;
+    
+    public Session getCurrentSession() {
+<span class="nc" id="L135">        return entityManager.unwrap(Session.class);</span>
+    }
+
+    public PersistenceService getPersistenceService() {
+<span class="nc" id="L139">        return persistenceService;</span>
+    }
+
+    public void setPersistenceService(PersistenceService persistenceService) {
+<span class="nc" id="L143">        this.persistenceService = persistenceService;</span>
+<span class="nc" id="L144">    }</span>
+
+<span class="nc" id="L146">    private final static Logger LOGGER = Logger.getLogger(EmployeeServiceImpl.class);</span>
+
+    @Deprecated
+    public List searchEmployee(Integer departmentId, Integer designationId, String code, String name, String searchAll)
+            throws Exception {
+
+<span class="nc" id="L152">        List&lt;EmployeeView&gt; employeeList = null;</span>
+        try {
+
+<span class="nc" id="L155">            String mainStr = &quot;from EmployeeView ev where&quot;;</span>
+<span class="nc bnc" id="L156" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L157">                mainStr += &quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;;</span>
+            }
+<span class="nc bnc" id="L159" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L160">                mainStr += &quot; ev.deptId.id= :deptId and &quot;;</span>
+            }
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L163">                mainStr += &quot; ev.desigId.designationId = :designationId and &quot;;</span>
+            }
+<span class="nc bnc" id="L165" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L166">                mainStr += &quot; trim(upper(ev.employeeName))  like '%&quot; + name.trim().toUpperCase() + &quot;%' and &quot;;</span>
+            }
+            /*
+             * if(code!=null&amp;&amp;!code.equals(&quot;&quot;)) { mainStr
+             * +=&quot; where upper(trim(ev.employeeCode)) = :employeeCode &quot;; } else
+             * {
+             */
+<span class="nc bnc" id="L173" title="All 4 branches missed.">            if ((searchAll.equals(&quot;false&quot;) &amp;&amp; designationId.intValue() != 0)) {</span>
+<span class="nc" id="L174">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) and ev.isActive = '1' &quot;;</span>
+<span class="nc bnc" id="L175" title="All 4 branches missed.">            } else if ((searchAll.equals(&quot;true&quot;) &amp;&amp; designationId.intValue() != 0)) {</span>
+<span class="nc" id="L176">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // Inspite of SearchAll is true or false, if employee code is
+            // entered, search for all active and inactive employees
+<span class="nc bnc" id="L180" title="All 4 branches missed.">            else if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L181">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+<span class="nc bnc" id="L185" title="All 4 branches missed.">            } else if (searchAll.equals(&quot;true&quot;) &amp;&amp; designationId.intValue() == 0) {</span>
+<span class="nc" id="L186">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+            } else {
+<span class="nc" id="L191">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // }
+
+<span class="nc" id="L195">            Query qry = null;</span>
+<span class="nc" id="L196">            qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L197">            LOGGER.info(&quot;qryqryqryqry&quot; + qry.toString());</span>
+<span class="nc bnc" id="L198" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L199">                qry.setString(&quot;employeeCode&quot;, code.trim().toUpperCase());</span>
+            }
+<span class="nc bnc" id="L201" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L202">                qry.setLong(&quot;deptId&quot;, departmentId.longValue());</span>
+            }
+<span class="nc bnc" id="L204" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L205">                qry.setInteger(&quot;designationId&quot;, designationId);</span>
+            }
+<span class="nc" id="L207">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L209">        } catch (HibernateException he) {</span>
+<span class="nc" id="L210">            LOGGER.error(he);</span>
+<span class="nc" id="L211">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L212">        } catch (Exception he) {</span>
+<span class="nc" id="L213">            LOGGER.error(he);</span>
+
+<span class="nc" id="L215">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L217">        }</span>
+<span class="nc" id="L218">        return employeeList;</span>
+    }
+
+    public List searchEmployee(Integer departmentId, Integer designationId, String code, String name, Integer status)
+            throws Exception {
+
+<span class="nc" id="L224">        List&lt;EmployeeView&gt; employeeList = null;</span>
+        try {
+
+<span class="nc" id="L227">            String mainStr = &quot;from EmployeeView ev where ev.isPrimary='Y' and &quot;;</span>
+<span class="nc bnc" id="L228" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L229">                mainStr += &quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;;</span>
+            }
+<span class="nc bnc" id="L231" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L232">                mainStr += &quot; ev.deptId.id= :deptId and &quot;;</span>
+            }
+<span class="nc bnc" id="L234" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L235">                mainStr += &quot; ev.desigId.designationId = :designationId and &quot;;</span>
+            }
+<span class="nc bnc" id="L237" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L238">                mainStr += &quot; trim(upper(ev.employeeName))  like '%&quot; + name.trim().toUpperCase() + &quot;%' and &quot;;</span>
+            }
+<span class="nc bnc" id="L240" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L241">                mainStr += &quot; ev.employeeStatus.id = :employeeStatus and &quot;;</span>
+            }
+            /*
+             * if(code!=null&amp;&amp;!code.equals(&quot;&quot;)) { mainStr
+             * +=&quot; where upper(trim(ev.employeeCode)) = :employeeCode &quot;; } else
+             * {
+             */
+
+<span class="nc bnc" id="L249" title="All 4 branches missed.">            if (status.intValue() != 0 &amp;&amp; designationId.intValue() == 0) {</span>
+<span class="nc" id="L250">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) and ev.employeeStatus.id = :employeeStatus &quot;;</span>
+<span class="nc bnc" id="L251" title="All 4 branches missed.">            } else if (status.intValue() == 0 &amp;&amp; designationId.intValue() != 0) {</span>
+<span class="nc" id="L252">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // Inspite of SearchAll is true or false, if employee code is
+            // entered, search for all active and inactive employees
+<span class="nc bnc" id="L256" title="All 4 branches missed.">            else if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L257">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+<span class="nc bnc" id="L261" title="All 4 branches missed.">            } else if (status.intValue() != 0 || designationId.intValue() == 0) {</span>
+<span class="nc" id="L262">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+            } else {
+<span class="nc" id="L267">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // }
+
+<span class="nc" id="L271">            Query qry = null;</span>
+<span class="nc" id="L272">            qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L273">            LOGGER.info(&quot;qryqryqryqry&quot; + qry.toString());</span>
+<span class="nc bnc" id="L274" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L275">                qry.setString(&quot;employeeCode&quot;, code.trim().toUpperCase());</span>
+            }
+<span class="nc bnc" id="L277" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L278">                qry.setInteger(&quot;deptId&quot;, departmentId);</span>
+            }
+<span class="nc bnc" id="L280" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L281">                qry.setInteger(&quot;designationId&quot;, designationId);</span>
+            }
+<span class="nc bnc" id="L283" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L284">                qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+            }
+<span class="nc" id="L286">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L288">        } catch (HibernateException he) {</span>
+<span class="nc" id="L289">            LOGGER.error(he);</span>
+<span class="nc" id="L290">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L291">        } catch (Exception he) {</span>
+<span class="nc" id="L292">            LOGGER.error(he);</span>
+
+<span class="nc" id="L294">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L296">        }</span>
+<span class="nc" id="L297">        return employeeList;</span>
+    }
+
+    /*
+     * search employee by department,designation,functionary,code and name
+     */
+    public List searchEmployee(Integer departmentId, Integer designationId, Integer functionaryId, String code,
+            String name, Integer status) throws Exception {
+<span class="nc" id="L305">        List&lt;EmployeeView&gt; employeeList = null;</span>
+        try {
+
+<span class="nc" id="L308">            String mainStr = &quot;from EmployeeView ev where  &quot;;</span>
+<span class="nc bnc" id="L309" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L310">                mainStr += &quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;;</span>
+            }
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L313">                mainStr += &quot; ev.deptId.id= :deptId and &quot;;</span>
+            }
+<span class="nc bnc" id="L315" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L316">                mainStr += &quot; ev.desigId.designationId = :designationId and &quot;;</span>
+            }
+<span class="nc bnc" id="L318" title="All 2 branches missed.">            if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L319">                mainStr += &quot; ev.functionary.id = :functionaryId and &quot;;</span>
+            }
+
+<span class="nc bnc" id="L322" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L323">                mainStr += &quot; trim(upper(ev.employeeName))  like '%&quot; + name.trim().toUpperCase() + &quot;%' and &quot;;</span>
+            }
+<span class="nc bnc" id="L325" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L326">                mainStr += &quot; ev.employeeStatus.id = :employeeStatus and &quot;;</span>
+            }
+            /*
+             * if(code!=null&amp;&amp;!code.equals(&quot;&quot;)) { mainStr
+             * +=&quot; where upper(trim(ev.employeeCode)) = :employeeCode &quot;; } else
+             * {
+             */
+
+<span class="nc bnc" id="L334" title="All 4 branches missed.">            if (status.intValue() != 0 &amp;&amp; designationId.intValue() == 0) {</span>
+<span class="nc" id="L335">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) and ev.employeeStatus.id = :employeeStatus &quot;;</span>
+<span class="nc bnc" id="L336" title="All 4 branches missed.">            } else if (status.intValue() == 0 &amp;&amp; designationId.intValue() != 0) {</span>
+<span class="nc" id="L337">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // Inspite of SearchAll is true or false, if employee code is
+            // entered, search for all active and inactive employees
+<span class="nc bnc" id="L341" title="All 4 branches missed.">            else if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L342">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+<span class="nc bnc" id="L346" title="All 4 branches missed.">            } else if (status.intValue() != 0 || designationId.intValue() == 0) {</span>
+<span class="nc" id="L347">                mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= SYSDATE) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= SYSDATE) OR (evn2.fromDate &lt;= SYSDATE AND evn2.toDate &gt; SYSDATE)) )))) &quot;;
+            } else {
+<span class="nc" id="L352">                mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) &quot;;</span>
+            }
+            // }
+
+<span class="nc" id="L356">            Query qry = null;</span>
+<span class="nc" id="L357">            qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L358">            LOGGER.info(&quot;qryqryqryqry&quot; + qry.toString());</span>
+<span class="nc bnc" id="L359" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L360">                qry.setString(&quot;employeeCode&quot;, code.trim().toUpperCase());</span>
+            }
+<span class="nc bnc" id="L362" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L363">                qry.setInteger(&quot;deptId&quot;, departmentId);</span>
+            }
+<span class="nc bnc" id="L365" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L366">                qry.setInteger(&quot;designationId&quot;, designationId);</span>
+            }
+<span class="nc bnc" id="L368" title="All 2 branches missed.">            if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L369">                qry.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+            }
+<span class="nc bnc" id="L371" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L372">                qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+            }
+<span class="nc" id="L374">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L376">        } catch (HibernateException he) {</span>
+<span class="nc" id="L377">            LOGGER.error(he);</span>
+<span class="nc" id="L378">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L379">        } catch (Exception he) {</span>
+<span class="nc" id="L380">            LOGGER.error(he);</span>
+
+<span class="nc" id="L382">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L384">        }</span>
+<span class="nc" id="L385">        return employeeList;</span>
+    }
+
+    /**
+     * @param designationId
+     * @param code
+     * @param name
+     * @param status
+     * @param empType
+     * @param finParams
+     *            department,functionary,function optional
+     * @return
+     * @throws Exception
+     */
+    public List&lt;EmployeeView&gt; searchEmployee(Integer designationId, String code, String name, Integer status,
+            Integer empType, Map&lt;String, Integer&gt; finParams) throws Exception {
+
+<span class="nc" id="L402">        List&lt;EmployeeView&gt; employeeList = new ArrayList&lt;EmployeeView&gt;();</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">        Integer departmentId = finParams.get(&quot;departmentId&quot;) == null ? 0 : finParams.get(&quot;departmentId&quot;);</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">        Integer functionaryId = finParams.get(&quot;functionaryId&quot;) == null ? 0 : finParams.get(&quot;functionaryId&quot;);</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        Integer functionId = finParams.get(&quot;functionId&quot;) == null ? 0 : finParams.get(&quot;functionId&quot;);</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">        Integer userId = finParams.get(&quot;userId&quot;) == null ? 0 : finParams.get(&quot;userId&quot;);</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">        Integer isActive = finParams.get(&quot;isActive&quot;) == null ? 0 : finParams.get(&quot;isActive&quot;);</span>
+        try {
+<span class="nc" id="L409">            Query qry = null;</span>
+<span class="nc bnc" id="L410" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L411">                logger.info(&quot; Search by Code &quot; + code);</span>
+               
+<span class="nc" id="L413">                List&lt;EmployeeView&gt; list = persistenceService.findAllBy(</span>
+                        &quot; from EmployeeView ev where upper(ev.employeeCode) like ? &quot;, code);
+<span class="nc" id="L415">                Iterator itr = list.iterator();</span>
+<span class="nc" id="L416">                EmployeeView ev = null;</span>
+<span class="nc" id="L417">                EmployeeView ev1 = null;</span>
+<span class="nc" id="L418">                Assignment ass = null;</span>
+<span class="nc" id="L419">                Date date = new Date();</span>
+<span class="nc" id="L420">                PersonalInformation emp = null;</span>
+<span class="nc bnc" id="L421" title="All 2 branches missed.">                while (itr.hasNext()) {</span>
+<span class="nc" id="L422">                    ev = (EmployeeView) itr.next();</span>
+<span class="nc" id="L423">                    emp = getEmloyeeById(ev.getId().intValue());</span>
+                    break;
+                }
+                /*if (emp != null)
+                    ass = emp.getAssignment(date,persistenceService);*/ // Returns current/latest
+                                                   // primary/temp assignment as
+                                                   // on current date
+<span class="nc" id="L430">                Iterator itr1 = list.iterator();</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">                while (itr1.hasNext()) {</span>
+<span class="nc" id="L432">                    ev1 = (EmployeeView) itr1.next();</span>
+
+<span class="nc bnc" id="L434" title="All 4 branches missed.">                    if (ass != null &amp;&amp; ev1.getAssignment().equals(ass)) {</span>
+<span class="nc" id="L435">                        logger.info(&quot;ev.assId=&quot; + ev1.getAssignment().getId());</span>
+<span class="nc" id="L436">                        logger.info(&quot;ass.assId=&quot; + ass.getId());</span>
+<span class="nc" id="L437">                        logger.info(&quot;emp &quot; + ev1.getName() + &quot; : &quot; + ev1.getPosition().getName() + &quot; : &quot;</span>
+<span class="nc" id="L438">                                + ev1.getPrimary());</span>
+<span class="nc" id="L439">                        break;</span>
+                    }
+                }
+<span class="nc bnc" id="L442" title="All 2 branches missed.">                if (ev1 != null)</span>
+<span class="nc" id="L443">                    employeeList.add(ev1);</span>
+<span class="nc" id="L444">            } else {</span>
+<span class="nc" id="L445">                logger.info(&quot; Search by other params &quot;);</span>
+<span class="nc" id="L446">                String mainStr = &quot;from EmployeeView ev where &quot;;</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">                if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L448">                    mainStr += &quot; ev.deptId.id= :deptId and &quot;;</span>
+                }
+<span class="nc bnc" id="L450" title="All 2 branches missed.">                if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L451">                    mainStr += &quot; ev.desigId.designationId = :designationId and &quot;;</span>
+                }
+<span class="nc bnc" id="L453" title="All 2 branches missed.">                if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L454">                    mainStr += &quot; ev.functionary.id = :functionaryId and &quot;;</span>
+                }
+<span class="nc bnc" id="L456" title="All 4 branches missed.">                if (functionId != null &amp;&amp; functionId.intValue() != 0) {</span>
+<span class="nc" id="L457">                    mainStr += &quot; ev.functionId.id = :functionId and &quot;;</span>
+                }
+
+<span class="nc bnc" id="L460" title="All 4 branches missed.">                if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L461">                    mainStr += &quot; trim(upper(ev.employeeName))  like '%&quot; + name.trim().toUpperCase() + &quot;%' and &quot;;</span>
+                }
+<span class="nc bnc" id="L463" title="All 2 branches missed.">                if (status.intValue() != 0) {</span>
+<span class="nc" id="L464">                    mainStr += &quot; ev.employeeStatus.id = :employeeStatus and &quot;;</span>
+                }
+<span class="nc bnc" id="L466" title="All 2 branches missed.">                if (empType.intValue() != 0) {</span>
+<span class="nc" id="L467">                    mainStr += &quot; ev.employeeType.id=:employeeType and &quot;;</span>
+                }
+<span class="nc bnc" id="L469" title="All 2 branches missed.">                if (isActive.intValue() != 0) {</span>
+<span class="nc" id="L470">                    mainStr += &quot; ev.userMaster.active=:isActive  and &quot;;</span>
+                }
+<span class="nc bnc" id="L472" title="All 2 branches missed.">                if (userId.intValue() != 0)// to query the employee using</span>
+                                           // employee username
+                {
+<span class="nc" id="L475">                    mainStr += &quot; ev.userMaster.id= :userId and &quot;;</span>
+                }
+<span class="nc" id="L477">                mainStr += &quot; upper(ev.isPrimary)='Y' AND ((  ev.toDate IS NULL AND ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR ( ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND ev.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy')) &quot;</span>
+                        + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                        + &quot; WHERE evn.id = ev.id  AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                        + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR (evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND evn2.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy'))) )))) &quot;;
+
+<span class="nc" id="L482">                qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L483" title="All 2 branches missed.">                if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L484">                    qry.setInteger(&quot;deptId&quot;, departmentId);</span>
+                }
+<span class="nc bnc" id="L486" title="All 2 branches missed.">                if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L487">                    qry.setInteger(&quot;designationId&quot;, designationId);</span>
+                }
+<span class="nc bnc" id="L489" title="All 2 branches missed.">                if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L490">                    qry.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+                }
+<span class="nc bnc" id="L492" title="All 2 branches missed.">                if (status.intValue() != 0) {</span>
+<span class="nc" id="L493">                    qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+                }
+<span class="nc bnc" id="L495" title="All 2 branches missed.">                if (empType.intValue() != 0) {</span>
+<span class="nc" id="L496">                    qry.setInteger(&quot;employeeType&quot;, empType);</span>
+                }
+<span class="nc bnc" id="L498" title="All 2 branches missed.">                if (isActive.intValue() != 0) {</span>
+<span class="nc" id="L499">                    qry.setInteger(&quot;isActive&quot;, isActive);</span>
+                }
+<span class="nc bnc" id="L501" title="All 2 branches missed.">                if (userId.intValue() != 0) {</span>
+<span class="nc" id="L502">                    qry.setInteger(&quot;userId&quot;, userId);</span>
+                }
+<span class="nc" id="L504">                employeeList = (List) qry.list();</span>
+            }
+
+<span class="nc" id="L507">        } catch (HibernateException he) {</span>
+<span class="nc" id="L508">            LOGGER.error(he);</span>
+<span class="nc" id="L509">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L510">        } catch (Exception he) {</span>
+<span class="nc" id="L511">            LOGGER.error(he);</span>
+
+<span class="nc" id="L513">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L515">        }</span>
+<span class="nc" id="L516">        return employeeList;</span>
+    }
+
+    /*
+     * public List searchEmployeeForNominees(Integer departmentId,Integer
+     * designationId,Integer functionaryId,String code,String name,Integer
+     * status,Integer empType)throws Exception { //session =
+     * null; try { String mainStr =
+     * &quot;select distinct ev from EmployeeView ev,EmployeeNomineeMaster enm where ev.id=enm.employeeId.id and &quot;
+     * ; if(code!=null&amp;&amp;!code.equals(&quot;&quot;)) { mainStr
+     * +=&quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;; name=&quot;&quot;; }
+     * if(departmentId.intValue() != 0) { mainStr
+     * +=&quot; ev.deptId.id= :deptId and &quot;; } if(designationId.intValue() != 0) {
+     * mainStr += &quot; ev.desigId.designationId = :designationId and &quot;; }
+     * if(functionaryId.intValue() !=0) { mainStr +=
+     * &quot; ev.functionary.id = :functionaryId and &quot;; } if(name!= null &amp;&amp;
+     * !name.equals(&quot;&quot;)) { mainStr +=
+     * &quot; trim(upper(ev.employeeName))  like :empName and &quot;; }
+     * if(status.intValue() != 0 ) { mainStr +=
+     * &quot; ev.employeeStatus.id = :employeeStatus and &quot;; }
+     * if(empType.intValue()!=0) { mainStr +=
+     * &quot; ev.employeeType.id=:employeeType and &quot;; } mainStr +=
+     * &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR (upper(ev.isPrimary)='Y' and ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND ev.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy')) &quot;
+     * +
+     * &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+     * +
+     * &quot; WHERE evn.id = ev.id AND upper(ev.isPrimary)='Y' AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+     * +
+     * &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR (evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND evn2.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy'))) )))&quot;
+     * + &quot; ) &quot;; Query qry = null; qry =
+     * getCurrentSession().createQuery(mainStr);
+     * LOGGER.info(&quot;qryqryqryqry&quot;+qry.toString());
+     * if(code!=null&amp;&amp;!code.equals(&quot;&quot;)) { qry.setString(&quot;employeeCode&quot;,
+     * code.trim().toUpperCase()); } if(name!= null &amp;&amp; !name.equals(&quot;&quot;)) {
+     * qry.setString(&quot;empName&quot;,&quot;%&quot;+name.trim().toUpperCase()+&quot;%&quot;); }
+     * if(departmentId.intValue() != 0) { qry.setInteger(&quot;deptId&quot;,
+     * departmentId); } if(designationId.intValue() != 0) {
+     * qry.setInteger(&quot;designationId&quot;, designationId); }
+     * if(functionaryId.intValue() != 0) { qry.setInteger(&quot;functionaryId&quot;,
+     * functionaryId); } if(status.intValue() != 0) {
+     * qry.setInteger(&quot;employeeStatus&quot;, status); } if(empType.intValue() != 0) {
+     * qry.setInteger(&quot;employeeType&quot;,empType); } employeeList =
+     * (List)qry.list(); } catch (HibernateException he) { LOGGER.error(he);
+     * ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); } catch
+     * throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); }
+     * return employeeList; }
+     */
+
+    @Deprecated
+    /**
+     *
+     * Api to get the employee with primary assignment for currentdate.
+     * If there is no Assignment for the current date then it pick's up the employee with  lastest assignment ie: Maximum( From Date)
+     * @param departmentId
+     * @param designationId
+     * @param functionaryId
+     * @param code
+     * @param name
+     * @param status
+     * @param empType
+     * @return List of EmployeeView for current or Lastest Assignment.
+     * @throws Exception
+     */
+    public List searchEmployee(Integer departmentId, Integer designationId, Integer functionaryId, String code,
+            String name, Integer status, Integer empType) throws Exception {
+
+<span class="nc" id="L582">        List&lt;EmployeeView&gt; employeeList = null;</span>
+        try {
+
+<span class="nc" id="L585">            String mainStr = &quot;from EmployeeView ev where &quot;;</span>
+<span class="nc bnc" id="L586" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L587">                mainStr += &quot; upper(trim(ev.employeeCode)) = :employeeCode and &quot;;</span>
+<span class="nc" id="L588">                name = &quot;&quot;;</span>
+            }
+<span class="nc bnc" id="L590" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L591">                mainStr += &quot; ev.deptId.id= :deptId and &quot;;</span>
+            }
+<span class="nc bnc" id="L593" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L594">                mainStr += &quot; ev.desigId.designationId = :designationId and &quot;;</span>
+            }
+<span class="nc bnc" id="L596" title="All 2 branches missed.">            if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L597">                mainStr += &quot; ev.functionary.id = :functionaryId and &quot;;</span>
+            }
+
+<span class="nc bnc" id="L600" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L601">                mainStr += &quot; trim(upper(ev.employeeName))  like :empName and &quot;;</span>
+            }
+<span class="nc bnc" id="L603" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L604">                mainStr += &quot; ev.employeeStatus.id = :employeeStatus and &quot;;</span>
+            }
+<span class="nc bnc" id="L606" title="All 2 branches missed.">            if (empType.intValue() != 0) {</span>
+<span class="nc" id="L607">                mainStr += &quot; ev.employeeType.id=:employeeType and &quot;;</span>
+            }
+
+<span class="nc" id="L610">            mainStr += &quot;  ((ev.toDate IS NULL AND ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR (upper(ev.isPrimary)='Y' and ev.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND ev.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy')) &quot;</span>
+                    + &quot; OR (ev.fromDate IN (SELECT MAX (evn.fromDate)  FROM EmployeeView  evn   &quot;
+                    + &quot; WHERE evn.id = ev.id AND upper(ev.isPrimary)='Y' AND NOT EXISTS  (SELECT evn2.id FROM EmployeeView evn2 WHERE evn2.id = ev.id AND &quot;
+                    + &quot; ((evn2.toDate  IS NULL AND evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) OR (evn2.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') AND evn2.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy'))) )))) &quot;;
+
+<span class="nc" id="L615">            Query qry = null;</span>
+<span class="nc" id="L616">            qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L617">            LOGGER.info(&quot;qryqryqryqry&quot; + qry.toString());</span>
+<span class="nc bnc" id="L618" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L619">                qry.setString(&quot;employeeCode&quot;, code.trim().toUpperCase());</span>
+            }
+<span class="nc bnc" id="L621" title="All 2 branches missed.">            if (departmentId.intValue() != 0) {</span>
+<span class="nc" id="L622">                qry.setInteger(&quot;deptId&quot;, departmentId);</span>
+            }
+<span class="nc bnc" id="L624" title="All 4 branches missed.">            if (name != null &amp;&amp; !name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L625">                qry.setString(&quot;empName&quot;, &quot;%&quot; + name.trim().toUpperCase() + &quot;%&quot;);</span>
+            }
+<span class="nc bnc" id="L627" title="All 2 branches missed.">            if (designationId.intValue() != 0) {</span>
+<span class="nc" id="L628">                qry.setInteger(&quot;designationId&quot;, designationId);</span>
+            }
+<span class="nc bnc" id="L630" title="All 2 branches missed.">            if (functionaryId.intValue() != 0) {</span>
+<span class="nc" id="L631">                qry.setInteger(&quot;functionaryId&quot;, functionaryId);</span>
+            }
+<span class="nc bnc" id="L633" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L634">                qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+            }
+<span class="nc bnc" id="L636" title="All 2 branches missed.">            if (empType.intValue() != 0) {</span>
+<span class="nc" id="L637">                qry.setInteger(&quot;employeeType&quot;, empType);</span>
+            }
+<span class="nc" id="L639">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L641">        } catch (HibernateException he) {</span>
+<span class="nc" id="L642">            LOGGER.error(he);</span>
+<span class="nc" id="L643">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L644">        } catch (Exception he) {</span>
+<span class="nc" id="L645">            LOGGER.error(he);</span>
+
+<span class="nc" id="L647">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L649">        }</span>
+<span class="nc" id="L650">        return employeeList;</span>
+    }
+
+    public List&lt;EmployeeView&gt; searchEmployeeByGrouping(LinkedList&lt;String&gt; groupingByOrder) throws Exception {
+<span class="nc" id="L654">        List&lt;EmployeeView&gt; employeeList = null;</span>
+        try {
+<span class="nc" id="L656">            String mainStr = &quot;from EmployeeView ev where &quot;;</span>
+
+<span class="nc" id="L658">            String orderByStr = &quot;&quot;;</span>
+<span class="nc bnc" id="L659" title="All 2 branches missed.">            for (int i = 0; i &lt; groupingByOrder.size(); i++) {</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">                if (groupingByOrder.get(i).toString().equals(&quot;FundCode&quot;)) {</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">                    if (!orderByStr.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L662">                        orderByStr = orderByStr + &quot;, &quot;;</span>
+                    }
+<span class="nc" id="L664">                    orderByStr = orderByStr + &quot; ev.assignment.fundId.code&quot;;</span>
+<span class="nc bnc" id="L665" title="All 2 branches missed.">                } else if (groupingByOrder.get(i).toString().equals(&quot;FunctionCode&quot;)) {</span>
+<span class="nc bnc" id="L666" title="All 2 branches missed.">                    if (!orderByStr.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L667">                        orderByStr = orderByStr + &quot;, &quot;;</span>
+                    }
+<span class="nc" id="L669">                    orderByStr = orderByStr + &quot; ev.assignment.functionId.code&quot;;</span>
+<span class="nc bnc" id="L670" title="All 2 branches missed.">                } else if (groupingByOrder.get(i).toString().equals(&quot;DeptCode&quot;)) {</span>
+<span class="nc bnc" id="L671" title="All 2 branches missed.">                    if (!orderByStr.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L672">                        orderByStr = orderByStr + &quot;, &quot;;</span>
+                    }
+<span class="nc" id="L674">                    orderByStr = orderByStr + &quot; ev.assignment.deptId.deptCode&quot;;</span>
+                }
+            }
+
+<span class="nc bnc" id="L678" title="All 2 branches missed.">            if (!orderByStr.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L679">                orderByStr = &quot; order by &quot; + orderByStr;</span>
+            }
+<span class="nc" id="L681">            mainStr += &quot; ((ev.toDate is null and ev.fromDate &lt;= SYSDATE ) OR (ev.fromDate &lt;= SYSDATE AND ev.toDate &gt; SYSDATE)) and ev.assignment.isPrimary='Y' &quot;;</span>
+
+<span class="nc" id="L683">            mainStr = mainStr + orderByStr;</span>
+
+<span class="nc" id="L685">            Query qry = null;</span>
+<span class="nc" id="L686">            qry = getCurrentSession().createQuery(mainStr);</span>
+
+<span class="nc" id="L688">            LOGGER.info(&quot;Query in search Employee by grouping==&quot; + qry.toString());</span>
+
+<span class="nc" id="L690">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L692">        } catch (HibernateException he) {</span>
+<span class="nc" id="L693">            LOGGER.error(&quot;Exception ===&quot; + he.getMessage());</span>
+<span class="nc" id="L694">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L695">        } catch (Exception e) {</span>
+<span class="nc" id="L696">            LOGGER.error(&quot;Exception ===&quot; + e.getMessage());</span>
+<span class="nc" id="L697">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+
+<span class="nc" id="L699">        }</span>
+<span class="nc" id="L700">        return employeeList;</span>
+    }
+
+    public List searchEmployee(Integer empId) throws Exception {
+<span class="nc" id="L704">        ArrayList&lt;SearchEmpDTO&gt; dataElCol = new ArrayList&lt;SearchEmpDTO&gt;();</span>
+<span class="nc" id="L705">        List employeeList = null;</span>
+
+        try {
+
+<span class="nc" id="L709">            String mainStr = &quot;select ev.employeeCode,ev.employeeName,ev.id,ev.desigId.designationId, ev.deptId.id ,ev.fromDate,ev.toDate from EmployeeView ev where ev.id = :empId&quot;;</span>
+<span class="nc" id="L710">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+
+<span class="nc bnc" id="L712" title="All 2 branches missed.">            if (empId.intValue() != 0) {</span>
+<span class="nc" id="L713">                qry.setInteger(&quot;empId&quot;, empId);</span>
+
+            }
+<span class="nc" id="L716">            employeeList = qry.list();</span>
+
+<span class="nc bnc" id="L718" title="All 2 branches missed.">            for (Iterator iter = employeeList.iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L719">                Object[] objArray = (Object[]) iter.next();</span>
+<span class="nc" id="L720">                addEmployee(objArray, dataElCol);</span>
+<span class="nc" id="L721">            }</span>
+
+<span class="nc" id="L723">        } catch (HibernateException he) {</span>
+<span class="nc" id="L724">            LOGGER.error(he);</span>
+<span class="nc" id="L725">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L726">        } catch (Exception he) {</span>
+<span class="nc" id="L727">            LOGGER.error(he);</span>
+
+<span class="nc" id="L729">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L731">        }</span>
+
+<span class="nc" id="L733">        return dataElCol;</span>
+    }
+
+    private void addEmployee(Object[] objArray, ArrayList&lt;SearchEmpDTO&gt; dataElColt) {
+        try {
+<span class="nc" id="L738">            int len = objArray.length;</span>
+
+<span class="nc" id="L740">            Integer id = Integer.valueOf(0);</span>
+<span class="nc" id="L741">            String empCode = &quot;&quot;;</span>
+<span class="nc" id="L742">            String fName = &quot;&quot;;</span>
+<span class="nc" id="L743">            Integer desid = null;</span>
+<span class="nc" id="L744">            Integer deptId = null;</span>
+<span class="nc" id="L745">            java.sql.Date fromDate = null;</span>
+<span class="nc" id="L746">            java.sql.Date toDate = null;</span>
+
+<span class="nc bnc" id="L748" title="All 2 branches missed.">            for (int i = 0; i &lt; len; i++) {</span>
+
+<span class="nc bnc" id="L750" title="All 2 branches missed.">                if (i == 0) {</span>
+<span class="nc" id="L751">                    empCode = (String) objArray[i];</span>
+
+<span class="nc bnc" id="L753" title="All 2 branches missed.">                } else if (i == 1) {</span>
+<span class="nc" id="L754">                    fName = (String) objArray[i];</span>
+
+<span class="nc bnc" id="L756" title="All 2 branches missed.">                } else if (i == 2) {</span>
+<span class="nc" id="L757">                    id = (Integer) objArray[i];</span>
+
+<span class="nc bnc" id="L759" title="All 2 branches missed.">                } else if (i == 3) {</span>
+<span class="nc" id="L760">                    desid = (Integer) objArray[i];</span>
+
+<span class="nc bnc" id="L762" title="All 2 branches missed.">                } else if (i == 4) {</span>
+<span class="nc" id="L763">                    deptId = (Integer) objArray[i];</span>
+
+<span class="nc bnc" id="L765" title="All 2 branches missed.">                } else if (i == 5) {</span>
+<span class="nc" id="L766">                    fromDate = (java.sql.Date) objArray[i];</span>
+
+<span class="nc bnc" id="L768" title="All 2 branches missed.">                } else if (i == 6) {</span>
+<span class="nc" id="L769">                    toDate = (java.sql.Date) objArray[i];</span>
+
+                }
+<span class="nc bnc" id="L772" title="All 2 branches missed.">                if (i == 6) {</span>
+<span class="nc" id="L773">                    dataElColt.add(new SearchEmpDTO(desid, deptId, empCode, fName, id, fromDate, toDate));</span>
+                }
+            }
+<span class="nc" id="L776">        } catch (Exception e) {</span>
+
+<span class="nc" id="L778">            LOGGER.error(e);</span>
+<span class="nc" id="L779">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L780">        }</span>
+<span class="nc" id="L781">    }</span>
+
+    public Assignment getAssignmentByEmpAndDate(Date date, Integer empId) {
+<span class="nc" id="L784">        Assignment assignment = null;</span>
+        try {
+
+<span class="nc bnc" id="L787" title="All 2 branches missed.">            if (empId != null) {</span>
+<span class="nc" id="L788">                String mainStr = &quot; select 	ev.assignment  from EmployeeView ev  where ev.assignment.isPrimary = 'Y' and ev.id = :empId and ((ev.toDate is null and ev.fromDate &lt;= :date1 ) OR (ev.fromDate &lt;= :date2 AND ev.toDate &gt;= :date3 ))&quot;;</span>
+<span class="nc" id="L789">                Query qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L790">                qry.setInteger(&quot;empId&quot;, empId);</span>
+<span class="nc" id="L791">                qry.setDate(&quot;date1&quot;, new java.sql.Date(date.getTime()));</span>
+<span class="nc" id="L792">                qry.setDate(&quot;date2&quot;, new java.sql.Date(date.getTime()));</span>
+<span class="nc" id="L793">                qry.setDate(&quot;date3&quot;, new java.sql.Date(date.getTime()));</span>
+
+<span class="nc bnc" id="L795" title="All 4 branches missed.">                if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc" id="L796">                    assignment = (Assignment) qry.list().get(0);</span>
+                }
+            }
+
+<span class="nc" id="L800">        } catch (HibernateException he) {</span>
+<span class="nc" id="L801">            LOGGER.error(he);</span>
+<span class="nc" id="L802">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L803">        } catch (Exception he) {</span>
+<span class="nc" id="L804">            LOGGER.error(he);</span>
+<span class="nc" id="L805">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L806">        }</span>
+<span class="nc" id="L807">        return assignment;</span>
+    }
+
+    public Assignment getLatestAssignmentForEmployee(Integer empId) {
+        // changing sysdate to current date of java
+<span class="nc" id="L812">        Date currDate = new Date();</span>
+<span class="nc" id="L813">        Assignment assignment = null;</span>
+        try {
+<span class="nc" id="L815">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L816">            mainStr = &quot; select ev.assignment from EmployeeView ev where ev.assignment.isPrimary = 'Y' and ev.id = :empId and ((ev.toDate is null and ev.fromDate &lt;= :sysDate ) OR (ev.fromDate &lt;= :sysDate AND ev.toDate &gt;= :sysDate))&quot;;</span>
+<span class="nc" id="L817">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+
+<span class="nc bnc" id="L819" title="All 2 branches missed.">            if (empId != null) {</span>
+<span class="nc" id="L820">                qry.setInteger(&quot;empId&quot;, empId);</span>
+<span class="nc" id="L821">                qry.setDate(&quot;sysDate&quot;, new java.sql.Date(currDate.getTime()));</span>
+            }
+<span class="nc bnc" id="L823" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L825">                    assignment = (Assignment) iter.next();</span>
+                }
+            }
+<span class="nc" id="L828">        } catch (HibernateException he) {</span>
+<span class="nc" id="L829">            LOGGER.error(he);</span>
+<span class="nc" id="L830">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L831">        } catch (Exception he) {</span>
+<span class="nc" id="L832">            LOGGER.error(he);</span>
+<span class="nc" id="L833">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L834">        }</span>
+<span class="nc" id="L835">        return assignment;</span>
+    }
+
+    /*
+     * public List getListByAppNoAndMeMoNo(String applicationNumber ,String
+     * chargeMemoNo,Integer empId) { List&lt;DisciplinaryPunishment&gt; list = new
+     * ArrayList&lt;DisciplinaryPunishment&gt;(); //session =
+     * &quot;select dp.disciplinaryPunishmentId  from DisciplinaryPunishment dp,PersonalInformation pi  where  dp.employeeId = pi.idPersonalInformation and dp.employeeId = :empId &quot;
+     * ; if(chargeMemoNo!=null&amp;&amp;!chargeMemoNo.equals(&quot;&quot;)) mainStr
+     * +=&quot; and upper(trim(dp.chargeMemoNo)) = :chargeMemoNo &quot;;
+     * if(applicationNumber!=null&amp;&amp;!applicationNumber.equals(&quot;&quot;)) mainStr
+     * +=&quot; and upper(trim(dp.applicationNumber)) = :applicationNumber &quot;; Query
+     * qry = getCurrentSession().createQuery(mainStr); if(empId != null) {
+     * qry.setInteger(&quot;empId&quot;, empId); }
+     * if(chargeMemoNo!=null&amp;&amp;!chargeMemoNo.equals(&quot;&quot;)) {
+     * qry.setString(&quot;chargeMemoNo&quot;, chargeMemoNo); }
+     * if(applicationNumber!=null&amp;&amp;!applicationNumber.equals(&quot;&quot;)) {
+     * qry.setString(&quot;applicationNumber&quot;, applicationNumber); }
+     * if(qry.list()!=null&amp;&amp;!qry.list().isEmpty()) { Integer desigId = null;
+     * for(Iterator iter = qry.list().iterator();iter.hasNext();) { desigId =
+     * (Integer)iter.next(); list.add(getDisciplinaryPunishmentById(desigId)); }
+     * } } catch (HibernateException he) { LOGGER.error(he);
+     * ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); } catch
+     * throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); }
+     * return list; }
+     */
+
+    /*
+     * public List&lt;SearchEmpDTO&gt; getHistoryOfEmpForCurrentFinY(Integer
+     * empId,java.util.Date givenDate) { List&lt;SearchEmpDTO&gt; list = new
+     * ArrayList&lt;SearchEmpDTO&gt;(); CFinancialYear financialYear=null;
+     * CalendarYear calYear=null; SimpleDateFormat smt = new
+     * SimpleDateFormat(&quot;dd-MMM-yyyy&quot;,Locale.getDefault()); String finId = null;
+     * java.util.Date stFyDate=null; Date myGivenDate = givenDate; //String
+     * finId = EisManagersUtill.getCommonsManager().getCurrYearFiscalId();
+     * if(EisManagersUtill.getEmpLeaveService().isLeaveCalendarBased()) {
+     * if(myGivenDate==null) { myGivenDate = new Date(); finId
+     * =smt.format(myGivenDate); } else { finId =smt.format(myGivenDate); }
+     * calYear
+     * =EisManagersUtill.getEmpLeaveService().getCalendarYearById(Long.valueOf
+     * (finId)); stFyDate = calYear.getStartingDate(); } else { //fix for leave
+     * report encahshed leave type where from date will be null
+     * if(myGivenDate==null) { myGivenDate = new Date(); finId =
+     * smt.format(myGivenDate); } else { finId = smt.format(myGivenDate); }
+     * financialYear =
+     * EisManagersUtill.getCommonsService().findFinancialYearById
+     * (Long.valueOf(finId)); stFyDate = financialYear.getStartingDate(); }
+     * String mainStr =
+     * &quot;select ev.desigId.designationId, ev.fromDate,ev.toDate  from EmployeeView ev  where ev.id = :empId and  ( ev.toDate is null or ev.toDate &gt;= :startingFy ) and  ev.fromDate &lt;  :givenDate &quot;
+     * ; Query qry = getCurrentSession().createQuery(mainStr); if(empId != null)
+     * { qry.setInteger(&quot;empId&quot;, empId); qry.setDate(&quot;startingFy&quot;, new
+     * java.sql.Date(stFyDate.getTime())); qry.setDate(&quot;givenDate&quot;,
+     * myGivenDate); } List listOfHistory = qry.list();
+     * if(qry.list()!=null&amp;&amp;!qry.list().isEmpty()) { for(Iterator iter =
+     * listOfHistory.iterator();iter.hasNext();) { Object [] objArray = (Object
+     * [])iter.next();
+     * addListEmployeeHistory(empId,objArray,list,myGivenDate,stFyDate); } } }
+     * catch (HibernateException he) { LOGGER.error(he);
+     * ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); } catch
+     * throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); }
+     * return list; }
+     */
+
+    /*
+     * public List getHistoryOfEmpForGivenFinY(Integer empId,java.util.Date
+     * givenDate,CFinancialYear financialYear) { List&lt;SearchEmpDTO&gt; list = new
+     * ArrayList&lt;SearchEmpDTO&gt;(); //String finId =
+     * EisManagersUtill.getCommonsManager().getCurrYearFiscalId(); //session =
+     * = EisManagersUtill.getCommonsManager().findFinancialYearById(new
+     * Long(finId)); java.util.Date stFyDate = financialYear.getStartingDate();
+     * String mainStr =
+     * &quot;select ev.desigId.designationId, ev.fromDate,ev.toDate  from EmployeeView ev  where ev.id = :empId and  ( ev.toDate is null or ev.toDate &gt;= :startingFy ) and  ev.fromDate &lt;  :givenDate &quot;
+     * ; Query qry = getCurrentSession().createQuery(mainStr); if(empId != null)
+     * { qry.setInteger(&quot;empId&quot;, empId); qry.setDate(&quot;startingFy&quot;, new
+     * java.sql.Date(stFyDate.getTime())); qry.setDate(&quot;givenDate&quot;, givenDate);
+     * } List listOfHistory = qry.list();
+     * if(qry.list()!=null&amp;&amp;!qry.list().isEmpty()) { for(Iterator iter =
+     * listOfHistory.iterator();iter.hasNext();) { Object [] objArray = (Object
+     * [])iter.next();
+     * addListEmployeeHistory(empId,objArray,list,givenDate,stFyDate); } } }
+     * catch (HibernateException he) { LOGGER.error(he);
+     * ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); } catch
+     * throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(),he); }
+     * return list; }
+     */
+
+    /*
+     * private void addListEmployeeHistory(Integer empId,Object []
+     * objArray,List&lt;SearchEmpDTO&gt; l,java.util.Date givenDate,java.util.Date
+     * stFyDate) { try { int len = objArray.length; java.sql.Date todesDate
+     * =null; java.sql.Date fromdesDate =null; Integer desig =null; for(int
+     * i=0;i&lt;len;i++) { if(i==1) { fromdesDate =(java.sql.Date)objArray[i]; }
+     * else if(i==0) { desig =(Integer)objArray[i]; } else if(i==2) { todesDate
+     * =(java.sql.Date)objArray[i]; if(todesDate==null) { todesDate = new
+     * java.sql.Date(givenDate.getTime()); } else {
+     * if(todesDate.getTime()&gt;givenDate.getTime()) { todesDate = new
+     * java.sql.Date(givenDate.getTime()); } } if(fromdesDate.getTime() &lt;
+     * stFyDate.getTime()) { fromdesDate = new
+     * java.sql.Date(stFyDate.getTime()); } l.add(new
+     * SearchEmpDTO(desig,Integer.
+     * valueOf(0),&quot;&quot;,&quot;&quot;,Integer.valueOf(empId),fromdesDate,todesDate)); } } }
+     * catch (Exception e) {  LOGGER.error(e);
+     * ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(),e); } }
+     */
+
+    public PersonalInformation getEmployeeforPosition(Position pos) {
+<span class="nc" id="L941">        User uerImpl = null;</span>
+<span class="nc" id="L942">        PersonalInformation personalInformation = new PersonalInformation();</span>
+        try {
+
+<span class="nc" id="L945">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L946">            mainStr = &quot; select 	id  from EG_EIS_EMPLOYEEINFO ev  where ev.POS_ID = :pos and ((ev.to_Date is null and ev.from_Date &lt;= SYSDATE ) OR (ev.from_Date &lt;= SYSDATE AND ev.to_Date &gt; SYSDATE))&quot;;</span>
+<span class="nc" id="L947">            Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;id&quot;, IntegerType.INSTANCE);</span>
+            ;
+
+<span class="nc bnc" id="L950" title="All 2 branches missed.">            if (pos != null) {</span>
+<span class="nc" id="L951">                qry.setEntity(&quot;pos&quot;, pos);</span>
+            }
+<span class="nc bnc" id="L953" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc bnc" id="L954" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L955">                    Integer id = (Integer) iter.next();</span>
+<span class="nc" id="L956">                    personalInformation = EisManagersUtill.getEmployeeService().getEmloyeeById(id);</span>
+<span class="nc" id="L957">                }</span>
+            }
+<span class="nc" id="L959">        } catch (HibernateException he) {</span>
+<span class="nc" id="L960">            LOGGER.error(he);</span>
+<span class="nc" id="L961">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L962">        } catch (Exception he) {</span>
+<span class="nc" id="L963">            LOGGER.error(he);</span>
+<span class="nc" id="L964">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L965">        }</span>
+<span class="nc" id="L966">        return personalInformation;</span>
+
+    }
+
+    public Position getPositionforEmp(Integer empId) {
+<span class="nc" id="L971">        Position position = null;</span>
+<span class="nc" id="L972">        List list = null;</span>
+        try {
+
+<span class="nc" id="L975">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L976">            mainStr = &quot; select 	POS_ID  from EG_EIS_EMPLOYEEINFO ev  where ev.ID = :empId and ((ev.to_Date is null and ev.from_Date &lt;= SYSDATE ) OR (ev.from_Date &lt;= SYSDATE AND ev.to_Date &gt;= SYSDATE))&quot;;</span>
+<span class="nc" id="L977">            Query qry = getCurrentSession().createSQLQuery(mainStr).addScalar(&quot;POS_ID&quot;, IntegerType.INSTANCE);</span>
+
+<span class="nc bnc" id="L979" title="All 2 branches missed.">            if (empId != null) {</span>
+<span class="nc" id="L980">                qry.setInteger(&quot;empId&quot;, empId);</span>
+            }
+<span class="nc" id="L982">            list = qry.list();</span>
+<span class="nc bnc" id="L983" title="All 4 branches missed.">            if (list != null &amp;&amp; !list.isEmpty()) {</span>
+<span class="nc bnc" id="L984" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L985">                    Integer id = (Integer) iter.next();</span>
+<span class="nc bnc" id="L986" title="All 2 branches missed.">                    if (id != null)</span>
+<span class="nc" id="L987">                        position = EisManagersUtill.getEisCommonsService().getPositionById(id);</span>
+<span class="nc" id="L988">                }</span>
+            }
+<span class="nc" id="L990">        } catch (HibernateException he) {</span>
+<span class="nc" id="L991">            LOGGER.error(he);</span>
+<span class="nc" id="L992">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L993">        } catch (Exception he) {</span>
+<span class="nc" id="L994">            LOGGER.error(he);</span>
+<span class="nc" id="L995">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L996">        }</span>
+<span class="nc" id="L997">        return position;</span>
+
+    }
+
+    /*
+     * public boolean checkSanctionNoForDisciplinary(String sanctionNo) {
+     * qry = getCurrentSession().createQuery(
+     * &quot;select dp.id from  DisciplinaryPunishmentApproval dp where upper(dp.sanctionNo) = :sanctionNo &quot;
+     * ); if(sanctionNo != null ) { qry.setString(&quot;sanctionNo&quot;, sanctionNo); }
+     * if(qry.list()!=null&amp;&amp;!qry.list().isEmpty()) { Object obj = null;
+     * for(Iterator iter = qry.list().iterator();iter.hasNext();) { obj =
+     * (Object)iter.next(); b = true; } } return b; }
+     */
+
+    public boolean checkDuplication(String name, String className) {
+
+<span class="nc" id="L1013">        boolean b = false;</span>
+        try {
+<span class="nc" id="L1015">            Query qry = getCurrentSession()</span>
+<span class="nc" id="L1016">                    .createQuery(&quot;from &quot; + className + &quot; CA where trim(upper(CA.name)) = :name &quot;);</span>
+<span class="nc" id="L1017">            qry.setString(&quot;name&quot;, name);</span>
+<span class="nc" id="L1018">            Iterator iter = qry.iterate();</span>
+
+<span class="nc bnc" id="L1020" title="All 2 branches missed.">            if (iter.hasNext()) {</span>
+
+<span class="nc" id="L1022">                b = true;</span>
+            }
+
+<span class="nc" id="L1025">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1026">            LOGGER.error(he);</span>
+<span class="nc" id="L1027">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1028">        } catch (Exception he) {</span>
+<span class="nc" id="L1029">            LOGGER.error(he);</span>
+
+<span class="nc" id="L1031">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L1033">        }</span>
+<span class="nc" id="L1034">        return b;</span>
+    }
+
+<span class="nc" id="L1037">    List appliedDisiplinaryApplications = new ArrayList();</span>
+<span class="nc" id="L1038">    List rejectedDisiplinaryApplications = new ArrayList();</span>
+<span class="nc" id="L1039">    List approvedDisiplinaryApplications = new ArrayList();</span>
+
+    public PersonalInformation getEmpForUserId(Long userId) {
+<span class="nc" id="L1042">        return personalInformationDAO.getPersonalInformationByUserId(userId);</span>
+    }
+
+    public void createAssignment(Assignment egEmpAssignment) {
+        try {
+<span class="nc" id="L1047">            assignmentDAO.create(egEmpAssignment);</span>
+<span class="nc" id="L1048">        } catch (Exception e) {</span>
+
+<span class="nc" id="L1050">            LOGGER.error(e);</span>
+<span class="nc" id="L1051">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1052">        }</span>
+<span class="nc" id="L1053">    }</span>
+
+    public PersonalInformation createEmloyee(PersonalInformation egpimsPersonalInformation) {
+       try {
+<span class="nc bnc" id="L1057" title="All 2 branches missed.">            if (egpimsPersonalInformation != null) {</span>
+<span class="nc" id="L1058">                personalInformationDAO.create(egpimsPersonalInformation);</span>
+<span class="nc" id="L1059">                Accountdetailtype accountdetailtype = (accountdetailtypeHibernateDAO.getAccountdetailtypeByName(&quot;Employee&quot;));</span>
+<span class="nc" id="L1060">                Accountdetailkey adk = new Accountdetailkey();</span>
+<span class="nc" id="L1061">                adk.setAccountdetailtype(accountdetailtype);</span>
+<span class="nc" id="L1062">                adk.setGroupid(1);</span>
+<span class="nc" id="L1063">                adk.setDetailkey(egpimsPersonalInformation.getIdPersonalInformation());</span>
+<span class="nc" id="L1064">                adk.setDetailname(accountdetailtype.getAttributename());</span>
+<span class="nc" id="L1065">                accountdetailkeyHibernateDAO.create(adk);</span>
+            }
+<span class="nc" id="L1067">        } catch (Exception e) {</span>
+<span class="nc" id="L1068">            LOGGER.error(e);</span>
+<span class="nc" id="L1069">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1070">        }</span>
+
+<span class="nc" id="L1072">        return egpimsPersonalInformation;</span>
+    }
+
+    public void updateEmloyee(PersonalInformation egpimsPersonalInformation) {
+        try {
+<span class="nc bnc" id="L1077" title="All 2 branches missed.">            if (egpimsPersonalInformation != null)</span>
+<span class="nc" id="L1078">                personalInformationDAO.update(egpimsPersonalInformation);</span>
+<span class="nc" id="L1079">        } catch (Exception e) {</span>
+
+<span class="nc" id="L1081">            LOGGER.error(e);</span>
+<span class="nc" id="L1082">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1083">        }</span>
+<span class="nc" id="L1084">    }</span>
+
+    public PersonalInformation getEmloyeeById(Integer employeeId) {
+<span class="nc" id="L1087">        PersonalInformation egpimsPersonalInformation = null;</span>
+<span class="nc" id="L1088">        egpimsPersonalInformation = personalInformationDAO.getPersonalInformationByID(employeeId);</span>
+<span class="nc" id="L1089">        return egpimsPersonalInformation;</span>
+    }
+
+    public GenericMaster getGenericMaster(Integer masterId, String masterName) {
+<span class="nc" id="L1093">        GenericMaster genericMaster = null;</span>
+<span class="nc" id="L1094">        genericMaster = (GenericMaster) genericMasterDAO.getGenericMaster(masterId.intValue(), masterName);</span>
+<span class="nc" id="L1095">        return genericMaster;</span>
+    }
+
+    public Assignment getAssignmentById(Integer assignmentId) {
+<span class="nc" id="L1099">        Assignment assignment = null;</span>
+<span class="nc" id="L1100">        assignment = assignmentDAO.getAssignmentById(assignmentId);</span>
+<span class="nc" id="L1101">        return assignment;</span>
+    }
+
+    public void updateAssignment(Assignment assignment) {
+        try {
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">            if (assignment != null)</span>
+<span class="nc" id="L1107">                assignmentDAO.update(assignment);</span>
+<span class="nc" id="L1108">        } catch (RuntimeException e) {</span>
+
+<span class="nc" id="L1110">            LOGGER.error(e);</span>
+<span class="nc" id="L1111">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1112">        }</span>
+<span class="nc" id="L1113">    }</span>
+
+    public void addLangKnown(PersonalInformation personalInformation, LangKnown langKnown) {
+        try {
+<span class="nc" id="L1117">            personalInformation.addLangKnown(langKnown);</span>
+<span class="nc" id="L1118">        } catch (RuntimeException e) {</span>
+
+<span class="nc" id="L1120">            LOGGER.error(e);</span>
+<span class="nc" id="L1121">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1122">        }</span>
+<span class="nc" id="L1123">    }</span>
+
+    public List getListOfEmpforDept(Integer deptId) {
+<span class="nc" id="L1126">        PersonalInformation personalInformation = null;</span>
+<span class="nc" id="L1127">        List listOfEmpOfSameDept = new ArrayList();</span>
+        try {
+<span class="nc" id="L1129">            Collection employeeList = searchEmployee(Integer.valueOf(deptId), Integer.valueOf(0), &quot;&quot;, &quot;&quot;, &quot;false&quot;);</span>
+<span class="nc bnc" id="L1130" title="All 2 branches missed.">            if (!employeeList.isEmpty()) {</span>
+<span class="nc" id="L1131">                Iterator iter = employeeList.iterator();</span>
+<span class="nc bnc" id="L1132" title="All 2 branches missed.">                while (iter.hasNext()) {</span>
+<span class="nc" id="L1133">                    EmployeeView cataEl = (EmployeeView) iter.next();</span>
+<span class="nc" id="L1134">                    personalInformation = (PersonalInformation) getEmloyeeById(cataEl.getId().intValue());</span>
+<span class="nc" id="L1135">                    listOfEmpOfSameDept.add(personalInformation);</span>
+
+<span class="nc" id="L1137">                }</span>
+            }
+
+<span class="nc" id="L1140">        } catch (Exception e) {</span>
+<span class="nc" id="L1141">            LOGGER.error(e);</span>
+<span class="nc" id="L1142">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1143">        }</span>
+<span class="nc" id="L1144">        return listOfEmpOfSameDept;</span>
+    }
+
+    public List getListOfEmpforDesignation(Integer desigId) {
+
+<span class="nc" id="L1149">        PersonalInformation personalInformation = null;</span>
+<span class="nc" id="L1150">        List listOfEmpOfSameDesig = new ArrayList();</span>
+
+        try {
+<span class="nc" id="L1153">            Collection employeeList = searchEmployee(Integer.valueOf(0), Integer.valueOf(desigId), &quot;&quot;, &quot;&quot;, &quot;false&quot;);</span>
+<span class="nc bnc" id="L1154" title="All 2 branches missed.">            if (!employeeList.isEmpty()) {</span>
+<span class="nc" id="L1155">                Iterator iter = employeeList.iterator();</span>
+<span class="nc bnc" id="L1156" title="All 2 branches missed.">                while (iter.hasNext()) {</span>
+<span class="nc" id="L1157">                    EmployeeView cataEl = (EmployeeView) iter.next();</span>
+<span class="nc" id="L1158">                    personalInformation = (PersonalInformation) getEmloyeeById(cataEl.getId().intValue());</span>
+<span class="nc" id="L1159">                    listOfEmpOfSameDesig.add(personalInformation);</span>
+
+<span class="nc" id="L1161">                }</span>
+            }
+
+<span class="nc" id="L1164">        } catch (Exception e) {</span>
+<span class="nc" id="L1165">            LOGGER.error(e);</span>
+<span class="nc" id="L1166">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1167">        }</span>
+<span class="nc" id="L1168">        return listOfEmpOfSameDesig;</span>
+    }
+
+    public EmployeeNamePoJo getNameOfEmployee(Integer empId) {
+        try {
+<span class="nc" id="L1173">            EmployeeNamePoJo employeeNamePoJo = null;</span>
+<span class="nc" id="L1174">            PersonalInformation personalInformation = getEmloyeeById(Integer.valueOf(empId));</span>
+<span class="nc" id="L1175">            String fn = &quot;&quot;;</span>
+<span class="nc" id="L1176">            String mn = &quot;&quot;;</span>
+<span class="nc" id="L1177">            String ln = &quot;&quot;;</span>
+<span class="nc bnc" id="L1178" title="All 2 branches missed.">            if (personalInformation.getEmployeeFirstName() != null) {</span>
+<span class="nc" id="L1179">                fn = personalInformation.getEmployeeFirstName();</span>
+            }
+<span class="nc bnc" id="L1181" title="All 2 branches missed.">            if (personalInformation.getEmployeeMiddleName() != null) {</span>
+<span class="nc" id="L1182">                mn = personalInformation.getEmployeeMiddleName();</span>
+            }
+<span class="nc bnc" id="L1184" title="All 2 branches missed.">            if (personalInformation.getEmployeeLastName() != null) {</span>
+<span class="nc" id="L1185">                ln = personalInformation.getEmployeeLastName();</span>
+            }
+<span class="nc" id="L1187">            employeeNamePoJo = new EmployeeNamePoJo(fn, mn, ln);</span>
+<span class="nc" id="L1188">            return employeeNamePoJo;</span>
+<span class="nc" id="L1189">        } catch (Exception e) {</span>
+
+<span class="nc" id="L1191">            LOGGER.error(e);</span>
+<span class="nc" id="L1192">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+        }
+
+    }
+
+    public Map getAllPIMap() {
+<span class="nc" id="L1198">        return personalInformationDAO.getAllPIMap();</span>
+    }
+
+    public Map getMapForList(List list) {
+<span class="nc" id="L1202">        Map&lt;Integer, String&gt; retMap = new LinkedHashMap&lt;Integer, String&gt;();</span>
+        try {
+
+<span class="nc bnc" id="L1205" title="All 2 branches missed.">            for (Iterator iter = list.iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1206">                Object object = (Object) iter.next();</span>
+<span class="nc" id="L1207">                Class classObj = object.getClass();</span>
+
+<span class="nc" id="L1209">                Field id = classObj.getField(&quot;id&quot;);</span>
+<span class="nc" id="L1210">                Field name = classObj.getField(&quot;name&quot;);</span>
+<span class="nc" id="L1211">                retMap.put((Integer) id.get(object), (String) name.get(object));</span>
+
+<span class="nc" id="L1213">            }</span>
+<span class="nc" id="L1214">        } catch (NoSuchFieldException nfe) {</span>
+<span class="nc" id="L1215">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + nfe.getMessage(), nfe);</span>
+<span class="nc" id="L1216">        } catch (IllegalAccessException iac) {</span>
+<span class="nc" id="L1217">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + iac.getMessage(), iac);</span>
+<span class="nc" id="L1218">        }</span>
+<span class="nc" id="L1219">        return retMap;</span>
+
+    }
+
+    /**
+     * Returns Map for a given list
+     * 
+     * @param list
+     * @return
+     */
+    public Map getMapForList(List list, String fieldName1, String fieldName2) {
+<span class="nc" id="L1230">        Map&lt;Integer, String&gt; retMap = new LinkedHashMap&lt;Integer, String&gt;();</span>
+        try {
+<span class="nc" id="L1232">            String id = null;</span>
+<span class="nc" id="L1233">            String name = null;</span>
+<span class="nc" id="L1234">            Long longObj = null;</span>
+<span class="nc bnc" id="L1235" title="All 2 branches missed.">            for (Iterator iter = list.iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1236">                Object object = (Object) iter.next();</span>
+
+<span class="nc" id="L1238">                id = (String) BeanUtils.getProperty(object, fieldName1);</span>
+<span class="nc" id="L1239">                name = (String) BeanUtils.getProperty(object, fieldName2);</span>
+<span class="nc bnc" id="L1240" title="All 2 branches missed.">                if (id != null) {</span>
+<span class="nc" id="L1241">                    retMap.put(Integer.valueOf(id), (String) name);</span>
+                }
+<span class="nc" id="L1243">            }</span>
+<span class="nc" id="L1244">        } catch (IllegalAccessException iac) {</span>
+
+<span class="nc" id="L1246">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + iac.getMessage(), iac);</span>
+<span class="nc" id="L1247">        } catch (InvocationTargetException e) {</span>
+<span class="nc" id="L1248">            LOGGER.error(e);</span>
+<span class="nc" id="L1249">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1250">        } catch (NoSuchMethodException e) {</span>
+<span class="nc" id="L1251">            LOGGER.error(e);</span>
+<span class="nc" id="L1252">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1253">        }</span>
+<span class="nc" id="L1254">        return retMap;</span>
+
+    }
+
+    public void deleteLangKnownForEmp(PersonalInformation personalInformation) {
+        try {
+<span class="nc" id="L1260">            personalInformationDAO.deleteLangKnownForEmp(personalInformation);</span>
+<span class="nc" id="L1261">        } catch (Exception e) {</span>
+
+<span class="nc" id="L1263">            LOGGER.error(e);</span>
+<span class="nc" id="L1264">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1265">        }</span>
+<span class="nc" id="L1266">    }</span>
+
+    public Integer getNextVal() {
+
+<span class="nc" id="L1270">        Integer id = Integer.valueOf(0);</span>
+        try {
+<span class="nc" id="L1272">            Query qry = getCurrentSession().createSQLQuery(&quot;SELECT SEQ_DIS_APP.nextval as id from dual&quot;).addScalar(</span>
+                    &quot;id&quot;, IntegerType.INSTANCE);
+
+<span class="nc bnc" id="L1275" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc" id="L1276">                Integer obj = null;</span>
+<span class="nc bnc" id="L1277" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1278">                    obj = (Integer) iter.next();</span>
+<span class="nc" id="L1279">                    id = obj;</span>
+                }
+
+            }
+
+<span class="nc" id="L1284">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1285">            LOGGER.error(he);</span>
+<span class="nc" id="L1286">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1287">        } catch (Exception he) {</span>
+<span class="nc" id="L1288">            LOGGER.error(he);</span>
+
+<span class="nc" id="L1290">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L1292">        }</span>
+<span class="nc" id="L1293">        return id;</span>
+    }
+
+    private String getNextValForCode() {
+
+<span class="nc" id="L1298">        Integer id = Integer.valueOf(0);</span>
+        try {
+<span class="nc" id="L1300">            Query qry = getCurrentSession()</span>
+<span class="nc" id="L1301">                    .createSQLQuery(</span>
+                            &quot;SELECT CODE AS id FROM EG_EMPLOYEE emp  WHERE emp.CODE =(SELECT MAX(code) FROM EG_EMPLOYEE )  FOR UPDATE &quot;)
+<span class="nc" id="L1303">                    .addScalar(&quot;id&quot;, IntegerType.INSTANCE);</span>
+<span class="nc bnc" id="L1304" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc" id="L1305">                Integer obj = null;</span>
+<span class="nc bnc" id="L1306" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1307">                    obj = (Integer) iter.next();</span>
+<span class="nc bnc" id="L1308" title="All 2 branches missed.">                    if (obj == null) {</span>
+<span class="nc" id="L1309">                        id = 1;</span>
+                    } else {
+<span class="nc" id="L1311">                        id = obj + 1;</span>
+                    }
+                }
+            }
+<span class="nc" id="L1315">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1316">            LOGGER.error(he);</span>
+<span class="nc" id="L1317">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1318">        } catch (Exception he) {</span>
+<span class="nc" id="L1319">            LOGGER.error(he);</span>
+
+<span class="nc" id="L1321">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L1323">        }</span>
+<span class="nc" id="L1324">        return String.valueOf(id);</span>
+    }
+
+    public String getEmployeeCode() {
+<span class="nc" id="L1328">        LOGGER.info(&quot;getNextValForCode&quot; + getNextValForCode());</span>
+<span class="nc" id="L1329">        return getNextValForCode();</span>
+    }
+
+    public boolean checkPos(Integer posId, Date fromDate, Date toDate, Integer empId, String isPrimary) {
+
+<span class="nc" id="L1334">        boolean b = false;</span>
+
+        try {
+<span class="nc" id="L1337">            Query qry = null;</span>
+
+<span class="nc bnc" id="L1339" title="All 4 branches missed.">            if (fromDate != null &amp;&amp; toDate != null) {</span>
+<span class="nc" id="L1340">                String main = &quot;from Assignment ev  where ev.isPrimary =:isPrimary and ev.position.id = :posId and &quot;;</span>
+<span class="nc bnc" id="L1341" title="All 2 branches missed.">                if (empId != null) {</span>
+<span class="nc" id="L1342">                    main += &quot;ev.employee.idPersonalInformation &lt;&gt;:empId and &quot;;</span>
+                }
+<span class="nc" id="L1344">                main += &quot;((ev.toDate is null ) or &quot; + &quot; (ev.fromDate &lt;= :fromDate and ev.toDate &gt;= :toDate) or &quot;</span>
+                        + &quot; (ev.toDate &lt;= :toDate and ev.toDate &gt;= :fromDate) or &quot;
+                        + &quot; (ev.fromDate &gt;= :fromDate and ev.fromDate &lt;= :toDate))  &quot;;
+
+<span class="nc" id="L1348">                qry = getCurrentSession().createQuery(main);</span>
+
+<span class="nc bnc" id="L1350" title="All 4 branches missed.">            } else if (fromDate != null &amp;&amp; toDate == null) {</span>
+<span class="nc" id="L1351">                qry = getCurrentSession()</span>
+<span class="nc" id="L1352">                        .createQuery(</span>
+                                &quot;from Assignment ev  where ev.position.id = :posId and ((ev.toDate is null ) or (ev.fromDate &lt;= :fromDate AND ev.toDate &gt;= :fromDate))&quot;);
+
+            }
+<span class="nc bnc" id="L1356" title="All 2 branches missed.">            if (posId != null) {</span>
+<span class="nc" id="L1357">                qry.setInteger(&quot;posId&quot;, posId);</span>
+
+            }
+<span class="nc bnc" id="L1360" title="All 2 branches missed.">            if (empId != null) {</span>
+<span class="nc" id="L1361">                qry.setInteger(&quot;empId&quot;, empId);</span>
+
+            }
+<span class="nc bnc" id="L1364" title="All 2 branches missed.">            if (isPrimary != null) {</span>
+<span class="nc" id="L1365">                qry.setCharacter(&quot;isPrimary&quot;, Character.valueOf(isPrimary.charAt(0)));</span>
+            }
+<span class="nc bnc" id="L1367" title="All 4 branches missed.">            if (fromDate != null &amp;&amp; toDate != null) {</span>
+<span class="nc" id="L1368">                qry.setDate(&quot;fromDate&quot;, new java.sql.Date(fromDate.getTime()));</span>
+<span class="nc" id="L1369">                qry.setDate(&quot;toDate&quot;, new java.sql.Date(toDate.getTime()));</span>
+
+<span class="nc bnc" id="L1371" title="All 4 branches missed.">            } else if (fromDate != null &amp;&amp; toDate == null) {</span>
+<span class="nc" id="L1372">                qry.setDate(&quot;fromDate&quot;, new java.sql.Date(fromDate.getTime()));</span>
+            }
+
+<span class="nc bnc" id="L1375" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc" id="L1376">                b = true;</span>
+            }
+
+<span class="nc" id="L1379">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1380">            LOGGER.error(he);</span>
+<span class="nc" id="L1381">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1382">        } catch (Exception he) {</span>
+<span class="nc" id="L1383">            LOGGER.error(he);</span>
+<span class="nc" id="L1384">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L1386">        }</span>
+<span class="nc" id="L1387">        return b;</span>
+
+    }
+
+    public List getListOfPersonalInformationByEmpIdsList(List empIdsList) {
+<span class="nc" id="L1392">        List list = null;</span>
+        try {
+<span class="nc bnc" id="L1394" title="All 4 branches missed.">            if (empIdsList != null &amp;&amp; !empIdsList.isEmpty()) {</span>
+<span class="nc" id="L1395">                list = (List) personalInformationDAO.getListOfPersonalInformationByEmpIdsList(empIdsList);</span>
+            }
+<span class="nc" id="L1397">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1398">            LOGGER.error(he);</span>
+<span class="nc" id="L1399">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1400">        } catch (Exception he) {</span>
+<span class="nc" id="L1401">            LOGGER.error(he);</span>
+<span class="nc" id="L1402">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1403">        }</span>
+<span class="nc" id="L1404">        return list;</span>
+    }
+
+    public List getListOfEmployeeWithoutAssignment(Date fromdate) {
+<span class="nc" id="L1408">        List list = null;</span>
+        try {
+
+<span class="nc" id="L1411">            list = (List) assignmentDAO.getListOfEmployeeWithoutAssignment(fromdate);</span>
+
+<span class="nc" id="L1413">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1414">            LOGGER.error(he);</span>
+<span class="nc" id="L1415">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1416">        } catch (Exception he) {</span>
+<span class="nc" id="L1417">            LOGGER.error(he);</span>
+<span class="nc" id="L1418">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1419">        }</span>
+<span class="nc" id="L1420">        return list;</span>
+    }
+
+    public Assignment getLatestAssignmentForEmployeeByToDate(Integer empId, Date todate) throws Exception {
+<span class="nc" id="L1424">        Assignment assignment = null;</span>
+        try {
+
+<span class="nc" id="L1427">            assignment = (Assignment) assignmentDAO.getLatestAssignmentForEmployeeByToDate(empId, todate);</span>
+
+<span class="nc" id="L1429">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1430">            LOGGER.error(he);</span>
+<span class="nc" id="L1431">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1432">        } catch (Exception he) {</span>
+<span class="nc" id="L1433">            LOGGER.error(he);</span>
+<span class="nc" id="L1434">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1435">        }</span>
+<span class="nc" id="L1436">        return assignment;</span>
+    }
+
+    /**
+     * This is used for workflow Getting employee by passing dept,desig,boundary
+     * 
+     * @param deptId
+     * @param designationId
+     * @param Boundaryid
+     * @return employee
+     * @throws TooManyValuesException
+     * @throws NoSuchObjectException
+     */
+    public PersonalInformation getEmployee(Integer deptId, Integer designationId, Long Boundaryid)
+            throws TooManyValuesException, NoSuchObjectException {
+<span class="nc" id="L1451">        PersonalInformation personalInformation = null;</span>
+
+        try {
+<span class="nc bnc" id="L1454" title="All 12 branches missed.">            if (deptId != 0 &amp;&amp; deptId != null &amp;&amp; designationId != 0 &amp;&amp; designationId != null &amp;&amp; Boundaryid != 0</span>
+                    &amp;&amp; Boundaryid != null) {
+<span class="nc" id="L1456">                personalInformation = personalInformationDAO.getEmployee(deptId, designationId, Boundaryid);</span>
+            }
+
+<span class="nc" id="L1459">        } catch (Exception e) {</span>
+<span class="nc" id="L1460">            throw new ApplicationRuntimeException(&quot;system.error&quot;, e);</span>
+<span class="nc" id="L1461">        }</span>
+<span class="nc" id="L1462">        return personalInformation;</span>
+    }
+
+    /**
+     * This is used for workflow Getting employee by passing
+     * dept,desig,boundary,functionary
+     * 
+     * @param deptId
+     * @param designationId
+     * @param Boundaryid
+     * @return employee
+     * @throws TooManyValuesException
+     * @throws NoSuchObjectException
+     */
+    public PersonalInformation getEmployeeByFunctionary(Long deptId, Long designationId, Long Boundaryid,
+            Integer functionaryId) throws TooManyValuesException, NoSuchObjectException {
+<span class="nc" id="L1478">        PersonalInformation personalInformation = null;</span>
+
+        try {
+<span class="nc bnc" id="L1481" title="All 12 branches missed.">            if (deptId != 0 &amp;&amp; deptId != null &amp;&amp; designationId != 0 &amp;&amp; designationId != null &amp;&amp; Boundaryid != 0</span>
+<span class="nc bnc" id="L1482" title="All 4 branches missed.">                    &amp;&amp; Boundaryid != null &amp;&amp; functionaryId != 0 &amp;&amp; functionaryId != null) {</span>
+<span class="nc" id="L1483">                personalInformation = personalInformationDAO.getEmployeeByFunctionary(deptId, designationId,</span>
+                        Boundaryid, functionaryId);
+            }
+
+<span class="nc" id="L1487">        } catch (Exception e) {</span>
+<span class="nc" id="L1488">            throw new ApplicationRuntimeException(&quot;system.error&quot;, e);</span>
+<span class="nc" id="L1489">        }</span>
+<span class="nc" id="L1490">        return personalInformation;</span>
+    }
+
+    public Assignment getLastAssignmentByEmp(Integer empId) {
+<span class="nc" id="L1494">        Assignment assignment = null;</span>
+        try {
+<span class="nc" id="L1496">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L1497">            mainStr = &quot;select ev.assignment from EmployeeView ev  where ev.id = :empId and nvl(ev.toDate,sysdate) in(select max(nvl(ev1.toDate,sysdate)) from EmployeeView ev1 where ev1.id = :empId)&quot;;</span>
+<span class="nc" id="L1498">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L1499" title="All 2 branches missed.">            if (empId != null) {</span>
+<span class="nc" id="L1500">                qry.setInteger(&quot;empId&quot;, empId);</span>
+            }
+<span class="nc bnc" id="L1502" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc bnc" id="L1503" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1504">                    assignment = (Assignment) iter.next();</span>
+                    break;
+                }
+            }
+<span class="nc" id="L1508">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1509">            LOGGER.error(he);</span>
+<span class="nc" id="L1510">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1511">        } catch (Exception he) {</span>
+<span class="nc" id="L1512">            LOGGER.error(he);</span>
+<span class="nc" id="L1513">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1514">        }</span>
+<span class="nc" id="L1515">        return assignment;</span>
+    }
+
+    public ServiceHistory getServiceId(Integer id) {
+<span class="nc" id="L1519">        Query qry = getCurrentSession().createQuery(&quot;from ServiceHistory S where S.idService =:id &quot;);</span>
+<span class="nc" id="L1520">        qry.setInteger(&quot;id&quot;, id);</span>
+<span class="nc" id="L1521">        return (ServiceHistory) qry.uniqueResult();</span>
+
+    }
+
+    public List&lt;PersonalInformation&gt; getAllEmpByGrade(Integer gradeId) {
+<span class="nc" id="L1526">        List&lt;PersonalInformation&gt; empList = null;</span>
+        try {
+
+<span class="nc" id="L1529">            empList = personalInformationDAO.getAllEmpByGrade(gradeId);</span>
+
+<span class="nc" id="L1531">        } catch (Exception e) {</span>
+
+<span class="nc" id="L1533">            LOGGER.error(e);</span>
+<span class="nc" id="L1534">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L1535">        }</span>
+<span class="nc" id="L1536">        return empList;</span>
+    }
+
+    public PersonalInformation getEmpForPositionAndDate(Date dateEntered, Integer posId) throws Exception {
+
+<span class="nc" id="L1541">        PersonalInformation personalInformation = null;</span>
+        try {
+<span class="nc" id="L1543">            Query qry = null;</span>
+<span class="nc bnc" id="L1544" title="All 2 branches missed.">            if (dateEntered != null) {</span>
+<span class="nc" id="L1545">                qry = getCurrentSession()</span>
+<span class="nc" id="L1546">                        .createQuery(</span>
+                                &quot;select ev.id from EmployeeView ev  where ev.position = :posId and ((ev.toDate is null ) or (ev.fromDate &lt;= :fromDate AND ev.toDate &gt;= :fromDate))&quot;);
+
+<span class="nc bnc" id="L1549" title="All 2 branches missed.">            } else if (dateEntered == null) {</span>
+<span class="nc" id="L1550">                qry = getCurrentSession()</span>
+<span class="nc" id="L1551">                        .createQuery(</span>
+                                &quot;select ev.id from EmployeeView ev  where ev.position = :posId and ((ev.toDate is null ) or (ev.fromDate &lt;=  TO_DATE(SYSDATE,'dd-MM-yyy') AND ev.toDate &gt;=  TO_DATE(SYSDATE,'dd-MM-yyy')))&quot;);
+            }
+<span class="nc bnc" id="L1554" title="All 2 branches missed.">            if (posId != null) {</span>
+<span class="nc" id="L1555">                qry.setInteger(&quot;posId&quot;, posId);</span>
+
+            }
+<span class="nc bnc" id="L1558" title="All 2 branches missed.">            if (dateEntered != null) {</span>
+<span class="nc" id="L1559">                qry.setDate(&quot;fromDate&quot;, new java.sql.Date(dateEntered.getTime()));</span>
+            }
+
+<span class="nc bnc" id="L1562" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc bnc" id="L1563" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1564">                    Integer id = (Integer) iter.next();</span>
+<span class="nc" id="L1565">                    personalInformation = EisManagersUtill.getEmployeeService().getEmloyeeById(id);</span>
+<span class="nc" id="L1566">                }</span>
+            }
+
+<span class="nc" id="L1569">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1570">            LOGGER.error(he);</span>
+<span class="nc" id="L1571">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1572">        } catch (Exception he) {</span>
+<span class="nc" id="L1573">            LOGGER.error(he);</span>
+<span class="nc" id="L1574">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1575">        }</span>
+
+<span class="nc" id="L1577">        return personalInformation;</span>
+    }
+
+    /**
+     * Returns list of employees for a given position and date
+     * 
+     * @param dateEntered
+     * @param posId
+     * @return
+     * @throws Exception
+     */
+    public List&lt;PersonalInformation&gt; getEmpListForPositionAndDate(Date dateEntered, Integer posId) throws Exception {
+
+<span class="nc" id="L1590">        PersonalInformation personalInformation = null;</span>
+<span class="nc" id="L1591">        List&lt;PersonalInformation&gt; empList = null;</span>
+        try {
+<span class="nc" id="L1593">            Query qry = null;</span>
+<span class="nc bnc" id="L1594" title="All 2 branches missed.">            if (dateEntered != null) {</span>
+<span class="nc" id="L1595">                qry = getCurrentSession()</span>
+<span class="nc" id="L1596">                        .createQuery(</span>
+                                &quot;select distinct ev.id from EmployeeView ev  where ev.position = :posId and ((ev.toDate is null ) or (ev.fromDate &lt;= :fromDate AND ev.toDate &gt;= :fromDate))&quot;);
+
+<span class="nc bnc" id="L1599" title="All 2 branches missed.">            } else if (dateEntered == null) {</span>
+<span class="nc" id="L1600">                qry = getCurrentSession()</span>
+<span class="nc" id="L1601">                        .createQuery(</span>
+                                &quot;select distinct ev.id from EmployeeView ev  where ev.position = :posId and ((ev.toDate is null ) or (ev.fromDate &lt;=  TO_DATE(SYSDATE,'dd-MM-yyy') AND ev.toDate &gt;=  TO_DATE(SYSDATE,'dd-MM-yyy')))&quot;);
+            }
+<span class="nc bnc" id="L1604" title="All 2 branches missed.">            if (posId != null) {</span>
+<span class="nc" id="L1605">                qry.setInteger(&quot;posId&quot;, posId);</span>
+
+            }
+<span class="nc bnc" id="L1608" title="All 2 branches missed.">            if (dateEntered != null) {</span>
+<span class="nc" id="L1609">                qry.setDate(&quot;fromDate&quot;, new java.sql.Date(dateEntered.getTime()));</span>
+            }
+
+<span class="nc bnc" id="L1612" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc" id="L1613">                empList = new ArrayList();</span>
+<span class="nc bnc" id="L1614" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1615">                    Integer id = (Integer) iter.next();</span>
+<span class="nc" id="L1616">                    personalInformation = EisManagersUtill.getEmployeeService().getEmloyeeById(id);</span>
+<span class="nc" id="L1617">                    empList.add(personalInformation);</span>
+<span class="nc" id="L1618">                }</span>
+            }
+
+<span class="nc" id="L1621">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1622">            LOGGER.error(he);</span>
+<span class="nc" id="L1623">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1624">        } catch (Exception he) {</span>
+<span class="nc" id="L1625">            LOGGER.error(he);</span>
+<span class="nc" id="L1626">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1627">        }</span>
+
+<span class="nc" id="L1629">        return empList;</span>
+    }
+
+    /**
+     * return all distinct Designations to which employees are assigned in the
+     * given department for current date. This list includes primary as well as
+     * secondary assignments If there is No Designation for the given department
+     * then returns the empty list
+     * 
+     * @param departmentId
+     * @param givenDate
+     * @return DesignationMaster List
+     */
+    public List getAllDesignationByDept(Integer deptId) {
+
+<span class="nc" id="L1644">        Integer departmentId = deptId;</span>
+<span class="nc" id="L1645">        List&lt;Designation&gt; designationMstrObj = new ArrayList&lt;Designation&gt;();</span>
+       
+<span class="nc" id="L1647">        designationMstrObj = (List&lt;Designation&gt;) eisService.getAllDesignationByDept(departmentId, new Date());</span>
+<span class="nc" id="L1648">        return designationMstrObj;</span>
+    }
+
+    /**
+     * Returns the list of active users who are assigned to the given
+     * designation. The designation can be a primary or temporary assignment of
+     * the user. The API does not currently check for active assignments
+     * 
+     * @param DesgId
+     * @return the list of active users who are assigned to the given
+     *         designation.
+     * @throws Exception
+     */
+
+    public List getAllActiveUsersByGivenDesg(Integer DesgId) throws Exception {
+<span class="nc" id="L1663">        List userList = null;</span>
+        try {
+<span class="nc bnc" id="L1665" title="All 4 branches missed.">            if (DesgId != null &amp;&amp; DesgId != 0) {</span>
+<span class="nc" id="L1666">                userList = personalInformationDAO.getAllActiveUsersByGivenDesg(DesgId);</span>
+
+            }
+
+<span class="nc" id="L1670">        } catch (Exception e) {</span>
+<span class="nc" id="L1671">            throw new ApplicationRuntimeException(&quot;system.error&quot;, e);</span>
+<span class="nc" id="L1672">        }</span>
+<span class="nc" id="L1673">        return userList;</span>
+    }
+
+    /**
+     * Returns the list of employees (EmployeeView) who have a temporary
+     * assignment as on the given date assigned to the given position
+     * 
+     * @param givenDate
+     * @param posId
+     * @return
+     */
+    public List&lt;EmployeeView&gt; getEmployeeWithTempAssignment(Date givenDate, Integer posId) {
+
+<span class="nc" id="L1686">        List list = null;</span>
+        try {
+
+<span class="nc" id="L1689">            list = (List) assignmentDAO.getEmployeeWithTempAssignment(givenDate, posId);</span>
+
+<span class="nc" id="L1691">        } catch (HibernateException he) {</span>
+
+<span class="nc" id="L1693">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1694">        } catch (Exception he) {</span>
+<span class="nc" id="L1695">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1696">        }</span>
+
+<span class="nc" id="L1698">        return list;</span>
+
+    }
+
+    /**
+     * Returns the list of employees (EmployeeView) who have a temporary
+     * assignment as on the given date assigned to the given position and has
+     * the employee code equal to the given code
+     * 
+     * @param givenDate
+     * @param posId
+     * @return
+     */
+    public List&lt;EmployeeView&gt; getEmployeeWithTempAssignment(String code, Date givenDate, Integer posId) {
+
+<span class="nc" id="L1713">        List list = null;</span>
+        try {
+
+<span class="nc" id="L1716">            list = (List) assignmentDAO.getEmployeeWithTempAssignment(code, givenDate, posId);</span>
+
+<span class="nc" id="L1718">        } catch (HibernateException he) {</span>
+
+<span class="nc" id="L1720">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1721">        } catch (Exception he) {</span>
+<span class="nc" id="L1722">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1723">        }</span>
+
+<span class="nc" id="L1725">        return list;</span>
+
+    }
+
+    /**
+     * Returns a list of temporary Assignments as on given date for employees
+     * that have the given code and position. If any of the parameters are null,
+     * the parameter is ignored. For instance, if givenDate is null, all
+     * temporary assignments for employee with given code and when assigned to
+     * givenPosition will be returned
+     * 
+     * @param code
+     * @param givenDate
+     * @param posId
+     * @return List of Assignment
+     */
+    public List getEmpTempAssignment(String code, Date givenDate, Integer posId) {
+
+<span class="nc" id="L1743">        List assignment = null;</span>
+        try {
+<span class="nc" id="L1745">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L1746">            mainStr = &quot;from Assignment ev  where ev.isPrimary='N'&quot;;</span>
+
+<span class="nc bnc" id="L1748" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1749">                mainStr += &quot;and ev.employee.employeeCode =:code &quot;;</span>
+            }
+<span class="nc bnc" id="L1751" title="All 2 branches missed.">            if (givenDate != null) {</span>
+<span class="nc" id="L1752">                mainStr += &quot; and ev.fromDate &lt;= :givenDate and ev.toDate &gt;=:givenDate&quot;;</span>
+            }
+
+<span class="nc bnc" id="L1755" title="All 4 branches missed.">            if (posId != null &amp;&amp; posId != 0) {</span>
+<span class="nc" id="L1756">                mainStr += &quot; and ev.position.id =:posId &quot;;</span>
+            }
+<span class="nc" id="L1758">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L1759" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1760">                qry.setString(&quot;code&quot;, code);</span>
+            }
+<span class="nc bnc" id="L1762" title="All 2 branches missed.">            if (givenDate != null) {</span>
+<span class="nc" id="L1763">                qry.setDate(&quot;givenDate&quot;, givenDate);</span>
+            }
+<span class="nc bnc" id="L1765" title="All 4 branches missed.">            if (posId != null &amp;&amp; posId != 0) {</span>
+<span class="nc" id="L1766">                qry.setInteger(&quot;posId&quot;, posId);</span>
+            }
+
+<span class="nc" id="L1769">            assignment = qry.list();</span>
+<span class="nc" id="L1770">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1771">            LOGGER.error(he);</span>
+<span class="nc" id="L1772">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1773">        } catch (Exception he) {</span>
+<span class="nc" id="L1774">            LOGGER.error(he);</span>
+<span class="nc" id="L1775">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1776">        }</span>
+<span class="nc" id="L1777">        return assignment;</span>
+
+    }
+
+    /**
+     * Returns a list of assignment ids. All assignments for the employee based
+     * on employee id and that fall in the given date will be returned.
+     * 
+     * @param empId
+     *            - Required parameter. If null is passed, the API throws an
+     *            ApplicationException
+     * @param givenDate
+     *            . Date as on which the assignments need to be returned. If
+     *            this parameter is null, the current date is considered
+     * @return List of Assignment Ids
+     * @throws ApplicationException
+     */
+    public List&lt;Integer&gt; getAssignmentsForEmp(Integer empId, Date givenDate) throws ApplicationException {
+<span class="nc" id="L1795">        List list = null;</span>
+<span class="nc" id="L1796">        Query query = null;</span>
+        try {
+
+<span class="nc" id="L1799">            StringBuffer stringbuffer = new StringBuffer(</span>
+                    &quot; select 	ASS_ID  from EG_EIS_EMPLOYEEINFO ev  where ev.ID = :empId&quot;);
+
+<span class="nc bnc" id="L1802" title="All 2 branches missed.">            if (empId == null) {</span>
+<span class="nc" id="L1803">                throw new ApplicationException(&quot;EmployeeId  Not provided&quot;);</span>
+<span class="nc bnc" id="L1804" title="All 2 branches missed.">            } else if (givenDate == null) {</span>
+<span class="nc" id="L1805">                stringbuffer</span>
+<span class="nc" id="L1806">                        .append(&quot; and ((ev.to_Date is null and ev.from_Date &lt;= SYSDATE ) OR (ev.from_Date &lt;= SYSDATE AND ev.to_Date &gt;= SYSDATE))&quot;);</span>
+
+            } else {
+<span class="nc" id="L1809">                stringbuffer.append(&quot; and  ev.from_Date &lt;= :givenDate AND ev.to_Date &gt;= :givenDate&quot;);</span>
+            }
+<span class="nc" id="L1811">            query = getCurrentSession().createSQLQuery(stringbuffer.toString())</span>
+<span class="nc" id="L1812">                    .addScalar(&quot;ASS_ID&quot;, IntegerType.INSTANCE);</span>
+
+<span class="nc bnc" id="L1814" title="All 2 branches missed.">            if (query.getQueryString().contains(&quot;:givenDate&quot;)) {</span>
+<span class="nc" id="L1815">                query.setDate(&quot;givenDate&quot;, givenDate);</span>
+            }
+
+<span class="nc" id="L1818">            query.setInteger(&quot;empId&quot;, empId);</span>
+
+<span class="nc" id="L1820">        } catch (HibernateException hibException) {</span>
+<span class="nc" id="L1821">            LOGGER.error(hibException.getMessage());</span>
+<span class="nc" id="L1822">            throw new ApplicationException(&quot;HibernateException:&quot; + hibException.getMessage(), hibException);</span>
+<span class="nc" id="L1823">        }</span>
+
+<span class="nc" id="L1825">        return query.list();</span>
+
+    }
+
+    /**
+     * API that will return all positions for a user(temporary and permanent)
+     * for a date.
+     *
+     * @param user
+     *            . Required. User object for which the positions are queried
+     * @param date
+     *            Will consider current date if date is not provided
+     * @return
+     * @throws ApplicationException
+     */
+
+    public List&lt;Position&gt; getPositionsForUser(User user, Date date) throws ApplicationException {
+
+<span class="nc" id="L1843">        List&lt;Position&gt; positionList = new ArrayList&lt;Position&gt;();</span>
+<span class="nc" id="L1844">        Integer pos = null;</span>
+        try {
+<span class="nc" id="L1846">            String mainStr = &quot;&quot;;</span>
+
+<span class="nc" id="L1848">            mainStr = &quot;select a.position.id from Assignment a where a.employee.userMaster.id =:userId&quot;;</span>
+
+<span class="nc bnc" id="L1850" title="All 2 branches missed.">            if (date != null) {</span>
+<span class="nc" id="L1851">                mainStr += &quot; and ((a.toDate is null and a.fromDate&lt;= :date) or (a.fromDate &lt;= :date and a.toDate &gt;= :date))&quot;;</span>
+            } else {
+<span class="nc" id="L1853">                mainStr += &quot; and ((a.toDate is null and a.fromDate&lt;= TO_DATE(SYSDATE,'dd-MM-yyy')) or (a.fromDate &lt;= TO_DATE(SYSDATE,'dd-MM-yyy') and a.toDate &gt;= TO_DATE(SYSDATE,'dd-MM-yyy')))&quot;;</span>
+            }
+<span class="nc" id="L1855">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L1856" title="All 2 branches missed.">            if (user != null) {</span>
+<span class="nc" id="L1857">                qry.setLong(&quot;userId&quot;, user.getId());</span>
+            }
+<span class="nc bnc" id="L1859" title="All 2 branches missed.">            if (date != null) {</span>
+<span class="nc" id="L1860">                qry.setDate(&quot;date&quot;, date);</span>
+            }
+
+<span class="nc bnc" id="L1863" title="All 4 branches missed.">            if (qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+
+<span class="nc bnc" id="L1865" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L1866">                    pos = (Integer) iter.next();</span>
+<span class="nc" id="L1867">                    Position position = EisManagersUtill.getEisCommonsService().getPositionById(pos);</span>
+<span class="nc" id="L1868">                    positionList.add(position);</span>
+<span class="nc" id="L1869">                }</span>
+            }
+
+<span class="nc" id="L1872">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1873">            LOGGER.error(he);</span>
+<span class="nc" id="L1874">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1875">        } catch (Exception he) {</span>
+<span class="nc" id="L1876">            LOGGER.error(he);</span>
+<span class="nc" id="L1877">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1878">        }</span>
+<span class="nc" id="L1879">        return positionList;</span>
+    }
+
+    /**
+     * Returns a list of primary Assignments as on given date for employees that
+     * have the given code and position. If any of the parameters are null, the
+     * parameter is ignored. For instance, if givenDate is null, all primary
+     * assignments for employee with given code and when assigned to
+     * givenPosition will be returned
+     *
+     * @param code
+     * @param givenDate
+     * @param posId
+     * @return
+     */
+    public List getEmpPrimaryAssignment(String code, Date givenDate, Integer posId) {
+
+<span class="nc" id="L1896">        List assignment = null;</span>
+        try {
+<span class="nc" id="L1898">            String mainStr = &quot;&quot;;</span>
+<span class="nc" id="L1899">            mainStr = &quot;from Assignment ev  where ev.isPrimary='Y'&quot;;</span>
+
+<span class="nc bnc" id="L1901" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1902">                mainStr += &quot;and ev.employee.employeeCode =:code &quot;;</span>
+            }
+<span class="nc bnc" id="L1904" title="All 2 branches missed.">            if (givenDate != null) {</span>
+<span class="nc" id="L1905">                mainStr += &quot; and ev.fromDate &lt;= :givenDate and ev.toDate &gt;=:givenDate&quot;;</span>
+            }
+
+<span class="nc bnc" id="L1908" title="All 4 branches missed.">            if (posId != null &amp;&amp; posId != 0) {</span>
+<span class="nc" id="L1909">                mainStr += &quot; and ev.position.id =:posId &quot;;</span>
+            }
+<span class="nc" id="L1911">            Query qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc bnc" id="L1912" title="All 4 branches missed.">            if (code != null &amp;&amp; !code.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1913">                qry.setString(&quot;code&quot;, code);</span>
+            }
+<span class="nc bnc" id="L1915" title="All 2 branches missed.">            if (givenDate != null) {</span>
+<span class="nc" id="L1916">                qry.setDate(&quot;givenDate&quot;, givenDate);</span>
+            }
+<span class="nc bnc" id="L1918" title="All 4 branches missed.">            if (posId != null &amp;&amp; posId != 0) {</span>
+<span class="nc" id="L1919">                qry.setInteger(&quot;posId&quot;, posId);</span>
+            }
+
+<span class="nc" id="L1922">            assignment = qry.list();</span>
+<span class="nc" id="L1923">        } catch (HibernateException he) {</span>
+<span class="nc" id="L1924">            LOGGER.error(he);</span>
+<span class="nc" id="L1925">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1926">        } catch (Exception he) {</span>
+<span class="nc" id="L1927">            LOGGER.error(he);</span>
+<span class="nc" id="L1928">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L1929">        }</span>
+<span class="nc" id="L1930">        return assignment;</span>
+
+    }
+
+    /**
+     * Api Used to get the report for employee,Retired,Deceased,Suspended based
+     * on the dates. For Employed, Retired and Deceased, the employee's
+     * assignment dates are considered. Whereas for Suspended status, the
+     * Disciplinary Action details are considered.
+     * 
+     * @param status
+     * @param fromDate
+     * @param toDate
+     * @return List of Assignment
+     * @throws Exception
+     */
+    public List searchEmployee(Integer status, Date fromDate, Date toDate) throws Exception {
+<span class="nc" id="L1947">        List&lt;Assignment&gt; employeeList = new ArrayList&lt;Assignment&gt;();</span>
+<span class="nc" id="L1948">        String mainStr = &quot;&quot;;</span>
+        try {
+<span class="nc" id="L1950">            EgwStatus statusType = egwStatusHibernateDAO.findById(status, false);</span>
+
+<span class="nc bnc" id="L1952" title="All 4 branches missed.">            if (statusType.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; statusType.getDescription().equals(&quot;Employed&quot;)) {</span>
+
+<span class="nc bnc" id="L1954" title="All 2 branches missed.">                if (status.intValue() != 0) {</span>
+<span class="nc" id="L1955">                    mainStr = &quot;from Assignment ev where ev.employee.StatusMaster.id =:employeeStatus&quot;;</span>
+                }
+<span class="nc bnc" id="L1957" title="All 4 branches missed.">                if (fromDate != null &amp;&amp; toDate != null) {</span>
+                    /*
+                     * mainStr +=
+                     * &quot; and ev.assignmentPrd.employeeId.dateOfFirstAppointment &gt;= :fromDate &quot;
+                     * +
+                     * &quot; and ev.assignmentPrd.employeeId.dateOfFirstAppointment &lt;= :toDate and ev.assignmentPrd.fromDate&lt;=sysdate and ev.assignmentPrd.toDate &gt;=sysdate&quot;
+                     * ;
+                     */
+                    // enhanced to avoid to show all assignment
+<span class="nc" id="L1966">                    mainStr += &quot; and ev.dateOfFirstAppointment &gt;= :fromDate &quot;</span>
+                            + &quot; and ev.dateOfFirstAppointment &lt;= :toDate &quot;
+                            + &quot; and ((ev.fromDate&lt;=sysdate and ev.toDate &gt;=sysdate) &quot;
+                            + &quot; or (ev.fromDate in (select max(prd.fromDate) from Assignment prd where ev.employee.idPersonalInformation = prd.employee.idPersonalInformation &quot;
+                            + &quot; and not exists (select prd1.id from Assignment prd1 where prd1.employee.idPersonalInformation=ev.assignment.employee.idPersonalInformation &quot;
+                            + &quot; and ( prd1.dateOfFirstAppointment &gt;= :fromDate and prd1.dateOfFirstAppointment &lt;= :toDate and prd1.fromDate&lt;= sysdate and prd1.toDate &gt;= sysdate) )))) &quot;;
+
+                }
+
+<span class="nc bnc" id="L1975" title="All 4 branches missed.">            } else if (statusType.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; statusType.getDescription().equals(&quot;Retired&quot;)) {</span>
+<span class="nc bnc" id="L1976" title="All 2 branches missed.">                if (status.intValue() != 0) {</span>
+<span class="nc" id="L1977">                    mainStr = &quot;from Assignment ev where ev.employee.StatusMaster.id =:employeeStatus&quot;;</span>
+                }
+<span class="nc bnc" id="L1979" title="All 4 branches missed.">                if (fromDate != null &amp;&amp; toDate != null) {</span>
+                    /*
+                     * mainStr +=
+                     * &quot; and ev.assignmentPrd.employeeId.retirementDate &gt;= :fromDate &quot;
+                     * +
+                     * &quot; and ev.assignmentPrd.employeeId.retirementDate &lt;= :toDate and ev.assignmentPrd.fromDate&lt;=sysdate and ev.assignmentPrd.toDate &gt;=sysdate&quot;
+                     * ;
+                     */
+
+                    // enhanced to avoid to show all assignment
+<span class="nc" id="L1989">                    mainStr += &quot; and ev.assignmentPrd.employeeId.retirementDate &gt;= :fromDate &quot;</span>
+                            + &quot; and ev.employee.retirementDate &lt;= :toDate &quot;
+                            + &quot; and ((ev.fromDate&lt;=sysdate and ev.toDate &gt;=sysdate) &quot;
+                            + &quot; or (ev.fromDate in (select max(prd.fromDate) from Assignment prd where ev.employee.idPersonalInformation = prd.employee.idPersonalInformation &quot;
+                            + &quot; and not exists (select prd1.id from Assignment prd1 where prd1.employee.idPersonalInformation=ev.employee.idPersonalInformation &quot;
+                            + &quot; and ( prd1.employee.retirementDate &gt;= :fromDate and prd1.employee.retirementDate &lt;= :toDate and prd1.fromDate&lt;= sysdate and prd1.toDate &gt;= sysdate) )))) &quot;;
+
+                }
+<span class="nc bnc" id="L1997" title="All 4 branches missed.">            } else if (statusType.getModuletype().equals(&quot;Employee&quot;) &amp;&amp; statusType.getDescription().equals(&quot;Deceased&quot;)) {</span>
+<span class="nc bnc" id="L1998" title="All 2 branches missed.">                if (status.intValue() != 0) {</span>
+<span class="nc" id="L1999">                    mainStr = &quot;from Assignment ev where ev.employee.StatusMaster.id =:employeeStatus&quot;;</span>
+                }
+<span class="nc bnc" id="L2001" title="All 4 branches missed.">                if (fromDate != null &amp;&amp; toDate != null) {</span>
+                    // enhanced to avoid to show all assignment
+<span class="nc" id="L2003">                    mainStr += &quot; and ev.employee.deathDate &gt;= :fromDate &quot;</span>
+                            + &quot; and ev.employee.deathDate &lt;= :toDate &quot;
+                            + &quot; and ((ev.fromDate&lt;=sysdate and ev.toDate &gt;=sysdate) &quot;
+                            + &quot; or (ev.fromDate in (select max(prd.fromDate) from Assignment prd where ev.employee.idPersonalInformation = prd.employee.idPersonalInformation &quot;
+                            + &quot; and not exists (select prd1.id from Assignment prd1 where prd1.employee.idPersonalInformation=ev.employee.idPersonalInformation &quot;
+                            + &quot; and ( prd1.employee.deathDate &gt;= :fromDate and prd1.employee.deathDate &lt;= :toDate and prd1.fromDate&lt;= sysdate and prd1.toDate &gt;= sysdate) )))) &quot;;
+                }
+            }
+            // to be handled
+            /*
+             * else if(statusType.getModuletype().equals(&quot;Employee&quot;) &amp;&amp;
+             * statusType.getDescription().equals(&quot;Suspended&quot;)) {
+             * if(status.intValue() != 0) { mainStr =
+             * &quot;from Assignment ev where ev.employee.StatusMaster.id =:employeeStatus&quot;
+             * ; } if(fromDate != null &amp;&amp; toDate!=null) { mainStr +=
+             * &quot; and ev.employee.idPersonalInformation in &quot; +
+             * &quot;(select D.employee.idPersonalInformation from DisciplinaryPunishment D where &quot;
+             * +
+             * &quot; D.dateOfSuspension &gt;= :fromDate and D.dateOfSuspension &lt;= :toDate ) &quot;
+             * ; } }
+             */
+
+<span class="nc" id="L2025">            Query qry = null;</span>
+
+<span class="nc" id="L2027">            qry = getCurrentSession().createQuery(mainStr);</span>
+<span class="nc" id="L2028">            logger.info(&quot;Query----&quot; + qry.toString());</span>
+
+<span class="nc bnc" id="L2030" title="All 2 branches missed.">            if (status.intValue() != 0) {</span>
+<span class="nc" id="L2031">                qry.setInteger(&quot;employeeStatus&quot;, status);</span>
+            }
+<span class="nc bnc" id="L2033" title="All 2 branches missed.">            if (fromDate != null) {</span>
+<span class="nc" id="L2034">                qry.setDate(&quot;fromDate&quot;, new java.sql.Date(fromDate.getTime()));</span>
+            }
+
+<span class="nc bnc" id="L2037" title="All 2 branches missed.">            if (toDate != null) {</span>
+<span class="nc" id="L2038">                qry.setDate(&quot;toDate&quot;, new java.sql.Date(toDate.getTime()));</span>
+            }
+
+<span class="nc" id="L2041">            employeeList = (List) qry.list();</span>
+
+<span class="nc" id="L2043">        } catch (HibernateException he) {</span>
+<span class="nc" id="L2044">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+<span class="nc" id="L2045">        } catch (Exception he) {</span>
+<span class="nc" id="L2046">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + he.getMessage(), he);</span>
+
+<span class="nc" id="L2048">        }</span>
+<span class="nc" id="L2049">        return employeeList;</span>
+    }
+
+    /**
+     * Returns the list of departments that the user is assigned to. This could
+     * be through primary as well as temporary assignments.
+     * 
+     * @param userName
+     * @return List of Department
+     */
+    public List getListOfDeptBasedOnUserDept(String userName) {
+<span class="nc" id="L2060">        List deptList = new ArrayList();</span>
+        try {
+<span class="nc" id="L2062">            Query qry = null;</span>
+<span class="nc bnc" id="L2063" title="All 2 branches missed.">            if (userName != null) {</span>
+<span class="nc" id="L2064">                qry = getCurrentSession().createQuery(</span>
+                        &quot;from Department where id in (select deptId.id from Assignment where userName=:userName &quot;
+                                + &quot; and fromDate &lt;= sysdate and toDate &gt;= sysdate )&quot;);
+            }
+
+<span class="nc bnc" id="L2069" title="All 2 branches missed.">            if (userName != null) {</span>
+<span class="nc" id="L2070">                qry.setString(&quot;userName&quot;, userName);</span>
+            }
+
+<span class="nc bnc" id="L2073" title="All 6 branches missed.">            if (qry != null &amp;&amp; qry.list() != null &amp;&amp; !qry.list().isEmpty()) {</span>
+<span class="nc bnc" id="L2074" title="All 2 branches missed.">                for (Iterator iter = qry.list().iterator(); iter.hasNext();) {</span>
+<span class="nc" id="L2075">                    Department deptImpl = (Department) iter.next();</span>
+<span class="nc" id="L2076">                    deptList.add(deptImpl);</span>
+<span class="nc" id="L2077">                }</span>
+            }
+
+<span class="nc" id="L2080">        } catch (Exception e) {</span>
+
+<span class="nc" id="L2082">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L2083">        }</span>
+<span class="nc" id="L2084">        return deptList;</span>
+    }
+
+    public boolean isFilterByDept() {
+<span class="nc" id="L2088">        boolean isFilterByDept = false;</span>
+<span class="nc" id="L2089">        String filterByDept = &quot;NO&quot;;</span>
+<span class="nc" id="L2090">        AppConfigValues configValue = appConfigValuesService.getAppConfigValueByDate(&quot;EIS-PAYROLL&quot;, &quot;FILTERBYDEPT&quot;,</span>
+                new Date());
+<span class="nc bnc" id="L2092" title="All 2 branches missed.">        if (null != configValue) {</span>
+<span class="nc" id="L2093">            filterByDept = configValue.getValue();</span>
+<span class="nc" id="L2094">            filterByDept = filterByDept.toUpperCase();</span>
+        }
+        // if selfApproval is true then single step approval
+<span class="nc bnc" id="L2097" title="All 2 branches missed.">        if (&quot;YES&quot;.equals(filterByDept)) {</span>
+<span class="nc" id="L2098">            isFilterByDept = true;</span>
+        }
+<span class="nc" id="L2100">        return isFilterByDept;</span>
+    }
+
+    /**
+     * Returns the list of Employees who are assigned to the given department
+     * and designation as of current date.
+     * 
+     * @param deptId
+     *            - Integer representing id of department
+     * @param desgId
+     *            - Integer representing id of designation
+     * @return List of EmployeeView
+     */
+    public List&lt;EmployeeView&gt; getEmployeeInfoBasedOnDeptAndDesg(Integer deptId, Integer desgId) {
+<span class="nc" id="L2114">        List&lt;EmployeeView&gt; employeeList = new ArrayList&lt;EmployeeView&gt;();</span>
+<span class="nc" id="L2115">        Criteria criteria = getCurrentSession().createCriteria(EmployeeView.class)</span>
+<span class="nc" id="L2116">                .createAlias(&quot;deptId&quot;, &quot;department&quot;).createAlias(&quot;desigId&quot;, &quot;designation&quot;)</span>
+<span class="nc" id="L2117">                .add(Restrictions.eq(&quot;department.id&quot;, deptId))</span>
+<span class="nc" id="L2118">                .add(Restrictions.eq(&quot;designation.designationId&quot;, desgId))</span>
+<span class="nc" id="L2119">                .add(Restrictions.and(Restrictions.le(&quot;fromDate&quot;, new Date()), Restrictions.ge(&quot;toDate&quot;, new Date())))</span>
+<span class="nc" id="L2120">                .add(Restrictions.eq(&quot;isPrimary&quot;, 'Y')).add(Restrictions.eq(&quot;isActive&quot;, 1));</span>
+<span class="nc" id="L2121">        return criteria.list();</span>
+
+    }
+
+    /**
+     * Returns the list of Employees who are assigned to the given department as
+     * of given date.
+     * 
+     * @param deptId
+     *            - Integer representing id of department
+     * @param date
+     *            - Given date. If null, current date is assumed.
+     * @return List of EmployeeView
+     */
+    public List&lt;EmployeeView&gt; getEmployeeInfoBasedOnDeptAndDate(Integer deptId, Date date) {
+<span class="nc bnc" id="L2136" title="All 2 branches missed.">        if (date == null)</span>
+<span class="nc" id="L2137">            date = new Date();</span>
+<span class="nc" id="L2138">        List&lt;EmployeeView&gt; employeeList = new ArrayList&lt;EmployeeView&gt;();</span>
+<span class="nc" id="L2139">        Criteria criteria = getCurrentSession().createCriteria(EmployeeView.class)</span>
+<span class="nc" id="L2140">                .createAlias(&quot;deptId&quot;, &quot;department&quot;).add(Restrictions.eq(&quot;department.id&quot;, deptId))</span>
+<span class="nc" id="L2141">                .add(Restrictions.eq(&quot;isActive&quot;, 1))</span>
+<span class="nc" id="L2142">                .add(Restrictions.and(Restrictions.le(&quot;fromDate&quot;, date), Restrictions.ge(&quot;toDate&quot;, date)));</span>
+<span class="nc" id="L2143">        criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);</span>
+<span class="nc" id="L2144">        return criteria.list();</span>
+    }
+
+    /**
+     * returns all the employees who has active assignment period
+     * 
+     * @return
+     */
+    public List&lt;PersonalInformation&gt; getAllEmployees() {
+<span class="nc" id="L2153">        return getCurrentSession()</span>
+<span class="nc" id="L2154">                .createQuery(</span>
+                        &quot;&quot; + &quot;select distinct employee from EmployeeView empview &quot;
+                                + &quot; where (sysdate between empview.fromDate  and empview.toDate or &quot;
+<span class="nc" id="L2157">                                + &quot; (empview.toDate is null and empview.fromDate&lt;=sysdate))&quot;).list();</span>
+    }
+
+    /**
+     * List of users not mapped to any of the employees
+     * 
+     * @return empUserMapList
+     */
+    public List getListOfUsersNotMappedToEmp() {
+<span class="nc" id="L2166">        List empUserMapList = null;</span>
+        try {
+
+<span class="nc" id="L2169">            empUserMapList = personalInformationDAO.getListOfUsersNotMappedToEmp();</span>
+
+<span class="nc" id="L2171">        } catch (Exception e) {</span>
+
+<span class="nc" id="L2173">            LOGGER.error(e);</span>
+<span class="nc" id="L2174">            throw new ApplicationRuntimeException(&quot;Exception:&quot; + e.getMessage(), e);</span>
+<span class="nc" id="L2175">        }</span>
+<span class="nc" id="L2176">        return empUserMapList;</span>
+    }
+
+    public Designation getPresentDesignation(Integer idPersonalInformation) {
+<span class="nc" id="L2180">        Assignment assignment = getLatestAssignmentForEmployee(idPersonalInformation);</span>
+<span class="nc" id="L2181">        return assignment.getDesignation();</span>
+    }
+
+    public EisUtilService getEisService() {
+<span class="nc" id="L2185">        return eisService;</span>
+    }
+
+    public void setEisService(EisUtilService eisService) {
+<span class="nc" id="L2189">        this.eisService = eisService;</span>
+<span class="nc" id="L2190">    }</span>
+
+    public PersonalInformationDAO getPersonalInformationDAO() {
+<span class="nc" id="L2193">        return personalInformationDAO;</span>
+    }
+
+    public void setPersonalInformationDAO(PersonalInformationDAO personalInformationDAO) {
+<span class="nc" id="L2197">        this.personalInformationDAO = personalInformationDAO;</span>
+<span class="nc" id="L2198">    }</span>
+
+    public AssignmentDAO getAssignmentDAO() {
+<span class="nc" id="L2201">        return assignmentDAO;</span>
+    }
+
+    public void setAssignmentDAO(AssignmentDAO assignmentDAO) {
+<span class="nc" id="L2205">        this.assignmentDAO = assignmentDAO;</span>
+<span class="nc" id="L2206">    }</span>
+
+	public AppConfigValueService getAppConfigValuesService() {
+<span class="nc" id="L2209">		return appConfigValuesService;</span>
+	}
+
+	public void setAppConfigValuesService(
+			AppConfigValueService appConfigValuesService) {
+<span class="nc" id="L2214">		this.appConfigValuesService = appConfigValuesService;</span>
+<span class="nc" id="L2215">	}</span>
+
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

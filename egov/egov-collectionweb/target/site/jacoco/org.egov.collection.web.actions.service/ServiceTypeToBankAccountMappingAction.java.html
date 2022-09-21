@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceTypeToBankAccountMappingAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.service</a> &gt; <span class="el_source">ServiceTypeToBankAccountMappingAction.java</span></div><h1>ServiceTypeToBankAccountMappingAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.collection.web.actions.service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.commons.Bank;
+import org.egov.commons.Bankaccount;
+import org.egov.commons.dao.BankBranchHibernateDAO;
+import org.egov.commons.dao.BankHibernateDAO;
+import org.egov.commons.dao.BankaccountHibernateDAO;
+import org.egov.commons.entity.BankAccountServiceMap;
+import org.egov.infra.microservice.models.BankAccountServiceMapping;
+import org.egov.infra.microservice.models.BusinessDetails;
+import org.egov.infra.microservice.models.BusinessService;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.egov.infra.web.struts.annotation.ValidationErrorPageExt;
+import org.egov.infstr.models.ServiceDetails;
+import org.egov.infstr.services.PersistenceService;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({
+        @Result(name = ServiceTypeToBankAccountMappingAction.NEW, location = &quot;serviceTypeToBankAccountMapping-new.jsp&quot;),
+        @Result(name = ServiceTypeToBankAccountMappingAction.SUCCESS, location = &quot;serviceTypeToBankAccountMapping-success.jsp&quot;),
+        @Result(name = ServiceTypeToBankAccountMappingAction.INDEX, location = &quot;serviceTypeToBankAccountMapping-index.jsp&quot;) })
+public class ServiceTypeToBankAccountMappingAction extends BaseFormAction {
+    private static final long serialVersionUID = 1L;
+    private static final String BANK_BRANCH_LIST = &quot;bankBranchList&quot;;
+    private static final String BANK_NAME_LIST = &quot;bankNameList&quot;;
+    private static final String BANK_ACCOUNT_LIST = &quot;bankAccountIdList&quot;;
+    private PersistenceService&lt;BankAccountServiceMap, Long&gt; bankAccountMappingService;
+<span class="nc" id="L89">    private BankAccountServiceMap bankAccountServiceMap = new BankAccountServiceMap();</span>
+    @Autowired
+    private BankHibernateDAO bankHibernateDAO;
+    @Autowired
+    private BankBranchHibernateDAO bankBrankHibernateDAO;
+    @Autowired
+    private BankaccountHibernateDAO bankAccountHibernateDAO;
+<span class="nc" id="L96">    private List&lt;BankAccountServiceMap&gt; bankAccountServices = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L97">    private List&lt;BankAccountServiceMapping&gt; mappings = new ArrayList&lt;&gt;();</span>
+    private Integer bankId;
+    private Integer branchId;
+    private String serviceCategory;
+    private String serviceTypeCode;
+    private Long serviceAccountId;
+    private String sourcePage;
+    private String target;
+    private Integer fundId;
+<span class="nc" id="L106">    Map&lt;String,String&gt; serviceCategoryNames = new HashMap&lt;String,String&gt;();</span>
+<span class="nc" id="L107">    Map&lt;String,Map&lt;String,String&gt;&gt; serviceTypeMap = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L109">    public ServiceTypeToBankAccountMappingAction() {</span>
+<span class="nc" id="L110">        addRelatedEntity(&quot;serviceDetails&quot;, ServiceDetails.class);</span>
+<span class="nc" id="L111">        addRelatedEntity(&quot;bankAccountId&quot;, Bankaccount.class);</span>
+<span class="nc" id="L112">    }</span>
+
+    @Action(value = &quot;/service/serviceTypeToBankAccountMapping-newform&quot;)
+    public String newform() {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (getServiceAccountId() != null) {</span>
+<span class="nc" id="L117">            populateListsForView();</span>
+<span class="nc" id="L118">            setupDropdownDataExcluding();</span>
+<span class="nc" id="L119">            bankAccountServiceMap = bankAccountMappingService.findById(getServiceAccountId(), false);</span>
+<span class="nc" id="L120">            addDropdownData(</span>
+                    BANK_BRANCH_LIST,
+<span class="nc" id="L122">                    bankBrankHibernateDAO.getAllBankBranchsByBank(bankAccountServiceMap.getBankAccountId()</span>
+<span class="nc" id="L123">                            .getBankbranch().getBank().getId()));</span>
+<span class="nc" id="L124">            addDropdownData(</span>
+                    BANK_ACCOUNT_LIST,
+<span class="nc" id="L126">                    bankAccountHibernateDAO.getBankAccountByBankBranchForReceiptsPayments(bankAccountServiceMap</span>
+<span class="nc" id="L127">                            .getBankAccountId().getBankbranch().getId(), bankAccountServiceMap.getServiceDetails()</span>
+<span class="nc" id="L128">                                    .getFund().getId()));</span>
+<span class="nc" id="L129">            setServiceCategory(bankAccountServiceMap.getServiceDetails().getServiceCategory().getCode());</span>
+<span class="nc" id="L130">            setBankId(bankAccountServiceMap.getBankAccountId().getBankbranch().getBank().getId());</span>
+<span class="nc" id="L131">            setBranchId(bankAccountServiceMap.getBankAccountId().getBankbranch().getId());</span>
+        } else
+<span class="nc" id="L133">            populateLists();</span>
+<span class="nc" id="L134">        return NEW;</span>
+    }
+
+    private void populateLists() {
+<span class="nc" id="L138">        this.getServiceCategoryList();</span>
+//        addDropdownData(&quot;serviceCategoryList&quot;, microserviceUtils.getBusinessCategories());
+//        addDropdownData(&quot;serviceDetailsList&quot;, Collections.emptyList());
+<span class="nc" id="L141">        addDropdownData(BANK_NAME_LIST, bankHibernateDAO.getAllBankHavingBranchAndAccounts());</span>
+<span class="nc" id="L142">        addDropdownData(BANK_BRANCH_LIST, Collections.emptyList());</span>
+<span class="nc" id="L143">        addDropdownData(BANK_ACCOUNT_LIST, Collections.emptyList());</span>
+<span class="nc" id="L144">    }</span>
+
+    private void populateListsForView() {
+<span class="nc" id="L147">        this.getServiceCategoryList();</span>
+<span class="nc" id="L148">        addDropdownData(&quot;serviceCategoryList&quot;, microserviceUtils.getBusinessCategories());</span>
+<span class="nc bnc" id="L149" title="All 6 branches missed.">        if (serviceCategory != null &amp;&amp; !serviceCategory.isEmpty() &amp;&amp; !serviceCategory.equalsIgnoreCase(&quot;-1&quot;)){</span>
+//            addDropdownData(&quot;serviceDetailsList&quot;, microserviceUtils.getBusinessDetailsByCategoryCode(serviceCategory));
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            if(bankAccountServiceMap.getServiceDetails() != null){</span>
+<span class="nc" id="L152">                setServiceTypeCode(bankAccountServiceMap.getServiceDetails().getCode());</span>
+            }
+        }
+<span class="nc bnc" id="L155" title="All 4 branches missed.">        if (sourcePage != null &amp;&amp; &quot;modify&quot;.equals(sourcePage))</span>
+<span class="nc" id="L156">            addDropdownData(BANK_NAME_LIST, bankHibernateDAO.getAllBankHavingBranchAndAccounts());</span>
+        else
+<span class="nc" id="L158">            addDropdownData(BANK_NAME_LIST, getBankMappedToService());</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        addDropdownData(</span>
+                BANK_BRANCH_LIST,
+<span class="nc bnc" id="L161" title="All 2 branches missed.">                bankId != null &amp;&amp; bankId != -1 ? bankBrankHibernateDAO</span>
+<span class="nc" id="L162">                        .getAllBankBranchsByBankForReceiptPayments(bankId) : Collections.emptyList());</span>
+<span class="nc" id="L163">        addDropdownData(</span>
+<span class="nc" id="L164">                BANK_ACCOUNT_LIST, getBankAccountMappedToService());</span>
+<span class="nc" id="L165">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private List&lt;Bank&gt; getBankMappedToService() {
+<span class="nc" id="L169">        List&lt;BankAccountServiceMapping&gt; mappings = microserviceUtils.getBankAcntServiceMappings();</span>
+<span class="nc" id="L170">        List&lt;String&gt; accountNumbers = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (BankAccountServiceMapping basm : mappings) {</span>
+<span class="nc" id="L172">            accountNumbers.add(basm.getBankAccount());</span>
+<span class="nc" id="L173">        }</span>
+<span class="nc" id="L174">        final String serviceBankQueryString = &quot;select distinct ba.bankbranch.bank from Bankaccount ba where ba.accountnumber in(:accountnumbers))&quot;;</span>
+
+<span class="nc" id="L176">        final Query bankListQuery = persistenceService.getSession().createQuery(serviceBankQueryString);</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if(!accountNumbers.isEmpty()){</span>
+<span class="nc" id="L178">            bankListQuery.setParameterList(&quot;accountnumbers&quot;, accountNumbers);</span>
+        }
+<span class="nc" id="L180">        return bankListQuery.list();</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private List&lt;Bankaccount&gt; getBankAccountMappedToService() {
+<span class="nc" id="L185">        List&lt;BankAccountServiceMapping&gt; mappings = microserviceUtils.getBankAcntServiceMappings();</span>
+<span class="nc" id="L186">        List&lt;String&gt; accountNumbers = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        if(!mappings.isEmpty()){</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            for (BankAccountServiceMapping basm : mappings) {</span>
+<span class="nc" id="L189">                accountNumbers.add(basm.getBankAccount());</span>
+<span class="nc" id="L190">            }</span>
+        }
+<span class="nc" id="L192">        final String serviceBankQueryString = &quot;select distinct ba from Bankaccount ba where ba.accountnumber in(:accountnumbers))&quot;;</span>
+
+<span class="nc" id="L194">        final Query bankAccListQuery = persistenceService.getSession().createQuery(serviceBankQueryString);</span>
+<span class="nc" id="L195">        bankAccListQuery.setParameterList(&quot;accountnumbers&quot;, accountNumbers);</span>
+<span class="nc" id="L196">        return bankAccListQuery.list();</span>
+    }
+
+    @Action(value = &quot;/service/serviceTypeToBankAccountMapping-list&quot;)
+    public String list() {
+<span class="nc" id="L201">        populateListsForView();</span>
+<span class="nc" id="L202">        return INDEX;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Action(value = &quot;/service/serviceTypeToBankAccountMapping-search&quot;)
+    public String search() {
+<span class="nc" id="L208">        populateListsForView();</span>
+<span class="nc" id="L209">        final StringBuilder searchkQueryString = new StringBuilder();</span>
+<span class="nc" id="L210">        StringBuilder businessDetails = new StringBuilder();</span>
+
+//        if (serviceCategory != null &amp;&amp; !serviceCategory.isEmpty() &amp;&amp; !serviceCategory.equalsIgnoreCase(&quot;-1&quot;)
+//                &amp;&amp; (bankAccountServiceMap.getServiceDetails() == null
+//                        || bankAccountServiceMap.getServiceDetails().getCode() == null
+//                        || bankAccountServiceMap.getServiceDetails().getCode().equalsIgnoreCase(&quot;-1&quot;))) {
+//            List&lt;BusinessDetails&gt; bds = microserviceUtils.getBusinessDetailsByCategoryCode(serviceCategory);
+//            for (BusinessDetails bd : bds) {
+//                if (businessDetails.length() &gt; 0) {
+//                    businessDetails.append(&quot;,&quot;);
+//                }
+//                businessDetails.append(bd.getCode());
+//            }
+//
+//        }
+<span class="nc" id="L225">        businessDetails.append(serviceCategory);</span>
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        if (bankAccountServiceMap.getServiceDetails() != null &amp;&amp; !bankAccountServiceMap.getServiceDetails().getCode().isEmpty()</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">                &amp;&amp; !bankAccountServiceMap.getServiceDetails().getCode().equalsIgnoreCase(&quot;-1&quot;)) {</span>
+<span class="nc" id="L228">            businessDetails.append(&quot;.&quot;).append(bankAccountServiceMap.getServiceDetails().getCode());</span>
+        }
+        
+        
+<span class="nc" id="L232">        mappings = microserviceUtils</span>
+<span class="nc" id="L233">                .getBankAcntServiceMappingsByBankAcc(bankAccountServiceMap.getBankAccountId().getAccountnumber(),</span>
+<span class="nc" id="L234">                        businessDetails.toString());</span>
+<span class="nc" id="L235">        populateNames(mappings);</span>
+<span class="nc" id="L236">        target = &quot;searchresult&quot;;</span>
+<span class="nc" id="L237">        return INDEX;</span>
+    }
+
+    private void populateNames(List&lt;BankAccountServiceMapping&gt; mappings2) {
+
+<span class="nc" id="L242">        StringBuilder businessDetails = new StringBuilder();</span>
+
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        for (BankAccountServiceMapping bd : mappings2) {</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (businessDetails.length() &gt; 0) {</span>
+<span class="nc" id="L246">                businessDetails.append(&quot;,&quot;);</span>
+            }
+<span class="nc" id="L248">            businessDetails.append(bd.getBusinessDetails());</span>
+<span class="nc" id="L249">        }</span>
+
+<span class="nc" id="L251">        List&lt;BusinessService&gt; businessDetailsList = microserviceUtils.getBusinessServiceByCodes(businessDetails.toString());</span>
+<span class="nc" id="L252">        Map&lt;String, String&gt; businessDetailsCodeNameMap = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (businessDetailsList != null)</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">            for (BusinessService bd : businessDetailsList) {</span>
+<span class="nc" id="L256">                businessDetailsCodeNameMap.put(bd.getCode(), bd.getBusinessService());</span>
+<span class="nc" id="L257">            }</span>
+
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        for (BankAccountServiceMapping r : mappings2) {</span>
+<span class="nc bnc" id="L260" title="All 4 branches missed.">            if (r.getBusinessDetails() != null &amp;&amp; !r.getBusinessDetails().isEmpty()){</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">                if(businessDetailsCodeNameMap.get(r.getBusinessDetails()) != null){</span>
+<span class="nc" id="L262">                    r.setBusinessDetailsName(businessDetailsCodeNameMap.get(r.getBusinessDetails()));</span>
+                }else{
+<span class="nc" id="L264">                    r.setBusinessDetailsName(r.getBusinessDetails());</span>
+                }
+            }
+<span class="nc" id="L267">        }</span>
+<span class="nc" id="L268">    }</span>
+
+    @ValidationErrorPageExt(action = NEW, makeCall = true, toMethod = &quot;newform&quot;)
+    @Action(value = &quot;/service/serviceTypeToBankAccountMapping-create&quot;)
+    public String create() {
+<span class="nc bnc" id="L273" title="All 2 branches missed.">        if (bankAccountServiceMap.getBankAccountId().getId() != null)</span>
+<span class="nc" id="L274">            bankAccountServiceMap</span>
+<span class="nc" id="L275">                    .setBankAccountId(bankAccountHibernateDAO.findById(bankAccountServiceMap.getBankAccountId().getId(), false));</span>
+<span class="nc" id="L276">        BankAccountServiceMapping basm = new BankAccountServiceMapping();</span>
+<span class="nc" id="L277">        String serviceCode = serviceCategory;</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if(bankAccountServiceMap.getServiceDetails()!= null){</span>
+<span class="nc" id="L279">            serviceCode += &quot;.&quot;+bankAccountServiceMap.getServiceDetails().getCode();</span>
+        }
+<span class="nc" id="L281">        basm.setBusinessDetails(serviceCode);</span>
+<span class="nc" id="L282">        basm.setBankAccount(bankAccountServiceMap.getBankAccountId().getAccountnumber());</span>
+<span class="nc" id="L283">        basm.setBankBranch(bankAccountServiceMap.getBankAccountId().getBankbranch().getBranchcode());</span>
+<span class="nc" id="L284">        basm.setBank(bankAccountServiceMap.getBankAccountId().getBankbranch().getBank().getName());</span>
+<span class="nc" id="L285">        basm.setTenantId(microserviceUtils.getTenentId());</span>
+<span class="nc" id="L286">        microserviceUtils.createBankAcntServiceMappings(basm);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if(bankAccountServiceMap.getServiceDetails() == null){</span>
+<span class="nc" id="L288">            bankAccountServiceMap.setServiceDetails(new ServiceDetails());</span>
+        }
+<span class="nc" id="L290">        bankAccountServiceMap.getServiceDetails().setName(microserviceUtils.getBusinessServiceNameByCode(serviceCode));</span>
+<span class="nc" id="L291">        addActionMessage(getText(&quot;service.master.successmessage.create&quot;, new String[] {</span>
+<span class="nc" id="L292">                bankAccountServiceMap.getServiceDetails().getName(),</span>
+<span class="nc" id="L293">                bankAccountServiceMap.getBankAccountId().getBankbranch().getBank().getName(),</span>
+<span class="nc" id="L294">                bankAccountServiceMap.getBankAccountId().getAccountnumber() }));</span>
+<span class="nc" id="L295">        return SUCCESS;</span>
+    }
+
+    public Boolean isMapExists() {
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (bankAccountServiceMap.getServiceDetails().getId() != null</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">                &amp;&amp; bankAccountServiceMap.getBankAccountId().getId() != null) {</span>
+<span class="nc" id="L301">            final BankAccountServiceMap bankAccountServiceMapObj = bankAccountMappingService.find(</span>
+                    &quot; from BankAccountServiceMap where serviceDetails.id=? and bankAccountId.id=?&quot;,
+<span class="nc" id="L303">                    bankAccountServiceMap.getServiceDetails().getId(), bankAccountServiceMap.getBankAccountId().getId());</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            if (bankAccountServiceMapObj != null) {</span>
+<span class="nc bnc" id="L305" title="All 4 branches missed.">                if (bankAccountServiceMap.getId() == null &amp;&amp; bankAccountServiceMapObj.getId() != null) {</span>
+<span class="nc" id="L306">                    return true;</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">                } else if (bankAccountServiceMap.getId() != null</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">                        &amp;&amp; bankAccountServiceMapObj.getId() != bankAccountServiceMap.getId()) {</span>
+<span class="nc" id="L309">                    return true;</span>
+                }
+            }
+        }
+<span class="nc" id="L313">        return false;</span>
+    }
+    
+    private void getServiceCategoryList() {
+<span class="nc" id="L317">        List&lt;BusinessService&gt; businessService = microserviceUtils.getBusinessService(null);</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        for(BusinessService bs : businessService){</span>
+<span class="nc" id="L319">            String[] splitServName = bs.getBusinessService().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc" id="L320">            String[] splitSerCode = bs.getCode().split(Pattern.quote(&quot;.&quot;));</span>
+<span class="nc bnc" id="L321" title="All 4 branches missed.">            if(splitServName.length==2 &amp;&amp; splitSerCode.length == 2){</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">                if(!serviceCategoryNames.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L323">                    serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+                }
+<span class="nc bnc" id="L325" title="All 2 branches missed.">                if(serviceTypeMap.containsKey(splitSerCode[0])){</span>
+<span class="nc" id="L326">                    Map&lt;String, String&gt; map = serviceTypeMap.get(splitSerCode[0]);</span>
+<span class="nc" id="L327">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L328">                    serviceTypeMap.put(splitSerCode[0], map);</span>
+<span class="nc" id="L329">                }else{</span>
+<span class="nc" id="L330">                    Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L331">                    map.put(splitSerCode[1], splitServName[1]);</span>
+<span class="nc" id="L332">                    serviceTypeMap.put(splitSerCode[0],map);</span>
+<span class="nc" id="L333">                }</span>
+            }else{
+<span class="nc" id="L335">                serviceCategoryNames.put(splitSerCode[0], splitServName[0]);</span>
+            }
+<span class="nc" id="L337">        }</span>
+<span class="nc" id="L338">    }</span>
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L342">        return bankAccountServiceMap;</span>
+    }
+
+    public List&lt;BankAccountServiceMap&gt; getBankAccountServices() {
+<span class="nc" id="L346">        return bankAccountServices;</span>
+    }
+
+    public void setBankAccountServices(final List&lt;BankAccountServiceMap&gt; bankAccountServices) {
+<span class="nc" id="L350">        this.bankAccountServices = bankAccountServices;</span>
+<span class="nc" id="L351">    }</span>
+
+    public PersistenceService&lt;BankAccountServiceMap, Long&gt; getBankAccountMappingService() {
+<span class="nc" id="L354">        return bankAccountMappingService;</span>
+    }
+
+    public void setBankAccountMappingService(
+            final PersistenceService&lt;BankAccountServiceMap, Long&gt; bankAccountMappingService) {
+<span class="nc" id="L359">        this.bankAccountMappingService = bankAccountMappingService;</span>
+<span class="nc" id="L360">    }</span>
+
+    public Integer getBankId() {
+<span class="nc" id="L363">        return bankId;</span>
+    }
+
+    public void setBankId(final Integer bankId) {
+<span class="nc" id="L367">        this.bankId = bankId;</span>
+<span class="nc" id="L368">    }</span>
+
+    public Integer getBranchId() {
+<span class="nc" id="L371">        return branchId;</span>
+    }
+
+    public void setBranchId(final Integer branchId) {
+<span class="nc" id="L375">        this.branchId = branchId;</span>
+<span class="nc" id="L376">    }</span>
+
+    public String getServiceCategory() {
+<span class="nc" id="L379">        return serviceCategory;</span>
+    }
+
+    public void setServiceCategory(final String serviceCategory) {
+<span class="nc" id="L383">        this.serviceCategory = serviceCategory;</span>
+<span class="nc" id="L384">    }</span>
+
+    public Long getServiceAccountId() {
+<span class="nc" id="L387">        return serviceAccountId;</span>
+    }
+
+    public void setServiceAccountId(final Long serviceAccountId) {
+<span class="nc" id="L391">        this.serviceAccountId = serviceAccountId;</span>
+<span class="nc" id="L392">    }</span>
+
+    public String getSourcePage() {
+<span class="nc" id="L395">        return sourcePage;</span>
+    }
+
+    public void setSourcePage(final String sourcePage) {
+<span class="nc" id="L399">        this.sourcePage = sourcePage;</span>
+<span class="nc" id="L400">    }</span>
+
+    public String getTarget() {
+<span class="nc" id="L403">        return target;</span>
+    }
+
+    public void setTarget(final String target) {
+<span class="nc" id="L407">        this.target = target;</span>
+<span class="nc" id="L408">    }</span>
+
+    public List&lt;BankAccountServiceMapping&gt; getMappings() {
+<span class="nc" id="L411">        return mappings;</span>
+    }
+
+    public void setMappings(List&lt;BankAccountServiceMapping&gt; mappings) {
+<span class="nc" id="L415">        this.mappings = mappings;</span>
+<span class="nc" id="L416">    }</span>
+
+    public Map&lt;String, String&gt; getServiceCategoryNames() {
+<span class="nc" id="L419">        return serviceCategoryNames;</span>
+    }
+
+    public void setServiceCategoryNames(Map&lt;String, String&gt; serviceCategoryNames) {
+<span class="nc" id="L423">        this.serviceCategoryNames = serviceCategoryNames;</span>
+<span class="nc" id="L424">    }</span>
+
+    public Map&lt;String, Map&lt;String, String&gt;&gt; getServiceTypeMap() {
+<span class="nc" id="L427">        return serviceTypeMap;</span>
+    }
+
+    public void setServiceTypeMap(Map&lt;String, Map&lt;String, String&gt;&gt; serviceTypeMap) {
+<span class="nc" id="L431">        this.serviceTypeMap = serviceTypeMap;</span>
+<span class="nc" id="L432">    }</span>
+
+    public String getServiceTypeCode() {
+<span class="nc" id="L435">        return serviceTypeCode;</span>
+    }
+
+    public void setServiceTypeCode(String serviceTypeCode) {
+<span class="nc" id="L439">        this.serviceTypeCode = serviceTypeCode;</span>
+<span class="nc" id="L440">    }</span>
+    
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

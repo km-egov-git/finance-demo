@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NumberToWord.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.utils</a> &gt; <span class="el_source">NumberToWord.java</span></div><h1>NumberToWord.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.utils;
+
+import org.egov.infra.exception.ApplicationRuntimeException;
+
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.egov.infra.config.core.LocalizationSettings.currencyName;
+import static org.egov.infra.config.core.LocalizationSettings.currencyUnitName;
+import static org.egov.infra.utils.ApplicationConstant.WHITESPACE;
+import static org.egov.infra.utils.StringUtils.isUnsignedNumber;
+import static org.egov.infra.utils.StringUtils.stripExtraSpaces;
+
+/**
+ * @deprecated use {@link NumberToWordConverter#amountInWordsWithCircumfix(BigDecimal)} instead.
+ */
+@Deprecated
+public final class NumberToWord {
+
+    private static final long ZEROS = 0;
+    private static final long UNITS = 1;
+    private static final long TENS = 10 * UNITS;
+    private static final long HUNDREDS = 10 * TENS;
+    private static final long THOUSANDS = 10 * HUNDREDS;
+    private static final long TENTHOUSANDS = 10 * THOUSANDS;
+    private static final long LAKHS = 10 * TENTHOUSANDS;
+    private static final long TENLAKHS = 10 * LAKHS;
+    private static final long CRORES = 10 * TENLAKHS;
+    private static final long TENCRORES = 10 * CRORES;
+    private static final long HUNDREDCRORES = 10 * TENCRORES;
+    private static final long THOUSANDCRORES = 10 * HUNDREDCRORES;
+    private static final long TENTHOUSANDCRORES = 10 * THOUSANDCRORES;
+
+<span class="nc" id="L84">    private static final String[] CARDINAL = {&quot;Zero&quot;, &quot;One&quot;, &quot;Two&quot;, &quot;Three&quot;, &quot;Four&quot;, &quot;Five&quot;, &quot;Six&quot;, &quot;Seven&quot;, &quot;Eight&quot;, &quot;Nine&quot;, &quot;Ten&quot;, &quot;Eleven&quot;, &quot;Twelve&quot;, &quot;Thirteen&quot;, &quot;Fourteen&quot;, &quot;Fifteen&quot;, &quot;Sixteen&quot;, &quot;Seventeen&quot;, &quot;Eighteen&quot;, &quot;Nineteen&quot;, &quot;Twenty&quot;, &quot;Thirty&quot;,</span>
+            &quot;Forty&quot;, &quot;Fifty&quot;, &quot;Sixty&quot;, &quot;Seventy&quot;, &quot;Eighty&quot;, &quot;Ninety&quot;, &quot;Hundred&quot;};
+
+    private static final String THOUSAND_CRORES = &quot; Thousand Crore &quot;;
+    private static final String HUNDRED_CRORES = &quot; Hundred Crore &quot;;
+    private static final String HUNDRED = &quot; Hundred &quot;;
+    private static final String THOUSAND = &quot; Thousand &quot;;
+    private static final String LAKH = &quot; Lakh &quot;;
+    private static final String CRORE = &quot; Crore &quot;;
+
+<span class="nc" id="L94">    private NumberToWord() {</span>
+        //Util class with static methods
+<span class="nc" id="L96">    }</span>
+
+    public static String amountInWords(Double amount) {
+<span class="nc" id="L99">        StringBuffer formattedAmount = new StringBuffer();</span>
+<span class="nc" id="L100">        new DecimalFormat(&quot;###0.00&quot;).format(amount, formattedAmount, new FieldPosition(0));</span>
+<span class="nc" id="L101">        return stripExtraSpaces(NumberToWord.convertToWord(formattedAmount.toString()));</span>
+    }
+
+    public static String convertToWord(String number) {
+
+<span class="nc" id="L106">        StringBuilder currencyUnitSuffix = new StringBuilder();</span>
+<span class="nc" id="L107">        String[] currencyAndUnit = number.split(&quot;[.]&quot;);</span>
+<span class="nc bnc" id="L108" title="All 4 branches missed.">        if (currencyAndUnit.length == 2 &amp;&amp; !currencyAndUnit[1].equals(&quot;00&quot;)) {</span>
+<span class="nc" id="L109">            currencyUnitSuffix.append(&quot; and &quot;).append(paiseInWords(currencyAndUnit[1]))</span>
+<span class="nc" id="L110">                    .append(WHITESPACE).append(currencyUnitName()).append(&quot; Only&quot;);</span>
+        }
+
+<span class="nc" id="L113">        String returnValue = translateToWord(currencyAndUnit[0]);</span>
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        return currencyUnitSuffix.length() &lt; 1 ? new StringBuilder()</span>
+<span class="nc" id="L116">                .append(currencyName()).append(WHITESPACE)</span>
+<span class="nc" id="L117">                .append(returnValue).append(&quot; Only&quot;).toString()</span>
+                : new StringBuilder()
+<span class="nc" id="L119">                .append(currencyName()).append(WHITESPACE)</span>
+<span class="nc" id="L120">                .append(returnValue).append(currencyUnitSuffix).toString();</span>
+
+    }
+
+    public static String translateToWord(String value) {
+
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (!isUnsignedNumber(value))</span>
+<span class="nc" id="L127">            throw new ApplicationRuntimeException(&quot;Provided value is not a valid number&quot;);</span>
+
+<span class="nc" id="L129">        StringBuilder numberInWords = new StringBuilder();</span>
+<span class="nc" id="L130">        long number = Long.parseLong(value);</span>
+<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (number == ZEROS || value.length() &gt; 12) {</span>
+<span class="nc" id="L132">            numberInWords.append(getWord(number));</span>
+        }
+
+        Long subNum;
+<span class="nc" id="L136">        String numericPart = Long.toString(number);</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">        while (number &gt; 0 &amp;&amp; numericPart.length() &lt; 13) {</span>
+<span class="nc" id="L138">            numericPart = Long.toString(number);</span>
+<span class="nc" id="L139">            long place = getPlace(numericPart);</span>
+
+<span class="nc bnc" id="L141" title="All 6 branches missed.">            if (place == HUNDREDCRORES || place == THOUSANDCRORES || place == TENTHOUSANDCRORES) {</span>
+<span class="nc" id="L142">                subNum = Long.parseLong(Character.toString(numericPart.charAt(0)));</span>
+<span class="nc" id="L143">                numberInWords.append(getWord(subNum));</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">                if (place == HUNDREDCRORES) {</span>
+<span class="nc" id="L145">                    number -= subNum * HUNDREDCRORES;</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">                    if (number == 0) {</span>
+<span class="nc" id="L147">                        numberInWords.append(HUNDRED_CRORES);</span>
+                    } else {
+<span class="nc" id="L149">                        numberInWords.append(HUNDRED);</span>
+                    }
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                } else if (place == THOUSANDCRORES) {</span>
+<span class="nc" id="L152">                    number -= subNum * THOUSANDCRORES;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                    if (number == 0) {</span>
+<span class="nc" id="L154">                        numberInWords.append(THOUSAND_CRORES);</span>
+                    } else {
+<span class="nc" id="L156">                        numberInWords.append(THOUSAND);</span>
+                    }
+                } else {
+<span class="nc" id="L159">                    numberInWords.setLength(0);</span>
+<span class="nc" id="L160">                    subNum = Long.parseLong(Character.toString(numericPart.charAt(0)) + numericPart.charAt(1));</span>
+<span class="nc" id="L161">                    number -= subNum * THOUSANDCRORES;</span>
+<span class="nc bnc" id="L162" title="All 6 branches missed.">                    if (subNum &gt;= 21 &amp;&amp; (subNum % 10) != 0 &amp;&amp; number == 0) {</span>
+<span class="nc" id="L163">                        numberInWords.append(getWord(Long.parseLong(String.valueOf(numericPart.charAt(0))) * 10))</span>
+<span class="nc" id="L164">                                .append(WHITESPACE).append(getWord(subNum % 10)).append(THOUSAND_CRORES);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">                    } else if (number == 0) {</span>
+<span class="nc" id="L166">                        numberInWords.append(getWord(Long.parseLong(String.valueOf(numericPart.charAt(0))) * 10))</span>
+<span class="nc" id="L167">                                .append(THOUSAND_CRORES);</span>
+                    } else {
+<span class="nc" id="L169">                        numberInWords.append(getWord(Long.parseLong(String.valueOf(numericPart.charAt(0))) * 10))</span>
+<span class="nc" id="L170">                                .append(WHITESPACE).append(getWord(subNum % 10)).append(THOUSAND);</span>
+                    }
+                }
+
+<span class="nc bnc" id="L174" title="All 8 branches missed.">            } else if (place == TENS || place == TENTHOUSANDS || place == TENLAKHS || place == TENCRORES) {</span>
+<span class="nc" id="L175">                subNum = Long.parseLong(String.valueOf(numericPart.charAt(0)) + String.valueOf(numericPart.charAt(1)));</span>
+
+<span class="nc bnc" id="L177" title="All 4 branches missed.">                if (subNum &gt;= 21 &amp;&amp; (subNum % 10) != 0) {</span>
+<span class="nc" id="L178">                    numberInWords.append(getWord(Long.parseLong(String.valueOf(numericPart.charAt(0))) * 10))</span>
+<span class="nc" id="L179">                            .append(WHITESPACE).append(getWord(subNum % 10));</span>
+                } else {
+<span class="nc" id="L181">                    numberInWords.append(getWord(subNum));</span>
+                }
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                if (place == TENS) {</span>
+<span class="nc" id="L185">                    number = 0;</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                } else if (place == TENTHOUSANDS) {</span>
+<span class="nc" id="L187">                    number -= subNum * THOUSANDS;</span>
+<span class="nc" id="L188">                    numberInWords.append(THOUSAND);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                } else if (place == TENLAKHS) {</span>
+<span class="nc" id="L190">                    number -= subNum * LAKHS;</span>
+<span class="nc" id="L191">                    numberInWords.append(LAKH);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">                } else if (place == TENCRORES) {</span>
+<span class="nc" id="L193">                    number -= subNum * CRORES;</span>
+<span class="nc" id="L194">                    numberInWords.append(CRORE);</span>
+                }
+            } else {
+<span class="nc" id="L197">                subNum = Long.parseLong(String.valueOf(numericPart.charAt(0)));</span>
+<span class="nc" id="L198">                numberInWords.append(getWord(subNum));</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">                if (place == UNITS) {</span>
+<span class="nc" id="L200">                    number = 0;</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">                } else if (place == HUNDREDS) {</span>
+<span class="nc" id="L202">                    number -= subNum * HUNDREDS;</span>
+<span class="nc" id="L203">                    numberInWords.append(HUNDRED);</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">                } else if (place == THOUSANDS) {</span>
+<span class="nc" id="L205">                    number -= subNum * THOUSANDS;</span>
+<span class="nc" id="L206">                    numberInWords.append(THOUSAND);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">                } else if (place == LAKHS) {</span>
+<span class="nc" id="L208">                    number -= subNum * LAKHS;</span>
+<span class="nc" id="L209">                    numberInWords.append(LAKH);</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">                } else if (place == CRORES) {</span>
+<span class="nc" id="L211">                    number -= subNum * CRORES;</span>
+<span class="nc" id="L212">                    numberInWords.append(CRORE);</span>
+                }
+            }
+<span class="nc" id="L215">        }</span>
+<span class="nc" id="L216">        return numberInWords.toString();</span>
+    }
+
+    private static long getPlace(String number) {
+<span class="nc bnc" id="L220" title="All 13 branches missed.">        switch (number.length()) {</span>
+            case 1:
+<span class="nc" id="L222">                return UNITS;</span>
+            case 2:
+<span class="nc" id="L224">                return TENS;</span>
+            case 3:
+<span class="nc" id="L226">                return HUNDREDS;</span>
+            case 4:
+<span class="nc" id="L228">                return THOUSANDS;</span>
+            case 5:
+<span class="nc" id="L230">                return TENTHOUSANDS;</span>
+            case 6:
+<span class="nc" id="L232">                return LAKHS;</span>
+            case 7:
+<span class="nc" id="L234">                return TENLAKHS;</span>
+            case 8:
+<span class="nc" id="L236">                return CRORES;</span>
+            case 9:
+<span class="nc" id="L238">                return TENCRORES;</span>
+            case 10:
+<span class="nc" id="L240">                return HUNDREDCRORES;</span>
+            case 11:
+<span class="nc" id="L242">                return THOUSANDCRORES;</span>
+            case 12:
+<span class="nc" id="L244">                return TENTHOUSANDCRORES;</span>
+            default:
+<span class="nc" id="L246">                return ZEROS;</span>
+        }
+    }
+
+    private static String getWord(Long number) {
+<span class="nc" id="L251">        int value = number.intValue();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        if (value &lt; 0)</span>
+<span class="nc" id="L253">            throw new ApplicationRuntimeException(&quot;Number is out of bound&quot;);</span>
+
+<span class="nc bnc" id="L255" title="All 9 branches missed.">        switch (value) {</span>
+            case 30:
+<span class="nc" id="L257">                return CARDINAL[21];</span>
+            case 40:
+<span class="nc" id="L259">                return CARDINAL[22];</span>
+            case 50:
+<span class="nc" id="L261">                return CARDINAL[23];</span>
+            case 60:
+<span class="nc" id="L263">                return CARDINAL[24];</span>
+            case 70:
+<span class="nc" id="L265">                return CARDINAL[25];</span>
+            case 80:
+<span class="nc" id="L267">                return CARDINAL[26];</span>
+            case 90:
+<span class="nc" id="L269">                return CARDINAL[27];</span>
+            case 100:
+<span class="nc" id="L271">                return CARDINAL[28];</span>
+            default:
+<span class="nc bnc" id="L273" title="All 2 branches missed.">                if (value &lt; 21) {</span>
+<span class="nc" id="L274">                    return CARDINAL[value];</span>
+                } else {
+<span class="nc" id="L276">                    return EMPTY;</span>
+                }
+        }
+
+    }
+
+    private static String paiseInWords(String paise) {
+
+        Long subNum;
+<span class="nc" id="L285">        StringBuilder returnValue = new StringBuilder();</span>
+
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (paise.length() &gt;= 2) {</span>
+<span class="nc" id="L288">            subNum = Long.parseLong(Character.toString(paise.charAt(0)) + paise.charAt(1));</span>
+        } else {
+<span class="nc" id="L290">            subNum = Long.parseLong(Character.toString(paise.charAt(0)));</span>
+        }
+
+<span class="nc bnc" id="L293" title="All 4 branches missed.">        if (subNum &gt;= 21 &amp;&amp; (subNum % 10) != 0) {</span>
+<span class="nc" id="L294">            returnValue.append(getWord(Long.parseLong(Character.toString(paise.charAt(0))) * 10))</span>
+<span class="nc" id="L295">                    .append(WHITESPACE).append(getWord(subNum % 10));</span>
+
+        } else {
+<span class="nc" id="L298">            returnValue.append(getWord(subNum));</span>
+
+        }
+
+<span class="nc" id="L302">        return returnValue.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

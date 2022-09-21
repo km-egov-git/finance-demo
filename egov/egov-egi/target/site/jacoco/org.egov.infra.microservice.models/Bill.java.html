@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Bill.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.microservice.models</a> &gt; <span class="el_source">Bill.java</span></div><h1>Bill.java</h1><pre class="source lang-java linenums">package org.egov.infra.microservice.models;
+
+import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+<span class="nc" id="L9">public class Bill {</span>
+<span class="nc" id="L10">    @JsonProperty(&quot;id&quot;)</span>
+    private String id = null;
+
+<span class="nc" id="L13">    @JsonProperty(&quot;mobileNumber&quot;)</span>
+    private String mobileNumber = null;
+    
+<span class="nc" id="L16">    @JsonProperty(&quot;paidBy&quot;)</span>
+    private String paidBy = null;
+
+<span class="nc" id="L19">    @JsonProperty(&quot;payerName&quot;)</span>
+    private String payerName = null;
+
+<span class="nc" id="L22">    @JsonProperty(&quot;payerAddress&quot;)</span>
+    private String payerAddress = null;
+    
+<span class="nc" id="L25">    @JsonProperty(&quot;narration&quot;)</span>
+    private String narration = null;
+
+<span class="nc" id="L28">    @JsonProperty(&quot;payerEmail&quot;)</span>
+    private String payerEmail = null;
+    
+<span class="nc" id="L31">    @JsonProperty(&quot;payerId&quot;)</span>
+    private String payerId = null;
+
+<span class="nc" id="L34">    @JsonProperty(&quot;isActive&quot;)</span>
+    private Boolean isActive = null;
+
+<span class="nc" id="L37">    @JsonProperty(&quot;isCancelled&quot;)</span>
+    private Boolean isCancelled = null;
+
+<span class="nc" id="L40">    @JsonProperty(&quot;additionalDetails&quot;)</span>
+    private Object additionalDetails = null;
+
+<span class="nc" id="L43">    @JsonProperty(&quot;taxAndPayments&quot;)</span>
+    @Valid
+    @NotNull
+    private List&lt;TaxAndPayment&gt; taxAndPayments = null;
+
+<span class="nc" id="L48">    @JsonProperty(&quot;billDetails&quot;)</span>
+    @Valid
+    private List&lt;BillDetail&gt; billDetails = null;
+
+<span class="nc" id="L52">    @JsonProperty(&quot;tenantId&quot;)</span>
+    private String tenantId = null;
+
+<span class="nc" id="L55">    @JsonProperty(&quot;auditDetails&quot;)</span>
+    private AuditDetails auditDetails = null;
+
+    public String getId() {
+<span class="nc" id="L59">        return id;</span>
+    }
+
+    public void setId(String id) {
+<span class="nc" id="L63">        this.id = id;</span>
+<span class="nc" id="L64">    }</span>
+
+    public String getMobileNumber() {
+<span class="nc" id="L67">        return mobileNumber;</span>
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+<span class="nc" id="L71">        this.mobileNumber = mobileNumber;</span>
+<span class="nc" id="L72">    }</span>
+
+    public String getPaidBy() {
+<span class="nc" id="L75">        return paidBy;</span>
+    }
+
+    public void setPaidBy(String paidBy) {
+<span class="nc" id="L79">        this.paidBy = paidBy;</span>
+<span class="nc" id="L80">    }</span>
+
+    public String getPayerName() {
+<span class="nc" id="L83">        return payerName;</span>
+    }
+
+    public void setPayerName(String payerName) {
+<span class="nc" id="L87">        this.payerName = payerName;</span>
+<span class="nc" id="L88">    }</span>
+
+    public String getPayerAddress() {
+<span class="nc" id="L91">        return payerAddress;</span>
+    }
+
+    public void setPayerAddress(String payerAddress) {
+<span class="nc" id="L95">        this.payerAddress = payerAddress;</span>
+<span class="nc" id="L96">    }</span>
+
+    public String getPayerEmail() {
+<span class="nc" id="L99">        return payerEmail;</span>
+    }
+
+    public void setPayerEmail(String payerEmail) {
+<span class="nc" id="L103">        this.payerEmail = payerEmail;</span>
+<span class="nc" id="L104">    }</span>
+
+    public String getPayerId() {
+<span class="nc" id="L107">        return payerId;</span>
+    }
+
+    public void setPayerId(String payerId) {
+<span class="nc" id="L111">        this.payerId = payerId;</span>
+<span class="nc" id="L112">    }</span>
+
+    public Boolean getIsActive() {
+<span class="nc" id="L115">        return isActive;</span>
+    }
+
+    public void setIsActive(Boolean isActive) {
+<span class="nc" id="L119">        this.isActive = isActive;</span>
+<span class="nc" id="L120">    }</span>
+
+    public Boolean getIsCancelled() {
+<span class="nc" id="L123">        return isCancelled;</span>
+    }
+
+    public void setIsCancelled(Boolean isCancelled) {
+<span class="nc" id="L127">        this.isCancelled = isCancelled;</span>
+<span class="nc" id="L128">    }</span>
+
+    public Object getAdditionalDetails() {
+<span class="nc" id="L131">        return additionalDetails;</span>
+    }
+
+    public void setAdditionalDetails(Object additionalDetails) {
+<span class="nc" id="L135">        this.additionalDetails = additionalDetails;</span>
+<span class="nc" id="L136">    }</span>
+
+    public List&lt;TaxAndPayment&gt; getTaxAndPayments() {
+<span class="nc" id="L139">        return taxAndPayments;</span>
+    }
+
+    public void setTaxAndPayments(List&lt;TaxAndPayment&gt; taxAndPayments) {
+<span class="nc" id="L143">        this.taxAndPayments = taxAndPayments;</span>
+<span class="nc" id="L144">    }</span>
+
+    public List&lt;BillDetail&gt; getBillDetails() {
+<span class="nc" id="L147">        return billDetails;</span>
+    }
+
+    public void setBillDetails(List&lt;BillDetail&gt; billDetails) {
+<span class="nc" id="L151">        this.billDetails = billDetails;</span>
+<span class="nc" id="L152">    }</span>
+
+    public String getTenantId() {
+<span class="nc" id="L155">        return tenantId;</span>
+    }
+
+    public void setTenantId(String tenantId) {
+<span class="nc" id="L159">        this.tenantId = tenantId;</span>
+<span class="nc" id="L160">    }</span>
+
+    public AuditDetails getAuditDetails() {
+<span class="nc" id="L163">        return auditDetails;</span>
+    }
+
+    public void setAuditDetails(AuditDetails auditDetails) {
+<span class="nc" id="L167">        this.auditDetails = auditDetails;</span>
+<span class="nc" id="L168">    }</span>
+
+	public String getNarration() {
+<span class="nc" id="L171">		return narration;</span>
+	}
+
+	public void setNarration(String narration) {
+<span class="nc" id="L175">		this.narration = narration;</span>
+<span class="nc" id="L176">	}</span>
+    
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RestServiceAuthFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.filter</a> &gt; <span class="el_source">RestServiceAuthFilter.java</span></div><h1>RestServiceAuthFilter.java</h1><pre class="source lang-java linenums">package org.egov.infra.web.filter;
+
+import static org.egov.infra.utils.ApplicationConstant.MS_USER_TOKEN;
+import static org.egov.infra.utils.ApplicationConstant.MS_TENANTID_KEY;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
+import org.egov.infra.admin.master.entity.CustomUserDetails;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.config.security.authentication.userdetail.CurrentUser;
+import org.egov.infra.microservice.contract.Error;
+import org.egov.infra.microservice.contract.ErrorResponse;
+import org.egov.infra.microservice.contract.RequestInfoWrapper;
+import org.egov.infra.microservice.contract.UserSearchResponse;
+import org.egov.infra.microservice.contract.UserSearchResponseContent;
+import org.egov.infra.microservice.models.RequestInfo;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.persistence.entity.enums.Gender;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.egov.infra.security.utils.SecurityUtils;
+import org.egov.infra.web.rest.handler.RestErrorHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+
+<span class="nc" id="L67">public class RestServiceAuthFilter implements Filter {</span>
+
+<span class="nc" id="L69">    private static final Logger LOGGER = Logger.getLogger(RestServiceAuthFilter.class);</span>
+
+    private static final String INVALID_TOKEN = &quot;InvalidToken&quot;;
+    private static final String INVALID_REQUEST = &quot;InvalidRequest&quot;;
+
+    @Value(&quot;${egov.services.user.authsrvc.url}&quot;)
+    private String authSrvcUrl;
+
+    @Autowired
+    public MicroserviceUtils microserviceUtils;
+
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
+<span class="nc" id="L86">        LOGGER.info(&quot;Rest service authentication initiated&quot;);</span>
+        
+<span class="nc" id="L88">        HttpServletRequest httpRequest = (HttpServletRequest)req;</span>
+<span class="nc" id="L89">        HttpServletResponse httpResponse = (HttpServletResponse)res;</span>
+       
+<span class="nc bnc" id="L91" title="All 4 branches missed.">        if (httpRequest.getRequestURI().contains(&quot;/ClearToken&quot;)||httpRequest.getRequestURI().contains(&quot;/refreshToken&quot;)){</span>
+<span class="nc" id="L92">            LOGGER.info(&quot;Clear Token request recieved &quot; + httpRequest.getServletPath());</span>
+<span class="nc" id="L93">            httpRequest.getRequestDispatcher(httpRequest.getServletPath()+StringUtils.defaultString(httpRequest.getPathInfo())).forward(req, res);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        }else if(httpRequest.getRequestURI().contains(&quot;/rest/voucher/&quot;)){</span>
+            try {
+                // TODO : Need to identify the external and internal to enable/disable authentication.
+<span class="nc" id="L97">                RestRequestWrapper request = new RestRequestWrapper(httpRequest);</span>
+<span class="nc" id="L98">                String tenantId = readTenantId(request);</span>
+<span class="nc" id="L99">                String user_token = readAuthToken(request);</span>
+<span class="nc" id="L100">                HttpSession session = httpRequest.getSession();</span>
+<span class="nc" id="L101">                session.setAttribute(MS_TENANTID_KEY, tenantId);</span>
+<span class="nc" id="L102">                session.setAttribute(MS_USER_TOKEN, user_token);</span>
+<span class="nc" id="L103">                CurrentUser user = new CurrentUser(this.getUserDetails(request));</span>
+<span class="nc" id="L104">                Authentication auth = this.prepareAuthenticationObj(request, user);</span>
+<span class="nc" id="L105">                SecurityContextHolder.getContext().setAuthentication(auth);</span>
+<span class="nc" id="L106">                chain.doFilter(request, res);</span>
+<span class="nc" id="L107">            } catch (Exception e) {</span>
+<span class="nc" id="L108">                httpResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L109">                httpResponse.setStatus(HttpStatus.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L110">                httpResponse.getWriter().write(getErrorResponse(e.getMessage()));</span>
+<span class="nc" id="L111">            }</span>
+        }else{
+        
+<span class="nc" id="L114">	        RestRequestWrapper request = new RestRequestWrapper(httpRequest);</span>
+	        
+	        try {
+<span class="nc" id="L117">	            CurrentUser user = new CurrentUser(this.getUserDetails(request));</span>
+<span class="nc" id="L118">	            Authentication auth = this.prepareAuthenticationObj(request, user);</span>
+<span class="nc" id="L119">	            SecurityContextHolder.getContext().setAuthentication(auth);</span>
+<span class="nc" id="L120">	            chain.doFilter(request, res);</span>
+<span class="nc" id="L121">	        } catch (Exception e) {</span>
+<span class="nc" id="L122">	            res.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L123">	            res.getWriter().write(getErrorResponse(e.getMessage()));  </span>
+<span class="nc" id="L124">	        }</span>
+        }        
+<span class="nc" id="L126">        LOGGER.info(&quot;Rest service authentication completed&quot;);</span>
+<span class="nc" id="L127">     }</span>
+
+    private String getErrorResponse(String errorMsg) throws JsonProcessingException {
+<span class="nc" id="L130">        ErrorResponse errorResp = new ErrorResponse();</span>
+<span class="nc" id="L131">        List&lt;Error&gt; errorlist = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L133">        Error error = new Error();</span>
+<span class="nc" id="L134">        error.setCode(401);</span>
+<span class="nc" id="L135">        error.setDescription(errorMsg);</span>
+<span class="nc" id="L136">        error.setMessage(errorMsg);</span>
+        
+<span class="nc" id="L138">        errorlist.add(error);</span>
+<span class="nc" id="L139">        errorResp.setErrors(errorlist);</span>
+<span class="nc" id="L140">        ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L141">        String response = mapper.writeValueAsString(errorResp);</span>
+<span class="nc" id="L142">        return response;</span>
+
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+<span class="nc" id="L148">    }</span>
+
+    @Override
+    public void destroy() {
+<span class="nc" id="L152">    }</span>
+
+    private Authentication prepareAuthenticationObj(HttpServletRequest request, CurrentUser user) {
+
+    	
+<span class="nc" id="L157">        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, &quot; &quot;,</span>
+<span class="nc" id="L158">                user.getAuthorities());</span>
+<span class="nc" id="L159">        WebAuthenticationDetails details = new WebAuthenticationDetails(request);</span>
+<span class="nc" id="L160">        auth.setDetails(details);</span>
+<span class="nc" id="L161">        return auth;</span>
+    }
+
+    private User getUserDetails(HttpServletRequest request) throws Exception {
+      
+<span class="nc" id="L166">         String user_token = readAuthToken(request);</span>
+<span class="nc" id="L167">         String tenantId = readTenantId(request);</span>
+<span class="nc" id="L168">         setSchema(tenantId);</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (user_token == null)</span>
+<span class="nc" id="L170">            throw new Exception(&quot;AuthToken not found&quot;);</span>
+<span class="nc" id="L171">        HttpSession session = request.getSession();</span>
+<span class="nc" id="L172">        String admin_token = this.microserviceUtils.generateAdminToken(tenantId);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if(admin_token==null)</span>
+<span class="nc" id="L174">            throw new Exception(&quot;SI token generation failed&quot;);</span>
+<span class="nc" id="L175">        session.setAttribute(MS_USER_TOKEN, user_token);</span>
+<span class="nc" id="L176">        CustomUserDetails user = this.microserviceUtils.getUserDetails(user_token, admin_token);</span>
+<span class="nc" id="L177">        session.setAttribute(MS_TENANTID_KEY, user.getTenantId());</span>
+<span class="nc" id="L178">        UserSearchResponse response = this.microserviceUtils.getUserInfo(user_token, user.getTenantId(), user.getUserName());</span>
+       
+<span class="nc" id="L180">        return parepareCurrentUser(response.getUserSearchResponseContent().get(0));</span>
+    }
+
+    private User parepareCurrentUser(UserSearchResponseContent userinfo) {
+
+<span class="nc" id="L185">        User user = new User(UserType.valueOf(userinfo.getType().toUpperCase()));</span>
+<span class="nc" id="L186">        user.setId(userinfo.getId());</span>
+<span class="nc" id="L187">        user.setUsername(userinfo.getUserName());</span>
+<span class="nc" id="L188">        user.setActive(userinfo.getActive());</span>
+<span class="nc" id="L189">        user.setAccountLocked(userinfo.getAccountLocked());</span>
+<span class="nc" id="L190">        user.setGender(Gender.valueOf(userinfo.getGender().toUpperCase()));</span>
+<span class="nc" id="L191">        user.setPassword(&quot; &quot;);</span>
+<span class="nc" id="L192">        user.setName(userinfo.getName());</span>
+<span class="nc" id="L193">        user.setPwdExpiryDate(userinfo.getPwdExpiryDate());</span>
+<span class="nc" id="L194">        user.setLocale(userinfo.getLocale());</span>
+
+<span class="nc" id="L196">        Set&lt;Role&gt; roles = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L198">        userinfo.getRoles().forEach(roleReq -&gt; {</span>
+<span class="nc" id="L199">            Role role = new Role();</span>
+<span class="nc" id="L200">            role.setId(roleReq.getId());</span>
+<span class="nc" id="L201">            role.setName(roleReq.getName());</span>
+<span class="nc" id="L202">            roles.add(role);</span>
+<span class="nc" id="L203">        });</span>
+
+<span class="nc" id="L205">        return user;</span>
+
+    }
+
+    private String readAuthToken(HttpServletRequest request) throws Exception {
+<span class="nc" id="L210">        LOGGER.info(&quot;Rest service - reading authtoken&quot;);</span>
+
+        try {
+<span class="nc" id="L213">            ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L214">            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);</span>
+<span class="nc" id="L215">            mapper.setVisibilityChecker(</span>
+<span class="nc" id="L216">                    VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));</span>
+
+            // String strReq = request.getReader().lines().collect(Collectors.joining(&quot;\n&quot;));
+<span class="nc" id="L219">            String strReq = IOUtils.toString(request.getInputStream());</span>
+<span class="nc" id="L220">            LOGGER.info(&quot;Rest service request json : &quot;+ strReq);</span>
+            
+<span class="nc" id="L222">            HashMap&lt;Object, Object&gt; reqMap = mapper.readValue(strReq, HashMap.class);</span>
+<span class="nc" id="L223">            HashMap&lt;Object, Object&gt; reqInfo = null;</span>
+<span class="nc" id="L224">            reqInfo = (HashMap) reqMap.get(&quot;RequestInfo&quot;);</span>
+
+<span class="nc" id="L226">            String authToken = (String) reqInfo.get(&quot;authToken&quot;);</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">            if(authToken==null)</span>
+<span class="nc" id="L228">                throw new Exception(&quot;authToken not found&quot;);</span>
+
+<span class="nc" id="L230">            return authToken;</span>
+<span class="nc" id="L231">        } catch (JsonParseException e) {</span>
+<span class="nc" id="L232">            e.printStackTrace();</span>
+<span class="nc" id="L233">            throw new Exception(&quot;Request parsing failed&quot;);</span>
+<span class="nc" id="L234">        } catch (JsonMappingException e) {</span>
+<span class="nc" id="L235">            e.printStackTrace();</span>
+<span class="nc" id="L236">            throw new Exception(&quot;Request object Mapping failed&quot;);</span>
+<span class="nc" id="L237">        } catch (IOException e) {</span>
+<span class="nc" id="L238">            e.printStackTrace();</span>
+<span class="nc" id="L239">            throw new Exception(&quot;Request processing failed&quot;);</span>
+        }
+    }
+    
+    private String readTenantId(HttpServletRequest request) throws Exception{
+<span class="nc" id="L244">        LOGGER.info(&quot;Rest service - reading tenantId&quot;);</span>
+        try {
+<span class="nc" id="L246">            ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L247">            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);</span>
+<span class="nc" id="L248">            mapper.setVisibilityChecker(</span>
+<span class="nc" id="L249">                    VisibilityChecker.Std.defaultInstance().withFieldVisibility(JsonAutoDetect.Visibility.ANY));</span>
+
+            // String strReq = request.getReader().lines().collect(Collectors.joining(&quot;\n&quot;));
+<span class="nc" id="L252">            String strReq = IOUtils.toString(request.getInputStream());</span>
+<span class="nc" id="L253">            HashMap&lt;Object, Object&gt; reqMap = mapper.readValue(strReq, HashMap.class);</span>
+<span class="nc" id="L254">            String tenantId = String.valueOf(reqMap.get(&quot;tenantId&quot;));</span>
+<span class="nc bnc" id="L255" title="All 4 branches missed.">            if(tenantId==null || &quot;null&quot;.equalsIgnoreCase(tenantId)){</span>
+<span class="nc" id="L256">                LOGGER.info(&quot;Trying to read tenantid in query string &quot;);</span>
+<span class="nc" id="L257">                tenantId= request.getParameter(&quot;tenantId&quot;);</span>
+            }
+<span class="nc bnc" id="L259" title="All 4 branches missed.">            if(tenantId==null || &quot;null&quot;.equalsIgnoreCase(tenantId))</span>
+<span class="nc" id="L260">                throw new Exception(&quot;tenantId is not found&quot;);</span>
+
+<span class="nc" id="L262">            return tenantId;</span>
+<span class="nc" id="L263">        } catch (JsonParseException e) {</span>
+<span class="nc" id="L264">            e.printStackTrace();</span>
+<span class="nc" id="L265">            throw new Exception(&quot;Request parsing failed&quot;);</span>
+<span class="nc" id="L266">        } catch (JsonMappingException e) {</span>
+<span class="nc" id="L267">            e.printStackTrace();</span>
+<span class="nc" id="L268">            throw new Exception(&quot;Request object Mapping failed&quot;);</span>
+<span class="nc" id="L269">        } catch (IOException e) {</span>
+<span class="nc" id="L270">            e.printStackTrace();</span>
+<span class="nc" id="L271">            throw new Exception(&quot;Request processing failed&quot;);</span>
+        }
+
+        
+    }
+    
+    private void setSchema(String tenantid)
+    {
+<span class="nc bnc" id="L279" title="All 4 branches missed.">        if(null!=tenantid &amp;&amp; &quot;&quot;!=tenantid){</span>
+<span class="nc" id="L280">        String[] tenantParts = tenantid.split(&quot;\\.&quot;);</span>
+<span class="nc bnc" id="L281" title="All 4 branches missed.">            if(tenantParts != null||tenantParts.length&gt;1){</span>
+                //ApplicationThreadLocals.setTenantID(tenantid); FOR single ULB
+<span class="nc" id="L283">            	ApplicationThreadLocals.setTenantID(tenantParts[1]); //for Multiple ULBs</span>
+            }
+        }
+        
+<span class="nc" id="L287">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

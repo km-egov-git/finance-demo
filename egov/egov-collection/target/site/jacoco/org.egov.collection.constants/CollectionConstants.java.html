@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.constants</a> &gt; <span class="el_source">CollectionConstants.java</span></div><h1>CollectionConstants.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.constants;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.TreeMap;
+
+import org.egov.services.instrument.InstrumentService;
+import org.egov.utils.FinancialConstants;
+
+<span class="nc" id="L58">public final class CollectionConstants {</span>
+    // General messages/words like YES/NO/ALL
+    public static final String ALL = &quot;ALL&quot;;
+    public static final String BLANK = &quot;&quot;;
+    public static final String COMMA = &quot;, &quot;;
+    public static final String OPENBRACKET = &quot;[ &quot;;
+    public static final String CLOSEBRACKET = &quot; ]&quot;;
+
+    // Service types
+    public static final String SERVICE_TYPE_BILLING = &quot;B&quot;;
+    public static final String SERVICE_TYPE_CHALLAN_COLLECTION = &quot;C&quot;;
+    public static final String SERVICE_TYPE_MISC_COLLECTION = &quot;M&quot;;
+    public static final String SERVICE_TYPE_PAYMENT = &quot;P&quot;;
+
+    // Dropdown data
+    public static final String DROPDOWN_DATA_SERVICE_LIST = &quot;serviceList&quot;;
+    public static final String DROPDOWN_DATA_COUNTER_LIST = &quot;counterList&quot;;
+    public static final String DROPDOWN_DATA_RECEIPT_CREATOR_LIST = &quot;receiptCreatorList&quot;;
+    public static final String DROPDOWN_DATA_RECEIPTZONE_LIST = &quot;activeZoneList&quot;;
+    public static final String DROPDOWN_DATA_ONLINETRANSACTIONSTATUS_LIST = &quot;onlineTransactionStatusList&quot;;
+    public static final String DROPDOWN_DATA_BANKBRANCH_LIST = &quot;bankBranchList&quot;;
+    public static final String DROPDOWN_DATA_ACCOUNT_NO_LIST = &quot;accountNumberList&quot;;
+    public static final String DROPDOWN_DATA_INST_MODE_LIST = &quot;instrumentModeList&quot;;
+    public static final String DROPDOWN_DATA_LOCATION_LIST = &quot;locationList&quot;;
+    public static final String DROPDOWN_DATA_DISHONOR_REASONS_LIST = &quot;dishonorReasonsList&quot;;
+    // Instrument Types
+    public static final String INSTRUMENTTYPE_CASH = FinancialConstants.INSTRUMENT_TYPE_CASH;
+    public static final String INSTRUMENTTYPE_CHEQUE = FinancialConstants.INSTRUMENT_TYPE_CHEQUE;
+    public static final String INSTRUMENTTYPE_CHEQUEORDD = &quot;cheque/dd&quot;;
+    public static final String INSTRUMENTTYPE_DD = FinancialConstants.INSTRUMENT_TYPE_DD;
+    public static final String INSTRUMENTTYPE_CARD = FinancialConstants.INSTRUMENT_TYPE_CARD;
+    public static final String INSTRUMENTTYPE_BANK = FinancialConstants.INSTRUMENT_TYPE_BANK;
+    public static final String INSTRUMENTTYPE_ONLINE = FinancialConstants.INSTRUMENT_TYPE_ONLINE;
+    public static final String INSTRUMENTTYPE_ATM = FinancialConstants.INSTRUMENT_TYPE_ATM;
+    public static final String INSTRUMENTTYPE_NAME_CHEQUE = &quot;Cheque&quot;;
+    public static final String INSTRUMENTTYPE_NAME_CASH = &quot;Cash&quot;;
+    public static final String INSTRUMENTTYPE_NAME_CARD = &quot;Card&quot;;
+    public static final String INSTRUMENTTYPE_NAME_DD = &quot;DD&quot;;
+
+    
+    // Receipt types
+    public static final char RECEIPT_TYPE_ADHOC = 'A';
+    public static final char RECEIPT_TYPE_BILL = 'B';
+    public static final char RECEIPT_TYPE_CHALLAN = 'C';
+    
+    //microservices Receipt types
+    public static final String RECEIPT_M_TYPE_MISCELLANEOUS=&quot;MISCELLANEOUS&quot;;
+    public static final String RECEIPT_M_TYPE_BILLBASED=&quot;BILLBASED&quot;;
+    public static final String RECEIPT_M_TYPE_ADHOC=&quot;ADHOC&quot;;
+
+    // Collection type
+    public static final char COLLECTION_TYPE_COUNTER = 'C';
+    public static final char COLLECTION_TYPE_ONLINECOLLECTION = 'O';
+    public static final char COLLECTION_TYPE_FIELDCOLLECTION = 'F';
+
+    // Report template names
+    public static final String RECEIPT_TEMPLATE_NAME = &quot;collection_receipt&quot;;
+    public static final String CHALLAN_RECEIPT_TEMPLATE_NAME = &quot;collection_receipt_challan&quot;;
+    public static final String REPORT_TEMPLATE_PENDING_CHALLANS = &quot;pending_challans&quot;;
+    public static final String REPORT_TEMPLATE_ONLINE_TRANSACTION = &quot;online_transaction&quot;;
+    public static final String REPORT_TEMPLATE_RECEIPT_REGISTER = &quot;collection_receipt_register&quot;;
+
+    // Receipt View Source Path for Financials
+    public static final String RECEIPT_VIEW_SOURCEPATH = &quot;/collection/receipts/receipt-viewReceipts.action?selectedReceipts=&quot;;
+
+    // action method return values
+    public static final String REPORT = &quot;report&quot;;
+    public static final String VIEW = &quot;view&quot;;
+    public static final String CANCEL = &quot;cancel&quot;;
+    public static final String CREATERECEIPT = &quot;createReceipt&quot;;
+    public static final String CANCELRECEIPT = &quot;cancelReceipt&quot;;
+
+    // Status codes
+    public static final String RECEIPT_STATUS_CODE_TO_BE_SUBMITTED = &quot;TO_BE_SUBMITTED&quot;;
+    public static final String RECEIPT_STATUS_CODE_SUBMITTED = &quot;SUBMITTED&quot;;
+    public static final String RECEIPT_STATUS_CODE_APPROVED = &quot;APPROVED&quot;;
+    public static final String RECEIPT_STATUS_APPROVED = &quot;Approved&quot;;
+    public static final String RECEIPT_STATUS_CODE_INSTRUMENT_BOUNCED = &quot;INSTR_BOUNCED&quot;;
+    public static final String RECEIPT_STATUS_CODE_CANCELLED = &quot;CANCELLED&quot;;
+    public static final String RECEIPT_STATUS_CODE_FAILED = &quot;FAILED&quot;;
+    public static final String RECEIPT_STATUS_CODE_PENDING = &quot;PENDING&quot;;
+    public static final String RECEIPT_STATUS_CODE_REMITTED = &quot;REMITTED&quot;;
+    public static final String RECEIPT_STATUS_CODE_PARTIAL_REMITTED = &quot;PARTIAL_REMITTED&quot;;
+    public static final String RECEIPT_STATUS_CODE_CANCELLATION_CREATED = &quot;CANCELLATION_CREATED&quot;;
+    public static final String RECEIPT_STATUS_CODE_CANCELLATION_CHECKED = &quot;CANCELLATION_CHECKED&quot;;
+    public static final String RECEIPT_STATUS_CODE_CANCELLATION_REJECTED = &quot;CANCELLATION_REJECTED&quot;;
+    public static final String DISHONORCHEQUE_STATUS_CODE_CREATED = &quot;CREATED&quot;;
+    public static final String DISHONORCHEQUE_STATUS_CODE_APPROVED = &quot;APPROVED&quot;;
+    public static final String RECEIPT_STATUS_REMITTED = &quot;Remitted&quot;;
+
+    // Status descriptions - ideally we should not be using these - to be
+    // discussed
+    public static final String RECEIPT_STATUS_DESC_CANCELLED = &quot;Cancelled&quot;;
+    public static final String RECEIPT_STATUS_DESC_CREATED = &quot;To Be Submitted&quot;;
+    public static final String RECEIPT_STATUS_DESC_PENDING = &quot;Pending&quot;;
+
+    // module types
+    public static final String MODULE_NAME_RECEIPTHEADER = &quot;ReceiptHeader&quot;;
+    public static final String MODULE_NAME_CHALLAN = &quot;Challan&quot;;
+    public static final String MODULE_NAME_COLLECTIONS = &quot;Collections&quot;;
+    public static final String MODULE_NAME_COLLECTIONS_CONFIG = &quot;Collection&quot;;
+    public static final String MODULE_NAME_INSTRUMENTHEADER = &quot;Instrument&quot;;
+    public static final String MODULE_NAME_ONLINEPAYMENT = &quot;OnlinePayment&quot;;
+    public static final String MODULE_NAME_REMITTANCE = &quot;Remittance&quot;;
+    public static final String MODULE_NAME_PROPERTYTAX = &quot;Property Tax&quot;;
+    public static final String MODULE_NAME_DISHONORCHEQUE = &quot;DishonorCheque&quot;;
+
+    // AppConfig Values
+    public static final String APPCONFIG_VALUE_ISVOUCHERAPPROVED = &quot;ISVOUCHERAPPROVED&quot;;
+    public static final String APPCONFIG_VALUE_CHALLANVALIDUPTO = &quot;CHALLANVALIDUPTO&quot;;
+    public static final String APPCONFIG_VALUE_ISBILLNUMREQD = &quot;ISBILLNUMREQD&quot;;
+    public static final String APPCONFIG_VALUE_ISSERVICEREQD = &quot;ISSERVICEREQD&quot;;
+    public static final String APPCONFIG_VALUE_REMITTANCEVOUCHERTYPEFORCHEQUEDDCARD = &quot;REMITTANCEVOUCHERTYPEFORCHEQUEDDCARD&quot;;
+    public static final String APPCONFIG_VALUE_PAYEEFORMISCRECEIPTS = &quot;PayeeForMiscReceipts&quot;;
+    public static final String APPCONFIG_VALUE_USERECEIPTDATEFORCONTRA = &quot;USERECEIPTDATEFORCONTRA&quot;;
+    public static final String MANUALRECEIPTINFOREQUIRED = &quot;MANUALRECEIPTINFOREQUIRED&quot;;
+    public static final String APPCONFIG_VALUE_CREATEVOUCHER_FOR_REMITTANCE = &quot;CREATEVOUCHER_FOR_REMITTANCE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_FUNCTIONCODE = &quot;COLLECTION_BANKREMITTANCE_FUNCTIONCODE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_DEPTCODE = &quot;COLLECTION_BANKREMITTANCE_DEPTCODE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_SHOWCOLUMNSCARDONLINE = &quot;COLLECTION_BANKREMITTANCE_SHOWCOLUMNSCARDONLINE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTION_BANKREMITTANCE_SHOWREMITDATE = &quot;COLLECTION_BANKREMITTANCE_SHOWREMITDATE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTIONDATAENTRYCUTOFFDATE = &quot;COLLECTIONDATAENTRYCUTOFFDATE&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTIONSOURCEDEBITACCOUNTHEAD = &quot;COLLECTIONSOURCEDEBITACCOUNTHEAD&quot;;
+    public static final String APPCONFIG_VALUE_ROLES_CREATERECEIPT_APPROVEDSTATUS = &quot;ROLES_CREATERECEIPT_APPROVEDSTATUS&quot;;
+    public static final String APPCONFIG_VALUE_COLLECTIONCREATORRECEIPTCANCELROLE = &quot;COLLECTIONCREATORRECEIPTCANCELROLE&quot;;
+    public static final String APPCONFIG_VALUE_ISVOUCHERCREATIONONRECEIPTANDSTATUSDISPLAY = &quot;ISVOUCHERCREATIONONRECEIPTANDSTATUSDISPLAY&quot;;
+
+    // named queries (collections)
+    public static final String QUERY_RECEIPTS_FOR_VOUCHERS = &quot;RECEIPTS_FOR_VOUCHERS&quot;;
+    public static final String QUERY_RECEIPTDETAIL_BY_RECEIPTNUMBER = &quot;QUERY_RECEIPTDETAIL_BY_RECEIPTNUMBER&quot;;
+    public static final String QUERY_RECEIPT_VOUCHER_BY_RECEIPTID = &quot;RECEIPT_VOUCHER_BY_RECEIPTID&quot;;
+
+    public static final String QUERY_RECEIPTS_FOR_BOUNCED_INSTRUMENTS = &quot;RECEIPTS_FOR_BOUNCED_INSTRUMENTS&quot;;
+    // public static final String QUERY_RECEIPTS_FOR_PAYEEDETAIL =
+    // &quot;RECEIPTS_BY_PAYEEDETAILID&quot;;
+    public static final String QUERY_RECEIPT_BY_RECEIPTNUM_AND_SERVICECODE = &quot;RECEIPTS_BY_RECEIPTNUM_AND_SERVICECODE&quot;;
+    public static final String QUERY_RECEIPTS_BY_RECEIPTNUM = &quot;RECEIPTS_BY_RECEIPTNUM&quot;;
+    public static final String QUERY_RECEIPTS_BY_REFNUM_AND_SERVICECODE = &quot;RECEIPTS_BY_REFNUM_AND_SERVICECODE&quot;;
+    public static final String QUERY_RECEIPTS_BY_INSTRUMENTNO_AND_SERVICECODE = &quot;RECEIPTS_BY_INSTRUMENTNO_AND_SERVICECODE&quot;;
+    public static final String QUERY_RECEIPTS_BY_INSTRUMENTHEADER_AND_SERVICECODE = &quot;RECEIPTS_BY_INSTRUMENTHEADER_AND_SERVICECODE&quot;;
+    public static final String QUERY_RECEIPTS_BY_RECONSTATUS = &quot;RECEIPTS_BY_RECONSTATUS&quot;;
+    public static final String QUERY_RECEIPT_BY_CHALLANID = &quot;RECEIPT_BY_CHALLANID&quot;;
+    public static final String QUERY_VALIDRECEIPT_BY_CHALLANNO = &quot;VALIDRECEIPT_BY_CHALLANNO&quot;;
+    public static final String QUERY_CHALLANRECEIPT_BY_REFERENCEID = &quot;CHALLANRECEIPT_BY_REFERENCEID&quot;;
+    public static final String QUERY_ONLINERECEIPTS_BY_STATUSCODE = &quot;ONLINERECEIPTS_BY_STATUSCODE&quot;;
+    public static final String QUERY_ONLINE_PENDING_RECEIPTS_BY_CONSUMERCODE_AND_SERVICECODE = &quot;QUERY_ONLINE_PENDING_RECEIPTS_BY_CONSUMERCODE_AND_SERVICECODE&quot;;
+    public static final String QUERY_RECEIPT_BY_SERVICE_RECEIPTNUMBER_CONSUMERCODE = &quot;RECEIPT_BY_SERVICE_RECEIPTNUMBER_CONSUMERCODE&quot;;
+    public static final String QUERY_RECEIPT_BY_RECEIPTID_AND_REFERENCENUMBER = &quot;RECEIPT_BY_RECEIPTID_AND_REFERENCENUMBER&quot;;
+    public static final String QUERY_RECEIPT_BY_SERVICE_MANUALRECEIPTNO_AND_DATE = &quot;RECEIPT_BY_SERVICE_MANUALRECEIPTNO_AND_DATE&quot;;
+    public static final String QUERY_ACTIVE_SERVICES_BY_CODES = &quot;getActiveServiceByCodes&quot;;
+    public static final String QUERY_ACTIVE_SERVICES_BY_TYPE = &quot;getActiveServiceByType&quot;;
+    public static final String QUERY_RECEIPT_BY_ID_AND_CONSUMERCODE = &quot;QUERY_RECEIPT_BY_ID_AND_CONSUMERCODE&quot;;
+    public static final String QUERY_RECEIPTS_BY_DATE_AND_SERVICECODE = &quot;RECEIPTS_BY_DATE_AND_SERVICECODE&quot;;
+    public static final String QUERY_SERVICE_CATEGORY_FOR_TYPE = &quot;getServiceCategoryForType&quot;;
+    public static final String QUERY_SERVICE_DETAIL_BY_CATEGORY = &quot;getServiceDetailsByCategory&quot;;
+    public static final String QUERY_ACTIVE_SERVICE_CATEGORY = &quot;ACTIVE_SERVICE_CATEGORY&quot;;
+    public static final String QUERY_SERVICE_CATEGORY_BY_CODE = &quot;SERVICE_CATEGORY_BY_CODE&quot;;
+    public static final String QUERY_SERVICE_BY_CATEGORY_FOR_TYPE = &quot;SERVICE_BY_CATEGORY_FOR_TYPE&quot;;
+    public static final String QUERY_RECEIPT_BY_ID_AND_STATUSNOTCANCELLED = &quot;RECEIPT_BY_ID_AND_STATUSNOTCANCELLED&quot;;
+    public static final String QUERY_PENDING_RECEIPT_BY_ID_AND_CONSUMERCODE = &quot;QUERY_PENDING_RECEIPT_BY_ID_AND_CONSUMERCODE&quot;;
+    public static final String QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE = &quot;QUERY_PENDING_RECEIPT_BY_ID_AND_CITYCODE&quot;;
+
+    // named queries (other modules)
+    public static final String QUERY_ACTIVE_COUNTERS = &quot;getAllActiveCounters&quot;;
+    public static final String QUERY_CREATEDBYUSERS_OF_RECEIPTS = &quot;CREATEDBYUSERS_OF_RECEIPTS&quot;;
+    // public static final String QUERY_LOCATION_BY_USER = &quot;getLocationByUser&quot;;
+    public static final String QUERY_SERVICES_BY_TYPE = &quot;getServicesByType&quot;;
+    public static final String QUERY_COLLECTION_SERVICS = &quot;getCollectionServices&quot;;
+    public static final String QUERY_FUNCTIONARY_BY_CODE = &quot;getFunctionaryByCode&quot;;
+    public static final String QUERY_DEPARTMENT_BY_CODE = &quot;getDepartmentByCode&quot;;
+    public static final String QUERY_SERVICE_BY_CODE = &quot;getServiceByCode&quot;;
+    public static final String QUERY_INSTRUMENTTYPE_BY_TYPE = &quot;getInstrumentTypeByType&quot;;
+    public static final String QUERY_CHARTOFACCOUNT_BY_INSTRTYPE = &quot;getChartofAccountByInstrumentType&quot;;
+    public static final String QUERY_CHARTOFACCOUNT_BY_INSTRTYPE_SERVICE = &quot;getCOAByInstrumentTypeAndService&quot;;
+    public static final String QUERY_CHARTOFACCOUNT_BY_INSTRTYPE_SERVICE_BILLSERVICE = &quot;getCOAByInstrumentTypeAndServiceAndBillservice&quot;;
+    public static final String QUERY_ALLCOUNTERS = &quot;getAllCounters&quot;;
+    public static final String QUERY_ZONE_OF_RECEIPTS = &quot;getAllReceiptBoundary&quot;;
+    public static final String QUERY_SERVICE_BY_NAME = &quot;getServicesByName&quot;;
+    public static final String QUERY_SERVICE_BY_ID = &quot;SERVICE_BY_ID&quot;;
+    public static final String QUERY_SCHEME_BY_FUNDID = &quot;getAllSchemeByFundId&quot;;
+    public static final String QUERY_SUBSCHEME_BY_SCHEMEID = &quot;getAllSubSchemeBySchemeId&quot;;
+    public static final String QUERY_DEPARTMENT_BY_ID = &quot;getDepartmentById&quot;;
+    public static final String QUERY_ACCOUNTDETAILTYPE_BY_ID = &quot;getAccountDetailtypeById&quot;;
+    public static final String QUERY_ACCOUNTDETAILKEY_BY_DETAILKEY = &quot;getAccountDetailkeyByDetailKey&quot;;
+    public static final String QUERY_ALL_STATUSES_FOR_MODULE = &quot;getAllStatusesForModule&quot;;
+    public static final String QUERY_STATUSES_FOR_MODULE_AND_CODES = &quot;getStatusesForModuleAndCodes&quot;;
+    public static final String QUERY_RECEIPT_BY_ID_AND_CITYCODE = &quot;QUERY_RECEIPT_BY_ID_AND_CITYCODE&quot;;
+
+    public static final String QUERY_ALL_DEPARTMENTS = &quot;getAllDepartment&quot;;
+    public static final String QUERY_ALL_LOCATIONS = &quot;getAllLocations&quot;;
+    public static final String QUERY_ALL_FUNCTION = &quot;getAllFunction&quot;;
+    public static final String QUERY_ALL_FUNCTIONARY = &quot;getAllFunctionary&quot;;
+    public static final String QUERY_ALL_FUND = &quot;getAllFund&quot;;
+    public static final String QUERY_ALL_FUNDSOURCE = &quot;getAllFundsource&quot;;
+    public static final String QUERY_ALL_FIELD = &quot;getAllField&quot;;
+    public static final String QUERY_VOUCHERHEADER_BY_VOUCHERNUMBER = &quot;getVoucherHeaderByVoucherNumber&quot;;
+    public static final String QUERY_GETFINANCIALYEARBYDATE = &quot;getFinancialYearByDate&quot;;
+    public static final String QUERY_GET_LOCATIONBYID = &quot;getLocationById&quot;;
+    public static final String QUERY_GET_CONTRAVOUCHERBYVOUCHERHEADERID = &quot;getContraVoucherbyVoucherHeaderId&quot;;
+    public static final String QUERY_GET_INSTRUMENTHEADER_BY_ID = &quot;INSTRUMENTHEADERBYID&quot;;
+    public static final String QUERY_CREATEDBYUSERS_OF_PAYMENT_RECEIPTS = &quot;CREATEDBYUSERS_OF_PAYMENT_RECEIPTS&quot;;
+
+    // Workflow actions
+    public static final String WF_ACTION_CREATE_RECEIPT = &quot;Create Receipt&quot;;
+    public static final String WF_ACTION_CREATE_VOUCHER = &quot;Create Receipt Voucher&quot;;
+    public static final String WF_ACTION_SUBMIT = &quot;Submit for Approval&quot;;
+    public static final String WF_ACTION_APPROVE = &quot;Approve&quot;;
+    public static final String WF_ACTION_REJECT = &quot;Reject&quot;;
+    public static final String WF_STATE_NEW = &quot;NEW&quot;;
+    public static final String WF_STATE_END = &quot;END&quot;;
+    public static final String WF_ACTION_NAME_NEW_CHALLAN = &quot;CHALLAN_NEW&quot;;
+    public static final String WF_ACTION_NAME_CREATE_CHALLAN = &quot;CHALLAN_CREATE&quot;;
+    public static final String WF_ACTION_NAME_CHECK_CHALLAN = &quot;CHALLAN_CHECK&quot;;
+    public static final String WF_ACTION_NAME_APPROVE_CHALLAN = &quot;CHALLAN_APPROVE&quot;;
+    public static final String WF_ACTION_NAME_VALIDATE_CHALLAN = &quot;CHALLAN_VALIDATE&quot;;
+    public static final String WF_ACTION_NAME_REJECT_CHALLAN = &quot;CHALLAN_REJECT&quot;;
+    public static final String WF_ACTION_NAME_MODIFY_CHALLAN = &quot;CHALLAN_MODIFY&quot;;
+    public static final String WF_ACTION_NAME_CANCEL_CHALLAN = &quot;CHALLAN_CANCEL&quot;;
+    public static final String WF_ACTION_NAME_END_CHALLAN = &quot;CHALLAN_END&quot;;
+
+    // Workflow states
+    public static final String WF_STATE_RECEIPT_CREATED = &quot;Receipt Created&quot;;
+    public static final String WF_STATE_VOUCHER_CREATED = &quot;Receipt Voucher Created&quot;;
+    public static final String WF_STATE_SUBMITTED = &quot;Submitted&quot;;
+    public static final String WF_STATE_APPROVED = &quot;Approved&quot;;
+    public static final String WF_STATE_REJECTED = &quot;Rejected&quot;;
+    public static final String WF_STATE_CREATE_CHALLAN = &quot;CREATED&quot;;
+    public static final String WF_STATE_CHECK_CHALLAN = &quot;CHECKED&quot;;
+    public static final String WF_STATE_APPROVE_CHALLAN = &quot;APPROVED&quot;;
+    public static final String WF_STATE_VALIDATE_CHALLAN = &quot;VALIDATED&quot;;
+    public static final String WF_STATE_REJECTED_CHALLAN = &quot;REJECTED&quot;;
+    public static final String WF_STATE_CANCEL_CHALLAN = &quot;CANCELLED&quot;;
+
+    public static final String COLLECTIONS_INTERFACE_SUFFIX = &quot;CollectionsInterface&quot;;
+
+    public static final String BOUNCEDINSTRUPDATE_RECONDATE = &quot;BOUNCEDINSTRUPDATE_RECONDATE&quot;;
+
+    public static final String INSTRUMENTHEADER_STATUS_CANCELLED = FinancialConstants.INSTRUMENT_CANCELLED_STATUS;
+    public static final String INSTRUMENT_DISHONORED_STATUS = FinancialConstants.INSTRUMENT_DISHONORED_STATUS;
+    public static final String INSTRUMENT_NEW_STATUS = FinancialConstants.INSTRUMENT_CREATED_STATUS;
+    public static final String INSTRUMENT_DEPOSITED_STATUS = FinancialConstants.INSTRUMENT_DEPOSITED_STATUS;
+    public static final String INSTRUMENT_RECONCILED_STATUS = FinancialConstants.INSTRUMENT_RECONCILED_STATUS;
+
+    // Voucher Constants
+    public static final String FINANCIAL_RECEIPTS_VOUCHERTYPE = FinancialConstants.STANDARD_VOUCHER_TYPE_RECEIPT;
+    public static final String FINANCIAL_RECEIPTS_VOUCHERNAME = &quot;Other receipts&quot;;
+    public static final String FINANCIAL_JOURNALVOUCHER_VOUCHERTYPE = FinancialConstants.STANDARD_VOUCHER_TYPE_JOURNAL;
+    public static final String FINANCIAL_JOURNALVOUCHER_VOUCHERNAME = FinancialConstants.JOURNALVOUCHER_NAME_GENERAL;
+    public static final String FINANCIAL_VOUCHERDESCRIPTION = &quot;Collection Module&quot;;
+    public static final String FINANCIAL_PAYMENTVOUCHER_VOUCHERTYPE = FinancialConstants.STANDARD_VOUCHER_TYPE_PAYMENT;
+    public static final String FINANCIAL_PAYMENTVOUCHER_VOUCHERNAME = FinancialConstants.PAYMENTVOUCHER_NAME_DIRECTBANK;
+    public static final String FINANCIAL_CONTRAVOUCHER_VOUCHERTYPE = FinancialConstants.STANDARD_VOUCHER_TYPE_CONTRA;
+    public static final String FINANCIAL_CONTRATVOUCHER_VOUCHERNAME = FinancialConstants.CONTRAVOUCHER_NAME_PAYIN;
+
+    public static final String SESSION_VAR_RECEIPT_IDS = &quot;EGOV_RECEIPT_IDS&quot;;
+    public static final String SESSION_VAR_LOGIN_USER_LOCATIONID = &quot;locationId&quot;;
+
+    // Separators
+    public static final String SEPARATOR_HYPHEN = &quot;-&quot;;
+    public static final String SEPARATOR_UNDERSCORE = &quot;_&quot;;
+    public static final String SEPARATOR_COMMA = &quot;,&quot;;
+    public static final String ZERO_INT = &quot;0&quot;;
+    public static final String ZERO_DOUBLE = &quot;0.0&quot;;
+
+    public static final String FINANCIAL_INSTRUMENTSERVICE_VOUCHERHEADEROBJECT = &quot;Voucher header&quot;;
+    public static final String FINANCIAL_INSTRUMENTSERVICE_INSTRUMENTHEADEROBJECT = &quot;Instrument header&quot;;
+
+    public static final String BOUNDARY_HIER_CODE_ADMIN = &quot;ADMIN&quot;;
+
+    public static final String BOOLEAN_TRUE = &quot;TRUE&quot;;
+    public static final String BOOLEAN_FALSE = &quot;FALSE&quot;;
+
+    // Script names
+    public static final String SCRIPT_PAYMENTMODESNOTALLOWED_RULES = &quot;collection.paytmodesnotallowed.rules&quot;;
+    public static final String SCRIPT_RECEIPTNUMBER_GENERERATOR = &quot;collection.receiptnumber.generator&quot;;
+    public static final String SCRIPT_INTERNALREFNO_GENERERATOR = &quot;collection.internalrefno.generator&quot;;
+    public static final String SCRIPT_CHALLANNO_GENERERATOR = &quot;collection.challannumber.generator&quot;;
+    public static final String QUERY_CHALLAN_WORKFLOWDESIGNATIONS = &quot;collection.challanworkflowdesignations.rules&quot;;
+    public static final String QUERY_CHALLAN_WORKFLOWDEPARTMENTS = &quot;collection.challanworkflowdepartment.rules&quot;;
+    public static final String QUERY_BANKREMITTANCE_WORKFLOWDEPARTMENTS = &quot;collection.bankremittanceworkflowdepartment.rules&quot;;
+    public static final String QUERY_BANKREMITTANCE_WORKFLOWDESIGNATIONS = &quot;collection.bankremittanceworkflowdesignations.rules&quot;;
+
+    public static final String DEPARTMENT = &quot;department&quot;;
+    public static final String FUND = &quot;fund&quot;;
+    public static final String SCHEME = &quot;scheme&quot;;
+    public static final String SUBSCHEME = &quot;subscheme&quot;;
+    public static final String FUNCTION = &quot;function&quot;;
+    public static final String FUNCTIONARY = &quot;functionary&quot;;
+    public static final String FUNDSOURCE = &quot;fundsource&quot;;
+    public static final String FIELD = &quot;field&quot;;
+    public static final String BILLNUMBER = &quot;billNumber&quot;;
+    public static final String SERVICE = &quot;service&quot;;
+
+    // Purpose names
+    public static final String PURPOSE_NAME_CASH_IN_HAND = &quot;Cash In Hand&quot;;
+    public static final String PURPOSE_NAME_CHEQUE_IN_HAND = &quot;Cheque In Hand&quot;;
+    public static final String PURPOSE_NAME_CASH_IN_TRANSIT = &quot;Cash In Transit&quot;;
+    public static final String PURPOSE_NAME_CREDIT_CARD = &quot;Credit Card&quot;;
+    public static final String PURPOSE_NAME_ATM_ACCOUNTCODE = &quot;ATM ACCOUNT CODE&quot;;
+    public static final String PURPOSE_NAME_INTERUNITACCOUNT = &quot;Inter-Unit Transfer Account&quot;;
+    public static final String PURPOSE_NAME_REBATE = &quot;REBATE&quot;;
+    public static final String PURPOSE_NAME_THIRD_PARTY_COLLECTION = &quot;Third Party Receivable&quot;;
+
+    // Bank Remittance
+    public static final String BANKREMITTANCE_SERVICETOTALCASHAMOUNT = &quot;SERVICETOTALCASHAMOUNT&quot;;
+    public static final String BANKREMITTANCE_SERVICETOTALCHEQUEAMOUNT = &quot;SERVICETOTALCHEQUEAMOUNT&quot;;
+    public static final String BANKREMITTANCE_SERVICETOTALCARDPAYMENTAMOUNT = &quot;SERVICETOTALCARDPAYMENTAMOUNT&quot;;
+    public static final String BANKREMITTANCE_SERVICETOTALONLINEPAYMENTAMOUNT = &quot;SERVICETOTALONLINEPAYMENTAMOUNT&quot;;
+    public static final String BANKREMITTANCE_VOUCHERDATE = &quot;VOUCHERDATE&quot;;
+    public static final String BANKREMITTANCE_RECEIPTDATE = &quot;RECEIPTDATE&quot;;
+    public static final String BANKREMITTANCE_SERVICENAME = &quot;SERVICENAME&quot;;
+    public static final String BANKREMITTANCE_DEPARTMENTCODE_ACCOUNTS = &quot;A&quot;;
+    public static final String BANKREMITTANCE_FUNDNAME = &quot;FUNDNAME&quot;;
+    public static final String BANKREMITTANCE_DEPARTMENTNAME = &quot;DEPARTMENTNAME&quot;;
+    public static final String BANKREMITTANCE_FUNDCODE = &quot;FUNDCODE&quot;;
+    public static final String BANKREMITTANCE_DEPARTMENTCODE = &quot;DEPARTMENTCODE&quot;;
+    public static final String BANKREMITTANCE_RECEIPTNUMBER = &quot;RECEIPTNUMBER&quot;;
+    public static final String BANKREMITTANCE_CHEQUEDD_NUMBER = &quot;CHEQUEDDNUMBER&quot;;
+    public static final String BANKREMITTANCE_CHEQUEDD_DATE = &quot;CHEQUEDDDATE&quot;;
+    public static final String BANKREMITTANCE_DRAWEE_BANK = &quot;DRAWEEBANK&quot;;
+    public static final String BANKREMITTANCE_DRAWEE_BANKBRANCH = &quot;DRAWEEBANKBRANCH&quot;;
+    public static final String BANKREMITTANCE_INSTRUMENTID = &quot;INSTRUMENTID&quot;;
+
+    // Key entries in maps
+    public static final String MAP_KEY_EGOVCOMMON_CASHINHAND = &quot;cashInHand&quot;;
+    public static final String MAP_KEY_EGOVCOMMON_CHEQUEINHAND = &quot;chequeInHand&quot;;
+    public static final String MAP_KEY_INSTRSERVICE_INSTRUMENTNUMBER = InstrumentService.INSTRUMENT_NUMBER;
+    public static final String MAP_KEY_INSTRSERVICE_INSTRUMENTDATE = InstrumentService.INSTRUMENT_DATE;
+    public static final String MAP_KEY_INSTRSERVICE_INSTRUMENTAMOUNT = InstrumentService.INSTRUMENT_AMOUNT;
+    public static final String MAP_KEY_INSTRSERVICE_INSTRUMENTTYPE = InstrumentService.INSTRUMENT_TYPE;
+    public static final String MAP_KEY_INSTRSERVICE_ISPAYCHEQUE = InstrumentService.IS_PAYCHECK;
+    public static final String MAP_KEY_INSTRSERVICE_BANKCODE = InstrumentService.BANK_CODE;
+    public static final String MAP_KEY_INSTRSERVICE_BANKBRANCHNAME = InstrumentService.BRANCH_NAME;
+    public static final String MAP_KEY_INSTRSERVICE_TRANSACTIONNUMBER = InstrumentService.TRANSACTION_NUMBER;
+    public static final String MAP_KEY_INSTRSERVICE_TRANSACTIONDATE = InstrumentService.TRANSACTION_DATE;
+    public static final String MAP_KEY_INSTRSERVICE_BANKACCOUNTID = InstrumentService.BANKACCOUNTID;
+
+    // Online Payments
+    public static final String SERVICECODE_PGI_BILLDESK = &quot;BDPGI&quot;;
+    public static final String SERVICECODE_PROPERTYTAX = &quot;PT&quot;;
+    public static final String SERVICECODE_PROFESSIONALTAX = &quot;PRFT&quot;;
+    public static final String SERVICECODE_AXIS = &quot;AXIS&quot;;
+    public static final String SERVICECODE_SBIMOPS = &quot;SBIMOPS&quot;;
+    public static final String SERVICECODE_ATOM = &quot;ATOM&quot;;
+    public static final String SERVICECODE_LAMS = &quot;LAMS&quot;;
+
+    // Online Payment Statuses
+    public static final String ONLINEPAYMENT_STATUS_CODE_PENDING = &quot;ONLINE_STATUS_PENDING&quot;;
+    public static final String ONLINEPAYMENT_STATUS_CODE_SUCCESS = &quot;ONLINE_STATUS_SUCCESS&quot;;
+    public static final String ONLINEPAYMENT_STATUS_CODE_FAILURE = &quot;ONLINE_STATUS_FAILURE&quot;;
+    public static final String ONLINEPAYMENT_STATUS_CODE_ABORTED = &quot;ONLINE_STATUS_ABORTED&quot;;
+    public static final String ONLINEPAYMENT_STATUS_CODE_TO_BE_REFUNDED = &quot;TO_BE_REFUNDED&quot;;
+    public static final String ONLINEPAYMENT_STATUS_CODE_REFUNDED = &quot;ONLINE_STATUS_REFUNDED&quot;;
+    public static final String ONLINEPAYMENT_STATUS_DESC_PENDING = &quot;Pending&quot;;
+    public static final String ONLINEPAYMENT_STATUS_DESC_SUCCESS = &quot;Success&quot;;
+    public static final String ONLINEPAYMENT_STATUS_DESC_FAILURE = &quot;Failure&quot;;
+    public static final String ONLINEPAYMENT_STATUS_DESC_TO_BE_REFUNDED = &quot;To Be Refunded&quot;;
+    public static final String ONLINEPAYMENT_STATUS_DESC_REFUNDED = &quot;Refunded&quot;;
+
+    // Challan Statuses
+    public static final String CHALLAN_STATUS_CODE_CREATED = &quot;CREATED&quot;;
+    public static final String CHALLAN_STATUS_CODE_CHECKED = &quot;CHECKED&quot;;
+    public static final String CHALLAN_STATUS_CODE_APPROVED = &quot;APPROVED&quot;;
+    public static final String CHALLAN_STATUS_CODE_VALIDATED = &quot;VALIDATED&quot;;
+    public static final String CHALLAN_STATUS_CODE_REJECTED = &quot;REJECTED&quot;;
+    public static final String CHALLAN_STATUS_CODE_CANCELLED = &quot;CANCELLED&quot;;
+    public static final String CHALLAN_STATUS_DESC_CREATED = &quot;Created&quot;;
+    public static final String CHALLAN_STATUS_DESC_CHECKED = &quot;Checked&quot;;
+    public static final String CHALLAN_STATUS_DESC_APPROVED = &quot;Approved&quot;;
+    public static final String CHALLAN_STATUS_DESC_REJECTED = &quot;Rejected&quot;;
+    public static final String CHALLAN_STATUS_DESC_CANCELLED = &quot;Cancelled&quot;;
+
+    public static final String PGI_AUTHORISATION_CODE_SUCCESS = &quot;0300&quot;;
+    public static final String PGI_AUTHORISATION_CODE_FAILED = &quot;FAILED&quot;;
+    public static final String PGI_AUTHORISATION_CODE_PENDING = &quot;PENDING&quot;;
+    public static final String PGI_AUTHORISATION_CODE_ABORTED = &quot;ABORTED&quot;;
+
+    // Bill desk waiting for response from payment gateway.
+    public static final String PGI_AUTHORISATION_CODE_WAITINGFOR_PAY_GATEWAY_RESPONSE = &quot;0002&quot;;
+
+    // Generic Payment Request Attribute
+    public static final String ONLINEPAYMENT_INVOKE_URL = &quot;paymentGatewayURL&quot;;
+    public static final String PAYMENTGATEWAYADAPTOR_INTERFACE_SUFFIX = &quot;PaymentGatewayAdaptor&quot;;
+
+    // BillDesk Payment Request Attributes
+    public static final String BILLDESK_TXT_CUSTOMERID = &quot;txtCustomerID&quot;;
+    public static final String BILLDESK_TXT_TXNAMOUNT = &quot;txtTxnAmount&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO1 = &quot;txtAdditionalInfo1&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO2 = &quot;txtAdditionalInfo2&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO3 = &quot;txtAdditionalInfo3&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO4 = &quot;txtAdditionalInfo4&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO5 = &quot;txtAdditionalInfo5&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO6 = &quot;txtAdditionalInfo6&quot;;
+    public static final String BILLDESK_TXT_ADDITIONALINFO7 = &quot;txtAdditionalInfo7&quot;;
+    public static final String BILLDESK_RU = &quot;RU&quot;;
+    public static final String UNIQUE_CHECKSUM_KEY = &quot;9azFh4Ge1ftL&quot;;
+
+    public static final String ONLINE_PAYMENT_BILLDESK_MERCHANTID = &quot;TESTMUNC&quot;;
+    public static final String PAYMENT_REQUEST_MESSAGE_KEY = &quot;paymentReqMsg&quot;;
+
+    public static final String PIPE_SEPARATOR = &quot;|&quot;;
+    public static final String PAYMENT_REQUEST_MSG_NA = &quot;NA&quot;;
+    public static final String PAYMENT_REQUEST_SECURITY_ID = &quot;testmunc&quot;;
+
+    // Error Messages
+    public static final String REPORT_GENERATION_ERROR = &quot;Error during report generation!&quot;;
+
+    public static final String YES = &quot;Y&quot;;
+    public static final String NO = &quot;N&quot;;
+
+    // Service Codes
+    public static final String SERVICE_CODE_COLLECTIONS = &quot;CL&quot;;
+
+    // Challan
+    public static final String QUERY_CHALLAN_SERVICES = &quot;getServicesforChallan&quot;;
+    public static final String QUERY_ALL_ACTIVE_FINANCIAL_YEAR = &quot;getActiveFinancialYear&quot;;
+    public static final String Mandatory = &quot;M&quot;;
+    public static final String MISMandatoryAttributesModule = &quot;EGF&quot;;
+    public static final String MISMandatoryAttributesKey = &quot;DEFAULTTXNMISATTRRIBUTES&quot;;
+    public static final String MISMandatoryAttributesKeyCollection = &quot;DEFAULTTXNMISATTRRIBUTESCOLLECTION&quot;;
+
+    public static final String CHAIRPERSON = &quot;CHAIRPERSON&quot;;
+    public static final String CHALLAN_TEMPLATE_NAME = &quot;collection_challan&quot;;
+    public static final String CHALLAN_CREATION_REMARKS = &quot;Challan created&quot;;
+
+    // Reversal Voucher Contants
+    public static final String FINANCIALS_VOUCHERREVERSAL_ORIGINALVOUCHERID = &quot;Original voucher header id&quot;;
+    public static final String FINANCIALS_VOUCHERREVERSAL_DATE = &quot;Reversal voucher date&quot;;
+    public static final String FINANCIALS_VOUCHERREVERSAL_TYPE = &quot;Reversal voucher type&quot;;
+    public static final String FINANCIALS_VOUCHERREVERSAL_NAME = &quot;Reversal voucher name&quot;;
+
+    // COLLECTIONS MODULEID IN EG_MODULES
+    public static final String COLLECTIONS_EG_MODULES_ID = &quot;10&quot;;
+
+    // Collection Common List type
+    public static final String COLLECTIONSAMOUNTTPE_CREDIT = &quot;credit&quot;;
+    public static final String COLLECTIONSAMOUNTTPE_DEBIT = &quot;debit&quot;;
+    public static final String COLLECTIONSAMOUNTTPE_BOTH = &quot;both&quot;;
+
+    // Constants related to number formatting
+    public static final int AMOUNT_PRECISION_DEFAULT = 2;
+
+    // Report parameters
+    public static final String REPORT_PARAM_EGOV_COMMON = &quot;EGOV_COMMON&quot;;
+    public static final String REPORT_PARAM_COLLECTIONS_UTIL = &quot;EGOV_COLLECTIONS_UTIL&quot;;
+
+    // Custom Properties Parameters
+    public static final String CUSTOMPROPERTIES_FILENAME = &quot;custom.properties&quot;;
+    // public static final String
+    // MESSAGEKEY_SERVICECODE_=&quot;collection.servicecode.&quot;;
+    public static final String MESSAGEKEY_BILLDESK_REV_HEAD_ = &quot;billdesk.revenuehead.&quot;;
+
+    // Historic Data Migration Parameters
+    public static final String PROPERTYTAX_REFERENCEDESCRIPTION = &quot;Property Tax Bill Number: &quot;;
+    public static final String PROFESSIONALTAX_REFERENCEDESCRIPTION = &quot;Professional Tax Bill Number: &quot;;
+
+    // Service Category Masters
+    public static final String SERVICECATEGORY_CODE = &quot;code&quot;;
+
+    public static final String RCPT_CREATE = &quot;Receipt Creation&quot;;
+    public static final String RCPT_CANCEL = &quot;Receipt Cancellation&quot;;
+
+    public static final String PGI_BILLINGSERVICE_CONFIGKEY = &quot;BILLINGSERVICEPAYMENTGATEWAY&quot;;
+    public static final String COLLECTION_ROLEFORNONEMPLOYEE = &quot;COLLECTIONROLEFORNONEMPLOYEE&quot;;
+    public static final String COLLECTION_WORKFLOWDEPARTMENT = &quot;COLLECTIONDEPARTMENTFORWORKFLOW&quot;;
+    public static final String COLLECTION_DESIGNATIONFORCSCOPERATOR = &quot;COLLECTIONDESIGNATIONFORCSCOPERATORASCLERK&quot;;
+    public static final String COLLECTION_DEPARTMENT_COLLMODES = &quot;COLLECTIONDEPARTMENTCOLLMODES&quot;;
+    public static final String COLLECTION_DEPARTMENTFORWORKFLOWAPPROVER = &quot;COLLECTIONDEPARTMENTFORWORKFLOWAPPROVER&quot;;
+    public static final String COLLECTION_DESIGNATIONFORAPPROVER = &quot;COLLECTIONDESIGNATIONFORAPPROVER&quot;;
+    public static final String COLLECTION_DESIG_CHALLAN_WORKFLOW = &quot;COLLECTIONDESIGCHALLANWORKFLOW&quot;;
+
+    // AXIS payment gateway variables name
+    public static final String ONLINE_PAYMENT_AXIS_MERCHANTID = &quot;TESTEPAYCDMA&quot;;
+    public static final String AXIS_PAYMENT_CLIENT = &quot;vpc_VirtualPaymentClientURL&quot;;
+    public static final String AXIS_VERSION = &quot;vpc_Version&quot;;
+    public static final String AXIS_COMMAND = &quot;vpc_Command&quot;;
+    public static final String AXIS_ACCESS_CODE = &quot;vpc_AccessCode&quot;;
+    public static final String AXIS_MERCHANT_TXN_REF = &quot;vpc_MerchTxnRef&quot;;
+    public static final String AXIS_MERCHANT = &quot;vpc_Merchant&quot;;
+    public static final String AXIS_AMOUNT = &quot;vpc_Amount&quot;;
+    public static final String AXIS_RETURN_URL = &quot;vpc_ReturnURL&quot;;
+    public static final String AXIS_LOCALE = &quot;vpc_Locale&quot;;
+    public static final String AXIS_TICKET_NO = &quot;vpc_TicketNumber&quot;;
+    public static final String AXIS_OPERATOR_ID = &quot;vpc_User&quot;;
+    public static final String AXIS_PASSWORD = &quot;vpc_Password&quot;;
+    public static final String AXIS_SECURE_HASH = &quot;vpc_SecureHash&quot;;
+    public static final String AXIS_TXN_RESPONSE_CODE = &quot;vpc_TxnResponseCode&quot;;
+    public static final String AXIS_RESP_MESSAGE = &quot;vpc_Message&quot;;
+    public static final String AXIS_TXN_NO = &quot;vpc_TransactionNo&quot;;
+    public static final String AXIS_BATCH_NO = &quot;vpc_BatchNo&quot;;
+    public static final String AXIS_ORDER_INFO = &quot;vpc_OrderInfo&quot;;
+    public static final String AXIS_SECURE_HASHTYPE = &quot;vpc_SecureHashType&quot;;
+    public static final String AXIS_SECURE_HASHTYPE_VALUE = &quot;SHA256&quot;;
+
+    public static final String MESSAGEKEY_AXIS_PAYMENT_CLIENT = &quot;axis.payment.client&quot;;
+    public static final String MESSAGEKEY_AXIS_VERSION = &quot;axis.version&quot;;
+    public static final String MESSAGEKEY_AXIS_COMMAND = &quot;axis.command&quot;;
+    public static final String MESSAGEKEY_AXIS_COMMAND_QUERY = &quot;axis.command.query&quot;;
+    public static final String MESSAGEKEY_AXIS_ACCESS_CODE = &quot;axis.access.code&quot;;
+    public static final String MESSAGEKEY_AXIS_MERCHANT = &quot;axis.merchant&quot;;
+    public static final String MESSAGEKEY_AXIS_LOCALE = &quot;axis.locale&quot;;
+    public static final String MESSAGEKEY_AXIS_TICKET_NO = &quot;axis.ticket.no&quot;;
+    public static final String MESSAGEKEY_AXIS_OPERATOR_ID = &quot;axis.operator.id&quot;;
+    public static final String MESSAGEKEY_AXIS_PASSWORD = &quot;axis.password&quot;;
+    public static final String MESSAGEKEY_AXIS_RECONCILE_URL = &quot;axis.reconcile.url&quot;;
+    public static final String AXIS_SECURE_SECRET = &quot;axis.secure.secret&quot;;
+    public static final String AXIS_FAILED_ABORTED_MESSAGE = &quot;Failed/Aborted Transaction.&quot;;
+    public static final String AXIS_CHECK_DR_EXISTS = &quot;vpc_DRExists&quot;;
+    public static final String AXIS_ABORTED_AUTH_STATUS = &quot;A&quot;;
+
+    public static final String UTF_ENCODING = &quot;UTF-8&quot;;
+    // This is an array for creating hex chars
+<span class="nc" id="L570">    public static final char[] AXIS_HEX_TABLE = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',</span>
+            'B', 'C', 'D', 'E', 'F' };
+
+    public static final String AXIS_ABORTED_STATUS_CODE = &quot;3&quot;;
+
+<span class="nc" id="L575">    public static final TreeMap&lt;String, String&gt; INSTRUMENT_MODES_MAP = new TreeMap&lt;String, String&gt;() {</span>
+
+        private static final long serialVersionUID = -3923246500888439628L;
+        {
+<span class="nc" id="L579">            put(&quot;cheque&quot;, &quot;Cheque&quot;);</span>
+<span class="nc" id="L580">            put(&quot;dd&quot;, &quot;DD&quot;);</span>
+<span class="nc" id="L581">            put(&quot;cash&quot;, &quot;Cash&quot;);</span>
+<span class="nc" id="L582">            put(&quot;card&quot;, &quot;Card&quot;);</span>
+<span class="nc" id="L583">        }</span>
+    };
+    // Named query for dishonor changes
+    public static final String QUERY_INSTRUMENT_DISHONOR_STATUSES = &quot;INSTRUMENT_STATUS_FOR_DISHONOR&quot;;
+    public static final String QUERY_DISHONOR_STATE_OWNERS = &quot;DISHONOR_STATE_OWNERS&quot;;
+
+    // Cancel Receipt
+    public static final String RECEIPT_DEPOSITED_CANCELLED = &quot;Receipt cannot be cancelled since Instrument is already deposited&quot;;
+    public static final String RECEIPT_CANCELLED_SUCCESS = &quot;Receipt Cancelled Successfully&quot;;
+    public static final String RECEIPT_CANCELLED_REASON = &quot;Receipt Cancelled by meSeva&quot;;
+    public static final String ESTIMATION_CHARGES_WATERTAX_MODULE = &quot;Estimation Charges&quot;;
+
+    public static final String USER_TYPE_FOR_CITIZEN = &quot;CITIZEN&quot;;
+    public static final String DEPT_CODE_FOR_ACCOUNTS = &quot;DEPT_1&quot;;
+
+    public static final String REPORT_TEMPLATE_REMITTANCE_STATEMENT = &quot;collection_remittanc_statement_report&quot;;
+    public static final String REMITTANCEVOUCHERREPORT_BRV = &quot;BRV&quot;;
+    public static final String REMITTANCEVOUCHERREPORT_CSL = &quot;CSL&quot;;
+    public static final String QUERY_ALL_REMITTANCE_BANKACCOUNT_LIST = &quot;getAllRemittanceBankAccount&quot;;
+    public static final String REPORT_TEMPLATE_REMITTANCE_VOUCHER = &quot;collection_remittancevoucher_report&quot;;
+    public static final String QUERY_REMITTANCEVOUCHER_CREATOR_LIST = &quot;getAllRemittanceVoucherCreator&quot;;
+    public static final String SERVICETYPETOBANK_ID = &quot;id&quot;;
+
+    public static final String STATUS_OF_RECEIPTS = &quot;STATUS_OF_RECEIPTS&quot;;
+    public static final String REMITTANCE_NUMBER_PREFIX = &quot;REM&quot;;
+
+    // Remittance Status codes
+    public static final String REMITTANCE_STATUS_CODE_NEW = &quot;NEW&quot;;
+    public static final String REMITTANCE_STATUS_CODE_APPROVED = &quot;APPROVED&quot;;
+
+    public static final String LOGO_PATH = &quot;CITY_LOGO_PATH&quot;;
+    public static final String REMITTANCE_BY_VOUCHER_NUMBER = &quot;getRemitanceByVoucherNumber&quot;;
+<span class="nc" id="L615">    public static final TreeMap&lt;String, String&gt; SERVICE_TYPE_CLASSIFICATION = new TreeMap&lt;String, String&gt;() {</span>
+        {
+<span class="nc" id="L617">            put(&quot;B&quot;, &quot;BillBased&quot;);</span>
+<span class="nc" id="L618">            put(&quot;C&quot;, &quot;Challan Collection&quot;);</span>
+<span class="nc" id="L619">            put(&quot;M&quot;, &quot;Miscelleneous Collection&quot;);</span>
+<span class="nc" id="L620">            put(&quot;P&quot;, &quot;Payment&quot;);</span>
+<span class="nc" id="L621">        }</span>
+    };
+
+<span class="nc" id="L624">    public static final char[] REVENUEHEADS = new char[] { 'I', 'A', 'L' };</span>
+<span class="nc" id="L625">    public static final Integer DEFAULT_PAGE_SIZE = 30;</span>
+<span class="nc" id="L626">    public static final Integer QUARTZ_BULKBILL_JOBS = 2;</span>
+<span class="nc" id="L627">    public static final Integer QUARTZ_ATOM_RECONCILE_BULK_JOBS = 5;</span>
+
+    public static final String DATE_FORMAT_YYYYMMDD = &quot;yyyy-MM-dd&quot;;
+<span class="nc" id="L630">    public static final SimpleDateFormat DATEFORMATTER_YYYY_MM_DD = new SimpleDateFormat(DATE_FORMAT_YYYYMMDD);</span>
+
+    public static final String DASHBOARD_GROUPING_DISTRICTWISE = &quot;district&quot;;
+    public static final String DASHBOARD_GROUPING_ULBWISE = &quot;ulb&quot;;
+    public static final String DASHBOARD_GROUPING_REGIONWISE = &quot;region&quot;;
+    public static final String DASHBOARD_GROUPING_GRADEWISE = &quot;grade&quot;;
+    public static final String DASHBOARD_GROUPING_WARDWISE = &quot;ward&quot;;
+    public static final String DASHBOARD_GROUPING_CITYWISE = &quot;city&quot;;
+    public static final String COLLECTION_INDEX_NAME = &quot;receipts&quot;;
+<span class="nc" id="L639">    public static final BigDecimal BIGDECIMAL_100 = BigDecimal.valueOf(100);</span>
+    public static final String DISTINCT_SERVICE_DETAILS = &quot;DISTINCT_SERVICE_DETAILS&quot;;
+    public static final String DASHBOARD_OTHERS = &quot;OTHERS&quot;;
+
+    public static final String BANK_COLLECTION_OPERATOR = &quot;Bank Collection Operator&quot;;
+    public static final String BANK_COLLECTION_REMITTER = &quot;BANK COLLECTION REMITTER&quot;;
+    public static final String QUERY_ACTIVE_BRANCHUSER_BY_USER = &quot;QUERY_ACTIVE_BRANCHUSER_BY_USER&quot;;
+    public static final String QUERY_BRANCHUSER_BRANCH = &quot;QUERY_BRANCHUSER_BRANCH&quot;;
+    public static final String QUERY_RECEIPT_BRANCH = &quot;getAllReceiptBranch&quot;;
+    public static final String QUERY_ACTIVE_BRANCHUSER = &quot;QUERY_ACTIVE_BRANCHUSER&quot;;
+    public static final String QUERY_ALL_BRANCHUSER = &quot;QUERY_ALL_BRANCHUSER&quot;;
+
+    // ATOM payment gateway variables name
+    public static final String ATOM_LOGIN = &quot;login&quot;;
+    public static final String ATOM_PASS = &quot;pass&quot;;
+    public static final String ATOM_TTYPE = &quot;ttype&quot;;
+    public static final String ATOM_PRODID = &quot;prodid&quot;;
+    public static final String ATOM_AMT = &quot;amt&quot;;
+    public static final String ATOM_TXNCURR = &quot;txncurr&quot;;
+    public static final String ATOM_TXNSCAMT = &quot;txnscamt&quot;; // Transaction service charge amount,charged by the merchant.
+    public static final String ATOM_CLIENTCODE = &quot;clientcode&quot;;
+    public static final String ATOM_TXNID = &quot;txnid&quot;;
+    public static final String ATOM_DATE = &quot;date&quot;;
+    public static final String ATOM_CUSTACC = &quot;custacc&quot;;
+    public static final String ATOM_MDD = &quot;mdd&quot;;
+    public static final String ATOM_RU = &quot;ru&quot;; // Return URL
+    public static final String ATOM_UDF9 = &quot;udf9&quot;; // Merchant data
+    public static final String ATOM_TEMPTXNID = &quot;tempTxnId&quot;;
+    public static final String ATOM_TOKEN = &quot;token&quot;;
+    public static final String ATOM_TXNSTAGE = &quot;txnStage&quot;;
+    public static final String ATOM_F_CODE = &quot;f_code&quot;;
+    public static final String ATOM_MER_TXN = &quot;mer_txn&quot;;
+    public static final String ATOM_MMP_TXN = &quot;mmp_txn&quot;;
+    public static final String ATOM_MERCHANTID = &quot;merchantid&quot;;
+    public static final String ATOM_MERCHANT_TXNID = &quot;merchanttxnid&quot;;
+    public static final String ATOM_TDATE = &quot;tdate&quot;;
+<span class="nc" id="L675">    public static final ArrayList&lt;String&gt; ATOM_AUTHORISATION_CODES_WAITINGFOR_PAY_GATEWAY_RESPONSE = new ArrayList&lt;String&gt;() {</span>
+        {
+<span class="nc" id="L677">            add(&quot;Pending From Bank&quot;);</span>
+<span class="nc" id="L678">            add(&quot;Failure&quot;);</span>
+<span class="nc" id="L679">            add(&quot;INITIALIZED&quot;);</span>
+<span class="nc" id="L680">            add(&quot;F&quot;);</span>
+<span class="nc" id="L681">            add(&quot;C&quot;);</span>
+<span class="nc" id="L682">        }</span>
+    };
+    public static final String ATOM_AUTHORISATION_CODE_REFUNDED = &quot;AUTO REVERSAL&quot;;
+<span class="nc" id="L685">    public static final ArrayList&lt;String&gt; AXIS_AUTHORISATION_CODES_WAITINGFOR_PAY_GATEWAY_RESPONSE = new ArrayList&lt;String&gt;() {</span>
+        {
+<span class="nc" id="L687">            add(&quot;6&quot;);</span>
+<span class="nc" id="L688">            add(&quot;D&quot;);</span>
+<span class="nc" id="L689">            add(&quot;P&quot;);</span>
+<span class="nc" id="L690">        }</span>
+    };
+    public static final String MISCELLANEOUS_RECEIPT = &quot;MISCELLANEOUS_RECEIPT&quot;;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

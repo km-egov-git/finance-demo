@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Inbox.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.web.support.ui</a> &gt; <span class="el_source">Inbox.java</span></div><h1>Inbox.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+
+package org.egov.infra.web.support.ui;
+
+import org.egov.infra.utils.DateUtils;
+import org.egov.infra.workflow.entity.State;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.infra.workflow.entity.StateHistory;
+import org.egov.infra.workflow.entity.WorkflowTypes;
+
+import java.util.Date;
+
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.egov.infra.config.core.ApplicationThreadLocals.getUserId;
+import static org.egov.infra.utils.DateUtils.toDefaultDateTimeFormat;
+import static org.egov.infra.utils.StringUtils.escapeSpecialChars;
+
+public class Inbox {
+    private String id;
+    private String sender;
+    private String date;
+    private String task;
+    private String status;
+    private String details;
+    private String link;
+    private String moduleName;
+    private Date createdDate;
+    private boolean draft;
+
+<span class="nc" id="L78">    public Inbox() {</span>
+        //Default constructor for external inbox integration
+<span class="nc" id="L80">    }</span>
+
+<span class="nc" id="L82">    private Inbox(StateAware stateAware, WorkflowTypes workflowTypes, String nextAction) {</span>
+<span class="nc" id="L83">        State state = stateAware.getCurrentState();</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        this.id = workflowTypes.isGrouped() ? EMPTY : new StringBuilder(5).append(state.getId()).append(&quot;#&quot;)</span>
+<span class="nc" id="L85">                .append(workflowTypes.getId()).toString();</span>
+<span class="nc" id="L86">        this.date = toDefaultDateTimeFormat(state.getCreatedDate());</span>
+<span class="nc" id="L87">        this.sender = state.getSenderName();</span>
+<span class="nc" id="L88">        this.task = defaultIfBlank(state.getNatureOfTask(), workflowTypes.getDisplayName());</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        this.status = state.getValue() + (isBlank(nextAction) ? EMPTY : &quot; - &quot; + nextAction);</span>
+<span class="nc" id="L90">        this.details = defaultIfBlank(stateAware.getStateDetails(), EMPTY);</span>
+<span class="nc" id="L91">        this.link = workflowTypes.getLink().replace(&quot;:ID&quot;, stateAware.myLinkId());</span>
+<span class="nc" id="L92">        this.moduleName = workflowTypes.getModule().getDisplayName();</span>
+<span class="nc" id="L93">        this.createdDate = state.getCreatedDate();</span>
+<span class="nc bnc" id="L94" title="All 4 branches missed.">        this.draft = state.isNew() &amp;&amp; (state.getCreatedBy()==getUserId());</span>
+<span class="nc" id="L95">    }</span>
+
+<span class="nc" id="L97">    private Inbox(StateHistory stateHistory, WorkflowTypes workflowTypes) {</span>
+<span class="nc" id="L98">        this.id = stateHistory.getState().getId().toString();</span>
+<span class="nc" id="L99">        this.date = toDefaultDateTimeFormat(stateHistory.getLastModifiedDate());</span>
+<span class="nc" id="L100">        this.sender = stateHistory.getSenderName();</span>
+<span class="nc" id="L101">        this.task = defaultIfBlank(stateHistory.getNatureOfTask(), workflowTypes.getDisplayName());</span>
+<span class="nc" id="L102">        this.status = stateHistory.getValue()</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                + (isBlank(stateHistory.getNextAction()) ? EMPTY : &quot; - &quot; + stateHistory.getNextAction());</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        this.details = isBlank(stateHistory.getComments()) ? EMPTY : escapeSpecialChars(stateHistory.getComments());</span>
+<span class="nc" id="L105">        this.link = EMPTY;</span>
+<span class="nc" id="L106">    }</span>
+
+    public static Inbox build(StateAware stateAware, WorkflowTypes workflowType, String nextAction) {
+<span class="nc" id="L109">        return new Inbox(stateAware, workflowType, nextAction);</span>
+    }
+
+    public static Inbox buildHistory(StateHistory stateHistory, WorkflowTypes workflowType) {
+<span class="nc" id="L113">        return new Inbox(stateHistory, workflowType);</span>
+    }
+
+    public String getId() {
+<span class="nc" id="L117">        return id;</span>
+    }
+
+    public void setId(final String id) {
+<span class="nc" id="L121">        this.id = id;</span>
+<span class="nc" id="L122">    }</span>
+
+    public String getSender() {
+<span class="nc" id="L125">        return sender;</span>
+    }
+
+    public void setSender(final String sender) {
+<span class="nc" id="L129">        this.sender = sender;</span>
+<span class="nc" id="L130">    }</span>
+
+    public String getDate() {
+<span class="nc" id="L133">        return date;</span>
+    }
+
+    public void setDate(final String date) {
+<span class="nc" id="L137">        this.date = date;</span>
+<span class="nc" id="L138">    }</span>
+
+    public String getTask() {
+<span class="nc" id="L141">        return task;</span>
+    }
+
+    public void setTask(final String task) {
+<span class="nc" id="L145">        this.task = task;</span>
+<span class="nc" id="L146">    }</span>
+
+    public String getStatus() {
+<span class="nc" id="L149">        return status;</span>
+    }
+
+    public void setStatus(final String status) {
+<span class="nc" id="L153">        this.status = status;</span>
+<span class="nc" id="L154">    }</span>
+
+    public String getDetails() {
+<span class="nc" id="L157">        return details;</span>
+    }
+
+    public void setDetails(final String details) {
+<span class="nc" id="L161">        this.details = details;</span>
+<span class="nc" id="L162">    }</span>
+
+    public String getLink() {
+<span class="nc" id="L165">        return link;</span>
+    }
+
+    public void setLink(final String link) {
+<span class="nc" id="L169">        this.link = link;</span>
+<span class="nc" id="L170">    }</span>
+
+    public String getModuleName() {
+<span class="nc" id="L173">        return moduleName;</span>
+    }
+
+    public void setModuleName(final String moduleName) {
+<span class="nc" id="L177">        this.moduleName = moduleName;</span>
+<span class="nc" id="L178">    }</span>
+
+    public int getElapsed() {
+<span class="nc" id="L181">        return DateUtils.daysBetween(createdDate, new Date());</span>
+    }
+
+    public Date getCreatedDate() {
+<span class="nc" id="L185">        return createdDate;</span>
+    }
+
+    public void setCreatedDate(Date createdDate) {
+<span class="nc" id="L189">        this.createdDate = createdDate;</span>
+<span class="nc" id="L190">    }</span>
+
+    public boolean isDraft() {
+<span class="nc" id="L193">        return draft;</span>
+    }
+
+    public void setDraft(final boolean draft) {
+<span class="nc" id="L197">        this.draft = draft;</span>
+<span class="nc" id="L198">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

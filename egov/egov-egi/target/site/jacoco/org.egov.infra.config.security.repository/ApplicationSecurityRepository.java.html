@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationSecurityRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments egi</a> &gt; <a href="index.source.html" class="el_package">org.egov.infra.config.security.repository</a> &gt; <span class="el_source">ApplicationSecurityRepository.java</span></div><h1>ApplicationSecurityRepository.java</h1><pre class="source lang-java linenums">package org.egov.infra.config.security.repository;
+
+import static org.egov.infra.utils.ApplicationConstant.MS_USER_TOKEN;
+import static org.egov.infra.utils.ApplicationConstant.USERID_KEY;
+import static org.egov.infra.utils.ApplicationConstant.MS_TENANTID_KEY;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+import org.egov.infra.admin.master.entity.CustomUserDetails;
+import org.egov.infra.admin.master.entity.Role;
+import org.egov.infra.admin.master.entity.User;
+import org.egov.infra.config.core.ApplicationThreadLocals;
+import org.egov.infra.config.security.authentication.userdetail.CurrentUser;
+import org.egov.infra.microservice.contract.UserSearchResponse;
+import org.egov.infra.microservice.contract.UserSearchResponseContent;
+import org.egov.infra.microservice.utils.MicroserviceUtils;
+import org.egov.infra.persistence.entity.enums.Gender;
+import org.egov.infra.persistence.entity.enums.UserType;
+import org.egov.infra.web.filter.RestRequestWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.security.web.context.HttpRequestResponseHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+
+<span class="nc" id="L48">public class ApplicationSecurityRepository implements SecurityContextRepository {</span>
+
+<span class="nc" id="L50">	private static final Logger LOGGER = Logger.getLogger(ApplicationSecurityRepository.class);</span>
+
+	@Autowired
+	public RedisTemplate&lt;Object, Object&gt; redisTemplate;
+
+	@Autowired
+	public MicroserviceUtils microserviceUtils;
+
+	@Override
+	public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
+
+<span class="nc" id="L61">		SecurityContext context = new SecurityContextImpl();;</span>
+<span class="nc" id="L62">		CurrentUser cur_user= null;</span>
+<span class="nc" id="L63">		String oldSessionId = null;</span>
+		try {
+			
+<span class="nc" id="L66">			HttpServletRequest request = requestResponseHolder.getRequest();</span>
+<span class="nc" id="L67">			HttpSession session = request.getSession();</span>
+<span class="nc" id="L68">			LOGGER.info(&quot; *** URI &quot; + request.getRequestURL().toString());</span>
+<span class="nc" id="L69">			String user_token = request.getParameter(&quot;auth_token&quot;);</span>
+<span class="nc" id="L70">			String tenantid = request.getParameter(&quot;tenantId&quot;);</span>
+<span class="nc" id="L71">			cur_user = (CurrentUser)this.microserviceUtils.readFromRedis(request.getSession().getId(), &quot;current_user&quot;);</span>
+<span class="nc" id="L72">			LOGGER.info(&quot;curr user :: &quot;+cur_user);</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">			if (cur_user == null ) {</span>
+<span class="nc" id="L74">				LOGGER.info(&quot; ***  Session is not available in redis.... , trying to login&quot;);</span>
+<span class="nc" id="L75">				this.microserviceUtils.removeSessionFromRedis(user_token, session.getId());</span>
+<span class="nc" id="L76">				 cur_user = new CurrentUser(this.getUserDetails(request));</span>
+<span class="nc" id="L77">				this.microserviceUtils.savetoRedis(session.getId(), &quot;current_user&quot;, cur_user);</span>
+
+			}{
+<span class="nc" id="L80">			    String oldToken = (String)session.getAttribute(MS_USER_TOKEN);</span>
+<span class="nc" id="L81">			    String newToken = (String)this.microserviceUtils.readFromRedis(session.getId(), &quot;auth_token&quot;);</span>
+<span class="nc bnc" id="L82" title="All 6 branches missed.">			    if(null!=oldToken &amp;&amp; null!=newToken &amp;&amp; !oldToken.equals(newToken)){</span>
+<span class="nc" id="L83">			        session.setAttribute(MS_USER_TOKEN, newToken);</span>
+			    }
+			}
+<span class="nc" id="L86">			LOGGER.info(&quot; ***  Session   found  in redis.... ,&quot; + request.getSession().getId());</span>
+<span class="nc" id="L87">			context.setAuthentication(this.prepareAuthenticationObj(request, cur_user));</span>
+<span class="nc" id="L88">		} catch (Exception e) {</span>
+<span class="nc" id="L89">			e.printStackTrace();</span>
+<span class="nc" id="L90">			LOGGER.error(e.getMessage());</span>
+<span class="nc" id="L91">			LOGGER.error(&quot; ***  Session is not found in Redis. Creating empty security context&quot;);</span>
+<span class="nc" id="L92">			return SecurityContextHolder.createEmptyContext();</span>
+<span class="nc" id="L93">		}</span>
+<span class="nc" id="L94">		return context;</span>
+	}
+
+	@Override
+	public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
+
+
+<span class="nc" id="L101">	}</span>
+
+	@Override
+	public boolean containsContext(HttpServletRequest request) {
+<span class="nc" id="L105">		LOGGER.debug(&quot;containsContext: checking context avialability in redis -&quot; + request.getSession().getId() + &quot; : &quot;</span>
+<span class="nc" id="L106">				+ redisTemplate.hasKey(request.getSession().getId()));</span>
+
+<span class="nc" id="L108">		return redisTemplate.hasKey(request.getSession().getId());</span>
+
+	}
+
+
+	private Authentication prepareAuthenticationObj(HttpServletRequest request, CurrentUser user) {
+
+<span class="nc" id="L115">		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, &quot;dummy&quot;,</span>
+<span class="nc" id="L116">				user.getAuthorities());</span>
+<span class="nc" id="L117">		WebAuthenticationDetails details = new WebAuthenticationDetails(request);</span>
+<span class="nc" id="L118">		auth.setDetails(details);</span>
+<span class="nc" id="L119">		return auth;</span>
+	}
+
+    private User getUserDetails(HttpServletRequest request) throws Exception {
+<span class="nc" id="L123">        String user_token = null;</span>
+<span class="nc" id="L124">        String tenantid = null;</span>
+<span class="nc" id="L125">        user_token = request.getParameter(&quot;auth_token&quot;);</span>
+<span class="nc" id="L126">        tenantid = request.getParameter(&quot;tenantId&quot;);</span>
+<span class="nc" id="L127">        HttpSession session = request.getSession();</span>
+<span class="nc" id="L128">        LOGGER.info(&quot; *** authtoken in  getUserDetails()::: &quot;+user_token);</span>
+<span class="nc" id="L129">        LOGGER.info(&quot; *** tenant in  getUserDetails()::: &quot;+tenantid);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (user_token == null){</span>
+<span class="nc" id="L131">            session.setAttribute(&quot;error-code&quot;, 440);</span>
+<span class="nc" id="L132">            throw new Exception(&quot;AuthToken not found&quot;);</span>
+        }
+        
+<span class="nc" id="L135">        String admin_token = this.microserviceUtils.generateAdminToken(tenantid);</span>
+<span class="nc" id="L136">        session.setAttribute(MS_USER_TOKEN, user_token);</span>
+<span class="nc" id="L137">        CustomUserDetails user = this.microserviceUtils.getUserDetails(user_token, admin_token);</span>
+<span class="nc bnc" id="L138" title="All 4 branches missed.">        if(null==user || user.getId()==null)</span>
+<span class="nc" id="L139">            throw new Exception(&quot;Invalid Token&quot;);</span>
+<span class="nc" id="L140">        session.setAttribute(MS_TENANTID_KEY, user.getTenantId());</span>
+<span class="nc" id="L141">        session.setAttribute(USERID_KEY,user.getId());</span>
+<span class="nc" id="L142">        UserSearchResponse response = this.microserviceUtils.getUserInfo(user_token, user.getTenantId(), user.getUserName());</span>
+        
+<span class="nc" id="L144">        this.microserviceUtils.removeSessionFromRedis(user_token, session.getId());</span>
+<span class="nc" id="L145">        this.microserviceUtils.savetoRedis(session.getId(), &quot;auth_token&quot;, user_token);</span>
+<span class="nc" id="L146">        this.microserviceUtils.savetoRedis(session.getId(), &quot;_details&quot;, user);</span>
+<span class="nc" id="L147">        this.microserviceUtils.saveAuthToken(user_token, session.getId());</span>
+        
+<span class="nc" id="L149">        this.microserviceUtils.setExpire(session.getId());</span>
+<span class="nc" id="L150">        this.microserviceUtils.setExpire(user_token);</span>
+        
+
+<span class="nc" id="L153">        return this.parepareCurrentUser(response.getUserSearchResponseContent().get(0));</span>
+    }
+
+	private User parepareCurrentUser(UserSearchResponseContent userinfo) {
+
+<span class="nc" id="L158">		User user = new User(UserType.valueOf(userinfo.getType().toUpperCase()));</span>
+<span class="nc" id="L159">		user.setId(userinfo.getId());</span>
+<span class="nc" id="L160">		user.setUsername(userinfo.getUserName());</span>
+<span class="nc" id="L161">		user.setActive(userinfo.getActive());</span>
+<span class="nc" id="L162">		user.setAccountLocked(userinfo.getAccountLocked());</span>
+		//user.setGender(Gender.valueOf(userinfo.getGender().toUpperCase()));
+<span class="nc" id="L164">		user.setPassword(&quot; &quot;);</span>
+<span class="nc" id="L165">		user.setName(userinfo.getName());</span>
+<span class="nc" id="L166">		user.setPwdExpiryDate(userinfo.getPwdExpiryDate());</span>
+<span class="nc" id="L167">		user.setLocale(userinfo.getLocale());</span>
+<span class="nc" id="L168">		user.setUuid(userinfo.getUuid());</span>
+
+<span class="nc" id="L170">		Set&lt;Role&gt; roles = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L172">		userinfo.getRoles().forEach(roleReq -&gt; {</span>
+<span class="nc" id="L173">			Role role = new Role();</span>
+<span class="nc" id="L174">			role.setId(roleReq.getId());</span>
+<span class="nc" id="L175">			role.setName(roleReq.getName());</span>
+<span class="nc" id="L176">			roles.add(role);</span>
+<span class="nc" id="L177">		});</span>
+<span class="nc" id="L178">		return user;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

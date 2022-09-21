@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Remittance.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.entity</a> &gt; <span class="el_source">Remittance.java</span></div><h1>Remittance.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.entity;
+
+import org.egov.commons.Bankaccount;
+import org.egov.commons.CFunction;
+import org.egov.commons.CVoucherHeader;
+import org.egov.commons.EgwStatus;
+import org.egov.commons.Fund;
+import org.egov.infra.persistence.entity.Auditable;
+import org.egov.infra.workflow.entity.StateAware;
+import org.egov.pims.commons.Position;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+<span class="nc" id="L64">public class Remittance extends StateAware implements Auditable {</span>
+    private static final long serialVersionUID = 1L;
+    private Long id;
+    private String referenceNumber;
+    private Date referenceDate;
+    private CVoucherHeader voucherHeader;
+    private CFunction function;
+    private Fund fund;
+    private String remarks;
+    private String reasonForDelay;
+    private EgwStatus status;
+<span class="nc" id="L75">    private Set&lt;RemittanceDetail&gt; remittanceDetails = new LinkedHashSet&lt;&gt;();</span>
+<span class="nc" id="L76">    private Set&lt;ReceiptHeader&gt; collectionRemittance = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L77">    private Set&lt;RemittanceInstrument&gt; remittanceInstruments = new LinkedHashSet&lt;&gt;();</span>
+
+    private Bankaccount bankAccount;
+    private String referenceVoucherNumber;
+    private Long voucherid;
+
+    @Override
+    public Long getId() {
+<span class="nc" id="L85">        return id;</span>
+    }
+
+    @Override
+    public void setId(final Long id) {
+<span class="nc" id="L90">        this.id = id;</span>
+<span class="nc" id="L91">    }</span>
+
+    @Override
+    public String getStateDetails() {
+<span class="nc" id="L95">        return &quot;&quot;;</span>
+    }
+
+    public String getReferenceNumber() {
+<span class="nc" id="L99">        return referenceNumber;</span>
+    }
+
+    public void setReferenceNumber(final String referenceNumber) {
+<span class="nc" id="L103">        this.referenceNumber = referenceNumber;</span>
+<span class="nc" id="L104">    }</span>
+
+    public Date getReferenceDate() {
+<span class="nc" id="L107">        return referenceDate;</span>
+    }
+
+    public void setReferenceDate(final Date referenceDate) {
+<span class="nc" id="L111">        this.referenceDate = referenceDate;</span>
+<span class="nc" id="L112">    }</span>
+
+    public CVoucherHeader getVoucherHeader() {
+<span class="nc" id="L115">        return voucherHeader;</span>
+    }
+
+    public void setVoucherHeader(final CVoucherHeader voucherHeader) {
+<span class="nc" id="L119">        this.voucherHeader = voucherHeader;</span>
+<span class="nc" id="L120">    }</span>
+
+    public CFunction getFunction() {
+<span class="nc" id="L123">        return function;</span>
+    }
+
+    public void setFunction(final CFunction function) {
+<span class="nc" id="L127">        this.function = function;</span>
+<span class="nc" id="L128">    }</span>
+
+    public Fund getFund() {
+<span class="nc" id="L131">        return fund;</span>
+    }
+
+    public void setFund(final Fund fund) {
+<span class="nc" id="L135">        this.fund = fund;</span>
+<span class="nc" id="L136">    }</span>
+
+    public String getRemarks() {
+<span class="nc" id="L139">        return remarks;</span>
+    }
+
+    public void setRemarks(final String remarks) {
+<span class="nc" id="L143">        this.remarks = remarks;</span>
+<span class="nc" id="L144">    }</span>
+
+    public String getReasonForDelay() {
+<span class="nc" id="L147">        return reasonForDelay;</span>
+    }
+
+    public void setReasonForDelay(final String reasonForDelay) {
+<span class="nc" id="L151">        this.reasonForDelay = reasonForDelay;</span>
+<span class="nc" id="L152">    }</span>
+
+    public EgwStatus getStatus() {
+<span class="nc" id="L155">        return status;</span>
+    }
+
+    public void setStatus(final EgwStatus status) {
+<span class="nc" id="L159">        this.status = status;</span>
+<span class="nc" id="L160">    }</span>
+
+    public Set&lt;ReceiptHeader&gt; getCollectionRemittance() {
+<span class="nc" id="L163">        return collectionRemittance;</span>
+    }
+
+    public void setCollectionRemittance(final Set&lt;ReceiptHeader&gt; collectionRemittance) {
+<span class="nc" id="L167">        this.collectionRemittance = collectionRemittance;</span>
+<span class="nc" id="L168">    }</span>
+
+    public Set&lt;RemittanceDetail&gt; getRemittanceDetails() {
+<span class="nc" id="L171">        return remittanceDetails;</span>
+    }
+
+    public void setRemittanceDetails(Set&lt;RemittanceDetail&gt; remittanceDetails) {
+<span class="nc" id="L175">        this.remittanceDetails = remittanceDetails;</span>
+<span class="nc" id="L176">    }</span>
+
+    public Bankaccount getBankAccount() {
+<span class="nc" id="L179">        return bankAccount;</span>
+    }
+
+    public void setBankAccount(Bankaccount bankAccount) {
+<span class="nc" id="L183">        this.bankAccount = bankAccount;</span>
+<span class="nc" id="L184">    }</span>
+
+    public Set&lt;RemittanceInstrument&gt; getRemittanceInstruments() {
+<span class="nc" id="L187">        return remittanceInstruments;</span>
+    }
+
+    public void setRemittanceInstruments(Set&lt;RemittanceInstrument&gt; remittanceInstruments) {
+<span class="nc" id="L191">        this.remittanceInstruments = remittanceInstruments;</span>
+<span class="nc" id="L192">    }</span>
+
+	public String getReferenceVoucherNumber() {
+<span class="nc" id="L195">		return referenceVoucherNumber;</span>
+	}
+
+	public void setReferenceVoucherNumber(String referenceVoucherNumber) {
+<span class="nc" id="L199">		this.referenceVoucherNumber = referenceVoucherNumber;</span>
+<span class="nc" id="L200">	}</span>
+
+	public Long getVoucherid() {
+<span class="nc" id="L203">		return voucherid;</span>
+	}
+
+	public void setVoucherid(Long voucherid) {
+<span class="nc" id="L207">		this.voucherid = voucherid;</span>
+<span class="nc" id="L208">	}</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

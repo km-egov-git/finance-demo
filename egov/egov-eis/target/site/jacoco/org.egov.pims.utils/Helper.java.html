@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Helper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments eis</a> &gt; <a href="index.source.html" class="el_package">org.egov.pims.utils</a> &gt; <span class="el_source">Helper.java</span></div><h1>Helper.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.pims.utils;
+
+import org.egov.infra.admin.master.service.AppConfigValueService;
+import org.springframework.beans.factory.annotation.Autowired;
+
+<span class="nc" id="L53">public  class Helper {</span>
+	 @Autowired
+	    private AppConfigValueService appConfigValuesService;
+	
+	/*public static Integer getStatusTypeByDescAndModule()
+	{
+		String statusDesc=null;
+		String moduleType=null;
+		EgwStatus statusType=null;
+		Integer statusId=null;
+		
+		try {
+			//moduleType=EGovConfig.getProperty(&quot;eis_egov_config.xml&quot;, &quot;STATUS_MODULE_TYPE&quot;, &quot;&quot;,&quot;EIS.STATUS&quot;);
+			AppConfigValues appConfigValuesForModule = appConfigValuesService.getAppConfigValueByDate(&quot;EIS_STATUS&quot;,&quot;STATUS_MODULE_TYPE&quot;,new Date());
+			if(appConfigValuesForModule!=null){
+				moduleType= appConfigValuesForModule.getValue();
+			}
+			//statusDesc=EGovConfig.getProperty(&quot;eis_egov_config.xml&quot;, &quot;STATUS_DESCRIPTION&quot;, &quot;&quot;,&quot;EIS.STATUS&quot;);
+			AppConfigValues appConfigValuesForStatusDesc = GenericDaoFactory.getDAOFactory().getAppConfigValuesDAO().getAppConfigValueByDate(&quot;EIS_STATUS&quot;,&quot;STATUS_DESCRIPTION&quot;,new Date());
+			if(appConfigValuesForStatusDesc!=null){
+				statusDesc = appConfigValuesForStatusDesc.getValue();
+			}
+			if(moduleType!=null &amp;&amp; statusDesc!=null)
+			{
+			  
+				statusType =  EisManagersUtill.getCommonsService().getStatusByModuleAndCode(moduleType, statusDesc);
+				if(statusType!=null)
+				{
+					
+					statusId=statusType.getId();
+				}
+			}
+		} catch (ApplicationRuntimeException e) {
+			throw e;
+		}
+		
+		return statusId;
+	}
+	*//**
+	 * isCompOffValid API checks is requested  compensatory off date is within the validity period 
+	 * @param workedOn
+	 * @param compoffDate
+	 * @return Boolean
+	 *//*
+	public static Boolean isCompOffValid(Date workedOn,Date compoffDate){
+		
+		Boolean isCompOffValid=false;
+		List&lt;AppConfigValues&gt; compoffValidityList=appConfigValuesDAO.getConfigValuesByModuleAndKey(EisConstants.MODULE_LEAVEAPP, EisConstants.MODULE_KEY_COMPVAL);
+		
+		Calendar calworkedOnAndThirty=Calendar.getInstance();
+		Calendar calComoffDate=Calendar.getInstance();
+		calComoffDate.setTime(compoffDate);
+		calworkedOnAndThirty.setTime(workedOn);
+		calworkedOnAndThirty.add(Calendar.DAY_OF_MONTH,Integer.valueOf(compoffValidityList.get(0).getValue()));
+		isCompOffValid=(calworkedOnAndThirty.compareTo(calComoffDate)&gt;0 || calworkedOnAndThirty.compareTo(calComoffDate)==0);		
+		return isCompOffValid;
+	}*/
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

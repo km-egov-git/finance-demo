@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChequeCollectionReportAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">e-governments collection web</a> &gt; <a href="index.source.html" class="el_package">org.egov.collection.web.actions.reports</a> &gt; <span class="el_source">ChequeCollectionReportAction.java</span></div><h1>ChequeCollectionReportAction.java</h1><pre class="source lang-java linenums">/*
+ *    eGov  SmartCity eGovernance suite aims to improve the internal efficiency,transparency,
+ *    accountability and the service delivery of the government  organizations.
+ *
+ *     Copyright (C) 2017  eGovernments Foundation
+ *
+ *     The updated version of eGov suite of products as by eGovernments Foundation
+ *     is available at http://www.egovernments.org
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program. If not, see http://www.gnu.org/licenses/ or
+ *     http://www.gnu.org/licenses/gpl.html .
+ *
+ *     In addition to the terms of the GPL license to be adhered to in using this
+ *     program, the following additional terms are to be complied with:
+ *
+ *         1) All versions of this program, verbatim or modified must carry this
+ *            Legal Notice.
+ *            Further, all user interfaces, including but not limited to citizen facing interfaces,
+ *            Urban Local Bodies interfaces, dashboards, mobile applications, of the program and any
+ *            derived works should carry eGovernments Foundation logo on the top right corner.
+ *
+ *            For the logo, please refer http://egovernments.org/html/logo/egov_logo.png.
+ *            For any further queries on attribution, including queries on brand guidelines,
+ *            please contact contact@egovernments.org
+ *
+ *         2) Any misrepresentation of the origin of the material is prohibited. It
+ *            is required that all modified versions of this material be marked in
+ *            reasonable ways as different from the original version.
+ *
+ *         3) This license does not grant any rights to any user of the program
+ *            with regards to rights under trademark law for use of the trade names
+ *            or trademarks of eGovernments Foundation.
+ *
+ *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
+ *
+ */
+package org.egov.collection.web.actions.reports;
+
+import org.apache.log4j.Logger;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.egov.collection.constants.CollectionConstants;
+import org.egov.collection.utils.CollectionsUtil;
+import org.egov.infra.admin.master.service.CityService;
+import org.egov.infra.reporting.engine.ReportDataSourceType;
+import org.egov.infra.reporting.engine.ReportOutput;
+import org.egov.infra.reporting.engine.ReportRequest;
+import org.egov.infra.reporting.engine.ReportService;
+import org.egov.infra.reporting.viewer.ReportViewerUtil;
+import org.egov.infra.web.struts.actions.BaseFormAction;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+@ParentPackage(&quot;egov&quot;)
+@Results({ @Result(name = ChequeCollectionReportAction.INDEX, location = &quot;chequeCollectionReport-index.jsp&quot;),
+        @Result(name = ChequeCollectionReportAction.REPORT, location = &quot;chequeCollectionReport-report.jsp&quot;) })
+<span class="nc" id="L76">public class ChequeCollectionReportAction extends BaseFormAction {</span>
+
+    private static final long serialVersionUID = 1L;
+<span class="nc" id="L79">    private static final Logger LOGGER = Logger.getLogger(CashCollectionReportAction.class);</span>
+<span class="nc" id="L80">    public Map&lt;String, Object&gt; critParams = new HashMap&lt;String, Object&gt;(0);</span>
+    private ReportService reportService;
+    private CollectionsUtil collectionsUtil;
+    private String reportId;
+
+    public static final String REPORT = &quot;report&quot;;
+    private static final String EGOV_COUNTER_OPERATOR_ID = &quot;EGOV_COUNTER_OPERATOR_ID&quot;;
+    private static final String EGOV_COUNTER_ID = &quot;EGOV_COUNTER_ID&quot;;
+    private static final String EGOV_FROM_DATE = &quot;EGOV_FROM_DATE&quot;;
+    private static final String EGOV_TO_DATE = &quot;EGOV_TO_DATE&quot;;
+    private static final String EGOV_BOUNDARY_ID = &quot;EGOV_BOUNDARY_ID&quot;;
+    private static final String EGOV_RECEIPT_IDS = &quot;EGOV_RECEIPT_IDS&quot;;
+    private static final String CHEQUE_COLLETION_TEMPLATE = &quot;chequeCollectionReport&quot;;
+    private String receiptDate;
+    @Autowired
+    private ReportViewerUtil reportViewerUtil;
+    @Autowired
+    private CityService cityService;
+
+    @Override
+    public Object getModel() {
+<span class="nc" id="L101">        return null;</span>
+    }
+
+    public void setFromDate(final Date fromDate) {
+<span class="nc" id="L105">        critParams.put(EGOV_FROM_DATE, fromDate);</span>
+<span class="nc" id="L106">    }</span>
+
+    public void setToDate(final Date toDate) {
+<span class="nc" id="L109">        critParams.put(EGOV_TO_DATE, toDate);</span>
+<span class="nc" id="L110">    }</span>
+
+    public void setCounterId(final Long counterId) {
+<span class="nc" id="L113">        critParams.put(EGOV_COUNTER_ID, counterId);</span>
+<span class="nc" id="L114">    }</span>
+
+    public void setUserId(final Long userId) {
+<span class="nc" id="L117">        critParams.put(EGOV_COUNTER_OPERATOR_ID, userId);</span>
+<span class="nc" id="L118">    }</span>
+
+    public void setBoundaryId(final Long boundaryId) {
+<span class="nc" id="L121">        critParams.put(EGOV_BOUNDARY_ID, boundaryId);</span>
+<span class="nc" id="L122">    }</span>
+
+    public Date getFromDate() {
+<span class="nc" id="L125">        return (Date) critParams.get(EGOV_FROM_DATE);</span>
+    }
+
+    public Date getToDate() {
+<span class="nc" id="L129">        return (Date) critParams.get(EGOV_TO_DATE);</span>
+    }
+
+    public Long getCounterId() {
+<span class="nc" id="L133">        return (Long) critParams.get(EGOV_COUNTER_ID);</span>
+    }
+
+    public Long getUserId() {
+<span class="nc" id="L137">        return (Long) critParams.get(EGOV_COUNTER_OPERATOR_ID);</span>
+    }
+
+    public Long getBoundaryId() {
+<span class="nc" id="L141">        return (Long) critParams.get(EGOV_BOUNDARY_ID);</span>
+    }
+
+    /**
+     * @return the reportId
+     */
+    public String getReportId() {
+<span class="nc" id="L148">        return reportId;</span>
+    }
+
+    private void initializeCriteriaMap() {
+<span class="nc" id="L152">        critParams.clear();</span>
+<span class="nc" id="L153">        critParams.put(EGOV_COUNTER_OPERATOR_ID, Long.valueOf(-1L));</span>
+<span class="nc" id="L154">        critParams.put(EGOV_COUNTER_ID, Long.valueOf(-1L));</span>
+<span class="nc" id="L155">        critParams.put(EGOV_FROM_DATE, new Date());</span>
+<span class="nc" id="L156">        critParams.put(EGOV_TO_DATE, new Date());</span>
+<span class="nc" id="L157">        critParams.put(EGOV_BOUNDARY_ID, Long.valueOf(-1L));</span>
+<span class="nc" id="L158">    }</span>
+
+    @Override
+    public void prepare() {
+<span class="nc" id="L162">        super.prepare();</span>
+<span class="nc" id="L163">        setupDropdownDataExcluding();</span>
+<span class="nc" id="L164">        addDropdownData(CollectionConstants.DROPDOWN_DATA_COUNTER_LIST, collectionsUtil.getAllCounters());</span>
+<span class="nc" id="L165">        addDropdownData(CollectionConstants.DROPDOWN_DATA_RECEIPT_CREATOR_LIST, collectionsUtil.getReceiptCreators());</span>
+<span class="nc" id="L166">        addDropdownData(CollectionConstants.DROPDOWN_DATA_RECEIPTZONE_LIST, collectionsUtil.getReceiptZoneList());</span>
+<span class="nc" id="L167">        initializeCriteriaMap();</span>
+<span class="nc" id="L168">    }</span>
+
+    /**
+     * Action method to create the cheque submission report
+     * 
+     * @return report
+     */
+    @Action(value = &quot;/reports/chequeCollectionReport-submissionReport&quot;)
+    public String submissionReport() {
+<span class="nc" id="L177">        final Map&lt;String, Object&gt; session = getSession();</span>
+        // final User user = collectionsUtil.getLoggedInUser();
+
+        // final Date today = ReportUtil.today();
+<span class="nc" id="L181">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+<span class="nc" id="L182">        Date rcptDate = null;</span>
+        try {
+<span class="nc" id="L184">            rcptDate = sdf.parse(receiptDate);</span>
+<span class="nc" id="L185">        } catch (ParseException e) {</span>
+<span class="nc" id="L186">            LOGGER.error(&quot;Exception occured while parsing receipt created date&quot;, e);</span>
+<span class="nc" id="L187">        }</span>
+<span class="nc" id="L188">        critParams.put(EGOV_FROM_DATE, rcptDate);</span>
+<span class="nc" id="L189">        critParams.put(EGOV_TO_DATE, rcptDate);</span>
+
+        // critParams.put(EGOV_COUNTER_OPERATOR_ID, user.getId().longValue());
+<span class="nc" id="L192">        critParams.put(EGOV_COUNTER_OPERATOR_ID, Long.valueOf(-1L));</span>
+<span class="nc" id="L193">        critParams.put(EGOV_COUNTER_ID, collectionsUtil.getLocationOfUser(getSession()).getId().longValue());</span>
+<span class="nc" id="L194">        critParams.put(EGOV_RECEIPT_IDS,</span>
+<span class="nc" id="L195">                Arrays.asList((Long[]) session.get(CollectionConstants.SESSION_VAR_RECEIPT_IDS)));</span>
+
+<span class="nc" id="L197">        return report();</span>
+    }
+
+    /**
+     * Action method that creates the report
+     * 
+     * @return view
+     */
+    @Action(value = &quot;/reports/chequeCollectionReport-report&quot;)
+    public String report() {
+<span class="nc" id="L207">        critParams.put(CollectionConstants.LOGO_PATH, cityService.getCityLogoAsStream());</span>
+<span class="nc" id="L208">        final ReportRequest reportInput = new ReportRequest(CHEQUE_COLLETION_TEMPLATE, critParams,</span>
+                ReportDataSourceType.SQL);
+<span class="nc" id="L210">        final ReportOutput reportOutput = reportService.createReport(reportInput);</span>
+<span class="nc" id="L211">        reportId = reportViewerUtil.addReportToTempCache(reportOutput);</span>
+<span class="nc" id="L212">        return REPORT;</span>
+    }
+
+    @Action(value = &quot;/reports/chequeCollectionReport-criteria&quot;)
+    public String criteria() {
+<span class="nc" id="L217">        return INDEX;</span>
+    }
+
+    /**
+     * @param reportService the reportService to set
+     */
+    public void setReportService(final ReportService reportService) {
+<span class="nc" id="L224">        this.reportService = reportService;</span>
+<span class="nc" id="L225">    }</span>
+
+    /**
+     * @param critParams the critParams to set
+     */
+    public void setCritParams(final Map&lt;String, Object&gt; critParams) {
+<span class="nc" id="L231">        this.critParams = critParams;</span>
+<span class="nc" id="L232">    }</span>
+
+    /**
+     * @return the critParams
+     */
+    public Map&lt;String, Object&gt; getCritParams() {
+<span class="nc" id="L238">        return critParams;</span>
+    }
+
+    /**
+     * @param collectionsUtil the Collections Utility object to set
+     */
+    public void setCollectionsUtil(final CollectionsUtil collectionsUtil) {
+<span class="nc" id="L245">        this.collectionsUtil = collectionsUtil;</span>
+<span class="nc" id="L246">    }</span>
+
+    public String getReceiptDate() {
+<span class="nc" id="L249">        return receiptDate;</span>
+    }
+
+    public void setReceiptDate(String receiptDate) {
+<span class="nc" id="L253">        this.receiptDate = receiptDate;</span>
+<span class="nc" id="L254">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>
